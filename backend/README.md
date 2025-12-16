@@ -1,6 +1,13 @@
-# 서울과기대 컴공과 학생회 백엔드 API
+# Backend - FastAPI 서버
 
-FastAPI 기반 백엔드 서버입니다.
+서울과기대 컴퓨터공학과 학생회 홈페이지 백엔드 API
+
+## 📋 개요
+
+- **프레임워크**: FastAPI (Python 3.11+)
+- **데이터베이스**: Supabase (PostgreSQL)
+- **인증**: JWT + Supabase Auth
+- **이메일**: Gmail SMTP
 
 ## 🚀 주요 기능
 
@@ -23,51 +30,52 @@ FastAPI 기반 백엔드 서버입니다.
 
 ## 📦 설치 및 실행
 
-### 1. 가상 환경 생성 및 활성화
+### 1. 의존성 설치
 
 ```bash
+cd backend
 python -m venv venv
-source venv/bin/activate  # macOS/Linux
-```
+source venv/bin/activate      # macOS/Linux
+# venv\Scripts\activate       # Windows
 
-### 2. 패키지 설치
-
-```bash
 pip install -r requirements.txt
 ```
 
-### 3. 환경 변수 설정
+### 2. 환경 변수 설정
 
-`.env.example`을 복사하여 `.env` 파일을 생성하고 필요한 값을 입력하세요.
+`.env` 파일 생성 후 다음 값을 입력하세요:
 
-```bash
-cp .env.example .env
+```env
+# Supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-service-role-key
+
+# SMTP (Gmail)
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+
+# Security
+SECRET_KEY=your-secret-key-here
 ```
 
-필수 설정 항목:
-- `SUPABASE_URL`: Supabase 프로젝트 URL
-- `SUPABASE_KEY`: Supabase 서비스 롤 키
-- `SMTP_USER`: Gmail 계정
-- `SMTP_PASSWORD`: Gmail 앱 비밀번호
-- `SECRET_KEY`: 보안 키 (openssl rand -hex 32로 생성)
+> 💡 `SECRET_KEY` 생성: `openssl rand -hex 32`
 
-### 4. 서버 실행
+### 3. 서버 실행
 
 ```bash
-# 방법 1: 간단한 실행 (추천)
+# 개발 모드 (Hot Reload)
 python run.py
 
-# 방법 2: uvicorn 직접 실행
-uvicorn app.main:app --reload
-
-# 방법 3: 프로덕션 모드 (여러 워커)
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+# 또는 uvicorn 직접 실행
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 5. API 문서 확인
+### 4. API 문서 확인
 
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+> 📌 프론트엔드 CORS 설정은 `app/main.py`에서 관리됩니다.
 
 ## 🔐 인증 플로우
 

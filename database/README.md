@@ -1,13 +1,13 @@
-# 데이터베이스 설계 문서
+# Database - PostgreSQL 스키마
 
 서울과학기술대학교 컴퓨터공학과 학생회 홈페이지 데이터베이스
 
 ## 📋 개요
 
-- **DBMS**: PostgreSQL (Supabase)
-- **테이블 수**: 6개
-- **보안**: RLS (Row Level Security) + FastAPI 인증
-- **트랜잭션**: 선착순 신청 원자적 처리
+- **DBMS**: PostgreSQL 15+ (Supabase 호스팅)
+- **테이블**: 6개 (profiles, boards, posts, events, event_images, registrations)
+- **보안**: Row Level Security (RLS) + JWT 인증
+- **특징**: 선착순 신청 트랜잭션, Soft Delete, 익명 게시
 
 ## 🗂️ 테이블 구조
 
@@ -92,21 +92,31 @@ SELECT register_for_event(행사ID, 사용자ID);
 ## 📦 설치 및 실행
 
 ### 1. Supabase 프로젝트 생성
-1. [supabase.com](https://supabase.com) 가입
-2. New Project 생성
-3. Database Password 설정
+1. [Supabase Console](https://supabase.com/dashboard) 접속
+2. **New Project** 생성
+   - Name: `seoultech-comeng-council`
+   - Database Password: 강력한 비밀번호 설정
+   - Region: Northeast Asia (Seoul)
 
-### 2. 스키마 실행
-1. Supabase Dashboard → SQL Editor
-2. `schema.sql` 내용 전체 복사
-3. Run 실행
+### 2. 스키마 배포
+1. Supabase Dashboard → **SQL Editor**
+2. [`schema.sql`](schema.sql) 파일 내용 전체 복사
+3. **Run** 버튼 클릭
 
-### 3. 환경변수 설정
-```bash
+### 3. API 키 확인
+**Settings** → **API** 페이지에서 확인:
+
+```env
+# 백엔드 (.env)
 SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_ANON_KEY=eyJ...  # 프론트엔드용
-SUPABASE_SERVICE_KEY=eyJ...  # 백엔드용 (절대 노출 금지!)
+SUPABASE_KEY=eyJ...  # service_role key (절대 노출 금지!)
 ```
+
+### 4. Storage 버킷 생성
+**Storage** → **New bucket**:
+- Name: `student-verifications`
+- Public: ❌ (Private)
+- File size limit: 5MB
 
 ## 🔧 관리 작업
 
