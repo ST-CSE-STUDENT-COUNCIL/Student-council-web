@@ -2,7 +2,7 @@ import Layout from '../components/Layout';
 import ScrollReveal from '../components/ScrollReveal';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import api from '../api/axios';
+// import api from '../api/axios';
 import { MOCK_NOTICES } from '../mocks/data';
 
 export default function Home() {

@@ -3,7 +3,7 @@ import Layout from '../components/Layout';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useQuery } from '@tanstack/react-query';
-import api from '../api/axios';
+// import api from '../api/axios';
 import { MOCK_MY_EVENTS, MOCK_BOOKMARKS, MOCK_PAST_EVENTS } from '../mocks/data';
 
 export default function MyPage() {

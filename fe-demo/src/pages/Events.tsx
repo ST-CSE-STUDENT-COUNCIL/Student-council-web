@@ -1,6 +1,6 @@
 import Layout from "../components/Layout";
 import { useQuery } from '@tanstack/react-query';
-import api from '../api/axios';
+// import api from '../api/axios';
 import { MOCK_EVENTS } from "../mocks/data";
 
 export default function Events() {

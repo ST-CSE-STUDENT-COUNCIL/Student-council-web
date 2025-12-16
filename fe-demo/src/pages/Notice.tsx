@@ -1,7 +1,7 @@
 import Layout from "../components/Layout";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import api from "../api/axios";
+// import api from "../api/axios";
 import { MOCK_NOTICES } from "../mocks/data";
 
 export default function Notice() {
@@ -98,8 +98,8 @@ export default function Notice() {
 
                 {/* Notice List */}
                 <div className="space-y-4">
-                    {filteredNotices?.length > 0 ? (
-                        filteredNotices.map((notice: any) => (
+                    {(filteredNotices?.length ?? 0) > 0 ? (
+                        filteredNotices?.map((notice: any) => (
                             <div key={notice.id} className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-shadow cursor-pointer group">
                                 <div className="flex justify-between items-start mb-2">
                                     <div className="flex items-center gap-3">
