@@ -1,0 +1,36 @@
+# ============================================================================
+# Database 폴더 .gitignore
+# ============================================================================
+
+# 백업 파일 (로컬 백업, Supabase는 자동 백업 제공)
+*.backup
+*.dump
+*.sql.backup
+backup/
+backups/
+
+# 임시 SQL 파일 (테스트용)
+temp_*.sql
+test_*.sql
+scratch.sql
+
+# DB 마이그레이션 임시 파일
+migrations/*.backup
+migrations/temp/
+
+# 로컬 DB 파일 (PostgreSQL 로컬 테스트용)
+*.db
+*.sqlite
+*.sqlite3
+
+# DB 접속 정보 (절대 커밋 금지!)
+connection_string.txt
+db_credentials.txt
+.db_config
+
+# 로그
+*.log
+
+# 임시 파일
+*.tmp
+tmp/
