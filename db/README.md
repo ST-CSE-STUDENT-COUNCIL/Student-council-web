@@ -85,7 +85,7 @@ posts, events, registrations 등
 - admin만 관리
 
 ### 10. welfare_rentals (복지사업 - 대여물품)
-- 보드게임, 노트북 등 대여 물품 관리
+- 대여 물품 관리
 - 재고 수량 추적
 
 ### 11. welfare_rental_requests (복지사업 - 대여신청)
