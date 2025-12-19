@@ -3,6 +3,19 @@
 -- ============================================================================
 -- 기술 스택: Supabase (PostgreSQL) + FastAPI
 -- 
+-- 테이블 구조:
+--   - users: 유저 정보
+--   - email_verifications: 이메일 인증 대기
+--   - introductions: 학생회 소개
+--   - boards: 게시판 (공지사항, 건의함)
+--   - posts: 게시글
+--   - events: 행사
+--   - event_images: 행사 이미지
+--   - registrations: 행사 신청
+--   - clubs: 동아리
+--   - welfare_rentals: 복지사업(대여)
+--   - welfare_lockers: 복지사업(사물함)
+--
 -- 접근 제어 정책:
 --   - 비인증 사용자: 홈페이지 소개, 로그인/회원가입만 접근
 --   - 인증 사용자: 모든 콘텐츠 접근 (행사, 공지사항, 건의함)
@@ -46,7 +59,7 @@ CREATE INDEX idx_email_verifications_expires_at ON email_verifications(expires_a
 -- 대안: FastAPI 백그라운드 태스크로 주기적 삭제
 
 -- ============================================================================
--- 1. 사용자 프로필
+-- 1. 사용자
 -- ============================================================================
 -- 접근 권한:
 --   - 조회: 모든 인증된 사용자
@@ -58,7 +71,7 @@ CREATE INDEX idx_email_verifications_expires_at ON email_verifications(expires_a
 --   - council: 일반 학생회 (공지 작성 불가, 게시글 삭제 가능)
 --   - admin: 학생회 관리자 (공지 작성 가능, 모든 권한)
 -- ============================================================================
-CREATE TABLE profiles (
+CREATE TABLE users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   student_id VARCHAR(20) UNIQUE NOT NULL,  -- 학번 (로그인 ID)
   name VARCHAR(100) NOT NULL,  -- 이름
@@ -71,7 +84,6 @@ CREATE TABLE profiles (
   is_verified BOOLEAN DEFAULT false,  -- 관리자 승인 여부
   verification_image_url TEXT,  -- 통합정보시스템 학적 캡쳐 이미지
   verification_status VARCHAR(20) DEFAULT 'pending',  -- pending, approved, rejected
-  verified_by UUID REFERENCES profiles(id),  -- 승인한 관리자
   verified_at TIMESTAMPTZ,  -- 승인 일시
   rejection_reason TEXT,  -- 거부 사유
   
@@ -81,30 +93,54 @@ CREATE TABLE profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-COMMENT ON TABLE profiles IS '[인증 필요] 사용자 프로필';
-COMMENT ON COLUMN profiles.student_id IS '학번 (로그인 ID, Supabase Auth의 username)';
-COMMENT ON COLUMN profiles.role IS 'student: 일반학생, council: 일반학생회, admin: 관리자';
-COMMENT ON COLUMN profiles.is_verified IS '관리자 승인 여부 (승인되어야 로그인 가능)';
-COMMENT ON COLUMN profiles.verification_image_url IS '통합정보시스템 학적 증명 이미지 (학번 확인용)';
-COMMENT ON COLUMN profiles.verification_status IS 'pending: 승인대기, approved: 승인됨, rejected: 거부됨';
-COMMENT ON COLUMN profiles.membership_paid IS '4년 회비 납부 여부 (납부자 전용 행사 신
-CREATE INDEX idx_profiles_verification_status ON profiles(verification_status);  -- 승인 대기 목록 조회용청 조건)';
+COMMENT ON TABLE users IS '[인증 필요] 사용자 정보';
+COMMENT ON COLUMN users.student_id IS '학번 (로그인 ID, Supabase Auth의 username)';
+COMMENT ON COLUMN users.role IS 'student: 일반학생, council: 일반학생회, admin: 관리자';
+COMMENT ON COLUMN users.is_verified IS '관리자 승인 여부 (승인되어야 로그인 가능)';
+COMMENT ON COLUMN users.verification_image_url IS '통합정보시스템 학적 증명 이미지 (학번 확인용)';
+COMMENT ON COLUMN users.verification_status IS 'pending: 승인대기, approved: 승인됨, rejected: 거부됨';
+COMMENT ON COLUMN users.membership_paid IS '4년 회비 납부 여부 (납부자 전용 행사 신청 조건)';
 
-CREATE INDEX idx_profiles_student_id ON profiles(student_id);
-CREATE INDEX idx_profiles_membership_paid ON profiles(membership_paid);
+CREATE INDEX idx_users_student_id ON users(student_id);
+CREATE INDEX idx_users_verification_status ON users(verification_status);  -- 승인 대기 목록 조회용
+CREATE INDEX idx_users_membership_paid ON users(membership_paid);
 
 -- ============================================================================
--- 2. 게시판
+-- 2. 학생회 소개 이미지
+-- ============================================================================
+-- 학생회 소개 페이지 이미지 (현행 학생회, 공약, 역할, 행사, 조직도, 연락처)
+-- admin만 수정 가능
+-- ============================================================================
+CREATE TABLE introduction_images (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(100) NOT NULL,  -- 섹션 제목 (예: "현행 학생회", "조직도", "연락처")
+  image_url TEXT NOT NULL,  -- 이미지 URL
+  display_order INT DEFAULT 0,  -- 표시 순서
+  is_active BOOLEAN DEFAULT true,  -- 활성화 여부
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE introduction_images IS '[공개] 학생회 소개 이미지';
+COMMENT ON COLUMN introduction_images.display_order IS '표시 순서 (낮을수록 먼저)';
+
+CREATE INDEX idx_introduction_images_display_order ON introduction_images(display_order);
+
+-- ============================================================================
+-- 3. 게시판
 -- ============================================================================
 -- 게시판별 권한:
 --   - 공지사항 (notice): admin만 작성, 모두 읽기 (인증 필요)
 --   - 건의함 (suggestion): 모두 작성, 익명 허용, 관리자만 실명 확인
+-- 
+-- 대카테고리: 학생회 공지 / 민주자치 공지 등
 -- ============================================================================
 CREATE TABLE boards (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,  -- 게시판 이름
   slug VARCHAR(100) UNIQUE NOT NULL,  -- URL 식별자 (예: /board/notice)
   description TEXT,  -- 게시판 설명
+  category VARCHAR(50),  -- 대카테고리 (학생회, 민주자치 등)
   require_auth BOOLEAN DEFAULT true,  -- 인증 필요 여부
   allow_anonymous BOOLEAN DEFAULT false,  -- 익명 허용 여부 (건의함: true)
   require_admin BOOLEAN DEFAULT false,  -- admin 권한 필요 (공지사항: true)
@@ -113,16 +149,19 @@ CREATE TABLE boards (
 
 COMMENT ON TABLE boards IS '게시판 메타데이터';
 COMMENT ON COLUMN boards.slug IS 'URL 경로용 식별자 (예: /board/notice)';
+COMMENT ON COLUMN boards.category IS '대카테고리 (학생회, 민주자치 등)';
 COMMENT ON COLUMN boards.allow_anonymous IS '익명 허용 여부 (건의함: true, 공지사항: false)';
 COMMENT ON COLUMN boards.require_admin IS 'admin 권한 필요 여부 (공지사항: true)';
 
 -- 기본 게시판 생성
-INSERT INTO boards (name, slug, description, require_admin, allow_anonymous) VALUES
-('공지사항', 'notice', '학생회 공지사항', true, false),
-('건의함', 'suggestion', '익명으로 건의할 수 있습니다', false, true);
+INSERT INTO boards (name, slug, description, category, require_admin, allow_anonymous) VALUES
+('학생회 공지', 'notice-council', '학생회 공지사항', '학생회', true, false),
+('민주자치 공지', 'notice-democracy', '민주자치 공지사항', '민주자치', true, false),
+('복지 공지', 'notice-welfare', '복지사업 공지', '복지', true, false),
+('건의함', 'suggestion', '익명으로 건의할 수 있습니다', '커뮤니티', false, true);
 
 -- ============================================================================
--- 3. 게시글
+-- 4. 게시글
 -- ============================================================================
 -- 작성 권한:
 --   - 공지사항: admin만 (RLS로 제어)
@@ -144,23 +183,24 @@ INSERT INTO boards (name, slug, description, require_admin, allow_anonymous) VAL
 CREATE TABLE posts (
   id SERIAL PRIMARY KEY,
   board_id INT REFERENCES boards(id) ON DELETE CASCADE,
-  author_id UUID REFERENCES profiles(id) ON DELETE SET NULL,  -- 작성자 (익명일 때도 저장)
+  author_id UUID REFERENCES users(id) ON DELETE SET NULL,  -- 작성자 (익명일 때도 저장)
   title VARCHAR(200) NOT NULL,  -- 제목
   content TEXT NOT NULL,  -- 내용
-  view_count INT DEFAULT 0,  -- 조회수
+  subcategory VARCHAR(50),  -- 소카테고리 (게시판별로 다를 수 있음)
   is_pinned BOOLEAN DEFAULT false,  -- 상단 고정 (공지사항용)
   is_anonymous BOOLEAN DEFAULT false,  -- 익명 여부 (true: 관리자만 실명 확인)
   
   -- Soft Delete
   is_deleted BOOLEAN DEFAULT false,  -- true면 일반 사용자에게 안 보임
   deleted_at TIMESTAMPTZ,  -- 삭제 일시
-  deleted_by UUID REFERENCES profiles(id),  -- 삭제한 사람 (본인 or 관리자)
+  deleted_by UUID REFERENCES users(id),  -- 삭제한 사람 (본인 or 관리자)
   
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 COMMENT ON TABLE posts IS '[인증 필요] 게시글 (공지사항, 건의함)';
+COMMENT ON COLUMN posts.subcategory IS '소카테고리: 학생회(행사/복지/학과소식), 민주자치(고시/공고/대표자회의/학생회칙)';
 COMMENT ON COLUMN posts.is_anonymous IS '익명 여부 (true: 익명, 관리자만 실명 확인 가능)';
 COMMENT ON COLUMN posts.is_deleted IS 'Soft delete (true: 삭제됨, 복구 가능)';
 COMMENT ON COLUMN posts.deleted_by IS '삭제 처리한 사람 (본인 or 관리자)';
@@ -168,27 +208,34 @@ COMMENT ON COLUMN posts.deleted_by IS '삭제 처리한 사람 (본인 or 관리
 CREATE INDEX idx_posts_board_id ON posts(board_id);
 CREATE INDEX idx_posts_created_at ON posts(created_at DESC);
 CREATE INDEX idx_posts_is_deleted ON posts(is_deleted);  -- Soft delete 필터링 최적화
+CREATE INDEX idx_posts_subcategory ON posts(subcategory);  -- 소카테고리 필터링
 
 -- ============================================================================
--- 4. 행사
+-- 4-1. 첨부파일
 -- ============================================================================
--- 행사 신청 방식 (3가지):
---   1. 홈페이지 신청만:
---      - google_form_url = null
---      - use_google_form_only = false
---      → register_for_event() 함수로 선착순 신청
---
---   2. 구글폼만 (과도기):
---      - google_form_url = 'https://forms.gle/...'
---      - use_google_form_only = true
---      → 홈페이지 신청 버튼 숨김, 구글폼 링크만 표시
---      → 정원 관리 안 함 (구글폼에서 자체 관리)
---
---   3. 병행 (과도기):
---      - google_form_url = 'https://forms.gle/...'
---      - use_google_form_only = false
---      → "홈페이지 신청" + "구글폼으로 신청" 둘 다 표시
---      → 홈페이지 정원(max_capacity)은 전체 정원의 일부만 할당
+-- 게시글 첨부파일 (공지사항용)
+-- ============================================================================
+CREATE TABLE attachments (
+  id SERIAL PRIMARY KEY,
+  post_id INT REFERENCES posts(id) ON DELETE CASCADE,
+  filename VARCHAR(255) NOT NULL,  -- 원본 파일명
+  file_url TEXT NOT NULL,  -- Supabase Storage URL
+  file_size BIGINT,  -- 파일 크기 (bytes)
+  mime_type VARCHAR(100),  -- MIME 타입
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE attachments IS '[인증 필요] 게시글 첨부파일';
+
+CREATE INDEX idx_attachments_post_id ON attachments(post_id);
+
+-- ============================================================================
+-- 5. 행사
+-- ============================================================================
+-- 행사 상태:
+--   - 진행중: registration_start <= NOW() <= registration_end
+--   - 예정: NOW() < registration_start
+--   - 신청 마감: NOW() > registration_end 또는 current_count >= max_capacity
 --
 -- 납부자 제한:
 --   - require_membership = true: 회비 납부자만 신청 (MT, 컴공인의 밤 등)
@@ -209,20 +256,15 @@ CREATE TABLE events (
   max_capacity INT NOT NULL,  -- 최대 정원
   current_count INT DEFAULT 0,  -- 현재 신청 인원 (트랜잭션으로 관리)
   require_membership BOOLEAN DEFAULT false,  -- 회비 납부자만 신청 가능
-  
-  -- 구글폼 병행 (과도기)
-  google_form_url TEXT,  -- 구글폼 링크 (없으면 null)
-  use_google_form_only BOOLEAN DEFAULT false,  -- true: 구글폼만, false: 홈페이지 활성화
-  
-  thumbnail_url TEXT,  -- 썸네일 이미지
+  thumbnail_url TEXT,  -- 썸네일 이미지 (3:4 비율)
   is_active BOOLEAN DEFAULT true,  -- 활성화 여부
   
   -- Soft Delete
   is_deleted BOOLEAN DEFAULT false,  -- 과거 행사 데이터 보존
   deleted_at TIMESTAMPTZ,
-  deleted_by UUID REFERENCES profiles(id),
+  deleted_by UUID REFERENCES users(id),
   
-  created_by UUID REFERENCES profiles(id),  -- 행사 생성자
+  created_by UUID REFERENCES users(id),  -- 행사 생성자
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   
@@ -234,8 +276,7 @@ COMMENT ON TABLE events IS '[인증 필요] 행사 (로그인 후 조회 가능,
 COMMENT ON COLUMN events.category IS '행사 카테고리 (MT, 간식행사, 개강파티, 축제, 컴공인의 밤)';
 COMMENT ON COLUMN events.current_count IS '현재 신청 인원 (register_for_event 함수로만 수정)';
 COMMENT ON COLUMN events.require_membership IS 'true: 회비 납부자만 신청 가능';
-COMMENT ON COLUMN events.google_form_url IS '구글폼 링크 (과도기 병행용, 없으면 null)';
-COMMENT ON COLUMN events.use_google_form_only IS 'true: 구글폼만, false: 홈페이지 신청 활성화';
+COMMENT ON COLUMN events.thumbnail_url IS '썸네일 이미지 (3:4 비율 권장)';
 COMMENT ON COLUMN events.is_deleted IS 'Soft delete (과거 행사 데이터 보존)';
 
 CREATE INDEX idx_events_category ON events(category);
@@ -243,7 +284,7 @@ CREATE INDEX idx_events_event_date ON events(event_date);
 CREATE INDEX idx_events_is_deleted ON events(is_deleted);
 
 -- ============================================================================
--- 5. 행사 이미지
+-- 6. 행사 이미지
 -- ============================================================================
 -- 행사 상세 페이지에 표시될 설명 이미지 (여러 장)
 -- display_order로 순서 지정 (1, 2, 3...)
@@ -263,7 +304,7 @@ COMMENT ON COLUMN event_images.display_order IS '표시 순서 (1, 2, 3... 낮�
 CREATE INDEX idx_event_images_event_id ON event_images(event_id);
 
 -- ============================================================================
--- 6. 행사 신청 내역
+-- 7. 행사 신청 내역
 -- ============================================================================
 -- 접근 권한:
 --   - 조회: 본인 신청 내역만 (RLS로 제어)
@@ -277,7 +318,7 @@ CREATE INDEX idx_event_images_event_id ON event_images(event_id);
 CREATE TABLE registrations (
   id SERIAL PRIMARY KEY,
   event_id INT REFERENCES events(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   status VARCHAR(20) DEFAULT 'confirmed',  -- confirmed, cancelled
   registration_number INT,  -- 선착순 번호 (1번부터 시작)
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -296,7 +337,134 @@ CREATE INDEX idx_registrations_event_id ON registrations(event_id);
 CREATE INDEX idx_registrations_user_id ON registrations(user_id);
 
 -- ============================================================================
--- 7. 선착순 신청 함수 (원자적 트랜잭션 처리)
+-- 8. 행사 만족도 조사
+-- ============================================================================
+-- 완료된 행사에 대한 만족도 조사
+-- ============================================================================
+CREATE TABLE event_surveys (
+  id SERIAL PRIMARY KEY,
+  event_id INT REFERENCES events(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  rating INT NOT NULL,  -- 만족도 (1~5)
+  feedback TEXT,  -- 의견
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  -- 중복 제출 방지
+  UNIQUE(event_id, user_id),
+  CONSTRAINT check_rating CHECK (rating >= 1 AND rating <= 5)
+);
+
+COMMENT ON TABLE event_surveys IS '[인증 필요] 행사 만족도 조사';
+COMMENT ON COLUMN event_surveys.rating IS '만족도 (1~5점)';
+
+CREATE INDEX idx_event_surveys_event_id ON event_surveys(event_id);
+CREATE INDEX idx_event_surveys_user_id ON event_surveys(user_id);
+
+-- ============================================================================
+-- 9. 동아리
+-- ============================================================================
+-- 동아리 목록 및 정보
+-- admin만 CRUD 가능
+-- ============================================================================
+CREATE TABLE clubs (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,  -- 동아리 이름
+  category VARCHAR(50),  -- 분류 (학술, 스포츠 등)
+  description TEXT,  -- 소개
+  representative VARCHAR(100),  -- 대표자 이름
+  contact VARCHAR(100),  -- 연락처 (이메일/전화)
+  logo_url TEXT,  -- 로고 이미지 (목록용)
+  detail_image_url TEXT,  -- 상세 이미지 (자세히 보기용)
+  is_active BOOLEAN DEFAULT true,  -- 활동 중 여부
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE clubs IS '[공개] 동아리 목록';
+COMMENT ON COLUMN clubs.category IS '동아리 분류 (IT, 봉사, 문화예술 등)';
+COMMENT ON COLUMN clubs.detail_image_url IS '자세히 보기용 상세 이미지';
+
+CREATE INDEX idx_clubs_category ON clubs(category);
+CREATE INDEX idx_clubs_is_active ON clubs(is_active);
+
+-- ============================================================================
+-- 10. 복지사업 - 대여
+-- ============================================================================
+-- 물품 대여 (보드게임, 노트북 등)
+-- 선착순 또는 예약 방식
+-- ============================================================================
+CREATE TABLE welfare_rentals (
+  id SERIAL PRIMARY KEY,
+  item_name VARCHAR(100) NOT NULL,  -- 물품명
+  category VARCHAR(50),  -- 분류 (보드게임, 전자기기 등)
+  description TEXT,  -- 설명
+  quantity INT NOT NULL,  -- 총 수량
+  available_quantity INT NOT NULL,  -- 대여 가능 수량
+  image_url TEXT,  -- 물품 이미지
+  rental_period_days INT DEFAULT 7,  -- 대여 기간 (일)
+  is_active BOOLEAN DEFAULT true,  -- 대여 가능 여부
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  CONSTRAINT check_available_quantity CHECK (available_quantity >= 0),
+  CONSTRAINT check_quantity_positive CHECK (quantity > 0)
+);
+
+COMMENT ON TABLE welfare_rentals IS '[인증 필요] 복지사업 - 대여 물품';
+COMMENT ON COLUMN welfare_rentals.available_quantity IS '현재 대여 가능한 수량';
+COMMENT ON COLUMN welfare_rentals.rental_period_days IS '대여 기간 (일)';
+
+CREATE INDEX idx_welfare_rentals_category ON welfare_rentals(category);
+CREATE INDEX idx_welfare_rentals_is_active ON welfare_rentals(is_active);
+
+-- ============================================================================
+-- 11. 복지사업 - 대여 신청
+-- ============================================================================
+CREATE TABLE welfare_rental_requests (
+  id SERIAL PRIMARY KEY,
+  rental_id INT REFERENCES welfare_rentals(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  status VARCHAR(20) DEFAULT 'pending',  -- pending, approved, returned, cancelled
+  rental_start_date DATE NOT NULL,  -- 대여 시작일
+  rental_end_date DATE NOT NULL,  -- 반납 예정일
+  actual_return_date DATE,  -- 실제 반납일
+  notes TEXT,  -- 비고
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE welfare_rental_requests IS '[인증 필요] 복지사업 - 대여 신청';
+COMMENT ON COLUMN welfare_rental_requests.status IS 'pending: 대기, approved: 승인(대여중), returned: 반납완료, cancelled: 취소';
+
+CREATE INDEX idx_welfare_rental_requests_rental_id ON welfare_rental_requests(rental_id);
+CREATE INDEX idx_welfare_rental_requests_user_id ON welfare_rental_requests(user_id);
+CREATE INDEX idx_welfare_rental_requests_status ON welfare_rental_requests(status);
+
+-- ============================================================================
+-- 12. 복지사업 - 사물함
+-- ============================================================================
+-- 사물함 신청 및 관리
+-- ============================================================================
+CREATE TABLE welfare_lockers (
+  id SERIAL PRIMARY KEY,
+  locker_number VARCHAR(20) UNIQUE NOT NULL,  -- 사물함 번호
+  location VARCHAR(100),  -- 위치 (예: 다솔관 1층)
+  status VARCHAR(20) DEFAULT 'available',  -- available, occupied, maintenance
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,  -- 사용자
+  assigned_at TIMESTAMPTZ,  -- 배정일
+  expires_at TIMESTAMPTZ,  -- 만료일
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE welfare_lockers IS '[인증 필요] 복지사업 - 사물함';
+COMMENT ON COLUMN welfare_lockers.status IS 'available: 사용가능, occupied: 사용중, maintenance: 점검중';
+
+CREATE INDEX idx_welfare_lockers_status ON welfare_lockers(status);
+CREATE INDEX idx_welfare_lockers_user_id ON welfare_lockers(user_id);
+
+-- ============================================================================
+-- 13. 선착순 신청 함수 (원자적 트랜잭션 처리)
 -- ============================================================================
 -- 호출: SELECT register_for_event(행사ID, 사용자ID)
 --
@@ -329,13 +497,10 @@ DECLARE
   v_registration_end TIMESTAMPTZ;
   v_require_membership BOOLEAN;
   v_user_membership_paid BOOLEAN;
-  v_use_google_form_only BOOLEAN;
 BEGIN
   -- 행사 정보 조회 및 락 (다른 트랜잭션 대기)
-  SELECT current_count, max_capacity, registration_start, registration_end, 
-         require_membership, use_google_form_only
-  INTO v_current_count, v_max_capacity, v_registration_start, v_registration_end, 
-       v_require_membership, v_use_google_form_only
+  SELECT current_count, max_capacity, registration_start, registration_end, require_membership
+  INTO v_current_count, v_max_capacity, v_registration_start, v_registration_end, v_require_membership
   FROM events
   WHERE id = p_event_id AND is_active = true AND is_deleted = false
   FOR UPDATE;  -- Pessimistic Lock (경쟁 조건 방지)
@@ -344,14 +509,9 @@ BEGIN
     RETURN json_build_object('success', false, 'message', '행사를 찾을 수 없습니다');
   END IF;
   
-  -- 구글폼 전용 행사는 홈페이지 신청 불가
-  IF v_use_google_form_only THEN
-    RETURN json_build_object('success', false, 'message', '구글폼으로만 신청 가능합니다');
-  END IF;
-  
   -- 사용자 회비 납부 여부 확인
   SELECT membership_paid INTO v_user_membership_paid
-  FROM profiles WHERE id = p_user_id;
+  FROM users WHERE id = p_user_id;
   
   -- 회비 납부자 전용 행사 체크
   IF v_require_membership AND NOT v_user_membership_paid THEN
@@ -407,13 +567,13 @@ COMMENT ON FUNCTION register_for_event(INT, UUID) IS '[인증 필요] 선착순 
 -- FastAPI는 Service Key 사용하므로 RLS 우회 (모든 데이터 접근 가능)
 -- ============================================================================
 
--- profiles: 인증된 사용자만 조회, 본인만 수정
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+-- users: 인증된 사용자만 조회, 본인만 수정
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "profiles_select_authenticated" ON profiles
+CREATE POLICY "users_select_authenticated" ON users
   FOR SELECT USING (auth.uid() IS NOT NULL);  -- 인증 필수
 
-CREATE POLICY "profiles_update_own" ON profiles
+CREATE POLICY "users_update_own" ON users
   FOR UPDATE USING (auth.uid() = id);  -- 본인만 수정
 
 -- boards: 인증된 사용자만 조회 (게시판 목록도 로그인 후)
@@ -435,11 +595,11 @@ CREATE POLICY "posts_insert" ON posts
   FOR INSERT WITH CHECK (
     auth.uid() = author_id AND (
       -- 공지사항은 admin만 작성 가능
-      (board_id = (SELECT id FROM boards WHERE slug = 'notice') AND 
-       EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'))
+      (board_id IN (SELECT id FROM boards WHERE slug IN ('notice-council', 'notice-democracy')) AND 
+       EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'))
       OR
       -- 다른 게시판은 인증만 하면 작성 가능
-      board_id != (SELECT id FROM boards WHERE slug = 'notice')
+      board_id NOT IN (SELECT id FROM boards WHERE slug IN ('notice-council', 'notice-democracy'))
     )
   );
 
