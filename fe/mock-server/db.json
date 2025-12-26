@@ -11,7 +11,7 @@
             "role": "student",
             "is_verified": true,
             "verification_image_url": "https://via.placeholder.com/150",
-            "verification_status": "approved", // [pending, approved, rejected]
+            "verification_status": "approved",
             "verified_at": "2025-12-26",
             "membership_paid": true,
             "membership_paid_at": "2025-12-26",
@@ -29,7 +29,7 @@
             "role": "student",
             "is_verified": false,
             "verification_image_url": "https://via.placeholder.com/150",
-            "verification_status": "pending", // [pending, approved, rejected]
+            "verification_status": "pending",
             "membership_paid": false,
             "created_at": "2025-12-26",
             "updated_at": "2025-12-26"
@@ -44,7 +44,7 @@
             "department": "컴퓨터공학과",
             "role": "student",
             "is_verified": false,
-            "verification_status": "pending", // [pending, approved, rejected]
+            "verification_status": "pending",
             "membership_paid": false,
             "created_at": "2025-12-26T05:41:33.893Z",
             "updated_at": "2025-12-26T05:41:33.893Z"

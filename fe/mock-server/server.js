@@ -15,13 +15,53 @@ server.post('/api/auth/login', (req, res) => {
 
     if (user) {
         if (user.password === password) {
-            res.json(user)
+            // Generate a fake token (this would be a real JWT in production)
+            const accessToken = `mock_token_${user.id}_${Date.now()}`
+            res.json({
+                user,
+                accessToken
+            })
         } else {
             res.status(401).json({ error: "비밀번호가 일치하지 않습니다." })
         }
     } else {
         res.status(401).json({ error: "존재하지 않는 사용자입니다." })
     }
+})
+
+// Authentication Middleware
+server.use((req, res, next) => {
+    // Public routes that don't require authentication
+    const publicPaths = [
+        '/api/auth/login',
+        '/api/auth/register',
+    ]
+
+    // Allow read-only access to some resources without token if needed, 
+    // or strictly require token for everything.
+    // For this example, let's say POST/PUT/DELETE/PATCH require auth.
+    // AND specific GET routes if necessary.
+
+    const isPublic = publicPaths.some(path => req.path.startsWith(path))
+
+    if (isPublic) {
+        return next()
+    }
+
+    // Check if it's a mutation (unsafe method) - require auth
+    // OR if you want to protect everything:
+    // const isProtected = true; 
+
+    // For now, let's protect mutations
+    if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE' || req.method === 'PATCH') {
+        const authHeader = req.headers.authorization
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: "Unauthorized: Missing Token" })
+        }
+    }
+
+    // Continue to JSON Server router
+    next()
 })
 
 // Custom Register Route

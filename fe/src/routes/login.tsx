@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import axios from 'axios'
+import { api } from '../lib/axios'
+import { isAxiosError } from 'axios'
 import { useAuthStore } from '../store/useAuthStore'
 
 export const Route = createFileRoute('/login')({
@@ -17,15 +18,15 @@ function Login() {
     e.preventDefault()
 
     try {
-      const response = await axios.post('/api/auth/login', {
+      const response = await api.post('/api/auth/login', {
         studentId,
         password
       })
 
-      login(response.data)
+      login(response.data.user, response.data.accessToken)
       navigate({ to: '/' })
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
+      if (isAxiosError(error) && error.response?.status === 401) {
         alert('학번 또는 비밀번호가 일치하지 않습니다.')
       } else {
         console.error('Login failed:', error)
