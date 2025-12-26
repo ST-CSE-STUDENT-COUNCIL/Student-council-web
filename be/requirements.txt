@@ -2,6 +2,7 @@
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
 slowapi==0.1.9  # Rate limiting
+python-multipart==0.0.9  # File upload support
 
 # Supabase
 supabase==2.10.0
