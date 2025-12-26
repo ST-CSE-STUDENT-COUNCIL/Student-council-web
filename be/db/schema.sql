@@ -38,15 +38,12 @@
 CREATE TABLE email_verifications (
   id SERIAL PRIMARY KEY,
   email VARCHAR(255) NOT NULL,  -- 인증할 학교 이메일
-  student_id VARCHAR(20) NOT NULL,  -- 학번
   code VARCHAR(6) NOT NULL,  -- 6자리 인증 코드
   verified BOOLEAN DEFAULT false,  -- 인증 완료 여부
+  used BOOLEAN DEFAULT false,  -- 회원가입에 사용됨
   expires_at TIMESTAMPTZ NOT NULL,  -- 만료 시각 (5분)
   created_at TIMESTAMPTZ DEFAULT NOW(),  -- 생성 시각
-  verified_at TIMESTAMPTZ,  -- 인증 완료 시각
-  
-  -- 중복 요청 방지를 위한 인덱스
-  CONSTRAINT unique_unverified_email UNIQUE (email, verified)
+  verified_at TIMESTAMPTZ  -- 인증 완료 시각
 );
 
 -- 인덱스
