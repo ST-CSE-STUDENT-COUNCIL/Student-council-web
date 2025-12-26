@@ -1,13 +1,13 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 
-// Create a custom Axios instance
+// 커스텀 Axios 인스턴스 생성
 export const api = axios.create({
-    // You might want to set a baseURL here if your API is elsewhere
+    // 백엔드 생기면, 나중에 연결
     // baseURL: 'http://localhost:3000', 
 });
 
-// Request interceptor to add the Access Token to headers
+// 헤더에 액세스 토큰을 추가하기 위한 요청 인터셉터
 api.interceptors.request.use(
     (config) => {
         const accessToken = useAuthStore.getState().accessToken;
@@ -21,12 +21,12 @@ api.interceptors.request.use(
     }
 );
 
-// Response interceptor to handle 401 errors (optional but good practice)
+// 401 오류를 처리하기 위한 응답 인터셉터
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Handle unauthorized access (e.g., logout user)
+            // 무단 액세스 처리 (예: 사용자 로그아웃)
             useAuthStore.getState().logout();
         }
         return Promise.reject(error);

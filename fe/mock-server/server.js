@@ -7,7 +7,7 @@ const middlewares = jsonServer.defaults()
 server.use(middlewares)
 server.use(jsonServer.bodyParser)
 
-// Custom Login Route
+// 커스텀 로그인 라우트
 server.post('/api/auth/login', (req, res) => {
     const { studentId, password } = req.body
     const db = router.db
@@ -15,7 +15,7 @@ server.post('/api/auth/login', (req, res) => {
 
     if (user) {
         if (user.password === password) {
-            // Generate a fake token (this would be a real JWT in production)
+            // 가짜 토큰 생성 (실제 프로덕션에서는 진짜 JWT가 됩니다)
             const accessToken = `mock_token_${user.id}_${Date.now()}`
             res.json({
                 user,
@@ -29,18 +29,13 @@ server.post('/api/auth/login', (req, res) => {
     }
 })
 
-// Authentication Middleware
+// 인증 미들웨어
 server.use((req, res, next) => {
-    // Public routes that don't require authentication
+    // 인증이 필요 없는 공개 라우트
     const publicPaths = [
         '/api/auth/login',
         '/api/auth/register',
     ]
-
-    // Allow read-only access to some resources without token if needed, 
-    // or strictly require token for everything.
-    // For this example, let's say POST/PUT/DELETE/PATCH require auth.
-    // AND specific GET routes if necessary.
 
     const isPublic = publicPaths.some(path => req.path.startsWith(path))
 
@@ -48,11 +43,7 @@ server.use((req, res, next) => {
         return next()
     }
 
-    // Check if it's a mutation (unsafe method) - require auth
-    // OR if you want to protect everything:
-    // const isProtected = true; 
-
-    // For now, let's protect mutations
+    // 데이터 변경(안전하지 않은 메서드) 요청인지 확인 - 인증 필요
     if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE' || req.method === 'PATCH') {
         const authHeader = req.headers.authorization
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -60,16 +51,16 @@ server.use((req, res, next) => {
         }
     }
 
-    // Continue to JSON Server router
+    // JSON Server 라우터로 계속 진행
     next()
 })
 
-// Custom Register Route
+// 커스텀 회원가입 라우트
 server.post('/api/auth/register', (req, res) => {
     const { name, student_id, email, phone, password } = req.body
     const db = router.db
 
-    // Check if user exists
+    // 사용자 존재 여부 확인
     const existing = db.get('users').find({ student_id }).value()
     if (existing) {
         return res.status(409).json({ error: "User already exists" })
@@ -97,7 +88,7 @@ server.post('/api/auth/register', (req, res) => {
     res.status(201).json(newUser)
 })
 
-// Rewrites
+// URL 재작성 (Rewrites)
 server.use(jsonServer.rewriter({
     '/api/*': '/$1',
     '/welfare/rentals': '/rentals'
