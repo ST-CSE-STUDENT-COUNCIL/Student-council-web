@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # Environment
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
-    FRONTEND_URL: str
+    FRONTEND_URL: str = "*"  # 기본값: 모든 origin 허용 (프론트 배포 후 변경 권장)
     
     # Server
     HOST: str = "0.0.0.0"
