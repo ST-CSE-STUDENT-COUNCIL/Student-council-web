@@ -1,4 +1,4 @@
-# Logs
+# 로그 무시
 logs
 *.log
 npm-debug.log*
@@ -7,12 +7,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+#tanstack 라이브러리 tmp 무시
+.tanstack
+
+
+
+# 노드 모듈 무시
 node_modules
 dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# 비주얼스튜디오 환결 설정 파일 무시
 .vscode/*
 !.vscode/extensions.json
 .idea

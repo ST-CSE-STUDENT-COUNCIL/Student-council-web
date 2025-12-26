@@ -1,0 +1,221 @@
+{
+    "users": [
+        {
+            "id": "1",
+            "student_id": "24101224",
+            "password": "qwer1234",
+            "name": "이재호",
+            "email": "idjaeho@seoultech.ac.kr",
+            "department": "컴퓨터공학과",
+            "phone": "010-9936-9064",
+            "role": "student",
+            "is_verified": true,
+            "verification_image_url": "https://via.placeholder.com/150",
+            "verification_status": "approved", // [pending, approved, rejected]
+            "verified_at": "2025-12-26",
+            "membership_paid": true,
+            "membership_paid_at": "2025-12-26",
+            "created_at": "2025-12-26",
+            "updated_at": "2025-12-26"
+        },
+        {
+            "id": "2",
+            "student_id": "25101182",
+            "password": "qwer1234",
+            "name": "이준석",
+            "email": "ljs0503js@seoultech.ac.kr",
+            "department": "컴퓨터공학과",
+            "phone": "010-2160-6009",
+            "role": "student",
+            "is_verified": false,
+            "verification_image_url": "https://via.placeholder.com/150",
+            "verification_status": "pending", // [pending, approved, rejected]
+            "membership_paid": false,
+            "created_at": "2025-12-26",
+            "updated_at": "2025-12-26"
+        },
+        {
+            "id": "3",
+            "student_id": "24101242",
+            "password": "qwer1234",
+            "name": "최세영",
+            "email": "goingwell@seoultech.ac.kr",
+            "phone": "010-9999-9999",
+            "department": "컴퓨터공학과",
+            "role": "student",
+            "is_verified": false,
+            "verification_status": "pending", // [pending, approved, rejected]
+            "membership_paid": false,
+            "created_at": "2025-12-26T05:41:33.893Z",
+            "updated_at": "2025-12-26T05:41:33.893Z"
+        }
+    ],
+    "notices": [
+        {
+            "id": 1,
+            "category": "학생회",
+            "subcategory": "복지",
+            "title": "2025학년도 1학기 사물함 신청 안내",
+            "date": "2025.02.20",
+            "content": "사물함 신청 기간 및 방법을 안내해 드립니다. 자세한 내용은 첨부파일을 확인해주세요.",
+            "is_pinned": true
+        },
+        {
+            "id": 2,
+            "category": "민주자치",
+            "subcategory": "공고",
+            "title": "2025학년도 학생회칙 개정안 공고",
+            "date": "2025.02.15",
+            "content": "학생회칙 개정안을 공고합니다. 이의가 있으신 분은...",
+            "is_pinned": false
+        },
+        {
+            "id": 3,
+            "category": "복지",
+            "subcategory": null,
+            "title": "중간고사 기간 간식 배부 안내",
+            "date": "2025.04.10",
+            "content": "중간고사 기간을 맞아 간식을 배부합니다. 메뉴는 싸이버거입니다.",
+            "is_pinned": false
+        },
+        {
+            "id": 4,
+            "category": "학생회",
+            "subcategory": "학과 소식",
+            "title": "3월 월간회의 결과 보고",
+            "date": "2025.03.30",
+            "content": "3월 월간회의 결과를 보고합니다.",
+            "is_pinned": false
+        },
+        {
+            "id": 5,
+            "category": "민주자치",
+            "subcategory": "공고",
+            "title": "선거관리위원회 모집 공고",
+            "date": "2025.11.01",
+            "content": "공정한 선거를 위한 선거관리위원을 모집합니다.",
+            "is_pinned": true
+        },
+        {
+            "id": 6,
+            "category": "소통",
+            "subcategory": null,
+            "title": "과방 청결 문제 건의합니다",
+            "date": "2025.05.10",
+            "content": "과방에 쓰레기가 너무 많습니다. 청소 좀 부탁드립니다.",
+            "is_pinned": false
+        }
+    ],
+    "events": [
+        {
+            "id": 1,
+            "title": "2025 신입생 OT",
+            "status": "closed",
+            "description": "컴퓨터공학과 신입생 여러분을 환영합니다! 학교 생활 안내 및 친목 도모의 시간.",
+            "image": "https://via.placeholder.com/400x300",
+            "currentCount": 50,
+            "maxCount": 50
+        },
+        {
+            "id": 2,
+            "title": "개강파티",
+            "status": "closed",
+            "description": "새로운 학기의 시작을 알리는 개강파티! 선후배가 함께하는 즐거운 자리.",
+            "image": "https://via.placeholder.com/400x300",
+            "currentCount": 75,
+            "maxCount": 100
+        },
+        {
+            "id": 3,
+            "title": "중간고사 간식행사",
+            "status": "active",
+            "description": "시험공부에 지친 학우들을 위한 싸이버거 세트 증정! 선착순 100명.",
+            "image": "https://via.placeholder.com/400x300",
+            "currentCount": 82,
+            "maxCount": 100
+        },
+        {
+            "id": 4,
+            "title": "e-Sports 대회",
+            "status": "scheduled",
+            "description": "롤, 발로란트 최강자를 가려라! 총 상금 50만원.",
+            "image": "https://via.placeholder.com/400x300",
+            "currentCount": 0,
+            "maxCount": 32
+        }
+    ],
+    "clubs": [
+        {
+            "id": 1,
+            "name": "Tools",
+            "description": "매주 정기회의, 세미나, 툴스익스퍼츠.",
+            "category": "학술"
+        },
+        {
+            "id": 2,
+            "name": "다락방",
+            "description": "학술 전문, 스터디 진행.",
+            "category": "학술"
+        },
+        {
+            "id": 3,
+            "name": "E.C",
+            "description": "야구 동아리.",
+            "category": "학술"
+        },
+        {
+            "id": 4,
+            "name": "TCP",
+            "description": "보안 동아리.",
+            "category": "학술"
+        },
+        {
+            "id": 5,
+            "name": "NL",
+            "description": "네트워크 동아리.",
+            "category": "학술"
+        },
+        {
+            "id": 6,
+            "name": "PLUM",
+            "description": "게임 동아리.",
+            "category": "학술"
+        },
+        {
+            "id": 7,
+            "name": "AFK",
+            "description": "축구동아리.",
+            "category": "스포츠"
+        }
+    ],
+    "rentals": [
+        {
+            "id": 1,
+            "name": "보드게임 - 루미큐브",
+            "totalQuantity": 3,
+            "rentedQuantity": 1,
+            "image": "https://via.placeholder.com/150"
+        },
+        {
+            "id": 2,
+            "name": "보드게임 - 스플렌더",
+            "totalQuantity": 2,
+            "rentedQuantity": 2,
+            "image": "https://via.placeholder.com/150"
+        },
+        {
+            "id": 3,
+            "name": "우산",
+            "totalQuantity": 10,
+            "rentedQuantity": 5,
+            "image": "https://via.placeholder.com/150"
+        },
+        {
+            "id": 4,
+            "name": "보조배터리",
+            "totalQuantity": 5,
+            "rentedQuantity": 0,
+            "image": "https://via.placeholder.com/150"
+        }
+    ]
+}
