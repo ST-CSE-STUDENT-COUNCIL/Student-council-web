@@ -3,11 +3,12 @@ FastAPI 메인 애플리케이션
 """
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from fastapi.responses import JSONResponse
+from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.config import settings
-from app.routes import auth
+from app.routes import auth, admin, users
 
 # Rate limiter 설정
 limiter = Limiter(key_func=get_remote_address)
@@ -23,7 +24,16 @@ app = FastAPI(
 
 # Rate limiting 상태 저장
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Rate limit 초과 시 커스텀 에러 핸들러
+async def rate_limit_handler(request: Request, exc: Exception):
+    """Rate limit 초과 시 에러 응답"""
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "요청 횟수 제한을 초과했습니다. 잠시 후 다시 시도해주세요."}
+    )
+
+app.add_exception_handler(RateLimitExceeded, rate_limit_handler)  # type: ignore
 
 # CORS 설정
 app.add_middleware(
@@ -36,6 +46,8 @@ app.add_middleware(
 
 # 라우터 등록
 app.include_router(auth.router)
+app.include_router(admin.router)
+app.include_router(users.router)
 
 # 헬스체크 엔드포인트
 @app.get("/", tags=["헬스체크"])
