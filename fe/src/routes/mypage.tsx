@@ -47,7 +47,13 @@ function MyPage() {
 
   const welfareInfo = {
     returnPeriod: '2025.01.20 ~ 2025.01.27',
-    itemName: '보조 배터리',
+    borrowedItems: [
+      { name: '보조 배터리', returnDate: '2025.01.27' },
+      { name: '우산', returnDate: '2025.01.25' },
+      { name: '돗자리', returnDate: '2025.02.05' },
+      { name: '케이블', returnDate: '2025.01.25' },
+      { name: '마우스 ', returnDate: '2025.02.05' },
+    ],
     lockerLocation: '' ,
     lockerPeriod: '2025.02.01까지',
     verificationStatus:
@@ -172,7 +178,7 @@ function MyPage() {
               <section className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-gray-900">
-                    내가 신청한 행사 (예정)
+                    신청한 행사
                   </h2>
                   <Link to="/events" className="text-sm text-blue-600 hover:underline">
                     행사 보기
@@ -206,7 +212,7 @@ function MyPage() {
               <section className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-gray-900">
-                    참여 완료한 행사
+                    참여 완료 행사
                   </h2>
                   <Link to="/events" className="text-sm text-blue-600 hover:underline">
                     지난 행사 보기
@@ -250,33 +256,51 @@ function MyPage() {
                 </Link>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <InfoCard title="물품 반납 기간" value={welfareInfo.returnPeriod} />
-                <InfoCard title="물품 여부" value={welfareInfo.itemName || '대여 없음'} />
-                <InfoCard
-                  title="내 사물함 위치"
-                  value={welfareInfo.lockerLocation || '현재 대여 중인 사물함이 없습니다'}
-                  sub={welfareInfo.lockerLocation ? welfareInfo.lockerPeriod : undefined}
-                />
-                {user.verification_status === 'rejected' ? (
-                  <div className="border border-gray-100 rounded-xl p-4 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">학생 가입 인증</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowVerifyModal(true)}
-                      className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
-                    >
-                      인증하기
-                    </button>
-                  </div>
-                ) : (
+              <div className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
                   <InfoCard
-                    title="학생 가입 인증"
-                    value={welfareInfo.verificationStatus}
+                    title="내 사물함 위치"
+                    value={welfareInfo.lockerLocation || '현재 대여 중인 사물함이 없습니다'}
+                    sub={welfareInfo.lockerLocation ? welfareInfo.lockerPeriod : undefined}
                   />
-                )}
+                  {user.verification_status === 'rejected' ? (
+                    <div className="border border-gray-100 rounded-xl p-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">학생 가입 인증</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowVerifyModal(true)}
+                        className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                      >
+                        인증하기
+                      </button>
+                    </div>
+                  ) : (
+                    <InfoCard
+                      title="학생 가입 인증"
+                      value={welfareInfo.verificationStatus}
+                    />
+                  )}
+                </div>
+
+                <div className="border border-gray-100 rounded-xl p-4">
+                  <h3 className="text-sm text-gray-500 mb-3">대여 중인 물품</h3>
+                  {welfareInfo.borrowedItems.length > 0 ? (
+                    <div className="space-y-2">
+                      {[...welfareInfo.borrowedItems]
+                        .sort((a, b) => new Date(a.returnDate).getTime() - new Date(b.returnDate).getTime())
+                        .map((item, index) => (
+                        <div key={index} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-md">
+                          <span className="text-sm font-medium text-gray-900">{item.name}</span>
+                          <span className="text-xs text-gray-500">반납일: {item.returnDate}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400 text-center py-2">대여 중인 물품이 없습니다</p>
+                  )}
+                </div>
               </div>
             </section>
           )}
@@ -384,17 +408,79 @@ function InfoCard({
 }
 
 function VerifyModal({ onClose }: { onClose: () => void }) {
+  const [file, setFile] = React.useState<File | null>(null)
+  const inputRef = React.useRef<HTMLInputElement>(null)
+  const [isDragging, setIsDragging] = React.useState(false)
+
+  function onChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setFile(f)
+  }
+
+  function onDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragging(false)
+    const f = e.dataTransfer.files?.[0]
+    if (!f) return
+    setFile(f)
+  }
+
+  function onDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  function onDragLeave() {
+    setIsDragging(false)
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-2">학생 가입 인증</h3>
-        <p className="text-sm text-gray-600 mb-4">학생증 또는 재학증명서 이미지를 업로드해주세요.</p>
-        <label className="block text-sm text-gray-700 mb-2">이미지 파일</label>
-        <input type="file" accept="image/*" className="block w-full text-sm border border-gray-300 rounded-md px-3 py-2" />
+        <p className="text-sm text-gray-600 mb-4">
+          학생증 또는 재학증명서를 선택해 주세요.
+        </p>
+
+        <div
+          className={`border border-dashed rounded-lg p-4 text-center mb-3 transition ${
+            isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+          }`}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+        >
+          <p className="text-sm text-gray-700 mb-2">이미지를 끌어오거나 클릭해서 선택하세요</p>
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+          >
+            파일 선택
+          </button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={onChange}
+          />
+          <p className="text-xs text-gray-500 mt-2">
+            {file ? `선택된 파일: ${file.name}` : 'JPG, PNG · 최대 10MB 권장'}
+          </p>
+        </div>
+
         <div className="flex justify-end gap-2 mt-6">
           <button onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">취소</button>
-          <button onClick={onClose} className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">확인</button>
+          <button
+            onClick={onClose}
+            disabled={!file}
+            className={`px-4 py-2 rounded-md text-sm text-white ${file ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'}`}
+          >
+            선택 완료
+          </button>
         </div>
       </div>
     </div>
