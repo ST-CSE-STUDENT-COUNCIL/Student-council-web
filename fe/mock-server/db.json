@@ -149,43 +149,57 @@
             "id": 1,
             "name": "Tools",
             "description": "매주 정기회의, 세미나, 툴스익스퍼츠.",
-            "category": "학술"
+            "category": "학술",
+            "detail_image_url": null,
+            "logo_url": null
         },
         {
             "id": 2,
             "name": "다락방",
             "description": "학술 전문, 스터디 진행.",
-            "category": "학술"
+            "category": "학술",
+            "detail_image_url": null,
+            "logo_url": null
         },
         {
             "id": 3,
             "name": "E.C",
             "description": "야구 동아리.",
-            "category": "학술"
+            "category": "학술",
+            "detail_image_url": null,
+            "logo_url": null
         },
         {
             "id": 4,
             "name": "TCP",
             "description": "보안 동아리.",
-            "category": "학술"
+            "category": "학술",
+            "detail_image_url": null,
+            "logo_url": null
         },
         {
             "id": 5,
             "name": "NL",
             "description": "네트워크 동아리.",
-            "category": "학술"
+            "category": "학술",
+            "detail_image_url": null,
+            "logo_url": null
         },
         {
             "id": 6,
             "name": "PLUM",
             "description": "게임 동아리.",
-            "category": "학술"
+            "category": "학술",
+            "detail_image_url": null,
+            "logo_url": null
         },
         {
             "id": 7,
             "name": "AFK",
             "description": "축구동아리.",
-            "category": "스포츠"
+            "category": "스포츠",
+            "detail_image_url": null,
+            "logo_url": null
         }
     ],
     "rentals": [
