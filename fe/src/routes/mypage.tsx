@@ -1,6 +1,7 @@
 import React from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAuthStore } from '../store/useAuthStore'
+import { api } from '../lib/axios'
 
 export const Route = createFileRoute('/mypage')({
   component: MyPage,
@@ -10,6 +11,72 @@ function MyPage() {
   const { user, isAuthenticated, logout } = useAuthStore()
   const [activeTab, setActiveTab] = React.useState<'info' | 'events' | 'welfare'>('info')
   const [showVerifyModal, setShowVerifyModal] = React.useState(false)
+  const [borrowedItems, setBorrowedItems] = React.useState<{ name: string; returnDate: string }[]>([])
+  const [lockerLocation, setLockerLocation] = React.useState('')
+  const [lockerPeriod, setLockerPeriod] = React.useState('')
+
+  React.useEffect(() => {
+    if (!user) return
+    const userId = user.id
+
+    const controller = new AbortController()
+
+    async function loadWelfare() {
+      try {
+        const baseURL = 'http://localhost:4000'
+
+        const [requestsRes, rentalsRes, lockerRentalsRes, lockerPeriodsRes] = await Promise.all([
+          api.get('/api/welfare_rental_requests', {
+            baseURL,
+            params: { user_id: userId },
+            signal: controller.signal,
+          }),
+          api.get('/api/welfare_rentals', { baseURL, signal: controller.signal }),
+          api.get('/api/locker_rentals', {
+            baseURL,
+            params: { user_id: userId },
+            signal: controller.signal,
+          }),
+          api.get('/api/locker_periods', { baseURL, signal: controller.signal }),
+        ])
+
+        const rentalsMap = new Map<number, { item_name?: string }>()
+        rentalsRes.data.forEach((r: { id: number; item_name?: string }) => rentalsMap.set(r.id, r))
+
+        const borrowed = (requestsRes.data as Array<{ rental_id: number; rental_end_date: string }>)
+          .map((req) => {
+            const rental = rentalsMap.get(req.rental_id)
+            return {
+              name: rental?.item_name || '알 수 없는 물품',
+              returnDate: req.rental_end_date,
+            }
+          })
+
+        setBorrowedItems(borrowed)
+
+        const locker = (lockerRentalsRes.data as Array<{ locker_number: number; period_id?: number }>)[0]
+        if (locker) {
+          setLockerLocation(`미래관 3층 ${locker.locker_number}번`)
+
+          const period = (lockerPeriodsRes.data as Array<{ id: number; usage_start: string; usage_end: string }>)
+            .find((p) => p.id === locker.period_id)
+          if (period) {
+            setLockerPeriod(`${formatDate(period.usage_start)} ~ ${formatDate(period.usage_end)}`)
+          }
+        } else {
+          setLockerLocation('')
+          setLockerPeriod('')
+        }
+      } catch (err) {
+        if (controller.signal.aborted) return
+        console.error('Failed to load welfare data', err)
+      }
+    }
+
+    loadWelfare()
+
+    return () => controller.abort()
+  }, [user])
 
   // 로그인하지 않은 경우
   if (!isAuthenticated || !user) {
@@ -46,16 +113,18 @@ function MyPage() {
   ]
 
   const welfareInfo = {
-    returnPeriod: '2025.01.20 ~ 2025.01.27',
-    borrowedItems: [
-      { name: '보조 배터리', returnDate: '2025.01.27' },
-      { name: '우산', returnDate: '2025.01.25' },
-      { name: '돗자리', returnDate: '2025.02.05' },
-      { name: '케이블', returnDate: '2025.01.25' },
-      { name: '마우스 ', returnDate: '2025.02.05' },
-    ],
-    lockerLocation: '' ,
-    lockerPeriod: '2025.02.01까지',
+    returnPeriod:
+      borrowedItems.length > 0
+        ? `${formatDate(
+            borrowedItems.reduce((acc, cur) => (cur.returnDate < acc ? cur.returnDate : acc), borrowedItems[0].returnDate),
+          )} ~ ${formatDate(
+            borrowedItems.reduce((acc, cur) => (cur.returnDate > acc ? cur.returnDate : acc), borrowedItems[0].returnDate),
+          )}`
+        : '',
+    borrowedItems,
+    lockerLocation,
+    lockerPeriod,
+
     verificationStatus:
       user.verification_status === 'pending'
         ? '가입 인증 대기'
@@ -502,4 +571,10 @@ function getVerificationStatus(user: { verification_status: string }) {
   if (user.verification_status === 'approved') return '인증 완료'
   if (user.verification_status === 'pending') return '인증 대기'
   return '미인증'
+}
+
+function formatDate(dateStr: string) {
+  const parts = dateStr?.split('-')
+  if (parts.length === 3) return `${parts[0]}.${parts[1]}.${parts[2]}`
+  return dateStr
 }
