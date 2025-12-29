@@ -102,6 +102,7 @@ Supabase Dashboard → SQL Editor에서 `db/schema.sql` 실행
 ### 5. 서버 실행
 
 ```bash
+source .venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 

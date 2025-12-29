@@ -151,11 +151,13 @@ COMMENT ON COLUMN boards.allow_anonymous IS '익명 허용 여부 (건의함: tr
 COMMENT ON COLUMN boards.require_admin IS 'admin 권한 필요 여부 (공지사항: true)';
 
 -- 기본 게시판 생성
+-- 학생회: 소카테고리 (행사, 복지, 학과소식)
+-- 민주자치: 소카테고리 (고시, 공고, 대표자회의, 학생회칙)
+-- 건의함: 익명 가능
 INSERT INTO boards (name, slug, description, category, require_admin, allow_anonymous) VALUES
-('학생회 공지', 'notice-council', '학생회 공지사항', '학생회', true, false),
-('민주자치 공지', 'notice-democracy', '민주자치 공지사항', '민주자치', true, false),
-('복지 공지', 'notice-welfare', '복지사업 공지', '복지', true, false),
-('건의함', 'suggestion', '익명으로 건의할 수 있습니다', '커뮤니티', false, true);
+('학생회 공지', 'student-council', '학생회 공지사항 (소카테고리: 행사, 복지, 학과소식)', '학생회', true, false),
+('민주자치 공지', 'democracy', '민주자치 공지사항 (소카테고리: 고시, 공고, 대표자회의, 학생회칙)', '민주자치', true, false),
+('건의함', 'suggestion', '익명으로 건의할 수 있습니다', '건의함', false, true);
 
 -- ============================================================================
 -- 4. 게시글
