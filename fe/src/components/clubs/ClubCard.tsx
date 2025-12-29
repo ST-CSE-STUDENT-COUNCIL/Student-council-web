@@ -1,5 +1,3 @@
-import { Link } from '@tanstack/react-router'
-
 export type Club = {
     id: number
     name: string
@@ -9,7 +7,12 @@ export type Club = {
     logo_url?: string | null
 }
 
-export function ClubCard({ club }: { club: Club }) {
+type Props = {
+    club: Club
+    onDetail?: () => void
+}
+
+export function ClubCard({ club, onDetail }: Props) {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition overflow-hidden flex flex-col">
             {/* 이미지 영역 */}
@@ -38,13 +41,13 @@ export function ClubCard({ club }: { club: Club }) {
                 </div>
                 <p className="text-gray-600 text-sm leading-relaxed">{club.description}</p>
                 <div className="mt-4">
-                    <Link
-                        to="/clubs"
-                        search={{ clubId: club.id }}
+                    <button
+                        type="button"
+                        onClick={onDetail}
                         className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
                     >
                         자세히 보기
-                    </Link>
+                    </button>
                 </div>
             </div>
         </div>
