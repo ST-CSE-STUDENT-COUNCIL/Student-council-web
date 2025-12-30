@@ -24,14 +24,19 @@ be/
 │   ├── database.py          # Supabase 클라이언트
 │   ├── routes/              # API 엔드포인트
 │   │   ├── __init__.py
-│   │   ├── auth.py          # 인증 관련 API (7개)
+│   │   ├── auth.py          # 인증 관련 API
 │   │   ├── admin.py         # 관리자 API (6개)
-│   │   └── users.py         # 사용자 프로필 API (3개)
+│   │   ├── users.py         # 사용자 프로필 API
+│   │   ├── posts.py         # 공지/게시글 API
+│   │   ├── boards.py        # 게시판 메타데이터 API
+│   │   └── suggestions.py   # 건의함 API
 │   ├── schemas/             # Pydantic 스키마
 │   │   ├── __init__.py
 │   │   ├── auth.py          # 인증 요청/응답 모델
 │   │   ├── admin.py         # 관리자 요청/응답 모델
-│   │   └── users.py         # 사용자 요청/응답 모델
+│   │   ├── users.py         # 사용자 요청/응답 모델
+│   │   ├── posts.py         # 게시글 요청/응답 모델
+│   │   └── suggestions.py   # 건의함 요청/응답 모델
 │   └── utils/               # 유틸리티
 │       ├── __init__.py
 │       ├── email.py         # 이메일 발송
@@ -119,9 +124,12 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ### API 목록 요약
 
-**인증 (Authentication)** - 7개 엔드포인트
-**사용자 (Users)** - 3개 엔드포인트  
-**관리자 (Admin)** - 6개 엔드포인트 ⚠️ 관리자 권한 필요
+**인증 (Authentication)**
+**사용자 (Users)**
+**관리자 (Admin)** ⚠️ 관리자 권한 필요
+**게시글 (Posts)**
+**게시판 (Boards)**
+**건의함 (Suggestions)**
 
 > 상세한 Request/Response 스키마는 Swagger 문서에서 확인하세요.
 
@@ -195,6 +203,20 @@ GET /admin/users/pending
 Authorization: Bearer <admin_access_token>
 ```
 응답에 `verification_image_url` 필드에 Signed URL 포함 (1시간 유효)
+
+**공지/게시글 첨부파일 업로드:**
+- **형식**: JPG, JPEG, PNG, PDF
+- **크기**: 최대 10MB
+- **저장소**: Supabase Storage Private bucket (`post-attachments`)
+- **요청 방식**: `POST /posts`에서 multipart/form-data로 게시글과 함께 업로드
+- **보안**: Signed URL로만 접근 가능 (1시간 유효)
+
+### 📮 건의함
+
+- **작성**: 승인된 사용자만 가능, 첨부파일 없음
+- **익명 처리**: 기본 익명, admin/council만 작성자 확인 가능
+- **상태 관리**: 접수/처리중/반려/승인
+- **사유/반영 내용**: admin과 작성자만 확인 가능
 
 ### 📧 이메일 인증
 
