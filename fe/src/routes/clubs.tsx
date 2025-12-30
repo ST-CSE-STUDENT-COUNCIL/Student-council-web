@@ -97,7 +97,17 @@ function Clubs() {
                 </div>
               )}
             </div>
-            <div className="px-4 py-3 text-sm text-gray-700 border-t border-gray-200">{selectedClub.description}</div>
+            <div className="px-4 py-3 text-sm text-gray-700 border-t border-gray-200">
+              <p className="mb-4">{selectedClub.description}</p>
+              <a 
+                href="https://www.naver.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+              >
+                이 부분에 링크를 집어넣을 수 있게 함 →
+              </a>
+            </div>
           </div>
         </div>
       )}
