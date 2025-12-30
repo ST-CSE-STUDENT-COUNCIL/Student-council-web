@@ -64,13 +64,10 @@ def build_attachment_responses(attachments_data: list[dict]) -> list[AttachmentR
   - 소카테고리: `행사`, `복지`, `학과소식`
 - `board_id=2`: 민주자치 공지 (admin만 작성 가능)
   - 소카테고리: `공고`, `고시`, `대표자회의`, `학생회칙`
-- `board_id=3`: 건의함 (모두 작성 가능, 익명 허용)
-  - 소카테고리: 없음
 
 **필터링 예시:**
 - 학생회 행사만 보기: `?board_id=1&subcategory=행사`
 - 민주자치 전체: `?board_id=2`
-- 건의함 전체: `?board_id=3`
 - 모든 게시판: 파라미터 없음
 
 **정렬:**
@@ -300,11 +297,9 @@ async def get_post(post_id: int, current_user: dict = Depends(require_verified_u
 
 **권한:**
 - `board_id=1, 2` (학생회/민주자치 공지): **admin만 작성 가능**
-- `board_id=3` (건의함): 모든 승인된 사용자 작성 가능
 
 **익명 게시:**
-- `board_id=3` (건의함)에서만 `is_anonymous=true` 가능
-- 관리자/학생회는 실명 확인 가능
+- 익명 게시글은 허용되지 않습니다
 
 **소카테고리:**
 - 학생회: `행사`, `복지`, `학과소식`
