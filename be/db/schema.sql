@@ -229,6 +229,37 @@ COMMENT ON TABLE attachments IS '[인증 필요] 게시글 첨부파일';
 CREATE INDEX idx_attachments_post_id ON attachments(post_id);
 
 -- ============================================================================
+-- 4-2. 건의함
+-- ============================================================================
+-- 익명 건의함 (첨부파일 없음)
+-- 작성자는 admin만 확인 가능 (council은 기본 비공개)
+-- ============================================================================
+CREATE TABLE suggestions (
+  id SERIAL PRIMARY KEY,
+  author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  title VARCHAR(200) NOT NULL,
+  content TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'received',  -- received, in_progress, rejected, approved
+  rejection_reason TEXT,  -- 반려 사유 (rejected 시)
+  resolution_note TEXT,  -- 승인/반영 내용 (approved 시)
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  CONSTRAINT check_suggestion_status CHECK (
+    status IN ('received', 'in_progress', 'rejected', 'approved')
+  )
+);
+
+COMMENT ON TABLE suggestions IS '[인증 필요] 익명 건의함';
+COMMENT ON COLUMN suggestions.status IS 'received: 접수, in_progress: 처리중, rejected: 반려, approved: 승인';
+COMMENT ON COLUMN suggestions.rejection_reason IS '반려 사유 (admin/작성자만 조회)';
+COMMENT ON COLUMN suggestions.resolution_note IS '승인/반영 내용 (admin/작성자만 조회)';
+
+CREATE INDEX idx_suggestions_author_id ON suggestions(author_id);
+CREATE INDEX idx_suggestions_status ON suggestions(status);
+CREATE INDEX idx_suggestions_created_at ON suggestions(created_at DESC);
+
+-- ============================================================================
 -- 5. 행사
 -- ============================================================================
 -- 행사 상태:
