@@ -21,6 +21,7 @@ from app.schemas.auth import (
 )
 from app.utils.email import (
     send_verification_email,
+    create_email_verification,
     verify_email_code,
     check_email_verified,
     mark_email_used
@@ -75,8 +76,11 @@ async def send_verification(body: SendVerificationRequest, request: Request):
                 detail="이미 인증 완료된 이메일입니다. 회원가입을 진행해주세요."
             )
         
-        # 3. 인증번호 발송
-        await send_verification_email(body.email)
+        # 3. 인증번호 생성 및 저장
+        code = await create_email_verification(body.email)
+        
+        # 4. 인증번호 발송
+        await send_verification_email(body.email, code)
         
         return SendVerificationResponse(email=body.email)
     

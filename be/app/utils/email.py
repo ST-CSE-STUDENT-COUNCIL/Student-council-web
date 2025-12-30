@@ -1,45 +1,42 @@
 """
 이메일 발송 유틸리티
 """
+import base64
+import logging
 import random
-import aiosmtplib
 from email.message import EmailMessage
 from datetime import datetime, timedelta, timezone
+
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
 from app.config import settings
 from app.database import supabase
 
 
-async def send_verification_email(email: str) -> str:
+logger = logging.getLogger(__name__)
+
+GMAIL_SEND_SCOPE = "https://www.googleapis.com/auth/gmail.send"
+
+
+def _generate_verification_code() -> str:
     """
-    이메일 인증번호 발송
-    
-    Args:
-        email: 수신자 이메일 (@seoultech.ac.kr)
-    
-    Returns:
-        str: 생성된 6자리 인증번호
-    
-    Raises:
-        Exception: 이메일 발송 실패 시
+    6자리 인증번호 생성
     """
-    # 6자리 랜덤 인증번호 생성
-    code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+    return ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+
+def _build_email_message(email: str, code: str) -> EmailMessage:
+    """
+    이메일 메시지 생성
     
-    # 만료 시간 (5분)
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
-    
-    # DB에 인증번호 저장
-    supabase.table('email_verifications').insert({
-        'email': email,
-        'code': code,
-        'expires_at': expires_at.isoformat()
-    }).execute()
-    
-    # 이메일 메시지 작성
+    텍스트와 HTML 본문을 동시에 구성합니다.
+    """
     message = EmailMessage()
-    message['From'] = f"{settings.SMTP_FROM_NAME} <{settings.SMTP_FROM_EMAIL}>"
-    message['To'] = email
-    message['Subject'] = '[서울과기대 컴공학생회] 이메일 인증번호'
+    message["From"] = f"{settings.GMAIL_FROM_NAME} <{settings.GMAIL_FROM_EMAIL}>"
+    message["To"] = email
+    message["Subject"] = "[서울과기대 컴공학생회] 이메일 인증번호"
     
     # HTML 본문
     html_content = f"""
@@ -71,18 +68,95 @@ async def send_verification_email(email: str) -> str:
     """
     
     message.set_content("인증번호: " + code)
-    message.add_alternative(html_content, subtype='html')
+    message.add_alternative(html_content, subtype="html")
     
-    # SMTP 서버로 이메일 발송
-    await aiosmtplib.send(
-        message,
-        hostname=settings.SMTP_HOST,
-        port=settings.SMTP_PORT,
-        username=settings.SMTP_USER,
-        password=settings.SMTP_PASSWORD,
-        start_tls=True
+    return message
+
+
+def _get_gmail_credentials() -> Credentials:
+    """
+    Gmail API 인증 정보 생성
+    
+    Refresh Token 기반으로 Access Token을 갱신합니다.
+    """
+    credentials = Credentials(
+        token=None,
+        refresh_token=settings.GOOGLE_REFRESH_TOKEN,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=settings.GOOGLE_CLIENT_ID,
+        client_secret=settings.GOOGLE_CLIENT_SECRET,
+        scopes=[GMAIL_SEND_SCOPE]
     )
     
+    # Access Token 갱신 (만료/미발급 시)
+    credentials.refresh(Request())
+    return credentials
+
+
+def _send_gmail_message(message: EmailMessage, credentials: Credentials) -> None:
+    """
+    Gmail API로 이메일 발송
+    
+    raw 메시지를 base64url로 인코딩하여 전송합니다.
+    """
+    # Gmail API는 base64url 인코딩된 raw 메시지를 요구합니다.
+    raw_bytes = message.as_bytes()
+    raw_b64 = base64.urlsafe_b64encode(raw_bytes).decode("utf-8")
+
+    service = build("gmail", "v1", credentials=credentials, cache_discovery=False)
+    try:
+        resp = service.users().messages().send(userId="me", body={"raw": raw_b64}).execute()
+        logger.debug("Gmail send response: %s", resp)
+    except Exception as e:
+        logger.exception("Gmail API send failed: %s", str(e))
+        raise
+
+
+async def send_verification_email(to_email: str, code: str) -> None:
+    """
+    이메일 인증번호 발송
+    
+    Args:
+        to_email: 수신자 이메일 (@seoultech.ac.kr)
+        code: 6자리 인증번호
+    
+    Raises:
+        Exception: 이메일 발송 실패 시
+    """
+    try:
+        message = _build_email_message(to_email, code)
+        credentials = _get_gmail_credentials()
+        _send_gmail_message(message, credentials)
+    except Exception as exc:
+        # Gmail API 호출 실패 시 로그를 남기고 예외 재발생
+        logger.exception("Gmail API 이메일 발송 실패")
+        raise exc
+
+
+async def create_email_verification(email: str) -> str:
+    """
+    이메일 인증코드 생성 및 저장
+    
+    기존 DB 저장 로직을 유지합니다.
+    """
+    # 6자리 랜덤 인증번호 생성
+    code = _generate_verification_code()
+    
+    # 만료 시간 (5분)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+    
+    # DB에 인증번호 저장
+    result = supabase.table('email_verifications').insert({
+        'email': email,
+        'code': code,
+        'expires_at': expires_at.isoformat()
+    }).execute()
+
+    # Supabase 에러 체크
+    if getattr(result, 'error', None):
+        logger.error('Supabase insert error: %s', result.error)
+        raise Exception('DB 저장 실패')
+
     return code
 
 

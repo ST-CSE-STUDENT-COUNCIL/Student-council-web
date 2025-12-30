@@ -15,5 +15,7 @@ pydantic==2.10.0
 pydantic-settings==2.6.0
 
 # 이메일
-aiosmtplib==3.0.2
 email-validator==2.2.0
+google-api-python-client==2.141.0
+google-auth==2.34.0
+google-auth-oauthlib==1.2.1
