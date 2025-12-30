@@ -1,24 +1,54 @@
 """
 게시글 관련 API 엔드포인트
 """
-from fastapi import APIRouter, HTTPException, Depends, status, Query
+from fastapi import APIRouter, HTTPException, Depends, status, Query, File, UploadFile, Form
 from typing import Optional
 from datetime import datetime
 import math
 from app.schemas.posts import (
-    PostCreateRequest,
     PostUpdateRequest,
     PostResponse,
     PostListResponse,
     PostListItem,
     PaginationMeta,
-    ErrorResponse
+    ErrorResponse,
+    AttachmentResponse
 )
-from app.utils.auth import get_current_user, require_verified_user, require_admin
+from app.utils.auth import require_verified_user
+from app.utils.storage import (
+    upload_post_attachment,
+    create_signed_url,
+    delete_post_attachments,
+    ATTACHMENT_ALLOWED_EXTENSIONS,
+    ATTACHMENT_MAX_FILE_SIZE
+)
 from app.database import supabase
 
 
 router = APIRouter(prefix="/posts", tags=["게시글"])
+MAX_ATTACHMENTS_PER_REQUEST = 5
+
+
+def build_attachment_responses(attachments_data: list[dict]) -> list[AttachmentResponse]:
+    responses: list[AttachmentResponse] = []
+    
+    for attachment in attachments_data:
+        signed_url = create_signed_url(
+            attachment.get('file_url'),
+            expires_in=3600,
+            bucket='post-attachments'
+        )
+        
+        responses.append(AttachmentResponse(
+            id=attachment['id'],
+            filename=attachment['filename'],
+            file_url=signed_url or "",
+            file_size=attachment.get('file_size'),
+            mime_type=attachment.get('mime_type'),
+            created_at=attachment['created_at']
+        ))
+    
+    return responses
 
 
 @router.get(
@@ -234,6 +264,7 @@ async def get_post(post_id: int, current_user: dict = Depends(require_verified_u
             .execute()
         
         attachments = attachments_result.data if attachments_result.data else []
+        attachment_responses = build_attachment_responses(attachments)
         
         return PostResponse(
             id=post['id'],
@@ -245,7 +276,7 @@ async def get_post(post_id: int, current_user: dict = Depends(require_verified_u
             subcategory=post.get('subcategory'),
             is_pinned=post['is_pinned'],
             is_anonymous=post['is_anonymous'],
-            attachments=attachments,
+            attachments=attachment_responses,
             created_at=post['created_at'],
             updated_at=post['updated_at']
         )
@@ -264,7 +295,7 @@ async def get_post(post_id: int, current_user: dict = Depends(require_verified_u
     response_model=PostResponse,
     status_code=status.HTTP_201_CREATED,
     summary="게시글 작성",
-    description="""
+    description=f"""
 새 게시글을 작성합니다.
 
 **권한:**
@@ -280,16 +311,20 @@ async def get_post(post_id: int, current_user: dict = Depends(require_verified_u
 - 민주자치: `공고`, `고시`, `대표자회의`, `학생회칙`
 - 건의함: 소카테고리 없음 (null)
 
+**첨부파일 제한:**
+- 허용 확장자: {', '.join(sorted(ATTACHMENT_ALLOWED_EXTENSIONS))}
+- 최대 파일 크기: {ATTACHMENT_MAX_FILE_SIZE // (1024 * 1024)}MB
+- 요청당 최대 파일 개수: {MAX_ATTACHMENTS_PER_REQUEST}개
+
+**요청 형식:** `multipart/form-data`
+
 **예시:**
-```json
-{
-  "board_id": 1,
-  "title": "2025 신입생 환영회",
-  "content": "환영회 내용...",
-  "subcategory": "행사",
-  "is_anonymous": false
-}
-```
+- `board_id`: 1
+- `title`: 2025 신입생 환영회
+- `content`: 환영회 내용...
+- `subcategory`: 행사
+- `is_anonymous`: false
+- `files`: 첨부파일
     """,
     responses={
         401: {"model": ErrorResponse, "description": "인증 필요"},
@@ -297,7 +332,15 @@ async def get_post(post_id: int, current_user: dict = Depends(require_verified_u
         404: {"model": ErrorResponse, "description": "게시판을 찾을 수 없음"}
     }
 )
-async def create_post(body: PostCreateRequest, current_user: dict = Depends(require_verified_user)):
+async def create_post(
+    board_id: int = Form(..., description="게시판 ID"),
+    title: str = Form(..., min_length=1, max_length=200, description="제목"),
+    content: str = Form(..., min_length=1, description="내용"),
+    subcategory: Optional[str] = Form(None, max_length=50, description="소카테고리"),
+    is_anonymous: bool = Form(False, description="익명 여부 (건의함만 가능)"),
+    files: Optional[list[UploadFile]] = File(None, description="첨부파일 리스트"),
+    current_user: dict = Depends(require_verified_user)
+):
     """
     게시글 작성
     
@@ -310,7 +353,12 @@ async def create_post(body: PostCreateRequest, current_user: dict = Depends(requ
     - 다른 게시판에서는 is_anonymous=true로 요청 시 에러
     
     Args:
-        body: 게시글 작성 요청
+        board_id: 게시판 ID
+        title: 제목
+        content: 내용
+        subcategory: 소카테고리
+        is_anonymous: 익명 여부
+        files: 첨부파일 리스트 (선택)
     
     Returns:
         생성된 게시글 정보
@@ -319,7 +367,7 @@ async def create_post(body: PostCreateRequest, current_user: dict = Depends(requ
         # 1. 게시판 정보 조회
         board_result = supabase.table('boards')\
             .select('*')\
-            .eq('id', body.board_id)\
+            .eq('id', board_id)\
             .single()\
             .execute()
         
@@ -339,20 +387,26 @@ async def create_post(body: PostCreateRequest, current_user: dict = Depends(requ
             )
         
         # 3. 익명 게시글 검증
-        if body.is_anonymous and not board['allow_anonymous']:
+        if is_anonymous and not board['allow_anonymous']:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="이 게시판에서는 익명 게시글을 작성할 수 없습니다"
             )
+
+        if files and len(files) > MAX_ATTACHMENTS_PER_REQUEST:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"첨부파일은 최대 {MAX_ATTACHMENTS_PER_REQUEST}개까지 업로드 가능합니다"
+            )
         
         # 4. 게시글 생성
         post_data = {
-            'board_id': body.board_id,
+            'board_id': board_id,
             'author_id': current_user['id'],
-            'title': body.title,
-            'content': body.content,
-            'subcategory': body.subcategory,
-            'is_anonymous': body.is_anonymous,
+            'title': title,
+            'content': content,
+            'subcategory': subcategory,
+            'is_anonymous': is_anonymous,
             'created_at': datetime.utcnow().isoformat(),
             'updated_at': datetime.utcnow().isoformat()
         }
@@ -367,20 +421,58 @@ async def create_post(body: PostCreateRequest, current_user: dict = Depends(requ
         
         post = result.data[0]
         
-        # 5. 작성자 이름 조회
-        author_name = "익명" if body.is_anonymous else current_user['name']
+        attachments = []
+        uploaded_paths = []
+        if files:
+            try:
+                attachments_to_insert = []
+                for file in files:
+                    metadata = await upload_post_attachment(file, post['id'])
+                    uploaded_paths.append(metadata["storage_path"])
+                    attachments_to_insert.append({
+                        "post_id": post['id'],
+                        "filename": metadata["filename"],
+                        "file_url": metadata["storage_path"],
+                        "file_size": metadata["file_size"],
+                        "mime_type": metadata["mime_type"]
+                    })
+                
+                attachments_result = supabase.table('attachments')\
+                    .insert(attachments_to_insert)\
+                    .execute()
+                
+                if not attachments_result.data:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="첨부파일 저장 실패"
+                    )
+                
+                attachments = attachments_result.data
+            
+            except Exception:
+                await delete_post_attachments(uploaded_paths)
+                supabase.table('posts').delete().eq('id', post['id']).execute()
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="첨부파일 업로드 실패로 게시글이 롤백되었습니다"
+                )
+        
+        attachment_responses = build_attachment_responses(attachments)
+        
+        # 6. 작성자 이름 조회
+        author_name = "익명" if is_anonymous else current_user['name']
         
         return PostResponse(
             id=post['id'],
             board_id=post['board_id'],
-            author_id=current_user['id'] if not body.is_anonymous else None,
+            author_id=current_user['id'] if not is_anonymous else None,
             author_name=author_name,
             title=post['title'],
             content=post['content'],
             subcategory=post.get('subcategory'),
             is_pinned=post['is_pinned'],
             is_anonymous=post['is_anonymous'],
-            attachments=[],
+            attachments=attachment_responses,
             created_at=post['created_at'],
             updated_at=post['updated_at']
         )
@@ -508,6 +600,7 @@ async def update_post(
             .execute()
         
         attachments = attachments_result.data if attachments_result.data else []
+        attachment_responses = build_attachment_responses(attachments)
         
         return PostResponse(
             id=updated_post['id'],
@@ -519,7 +612,7 @@ async def update_post(
             subcategory=updated_post.get('subcategory'),
             is_pinned=updated_post['is_pinned'],
             is_anonymous=updated_post['is_anonymous'],
-            attachments=attachments,
+            attachments=attachment_responses,
             created_at=updated_post['created_at'],
             updated_at=updated_post['updated_at']
         )

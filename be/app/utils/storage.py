@@ -5,12 +5,21 @@ from fastapi import UploadFile, HTTPException, status
 from typing import Optional
 import uuid
 import os
-from app.database import supabase
+from app.database import supabase, get_supabase_admin
 
 
 # 허용된 이미지 확장자
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+# 게시글 첨부파일 설정
+ATTACHMENT_ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.pdf'}
+ATTACHMENT_ALLOWED_MIME_TYPES = {
+    'image/jpeg',
+    'image/png',
+    'application/pdf'
+}
+ATTACHMENT_MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 
 def validate_image_file(file: UploadFile) -> None:
@@ -132,7 +141,11 @@ async def upload_verification_image(file: UploadFile) -> str:
         )
 
 
-def create_signed_url(file_path: str, expires_in: int = 3600) -> Optional[str]:
+def create_signed_url(
+    file_path: Optional[str],
+    expires_in: int = 3600,
+    bucket: str = 'verification-images'
+) -> Optional[str]:
     """
     Private Storage 파일의 Signed URL 생성
     
@@ -154,7 +167,7 @@ def create_signed_url(file_path: str, expires_in: int = 3600) -> Optional[str]:
     
     try:
         # Supabase Storage에서 Signed URL 생성
-        result = supabase.storage.from_('verification-images').create_signed_url(
+        result = supabase.storage.from_(bucket).create_signed_url(
             path=file_path,
             expires_in=expires_in
         )
@@ -168,6 +181,128 @@ def create_signed_url(file_path: str, expires_in: int = 3600) -> Optional[str]:
         # 에러 발생 시 None 반환 (이미지가 없어도 다른 정보는 표시되도록)
         print(f"Signed URL 생성 실패: {str(e)}")
         return None
+
+
+def validate_attachment_file(file: UploadFile) -> None:
+    """
+    게시글 첨부파일 유효성 검증
+    
+    확장자와 MIME 타입을 검증합니다.
+    """
+    if not file:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="파일이 전송되지 않았습니다"
+        )
+    
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="파일명이 없습니다"
+        )
+    
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in ATTACHMENT_ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "허용되지 않은 파일 형식입니다. 허용: "
+                f"{', '.join(sorted(ATTACHMENT_ALLOWED_EXTENSIONS))}"
+            )
+        )
+    
+    if file.content_type not in ATTACHMENT_ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="허용되지 않은 MIME 타입입니다"
+        )
+
+
+async def upload_post_attachment(file: UploadFile, post_id: int) -> dict:
+    """
+    게시글 첨부파일을 Supabase Storage에 업로드
+    
+    업로드 후 Storage 경로와 메타 정보를 반환합니다.
+    """
+    validate_attachment_file(file)
+    
+    try:
+        file_content = await file.read()
+        file_size = len(file_content)
+        
+        if file_size > ATTACHMENT_MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"파일 크기가 너무 큽니다 (최대 {ATTACHMENT_MAX_FILE_SIZE // (1024*1024)}MB)"
+            )
+        
+        if file_size == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="빈 파일은 업로드할 수 없습니다"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"파일 읽기 실패: {str(e)}"
+        )
+    
+    filename = file.filename or "unknown"
+    file_ext = os.path.splitext(filename)[1].lower()
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    storage_path = f"post-{post_id}/{unique_filename}"
+    
+    try:
+        result = supabase.storage.from_('post-attachments').upload(
+            path=storage_path,
+            file=file_content,
+            file_options={
+                "content-type": file.content_type or "application/octet-stream",
+                "cache-control": "3600"
+            }
+        )
+        
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="파일 업로드에 실패했습니다"
+            )
+        
+        return {
+            "storage_path": storage_path,
+            "filename": filename,
+            "file_size": file_size,
+            "mime_type": file.content_type
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Storage 업로드 실패: {str(e)}"
+        )
+
+
+async def delete_post_attachments(storage_paths: list[str]) -> bool:
+    """
+    게시글 첨부파일을 Storage에서 삭제
+    
+    업로드 실패 시 롤백 목적으로 사용합니다.
+    """
+    if not storage_paths:
+        return False
+    
+    try:
+        admin_client = get_supabase_admin()
+        storage_client = admin_client if admin_client is not None else supabase
+        storage_client.storage.from_('post-attachments').remove(storage_paths)
+        return True
+    except Exception as e:
+        print(f"첨부파일 삭제 실패: {str(e)}")
+        return False
 
 
 async def delete_verification_image(file_path: str) -> bool:

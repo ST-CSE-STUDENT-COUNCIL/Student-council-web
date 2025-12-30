@@ -10,7 +10,7 @@ class AttachmentResponse(BaseModel):
     """첨부파일 응답"""
     id: int = Field(..., description="첨부파일 ID")
     filename: str = Field(..., description="원본 파일명")
-    file_url: str = Field(..., description="파일 URL")
+    file_url: str = Field(..., description="Signed URL (일정 시간 유효)")
     file_size: Optional[int] = Field(None, description="파일 크기 (bytes)")
     mime_type: Optional[str] = Field(None, description="MIME 타입")
     created_at: datetime = Field(..., description="업로드 일시")
