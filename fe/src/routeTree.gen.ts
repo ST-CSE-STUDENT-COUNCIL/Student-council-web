@@ -19,6 +19,8 @@ import { Route as IntroRouteImport } from './routes/intro'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NoticeIndexRouteImport } from './routes/notice/index'
+import { Route as NoticeNoticeIdRouteImport } from './routes/notice/$noticeId'
 
 const WelfareRoute = WelfareRouteImport.update({
   id: '/welfare',
@@ -70,6 +72,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NoticeIndexRoute = NoticeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => NoticeRoute,
+} as any)
+const NoticeNoticeIdRoute = NoticeNoticeIdRouteImport.update({
+  id: '/$noticeId',
+  path: '/$noticeId',
+  getParentRoute: () => NoticeRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -78,10 +90,12 @@ export interface FileRoutesByFullPath {
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
-  '/notice': typeof NoticeRoute
+  '/notice': typeof NoticeRouteWithChildren
   '/register': typeof RegisterRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/notice/$noticeId': typeof NoticeNoticeIdRoute
+  '/notice/': typeof NoticeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -90,10 +104,11 @@ export interface FileRoutesByTo {
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
-  '/notice': typeof NoticeRoute
   '/register': typeof RegisterRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/notice/$noticeId': typeof NoticeNoticeIdRoute
+  '/notice': typeof NoticeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -103,10 +118,12 @@ export interface FileRoutesById {
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
-  '/notice': typeof NoticeRoute
+  '/notice': typeof NoticeRouteWithChildren
   '/register': typeof RegisterRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/notice/$noticeId': typeof NoticeNoticeIdRoute
+  '/notice/': typeof NoticeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +138,8 @@ export interface FileRouteTypes {
     | '/register'
     | '/suggestion'
     | '/welfare'
+    | '/notice/$noticeId'
+    | '/notice/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,10 +148,11 @@ export interface FileRouteTypes {
     | '/intro'
     | '/login'
     | '/mypage'
-    | '/notice'
     | '/register'
     | '/suggestion'
     | '/welfare'
+    | '/notice/$noticeId'
+    | '/notice'
   id:
     | '__root__'
     | '/'
@@ -145,6 +165,8 @@ export interface FileRouteTypes {
     | '/register'
     | '/suggestion'
     | '/welfare'
+    | '/notice/$noticeId'
+    | '/notice/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -154,7 +176,7 @@ export interface RootRouteChildren {
   IntroRoute: typeof IntroRoute
   LoginRoute: typeof LoginRoute
   MypageRoute: typeof MypageRoute
-  NoticeRoute: typeof NoticeRoute
+  NoticeRoute: typeof NoticeRouteWithChildren
   RegisterRoute: typeof RegisterRoute
   SuggestionRoute: typeof SuggestionRoute
   WelfareRoute: typeof WelfareRoute
@@ -232,8 +254,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notice/': {
+      id: '/notice/'
+      path: '/'
+      fullPath: '/notice/'
+      preLoaderRoute: typeof NoticeIndexRouteImport
+      parentRoute: typeof NoticeRoute
+    }
+    '/notice/$noticeId': {
+      id: '/notice/$noticeId'
+      path: '/$noticeId'
+      fullPath: '/notice/$noticeId'
+      preLoaderRoute: typeof NoticeNoticeIdRouteImport
+      parentRoute: typeof NoticeRoute
+    }
   }
 }
+
+interface NoticeRouteChildren {
+  NoticeNoticeIdRoute: typeof NoticeNoticeIdRoute
+  NoticeIndexRoute: typeof NoticeIndexRoute
+}
+
+const NoticeRouteChildren: NoticeRouteChildren = {
+  NoticeNoticeIdRoute: NoticeNoticeIdRoute,
+  NoticeIndexRoute: NoticeIndexRoute,
+}
+
+const NoticeRouteWithChildren =
+  NoticeRoute._addFileChildren(NoticeRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -242,7 +291,7 @@ const rootRouteChildren: RootRouteChildren = {
   IntroRoute: IntroRoute,
   LoginRoute: LoginRoute,
   MypageRoute: MypageRoute,
-  NoticeRoute: NoticeRoute,
+  NoticeRoute: NoticeRouteWithChildren,
   RegisterRoute: RegisterRoute,
   SuggestionRoute: SuggestionRoute,
   WelfareRoute: WelfareRoute,

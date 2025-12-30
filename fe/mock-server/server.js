@@ -35,6 +35,24 @@ server.post('/api/auth/login', (req, res) => {
     }
 })
 
+// 조회수 증가 커스텀 라우트 (공개)
+server.post('/notices/:id/views', (req, res) => {
+    const { id } = req.params
+    const db = router.db
+    const notice = db.get('notices').find({ id: Number(id) }).value()
+
+    if (notice) {
+        const newViews = (notice.view_count || 0) + 1
+        db.get('notices')
+            .find({ id: Number(id) })
+            .assign({ view_count: newViews })
+            .write()
+        res.json({ ...notice, view_count: newViews })
+    } else {
+        res.status(404).json({ error: "Notice not found" })
+    }
+})
+
 // 인증 미들웨어
 server.use((req, res, next) => {
     // 인증이 필요 없는 공개 라우트
