@@ -93,9 +93,7 @@ async def require_verified_user(user: dict = Depends(get_current_user)) -> dict:
     Raises:
         HTTPException 403: 승인 대기 또는 거절된 사용자
     """
-    # 1. 기본 사용자 인증
-    user = await get_current_user()
-    
+    # `user`는 Depends로 주입됩니다
     # 2. 승인 상태 확인
     verification_status = user.get('verification_status')
     
