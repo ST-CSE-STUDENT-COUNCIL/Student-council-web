@@ -243,63 +243,64 @@
           "name": "제1호 (2024년도 제2회기 정기 감사 최종 결과).pdf",
           "url": "/assets/notice/민주자치/고시/제1호 (2024년도 제2회기 정기 감사 최종 결과).pdf",
           "size": "21KB"
-    ],
-    "clubs": [
+        }
+      ],
+      "clubs": [
         {
-            "id": 1,
-            "name": "Tools",
-            "description": "매주 정기회의, 세미나, 툴스익스퍼츠.",
-            "category": "학술",
-            "detail_image_url": null,
-            "logo_url": null
+          "id": 1,
+          "name": "Tools",
+          "description": "매주 정기회의, 세미나, 툴스익스퍼츠.",
+          "category": "학술",
+          "detail_image_url": null,
+          "logo_url": null
         },
         {
-            "id": 2,
-            "name": "다락방",
-            "description": "학술 전문, 스터디 진행.",
-            "category": "학술",
-            "detail_image_url": null,
-            "logo_url": null
+          "id": 2,
+          "name": "다락방",
+          "description": "학술 전문, 스터디 진행.",
+          "category": "학술",
+          "detail_image_url": null,
+          "logo_url": null
         },
         {
-            "id": 3,
-            "name": "E.C",
-            "description": "야구 동아리.설명이 어디까지 늘어나나 늘어나는대로 어떤식으로 반영이 되나 네모칸 안에서 자동으로 줄바꿈이 되나 테스트를 하기 위해 혹시 글이 계속해서 길어진다면 어떤식응로 될까 네모칸이 길어질까 아니면 그냥 스크롤이 내려갈까에 대한 테스트를 진행하기 위해 글을 한번 길게 써보고 있습니다.",
-            "category": "학술",
-            "detail_image_url": null,
-            "logo_url": null
+          "id": 3,
+          "name": "E.C",
+          "description": "야구 동아리.설명이 어디까지 늘어나나 늘어나는대로 어떤식으로 반영이 되나 네모칸 안에서 자동으로 줄바꿈이 되나 테스트를 하기 위해 혹시 글이 계속해서 길어진다면 어떤식응로 될까 네모칸이 길어질까 아니면 그냥 스크롤이 내려갈까에 대한 테스트를 진행하기 위해 글을 한번 길게 써보고 있습니다.",
+          "category": "학술",
+          "detail_image_url": null,
+          "logo_url": null
         },
         {
-            "id": 4,
-            "name": "TCP",
-            "description": "보안 동아리.",
-            "category": "학술",
-            "detail_image_url": null,
-            "logo_url": null
+          "id": 4,
+          "name": "TCP",
+          "description": "보안 동아리.",
+          "category": "학술",
+          "detail_image_url": null,
+          "logo_url": null
         },
         {
-            "id": 5,
-            "name": "NL",
-            "description": "네트워크 동아리.",
-            "category": "학술",
-            "detail_image_url": null,
-            "logo_url": null
+          "id": 5,
+          "name": "NL",
+          "description": "네트워크 동아리.",
+          "category": "학술",
+          "detail_image_url": null,
+          "logo_url": null
         },
         {
-            "id": 6,
-            "name": "PLUM",
-            "description": "게임 동아리.",
-            "category": "학술",
-            "detail_image_url": null,
-            "logo_url": null
+          "id": 6,
+          "name": "PLUM",
+          "description": "게임 동아리.",
+          "category": "학술",
+          "detail_image_url": null,
+          "logo_url": null
         },
         {
-            "id": 7,
-            "name": "AFK",
-            "description": "축구동아리.",
-            "category": "스포츠",
-            "detail_image_url": null,
-            "logo_url": null
+          "id": 7,
+          "name": "AFK",
+          "description": "축구동아리.",
+          "category": "스포츠",
+          "detail_image_url": null,
+          "logo_url": null
         }
       ],
       "images": []
