@@ -77,7 +77,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
         )
 
 
-async def require_verified_user(authorization: Optional[str] = Header(None)) -> dict:
+async def require_verified_user(user: dict = Depends(get_current_user)) -> dict:
     """
     관리자 승인이 완료된 사용자만 접근 허용
     
@@ -85,7 +85,7 @@ async def require_verified_user(authorization: Optional[str] = Header(None)) -> 
     게시판, 행사 등의 기능을 사용할 수 있도록 제한합니다.
     
     Args:
-        authorization: HTTP Authorization 헤더 (Bearer 토큰)
+        user: 현재 인증된 사용자 (Depends(get_current_user))
     
     Returns:
         dict: 승인된 사용자 정보
