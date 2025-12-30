@@ -20,7 +20,9 @@ import { Route as EventsRouteImport } from './routes/events'
 import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NoticesIndexRouteImport } from './routes/notices/index'
+import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as NoticesNoticeIdRouteImport } from './routes/notices/$noticeId'
+import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
 
 const WelfareRoute = WelfareRouteImport.update({
   id: '/welfare',
@@ -77,16 +79,26 @@ const NoticesIndexRoute = NoticesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => NoticesRoute,
 } as any)
+const EventsIndexRoute = EventsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => EventsRoute,
+} as any)
 const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
   id: '/$noticeId',
   path: '/$noticeId',
   getParentRoute: () => NoticesRoute,
 } as any)
+const EventsEventIdRoute = EventsEventIdRouteImport.update({
+  id: '/$eventId',
+  path: '/$eventId',
+  getParentRoute: () => EventsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
-  '/events': typeof EventsRoute
+  '/events': typeof EventsRouteWithChildren
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
@@ -94,27 +106,30 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/events/$eventId': typeof EventsEventIdRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/events/': typeof EventsIndexRoute
   '/notices/': typeof NoticesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
-  '/events': typeof EventsRoute
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
   '/register': typeof RegisterRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/events/$eventId': typeof EventsEventIdRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/events': typeof EventsIndexRoute
   '/notices': typeof NoticesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
-  '/events': typeof EventsRoute
+  '/events': typeof EventsRouteWithChildren
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
@@ -122,7 +137,9 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/events/$eventId': typeof EventsEventIdRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/events/': typeof EventsIndexRoute
   '/notices/': typeof NoticesIndexRoute
 }
 export interface FileRouteTypes {
@@ -138,20 +155,23 @@ export interface FileRouteTypes {
     | '/register'
     | '/suggestion'
     | '/welfare'
+    | '/events/$eventId'
     | '/notices/$noticeId'
+    | '/events/'
     | '/notices/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/clubs'
-    | '/events'
     | '/intro'
     | '/login'
     | '/mypage'
     | '/register'
     | '/suggestion'
     | '/welfare'
+    | '/events/$eventId'
     | '/notices/$noticeId'
+    | '/events'
     | '/notices'
   id:
     | '__root__'
@@ -165,14 +185,16 @@ export interface FileRouteTypes {
     | '/register'
     | '/suggestion'
     | '/welfare'
+    | '/events/$eventId'
     | '/notices/$noticeId'
+    | '/events/'
     | '/notices/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClubsRoute: typeof ClubsRoute
-  EventsRoute: typeof EventsRoute
+  EventsRoute: typeof EventsRouteWithChildren
   IntroRoute: typeof IntroRoute
   LoginRoute: typeof LoginRoute
   MypageRoute: typeof MypageRoute
@@ -261,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NoticesIndexRouteImport
       parentRoute: typeof NoticesRoute
     }
+    '/events/': {
+      id: '/events/'
+      path: '/'
+      fullPath: '/events/'
+      preLoaderRoute: typeof EventsIndexRouteImport
+      parentRoute: typeof EventsRoute
+    }
     '/notices/$noticeId': {
       id: '/notices/$noticeId'
       path: '/$noticeId'
@@ -268,8 +297,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NoticesNoticeIdRouteImport
       parentRoute: typeof NoticesRoute
     }
+    '/events/$eventId': {
+      id: '/events/$eventId'
+      path: '/$eventId'
+      fullPath: '/events/$eventId'
+      preLoaderRoute: typeof EventsEventIdRouteImport
+      parentRoute: typeof EventsRoute
+    }
   }
 }
+
+interface EventsRouteChildren {
+  EventsEventIdRoute: typeof EventsEventIdRoute
+  EventsIndexRoute: typeof EventsIndexRoute
+}
+
+const EventsRouteChildren: EventsRouteChildren = {
+  EventsEventIdRoute: EventsEventIdRoute,
+  EventsIndexRoute: EventsIndexRoute,
+}
+
+const EventsRouteWithChildren =
+  EventsRoute._addFileChildren(EventsRouteChildren)
 
 interface NoticesRouteChildren {
   NoticesNoticeIdRoute: typeof NoticesNoticeIdRoute
@@ -287,7 +336,7 @@ const NoticesRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClubsRoute: ClubsRoute,
-  EventsRoute: EventsRoute,
+  EventsRoute: EventsRouteWithChildren,
   IntroRoute: IntroRoute,
   LoginRoute: LoginRoute,
   MypageRoute: MypageRoute,

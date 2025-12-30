@@ -31,4 +31,4 @@ dist-ssr
 *.sw?
 
 #json 무시
-db.json
+# db.json
