@@ -1,148 +1,248 @@
 {
-    "users": [
+  "users": [
+    {
+      "id": "1",
+      "student_id": "24101224",
+      "password": "qwer1234",
+      "name": "이재호",
+      "email": "idjaeho@seoultech.ac.kr",
+      "department": "컴퓨터공학과",
+      "phone": "010-9936-9064",
+      "role": "student",
+      "is_verified": true,
+      "verification_image_url": "https://via.placeholder.com/150",
+      "verification_status": "approved",
+      "verified_at": "2025-12-26",
+      "membership_paid": true,
+      "membership_paid_at": "2025-12-26",
+      "created_at": "2025-12-26",
+      "updated_at": "2025-12-26"
+    },
+    {
+      "id": "2",
+      "student_id": "25101182",
+      "password": "qwer1234",
+      "name": "이준석",
+      "email": "ljs0503js@seoultech.ac.kr",
+      "department": "컴퓨터공학과",
+      "phone": "010-2160-6009",
+      "role": "student",
+      "is_verified": false,
+      "verification_image_url": "https://via.placeholder.com/150",
+      "verification_status": "rejected",
+      "membership_paid": false,
+      "created_at": "2025-12-26",
+      "updated_at": "2025-12-26"
+    },
+    {
+      "id": "3",
+      "student_id": "24101242",
+      "password": "qwer1234",
+      "name": "최세영",
+      "email": "goingwell@seoultech.ac.kr",
+      "phone": "010-9999-9999",
+      "department": "컴퓨터공학과",
+      "role": "student",
+      "is_verified": false,
+      "verification_status": "pending",
+      "membership_paid": false,
+      "created_at": "2025-12-26T05:41:33.893Z",
+      "updated_at": "2025-12-26T05:41:33.893Z"
+    }
+  ],
+  "notices": [
+    {
+      "id": 1,
+      "main_category": "student_council",
+      "sub_category": "welfare",
+      "title": "2025학년도 1학기 사물함 신청 안내",
+      "content": "사물함 신청 기간 및 방법을 안내해 드립니다. 자세한 내용은 첨부파일을 확인해주세요.\n\n1. 신청 기간: 2025.02.20 ~ 2025.02.28\n2. 신청 방법: 학생회 홈페이지 온라인 신청\n3. 배정 발표: 2025.03.02",
+      "view_count": 1252,
+      "is_pinned": true,
+      "is_anonymous": false,
+      "author_name": "복지국장",
+      "created_at": "2025-02-20T00:00:00Z",
+      "updated_at": "2025-02-20T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [
         {
-            "id": "1",
-            "student_id": "24101224",
-            "password": "qwer1234",
-            "name": "이재호",
-            "email": "idjaeho@seoultech.ac.kr",
-            "department": "컴퓨터공학과",
-            "phone": "010-9936-9064",
-            "role": "student",
-            "is_verified": true,
-            "verification_image_url": "https://via.placeholder.com/150",
-            "verification_status": "approved",
-            "verified_at": "2025-12-26",
-            "membership_paid": true,
-            "membership_paid_at": "2025-12-26",
-            "created_at": "2025-12-26",
-            "updated_at": "2025-12-26"
-        },
-        {
-            "id": "2",
-            "student_id": "25101182",
-            "password": "qwer1234",
-            "name": "이준석",
-            "email": "ljs0503js@seoultech.ac.kr",
-            "department": "컴퓨터공학과",
-            "phone": "010-2160-6009",
-            "role": "student",
-            "is_verified": false,
-            "verification_image_url": "https://via.placeholder.com/150",
-            "verification_status": "rejected",
-            "membership_paid": false,
-            "created_at": "2025-12-26",
-            "updated_at": "2025-12-26"
-        },
-        {
-            "id": "3",
-            "student_id": "24101242",
-            "password": "qwer1234",
-            "name": "최세영",
-            "email": "goingwell@seoultech.ac.kr",
-            "phone": "010-9999-9999",
-            "department": "컴퓨터공학과",
-            "role": "student",
-            "is_verified": false,
-            "verification_status": "pending",
-            "membership_paid": false,
-            "created_at": "2025-12-26T05:41:33.893Z",
-            "updated_at": "2025-12-26T05:41:33.893Z"
+          "name": "2025_1학기_사물함_배치도.pdf",
+          "url": "#",
+          "size": "1.2MB"
         }
-    ],
-    "notices": [
+      ],
+      "images": []
+    },
+    {
+      "id": 2,
+      "main_category": "democracy",
+      "sub_category": "announcement",
+      "title": "2025학년도 학생회칙 개정안 공고",
+      "content": "학생회칙 개정안을 공고합니다.\n\n주요 개정 내용:\n- 제3조 회원 자격 명확화\n- 제15조 선거 관리 규정 일부 수정",
+      "view_count": 856,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "학생회장",
+      "created_at": "2025-02-15T00:00:00Z",
+      "updated_at": "2025-02-15T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [
         {
-            "id": 1,
-            "category": "학생회",
-            "subcategory": "복지",
-            "title": "2025학년도 1학기 사물함 신청 안내",
-            "date": "2025.02.20",
-            "content": "사물함 신청 기간 및 방법을 안내해 드립니다. 자세한 내용은 첨부파일을 확인해주세요.",
-            "is_pinned": true
+          "name": "민족자주 서울과학기술대학교 총학생회칙 개정안(25.01.24. 개정).pdf",
+          "url": "/assets/notice/민주자치/학생회칙/민족자주 서울과학기술대학교 총학생회칙 개정안(25.01.24. 개정).pdf",
+          "size": "341KB"
         },
         {
-            "id": 2,
-            "category": "민주자치",
-            "subcategory": "공고",
-            "title": "2025학년도 학생회칙 개정안 공고",
-            "date": "2025.02.15",
-            "content": "학생회칙 개정안을 공고합니다. 이의가 있으신 분은...",
-            "is_pinned": false
-        },
-        {
-            "id": 3,
-            "category": "복지",
-            "subcategory": null,
-            "title": "중간고사 기간 간식 배부 안내",
-            "date": "2025.04.10",
-            "content": "중간고사 기간을 맞아 간식을 배부합니다. 메뉴는 싸이버거입니다.",
-            "is_pinned": false
-        },
-        {
-            "id": 4,
-            "category": "학생회",
-            "subcategory": "학과 소식",
-            "title": "3월 월간회의 결과 보고",
-            "date": "2025.03.30",
-            "content": "3월 월간회의 결과를 보고합니다.",
-            "is_pinned": false
-        },
-        {
-            "id": 5,
-            "category": "민주자치",
-            "subcategory": "공고",
-            "title": "선거관리위원회 모집 공고",
-            "date": "2025.11.01",
-            "content": "공정한 선거를 위한 선거관리위원을 모집합니다.",
-            "is_pinned": true
-        },
-        {
-            "id": 6,
-            "category": "소통",
-            "subcategory": null,
-            "title": "과방 청결 문제 건의합니다",
-            "date": "2025.05.10",
-            "content": "과방에 쓰레기가 너무 많습니다. 청소 좀 부탁드립니다.",
-            "is_pinned": false
+          "name": "제22호 (개정 회칙 공포).pdf",
+          "url": "/assets/notice/민주자치/학생회칙/제22호 (개정 회칙 공포).pdf",
+          "size": "20KB"
         }
-    ],
-    "events": [
+      ],
+      "images": []
+    },
+    {
+      "id": 3,
+      "main_category": "student_council",
+      "sub_category": "welfare",
+      "title": "중간고사 기간 강의실 개방 및 간식 배부 안내",
+      "content": "중간고사 기간을 맞아 학우 여러분의 편의를 위해 강의실을 24시간 개방합니다.\n\n- 기간: 4.15(월) ~ 4.26(금)\n- 장소: 제2공학관 301호, 302호\n- 간식 배부: 4.16(화) 18:00 제2공학관 로비",
+      "view_count": 2100,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "복지국장",
+      "created_at": "2025-04-10T00:00:00Z",
+      "updated_at": "2025-04-10T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": [
+        "/images/공지/강의실개방/강의실 개방 1.png"
+      ]
+    },
+    {
+      "id": 4,
+      "main_category": "student_council",
+      "sub_category": "news",
+      "title": "3월 월간회의 결과 보고",
+      "content": "3월 월간회의 결과를 보고합니다.\n\n안건 1. 신입생 환영회 결산 보고\n안건 2. 과잠바 공동구매 진행 현황 공유",
+      "view_count": 340,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "사무국장",
+      "created_at": "2025-03-30T00:00:00Z",
+      "updated_at": "2025-03-30T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 5,
+      "main_category": "democracy",
+      "sub_category": "announcement",
+      "title": "선거관리위원회 모집 공고",
+      "content": "공정한 선거를 위한 선거관리위원을 모집합니다.\n\n- 모집 인원: 0명\n- 지원 자격: 본교 재학생 중 징계 사실이 없는 자",
+      "view_count": 562,
+      "is_pinned": true,
+      "is_anonymous": false,
+      "author_name": "선거관리위원장",
+      "created_at": "2025-11-01T00:00:00Z",
+      "updated_at": "2025-11-01T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 6,
+      "main_category": "student_council",
+      "sub_category": "welfare",
+      "title": "보조배터리 대여 사업 재개 안내",
+      "content": "파손으로 중단되었던 보조배터리 대여 사업을 재개합니다.\n이용 시간: 평일 10:00 ~ 18:00\n장소: 학생회실",
+      "view_count": 430,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "복지국장",
+      "created_at": "2025-03-05T00:00:00Z",
+      "updated_at": "2025-03-05T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 7,
+      "main_category": "democracy",
+      "sub_category": "meeting",
+      "title": "제4차 전체학생대표자회의 소집 공고",
+      "content": "제4차 전체학생대표자회의를 소집합니다.\n\n일시: 5월 10일(금) 19:00\n장소: 대강당\n안건: 축제 예산안 심의",
+      "view_count": 1121,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "총학생회장",
+      "created_at": "2025-05-01T00:00:00Z",
+      "updated_at": "2025-05-01T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [
         {
-            "id": 1,
-            "title": "2025 신입생 OT",
-            "status": "closed",
-            "description": "컴퓨터공학과 신입생 여러분을 환영합니다! 학교 생활 안내 및 친목 도모의 시간.",
-            "image": "https://via.placeholder.com/400x300",
-            "currentCount": 50,
-            "maxCount": 50
-        },
-        {
-            "id": 2,
-            "title": "개강파티",
-            "status": "closed",
-            "description": "새로운 학기의 시작을 알리는 개강파티! 선후배가 함께하는 즐거운 자리.",
-            "image": "https://via.placeholder.com/400x300",
-            "currentCount": 75,
-            "maxCount": 100
-        },
-        {
-            "id": 3,
-            "title": "중간고사 간식행사",
-            "status": "active",
-            "description": "시험공부에 지친 학우들을 위한 싸이버거 세트 증정! 선착순 100명.",
-            "image": "https://via.placeholder.com/400x300",
-            "currentCount": 82,
-            "maxCount": 100
-        },
-        {
-            "id": 4,
-            "title": "e-Sports 대회",
-            "status": "scheduled",
-            "description": "롤, 발로란트 최강자를 가려라! 총 상금 50만원.",
-            "image": "https://via.placeholder.com/400x300",
-            "currentCount": 0,
-            "maxCount": 32
+          "name": "제3호(제1회 대표자 회의 소집 공고).pdf",
+          "url": "/assets/notice/민주자치/공고/제3호(제1회 대표자 회의 소집 공고).pdf",
+          "size": "54KB"
         }
+      ],
+      "images": []
+    },
+    {
+      "id": 8,
+      "main_category": "democracy",
+      "sub_category": "rules",
+      "title": "회칙 위반 사례에 대한 입장문",
+      "content": "최근 발생한 회칙 위반 논란에 대하여...",
+      "view_count": 3500,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "사법위원장",
+      "created_at": "2025-05-15T00:00:00Z",
+      "updated_at": "2025-05-15T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 9,
+      "main_category": "student_council",
+      "sub_category": "event",
+      "title": "2025 이공계 체육대회 참가 신청",
+      "content": "체육대회 참가 선수를 모집합니다. 축구, 농구, 피구 등...",
+      "view_count": 981,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "기획국장",
+      "created_at": "2025-05-20T00:00:00Z",
+      "updated_at": "2025-05-20T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 10,
+      "main_category": "democracy",
+      "sub_category": "notice",
+      "title": "2025학년도 1학기 감사 결과 고시",
+      "content": "1학기 학생회비 집행 감사 결과를 고시합니다.",
+      "view_count": 674,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "감사위원장",
+      "created_at": "2025-06-30T00:00:00Z",
+      "updated_at": "2025-06-30T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [
+        {
+          "name": "붙임_2024학년도 제2회기 최종 감사 결과.pdf",
+          "url": "/assets/notice/민주자치/고시/붙임_2024학년도 제2회기 최종 감사 결과.pdf",
+          "size": "100KB"
+        },
+        {
+          "name": "제1호 (2024년도 제2회기 정기 감사 최종 결과).pdf",
+          "url": "/assets/notice/민주자치/고시/제1호 (2024년도 제2회기 정기 감사 최종 결과).pdf",
+          "size": "21KB"
     ],
     "clubs": [
         {
@@ -201,223 +301,491 @@
             "detail_image_url": null,
             "logo_url": null
         }
-    ],
-    "rentals": [
+      ],
+      "images": []
+    },
+    {
+      "id": 11,
+      "main_category": "student_council",
+      "sub_category": "event",
+      "title": "4월 간식행사 진행 알림",
+      "content": "4월 간식행사가 진행됩니다. 많은 참여 바랍니다.",
+      "view_count": 322,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "복지국장",
+      "created_at": "2025-04-05T00:00:00Z",
+      "updated_at": "2025-04-05T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 12,
+      "main_category": "student_council",
+      "sub_category": "event",
+      "title": "해오름제 참가자 모집",
+      "content": "해오름제 참가자를 모집합니다. 동기들과 좋은 추억 만드세요!",
+      "view_count": 2,
+      "is_pinned": true,
+      "is_anonymous": false,
+      "author_name": "기획국장",
+      "created_at": "2025-03-10T00:00:00Z",
+      "updated_at": "2025-03-10T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 13,
+      "main_category": "democracy",
+      "sub_category": "announcement",
+      "title": "단과대 학생회비 납부 안내",
+      "content": "학생회비 납부 기간 및 방법에 대한 안내입니다.",
+      "view_count": 890,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "사무국장",
+      "created_at": "2025-02-18T00:00:00Z",
+      "updated_at": "2025-02-18T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 14,
+      "main_category": "democracy",
+      "sub_category": "rules",
+      "title": "선거 시행 세칙 일부 개정안",
+      "content": "선거 시행 세칙이 일부 개정되었습니다.",
+      "view_count": 150,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "사법위원장",
+      "created_at": "2025-10-05T00:00:00Z",
+      "updated_at": "2025-10-05T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 15,
+      "main_category": "student_council",
+      "sub_category": "welfare",
+      "title": "우산 대여 사업 안내",
+      "content": "장마철을 대비하여 우산 대여 사업을 실시합니다.",
+      "view_count": 600,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "복지국장",
+      "created_at": "2025-06-20T00:00:00Z",
+      "updated_at": "2025-06-20T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 16,
+      "main_category": "student_council",
+      "sub_category": "news",
+      "title": "컴퓨터공학과 학술제 개최 안내",
+      "content": "제 30회 컴퓨터공학과 학술제가 열립니다.",
+      "view_count": 5,
+      "is_pinned": true,
+      "is_anonymous": false,
+      "author_name": "학술국장",
+      "created_at": "2025-11-15T00:00:00Z",
+      "updated_at": "2025-11-15T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 17,
+      "main_category": "democracy",
+      "sub_category": "meeting",
+      "title": "제5차 운영위원회 회의록 공개",
+      "content": "5월에 진행된 제5차 운영위원회 회의록을 공개합니다.",
+      "view_count": 202,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "서기",
+      "created_at": "2025-06-01T00:00:00Z",
+      "updated_at": "2025-06-01T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 18,
+      "main_category": "democracy",
+      "sub_category": "announcement",
+      "title": "2025학년도 반대표 모집 공고",
+      "content": "2025학년도 각 학년 반대표를 모집합니다. 자세한 내용은 첨부파일을 확인해주세요.",
+      "view_count": 121,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "학생회장",
+      "created_at": "2025-03-02T00:00:00Z",
+      "updated_at": "2025-03-02T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [
         {
-            "id": 1,
-            "name": "보드게임 - 루미큐브",
-            "totalQuantity": 3,
-            "rentedQuantity": 1,
-            "image": "https://via.placeholder.com/150"
-        },
-        {
-            "id": 2,
-            "name": "보드게임 - 스플렌더",
-            "totalQuantity": 2,
-            "rentedQuantity": 2,
-            "image": "https://via.placeholder.com/150"
-        },
-        {
-            "id": 3,
-            "name": "우산",
-            "totalQuantity": 10,
-            "rentedQuantity": 5,
-            "image": "https://via.placeholder.com/150"
-        },
-        {
-            "id": 4,
-            "name": "보조배터리",
-            "totalQuantity": 5,
-            "rentedQuantity": 0,
-            "image": "https://via.placeholder.com/150"
+          "name": "제2호 (반대표 모집 공고).pdf",
+          "url": "/assets/notice/민주자치/공고/제2호 (반대표 모집 공고).pdf",
+          "size": "58KB"
         }
-    ],
-    "welfare_rentals": [
+      ],
+      "images": []
+    },
+    {
+      "id": 19,
+      "main_category": "democracy",
+      "sub_category": "notice",
+      "title": "자치기구장 및 대표자 명부 고시",
+      "content": "2025학년도 자치기구장 및 대표자 명부를 고시합니다.",
+      "view_count": 46,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "선거관리위원장",
+      "created_at": "2025-03-15T00:00:00Z",
+      "updated_at": "2025-03-15T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [
         {
-            "id": 1,
-            "item_name": "보조 배터리",
-            "category": "충전기",
-            "description": "5V/2A 보조 배터리",
-            "quantity": 10,
-            "available_quantity": 6,
-            "image_url": "https://via.placeholder.com/150",
-            "rental_period_days": 7,
-            "is_active": true,
-            "created_at": "2025-01-10",
-            "updated_at": "2025-01-20"
-        },
-        {
-            "id": 2,
-            "item_name": "우산",
-            "category": "우산",
-            "description": "일반 장우산",
-            "quantity": 20,
-            "available_quantity": 12,
-            "image_url": "https://via.placeholder.com/150",
-            "rental_period_days": 7,
-            "is_active": true,
-            "created_at": "2025-01-10",
-            "updated_at": "2025-01-20"
-        },
-        {
-            "id": 3,
-            "item_name": "돗자리",
-            "category": "기타",
-            "description": "2~3인용 돗자리",
-            "quantity": 5,
-            "available_quantity": 2,
-            "image_url": "https://via.placeholder.com/150",
-            "rental_period_days": 7,
-            "is_active": true,
-            "created_at": "2025-01-10",
-            "updated_at": "2025-01-20"
-        },
-        {
-            "id": 4,
-            "item_name": "케이블",
-            "category": "주변기기",
-            "description": "C타입 충전 케이블",
-            "quantity": 15,
-            "available_quantity": 9,
-            "image_url": "https://via.placeholder.com/150",
-            "rental_period_days": 7,
-            "is_active": true,
-            "created_at": "2025-01-10",
-            "updated_at": "2025-01-20"
-        },
-        {
-            "id": 5,
-            "item_name": "마우스",
-            "category": "주변기기",
-            "description": "무선 마우스",
-            "quantity": 8,
-            "available_quantity": 4,
-            "image_url": "https://via.placeholder.com/150",
-            "rental_period_days": 7,
-            "is_active": true,
-            "created_at": "2025-01-10",
-            "updated_at": "2025-01-20"
+          "name": "자치기구장 및 대표자 명부 고시.pdf",
+          "url": "/assets/notice/민주자치/고시/자치기구장 및 대표자 명부 고시.pdf",
+          "size": "24KB"
         }
-    ],
-    "welfare_rental_requests": [
+      ],
+      "images": []
+    },
+    {
+      "id": 20,
+      "main_category": "democracy",
+      "sub_category": "rules",
+      "title": "컴퓨터공학과 및 정보통신대학 학생회칙 안내",
+      "content": "컴퓨터공학과 및 정보통신대학 학생회칙입니다.",
+      "view_count": 90,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "사법위원장",
+      "created_at": "2025-01-25T00:00:00Z",
+      "updated_at": "2025-01-25T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [
         {
-            "id": 1,
-            "rental_id": 1,
-            "user_id": "2",
-            "status": "approved",
-            "rental_start_date": "2025-01-20",
-            "rental_end_date": "2025-01-27",
-            "actual_return_date": null,
-            "notes": null,
-            "approved_by": "1",
-            "approved_at": "2025-01-20T09:00:00Z",
-            "created_at": "2025-01-20",
-            "updated_at": "2025-01-20"
+          "name": "컴퓨터공학과 학생회 회칙(25.09.29. 시행).pdf",
+          "url": "/assets/notice/민주자치/학생회칙/컴퓨터공학과 학생회 회칙(25.09.29. 시행).pdf",
+          "size": "469KB"
         },
         {
-            "id": 2,
-            "rental_id": 2,
-            "user_id": "2",
-            "status": "approved",
-            "rental_start_date": "2025-01-22",
-            "rental_end_date": "2025-01-25",
-            "actual_return_date": null,
-            "notes": null,
-            "approved_by": "1",
-            "approved_at": "2025-01-22T09:00:00Z",
-            "created_at": "2025-01-22",
-            "updated_at": "2025-01-22"
-        },
-        {
-            "id": 3,
-            "rental_id": 3,
-            "user_id": "2",
-            "status": "approved",
-            "rental_start_date": "2025-01-29",
-            "rental_end_date": "2025-02-05",
-            "actual_return_date": null,
-            "notes": null,
-            "approved_by": "1",
-            "approved_at": "2025-01-29T09:00:00Z",
-            "created_at": "2025-01-29",
-            "updated_at": "2025-01-29"
-        },
-        {
-            "id": 4,
-            "rental_id": 4,
-            "user_id": "2",
-            "status": "approved",
-            "rental_start_date": "2025-01-23",
-            "rental_end_date": "2025-01-25",
-            "actual_return_date": null,
-            "notes": null,
-            "approved_by": "1",
-            "approved_at": "2025-01-23T09:00:00Z",
-            "created_at": "2025-01-23",
-            "updated_at": "2025-01-23"
-        },
-        {
-            "id": 5,
-            "rental_id": 5,
-            "user_id": "2",
-            "status": "approved",
-            "rental_start_date": "2025-01-29",
-            "rental_end_date": "2025-02-05",
-            "actual_return_date": null,
-            "notes": null,
-            "approved_by": "1",
-            "approved_at": "2025-01-29T09:00:00Z",
-            "created_at": "2025-01-29",
-            "updated_at": "2025-01-29"
+          "name": "정보통신대학 학생회 회칙.pdf",
+          "url": "/assets/notice/민주자치/학생회칙/정보통신대학 학생회 회칙.pdf",
+          "size": "112KB"
         }
-    ],
-    "locker_periods": [
-        {
-            "id": 1,
-            "period_name": "2025-1학기",
-            "application_start": "2025-02-01T00:00:00Z",
-            "application_end": "2025-02-10T23:59:59Z",
-            "usage_start": "2025-03-02",
-            "usage_end": "2025-06-30",
-            "is_active": true,
-            "created_at": "2025-01-10",
-            "updated_at": "2025-01-20"
-        }
-    ],
-    "welfare_lockers": [
-        {
-            "locker_number": 1,
-            "is_available": true,
-            "notes": null,
-            "created_at": "2025-01-10"
-        },
-        {
-            "locker_number": 2,
-            "is_available": true,
-            "notes": null,
-            "created_at": "2025-01-10"
-        },
-        {
-            "locker_number": 3,
-            "is_available": false,
-            "notes": "고장",
-            "created_at": "2025-01-10"
-        }
-    ],
-    "locker_rentals": [
-        {
-            "id": 1,
-            "locker_number": 2,
-            "user_id": "2",
-            "period_id": 1,
-            "status": "approved",
-            "approved_by": "1",
-            "approved_at": "2025-02-02T09:00:00Z",
-            "return_confirmed_by": null,
-            "return_confirmed_at": null,
-            "notes": null,
-            "created_at": "2025-02-02",
-            "updated_at": "2025-02-02"
-        }
-    ]
+      ],
+      "images": []
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "title": "2025 신입생 OT",
+      "status": "closed",
+      "description": "컴퓨터공학과 신입생 여러분을 환영합니다! 학교 생활 안내 및 친목 도모의 시간.",
+      "image": "https://via.placeholder.com/400x300",
+      "currentCount": 50,
+      "maxCount": 50
+    },
+    {
+      "id": 2,
+      "title": "개강파티",
+      "status": "closed",
+      "description": "새로운 학기의 시작을 알리는 개강파티! 선후배가 함께하는 즐거운 자리.",
+      "image": "https://via.placeholder.com/400x300",
+      "currentCount": 75,
+      "maxCount": 100
+    },
+    {
+      "id": 3,
+      "title": "중간고사 간식행사",
+      "status": "active",
+      "description": "시험공부에 지친 학우들을 위한 싸이버거 세트 증정! 선착순 100명.",
+      "image": "https://via.placeholder.com/400x300",
+      "currentCount": 82,
+      "maxCount": 100
+    },
+    {
+      "id": 4,
+      "title": "e-Sports 대회",
+      "status": "scheduled",
+      "description": "롤, 발로란트 최강자를 가려라! 총 상금 50만원.",
+      "image": "https://via.placeholder.com/400x300",
+      "currentCount": 0,
+      "maxCount": 32
+    }
+  ],
+  "clubs": [
+    {
+      "id": 1,
+      "name": "Tools",
+      "description": "매주 정기회의, 세미나, 툴스익스퍼츠.",
+      "category": "학술"
+    },
+    {
+      "id": 2,
+      "name": "다락방",
+      "description": "학술 전문, 스터디 진행.",
+      "category": "학술"
+    },
+    {
+      "id": 3,
+      "name": "E.C",
+      "description": "야구 동아리.",
+      "category": "학술"
+    },
+    {
+      "id": 4,
+      "name": "TCP",
+      "description": "보안 동아리.",
+      "category": "학술"
+    },
+    {
+      "id": 5,
+      "name": "NL",
+      "description": "네트워크 동아리.",
+      "category": "학술"
+    },
+    {
+      "id": 6,
+      "name": "PLUM",
+      "description": "게임 동아리.",
+      "category": "학술"
+    },
+    {
+      "id": 7,
+      "name": "AFK",
+      "description": "축구동아리.",
+      "category": "스포츠"
+    }
+  ],
+  "rentals": [
+    {
+      "id": 1,
+      "name": "보드게임 - 루미큐브",
+      "totalQuantity": 3,
+      "rentedQuantity": 1,
+      "image": "https://via.placeholder.com/150"
+    },
+    {
+      "id": 2,
+      "name": "보드게임 - 스플렌더",
+      "totalQuantity": 2,
+      "rentedQuantity": 2,
+      "image": "https://via.placeholder.com/150"
+    },
+    {
+      "id": 3,
+      "name": "우산",
+      "totalQuantity": 10,
+      "rentedQuantity": 5,
+      "image": "https://via.placeholder.com/150"
+    },
+    {
+      "id": 4,
+      "name": "보조배터리",
+      "totalQuantity": 5,
+      "rentedQuantity": 0,
+      "image": "https://via.placeholder.com/150"
+    }
+  ],
+  "welfare_rentals": [
+    {
+      "id": 1,
+      "item_name": "보조 배터리",
+      "category": "충전기",
+      "description": "5V/2A 보조 배터리",
+      "quantity": 10,
+      "available_quantity": 6,
+      "image_url": "https://via.placeholder.com/150",
+      "rental_period_days": 7,
+      "is_active": true,
+      "created_at": "2025-01-10",
+      "updated_at": "2025-01-20"
+    },
+    {
+      "id": 2,
+      "item_name": "우산",
+      "category": "우산",
+      "description": "일반 장우산",
+      "quantity": 20,
+      "available_quantity": 12,
+      "image_url": "https://via.placeholder.com/150",
+      "rental_period_days": 7,
+      "is_active": true,
+      "created_at": "2025-01-10",
+      "updated_at": "2025-01-20"
+    },
+    {
+      "id": 3,
+      "item_name": "돗자리",
+      "category": "기타",
+      "description": "2~3인용 돗자리",
+      "quantity": 5,
+      "available_quantity": 2,
+      "image_url": "https://via.placeholder.com/150",
+      "rental_period_days": 7,
+      "is_active": true,
+      "created_at": "2025-01-10",
+      "updated_at": "2025-01-20"
+    },
+    {
+      "id": 4,
+      "item_name": "케이블",
+      "category": "주변기기",
+      "description": "C타입 충전 케이블",
+      "quantity": 15,
+      "available_quantity": 9,
+      "image_url": "https://via.placeholder.com/150",
+      "rental_period_days": 7,
+      "is_active": true,
+      "created_at": "2025-01-10",
+      "updated_at": "2025-01-20"
+    },
+    {
+      "id": 5,
+      "item_name": "마우스",
+      "category": "주변기기",
+      "description": "무선 마우스",
+      "quantity": 8,
+      "available_quantity": 4,
+      "image_url": "https://via.placeholder.com/150",
+      "rental_period_days": 7,
+      "is_active": true,
+      "created_at": "2025-01-10",
+      "updated_at": "2025-01-20"
+    }
+  ],
+  "welfare_rental_requests": [
+    {
+      "id": 1,
+      "rental_id": 1,
+      "user_id": "2",
+      "status": "approved",
+      "rental_start_date": "2025-01-20",
+      "rental_end_date": "2025-01-27",
+      "actual_return_date": null,
+      "notes": null,
+      "approved_by": "1",
+      "approved_at": "2025-01-20T09:00:00Z",
+      "created_at": "2025-01-20",
+      "updated_at": "2025-01-20"
+    },
+    {
+      "id": 2,
+      "rental_id": 2,
+      "user_id": "2",
+      "status": "approved",
+      "rental_start_date": "2025-01-22",
+      "rental_end_date": "2025-01-25",
+      "actual_return_date": null,
+      "notes": null,
+      "approved_by": "1",
+      "approved_at": "2025-01-22T09:00:00Z",
+      "created_at": "2025-01-22",
+      "updated_at": "2025-01-22"
+    },
+    {
+      "id": 3,
+      "rental_id": 3,
+      "user_id": "2",
+      "status": "approved",
+      "rental_start_date": "2025-01-29",
+      "rental_end_date": "2025-02-05",
+      "actual_return_date": null,
+      "notes": null,
+      "approved_by": "1",
+      "approved_at": "2025-01-29T09:00:00Z",
+      "created_at": "2025-01-29",
+      "updated_at": "2025-01-29"
+    },
+    {
+      "id": 4,
+      "rental_id": 4,
+      "user_id": "2",
+      "status": "approved",
+      "rental_start_date": "2025-01-23",
+      "rental_end_date": "2025-01-25",
+      "actual_return_date": null,
+      "notes": null,
+      "approved_by": "1",
+      "approved_at": "2025-01-23T09:00:00Z",
+      "created_at": "2025-01-23",
+      "updated_at": "2025-01-23"
+    },
+    {
+      "id": 5,
+      "rental_id": 5,
+      "user_id": "2",
+      "status": "approved",
+      "rental_start_date": "2025-01-29",
+      "rental_end_date": "2025-02-05",
+      "actual_return_date": null,
+      "notes": null,
+      "approved_by": "1",
+      "approved_at": "2025-01-29T09:00:00Z",
+      "created_at": "2025-01-29",
+      "updated_at": "2025-01-29"
+    }
+  ],
+  "locker_periods": [
+    {
+      "id": 1,
+      "period_name": "2025-1학기",
+      "application_start": "2025-02-01T00:00:00Z",
+      "application_end": "2025-02-10T23:59:59Z",
+      "usage_start": "2025-03-02",
+      "usage_end": "2025-06-30",
+      "is_active": true,
+      "created_at": "2025-01-10",
+      "updated_at": "2025-01-20"
+    }
+  ],
+  "welfare_lockers": [
+    {
+      "locker_number": 1,
+      "is_available": true,
+      "notes": null,
+      "created_at": "2025-01-10"
+    },
+    {
+      "locker_number": 2,
+      "is_available": true,
+      "notes": null,
+      "created_at": "2025-01-10"
+    },
+    {
+      "locker_number": 3,
+      "is_available": false,
+      "notes": "고장",
+      "created_at": "2025-01-10"
+    }
+  ],
+  "locker_rentals": [
+    {
+      "id": 1,
+      "locker_number": 2,
+      "user_id": "2",
+      "period_id": 1,
+      "status": "approved",
+      "approved_by": "1",
+      "approved_at": "2025-02-02T09:00:00Z",
+      "return_confirmed_by": null,
+      "return_confirmed_at": null,
+      "notes": null,
+      "created_at": "2025-02-02",
+      "updated_at": "2025-02-02"
+    }
+  ]
 }
