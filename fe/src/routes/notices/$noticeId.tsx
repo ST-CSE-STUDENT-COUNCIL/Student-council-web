@@ -87,7 +87,16 @@ function NoticeDetail() {
                     if (window.history.length > 1) {
                         router.history.go(-1)
                     } else {
-                        router.navigate({ to: '/notices' })
+                        router.navigate({
+                            to: '/notices',
+                            search: {
+                                mainCategory: 'student_council',
+                                subCategory: 'all',
+                                search: '',
+                                sort: 'newest',
+                                page: 1
+                            }
+                        })
                     }
                 }}
                 className="inline-flex items-center text-gray-500 hover:text-blue-600 mb-6 transition-colors"
