@@ -2,12 +2,16 @@
 인증 및 권한 검증 유틸리티
 FastAPI Depends를 통해 라우트별 권한 제어를 수행합니다.
 """
-from fastapi import HTTPException, Header, status
+from fastapi import HTTPException, status, Security, Depends
 from typing import Optional, List
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.database import supabase
 
+# OpenAPI에 HTTP Bearer 스킴을 등록하기 위한 객체
+bearer_scheme = HTTPBearer()
 
-async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(bearer_scheme)) -> dict:
     """
     현재 로그인한 사용자 정보 조회
     
@@ -24,15 +28,13 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
         HTTPException 401: 토큰이 없거나 유효하지 않은 경우
         HTTPException 404: 사용자를 찾을 수 없는 경우
     """
-    # 1. Authorization 헤더 검증
-    if not authorization or not authorization.startswith("Bearer "):
+    # 1. Credentials 검증
+    if not credentials or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="인증 토큰이 필요합니다"
         )
-    
-    # 2. Bearer 토큰 추출
-    access_token = authorization.replace("Bearer ", "")
+    access_token = credentials.credentials
     
     # 3. Supabase Auth로 토큰 검증 및 사용자 조회
     try:
@@ -92,7 +94,7 @@ async def require_verified_user(authorization: Optional[str] = Header(None)) -> 
         HTTPException 403: 승인 대기 또는 거절된 사용자
     """
     # 1. 기본 사용자 인증
-    user = await get_current_user(authorization)
+    user = await get_current_user()
     
     # 2. 승인 상태 확인
     verification_status = user.get('verification_status')
@@ -117,7 +119,7 @@ async def require_verified_user(authorization: Optional[str] = Header(None)) -> 
     return user
 
 
-async def require_council(authorization: Optional[str] = Header(None)) -> dict:
+async def require_council(user: dict = Depends(require_verified_user)) -> dict:
     """
     학생회 권한 이상 요구 (council, admin)
     
@@ -134,7 +136,7 @@ async def require_council(authorization: Optional[str] = Header(None)) -> dict:
         HTTPException 403: 권한 부족
     """
     # 1. 승인된 사용자인지 확인
-    user = await require_verified_user(authorization)
+    # `user`는 Depends로 주입됩니다
     
     # 2. 역할 확인 (council 또는 admin)
     role = user.get('role')
@@ -147,7 +149,7 @@ async def require_council(authorization: Optional[str] = Header(None)) -> dict:
     return user
 
 
-async def require_admin(authorization: Optional[str] = Header(None)) -> dict:
+async def require_admin(user: dict = Depends(require_verified_user)) -> dict:
     """
     관리자 권한 요구 (admin만)
     
@@ -164,7 +166,7 @@ async def require_admin(authorization: Optional[str] = Header(None)) -> dict:
         HTTPException 403: 관리자가 아닌 경우
     """
     # 1. 승인된 사용자인지 확인
-    user = await require_verified_user(authorization)
+    # `user`는 Depends로 주입됩니다
     
     # 2. 역할 확인 (admin만)
     role = user.get('role')

@@ -8,7 +8,7 @@ FastAPI + Supabase 기반 학생회 홈페이지 백엔드 API
 - **Database**: PostgreSQL (Supabase)
 - **Authentication**: Supabase Auth (JWT)
 - **Storage**: Supabase Storage (Private bucket)
-- **Email**: Gmail SMTP (aiosmtplib)
+ - **Email**: Gmail HTTP API (google-auth/googleapiclient) — migrated from SMTP
 - **Rate Limiting**: slowapi
 - **File Upload**: python-multipart
 - **Python**: 3.12+
@@ -78,13 +78,13 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_KEY=your_service_role_key
 SUPABASE_ANON_KEY=your_anon_key
 
-# Gmail SMTP
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your_email@gmail.com
-SMTP_PASSWORD=your_app_password
-SMTP_FROM_EMAIL=your_email@gmail.com
-SMTP_FROM_NAME=서울과기대 컴공학생회
+# Gmail HTTP API (OAuth2)
+# Use OAuth2 client ID/secret + refresh token for the Gmail HTTP API migration.
+GMAIL_CLIENT_ID=your_gmail_oauth_client_id
+GMAIL_CLIENT_SECRET=your_gmail_oauth_client_secret
+GMAIL_REFRESH_TOKEN=your_gmail_refresh_token
+GMAIL_FROM_EMAIL=your_email@gmail.com
+GMAIL_FROM_NAME=서울과기대 컴공학생회
 
 # Security
 SECRET_KEY=your_secret_key_here
@@ -194,6 +194,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - **크기**: 최대 5MB
 - **저장소**: Supabase Storage Private bucket (`verification-images`)
 - **보안**: Signed URL로만 접근 가능 (1시간 유효)
+
+Note: Attachment endpoints integration is in Phase 2 — helpers and schema exist, final wiring and tests pending.
 - **Rate Limiting**: 1시간에 3회 제한
 - **로그인**: 필수 (FK 관계 보장)
 
@@ -220,7 +222,7 @@ Authorization: Bearer <admin_access_token>
 
 ### 📧 이메일 인증
 
-- **발송**: Gmail SMTP (앱 비밀번호 사용)
+- **발송**: Gmail HTTP API (OAuth2 refresh token 사용, `google-auth` 기반)
 - **코드**: 6자리 랜덤 숫자
 - **유효기간**: 5분
 - **제한**: 1분에 1회 (Rate limiting)
@@ -319,6 +321,13 @@ ENVIRONMENT=production
 DEBUG=false
 FRONTEND_URL=https://yourdomain.com
 ```
+
+### 페이지네이션
+- 기본 페이지 크기: 20 (posts API 기본값)
+
+### 기타 업데이트
+- `db/reset.sql` 스크립트가 `db/`에 추가되어 데이터 초기화 및 시퀀스 리셋을 돕습니다.
+- 배포용 예시 환경 파일 `.env.render.example`를 루트에 추가했습니다. 민감값은 Render Secrets에 설정하세요.
 
 ## 문제 해결
 

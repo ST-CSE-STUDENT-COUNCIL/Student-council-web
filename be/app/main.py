@@ -19,7 +19,8 @@ app = FastAPI(
     description="학생회 홈페이지 백엔드 API",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    swagger_ui_parameters={"persistAuthorization": True}
 )
 
 # Rate limiting 상태 저장
