@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { NoticeFilters } from '../../components/notice/NoticeFilters'
-import { NoticeList } from '../../components/notice/NoticeList'
-import type { Notice } from '../../types/notice'
+import { NoticeFilters } from '../../components/notices/NoticeFilters'
+import { NoticeList } from '../../components/notices/NoticeList'
+import type { Notice } from '../../types/notices'
 
 interface NoticeSearch {
   mainCategory: string
@@ -12,8 +12,8 @@ interface NoticeSearch {
   page: number
 }
 
-export const Route = createFileRoute('/notice/')({
-  component: Notice,
+export const Route = createFileRoute('/notices/')({
+  component: Notices,
   validateSearch: (search: Record<string, unknown>): NoticeSearch => {
     return {
       mainCategory: (search.mainCategory as string) || 'student_council',
@@ -25,7 +25,7 @@ export const Route = createFileRoute('/notice/')({
   },
 })
 
-function Notice() {
+function Notices() {
   const { mainCategory, subCategory, search, sort, page } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
 
@@ -37,7 +37,7 @@ function Notice() {
   const fetchNotices = async () => {
     try {
       setLoading(true)
-      const { noticeApi } = await import('../../lib/api/notice')
+      const { noticeApi } = await import('../../lib/api/notices')
       const data = await noticeApi.getAll()
       setNotices(data)
     } catch (error) {

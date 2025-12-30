@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Notice } from '../../types/notice';
+import type { Notice } from '../../types/notices';
 
 const API_BASE_url = 'http://localhost:4000';
 

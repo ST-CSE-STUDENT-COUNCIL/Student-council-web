@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import type { Notice } from '../../types/notice';
+import type { Notice } from '../../types/notices';
 
 interface NoticeListProps {
     notices: Notice[];
@@ -30,7 +30,7 @@ export const NoticeList = ({ notices }: NoticeListProps) => {
                 {notices.map((notice) => (
                     <Link
                         key={notice.id}
-                        to="/notice/$noticeId"
+                        to="/notices/$noticeId"
                         params={{ noticeId: notice.id.toString() }}
                         className="flex flex-col md:flex-row items-start md:items-center py-4 px-6 hover:bg-gray-50 transition-colors group cursor-pointer"
                     >

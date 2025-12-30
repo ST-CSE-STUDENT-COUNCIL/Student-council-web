@@ -12,15 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelfareRouteImport } from './routes/welfare'
 import { Route as SuggestionRouteImport } from './routes/suggestion'
 import { Route as RegisterRouteImport } from './routes/register'
-import { Route as NoticeRouteImport } from './routes/notice'
+import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as MypageRouteImport } from './routes/mypage'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IntroRouteImport } from './routes/intro'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as NoticeIndexRouteImport } from './routes/notice/index'
-import { Route as NoticeNoticeIdRouteImport } from './routes/notice/$noticeId'
+import { Route as NoticesIndexRouteImport } from './routes/notices/index'
+import { Route as NoticesNoticeIdRouteImport } from './routes/notices/$noticeId'
 
 const WelfareRoute = WelfareRouteImport.update({
   id: '/welfare',
@@ -37,9 +37,9 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NoticeRoute = NoticeRouteImport.update({
-  id: '/notice',
-  path: '/notice',
+const NoticesRoute = NoticesRouteImport.update({
+  id: '/notices',
+  path: '/notices',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MypageRoute = MypageRouteImport.update({
@@ -72,15 +72,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NoticeIndexRoute = NoticeIndexRouteImport.update({
+const NoticesIndexRoute = NoticesIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => NoticeRoute,
+  getParentRoute: () => NoticesRoute,
 } as any)
-const NoticeNoticeIdRoute = NoticeNoticeIdRouteImport.update({
+const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
   id: '/$noticeId',
   path: '/$noticeId',
-  getParentRoute: () => NoticeRoute,
+  getParentRoute: () => NoticesRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -90,12 +90,12 @@ export interface FileRoutesByFullPath {
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
-  '/notice': typeof NoticeRouteWithChildren
+  '/notices': typeof NoticesRouteWithChildren
   '/register': typeof RegisterRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
-  '/notice/$noticeId': typeof NoticeNoticeIdRoute
-  '/notice/': typeof NoticeIndexRoute
+  '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/notices/': typeof NoticesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -107,8 +107,8 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
-  '/notice/$noticeId': typeof NoticeNoticeIdRoute
-  '/notice': typeof NoticeIndexRoute
+  '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/notices': typeof NoticesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -118,12 +118,12 @@ export interface FileRoutesById {
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
-  '/notice': typeof NoticeRouteWithChildren
+  '/notices': typeof NoticesRouteWithChildren
   '/register': typeof RegisterRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
-  '/notice/$noticeId': typeof NoticeNoticeIdRoute
-  '/notice/': typeof NoticeIndexRoute
+  '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/notices/': typeof NoticesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -134,12 +134,12 @@ export interface FileRouteTypes {
     | '/intro'
     | '/login'
     | '/mypage'
-    | '/notice'
+    | '/notices'
     | '/register'
     | '/suggestion'
     | '/welfare'
-    | '/notice/$noticeId'
-    | '/notice/'
+    | '/notices/$noticeId'
+    | '/notices/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -151,8 +151,8 @@ export interface FileRouteTypes {
     | '/register'
     | '/suggestion'
     | '/welfare'
-    | '/notice/$noticeId'
-    | '/notice'
+    | '/notices/$noticeId'
+    | '/notices'
   id:
     | '__root__'
     | '/'
@@ -161,12 +161,12 @@ export interface FileRouteTypes {
     | '/intro'
     | '/login'
     | '/mypage'
-    | '/notice'
+    | '/notices'
     | '/register'
     | '/suggestion'
     | '/welfare'
-    | '/notice/$noticeId'
-    | '/notice/'
+    | '/notices/$noticeId'
+    | '/notices/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -176,7 +176,7 @@ export interface RootRouteChildren {
   IntroRoute: typeof IntroRoute
   LoginRoute: typeof LoginRoute
   MypageRoute: typeof MypageRoute
-  NoticeRoute: typeof NoticeRouteWithChildren
+  NoticesRoute: typeof NoticesRouteWithChildren
   RegisterRoute: typeof RegisterRoute
   SuggestionRoute: typeof SuggestionRoute
   WelfareRoute: typeof WelfareRoute
@@ -205,11 +205,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/notice': {
-      id: '/notice'
-      path: '/notice'
-      fullPath: '/notice'
-      preLoaderRoute: typeof NoticeRouteImport
+    '/notices': {
+      id: '/notices'
+      path: '/notices'
+      fullPath: '/notices'
+      preLoaderRoute: typeof NoticesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mypage': {
@@ -254,35 +254,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/notice/': {
-      id: '/notice/'
+    '/notices/': {
+      id: '/notices/'
       path: '/'
-      fullPath: '/notice/'
-      preLoaderRoute: typeof NoticeIndexRouteImport
-      parentRoute: typeof NoticeRoute
+      fullPath: '/notices/'
+      preLoaderRoute: typeof NoticesIndexRouteImport
+      parentRoute: typeof NoticesRoute
     }
-    '/notice/$noticeId': {
-      id: '/notice/$noticeId'
+    '/notices/$noticeId': {
+      id: '/notices/$noticeId'
       path: '/$noticeId'
-      fullPath: '/notice/$noticeId'
-      preLoaderRoute: typeof NoticeNoticeIdRouteImport
-      parentRoute: typeof NoticeRoute
+      fullPath: '/notices/$noticeId'
+      preLoaderRoute: typeof NoticesNoticeIdRouteImport
+      parentRoute: typeof NoticesRoute
     }
   }
 }
 
-interface NoticeRouteChildren {
-  NoticeNoticeIdRoute: typeof NoticeNoticeIdRoute
-  NoticeIndexRoute: typeof NoticeIndexRoute
+interface NoticesRouteChildren {
+  NoticesNoticeIdRoute: typeof NoticesNoticeIdRoute
+  NoticesIndexRoute: typeof NoticesIndexRoute
 }
 
-const NoticeRouteChildren: NoticeRouteChildren = {
-  NoticeNoticeIdRoute: NoticeNoticeIdRoute,
-  NoticeIndexRoute: NoticeIndexRoute,
+const NoticesRouteChildren: NoticesRouteChildren = {
+  NoticesNoticeIdRoute: NoticesNoticeIdRoute,
+  NoticesIndexRoute: NoticesIndexRoute,
 }
 
-const NoticeRouteWithChildren =
-  NoticeRoute._addFileChildren(NoticeRouteChildren)
+const NoticesRouteWithChildren =
+  NoticesRoute._addFileChildren(NoticesRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -291,7 +291,7 @@ const rootRouteChildren: RootRouteChildren = {
   IntroRoute: IntroRoute,
   LoginRoute: LoginRoute,
   MypageRoute: MypageRoute,
-  NoticeRoute: NoticeRouteWithChildren,
+  NoticesRoute: NoticesRouteWithChildren,
   RegisterRoute: RegisterRoute,
   SuggestionRoute: SuggestionRoute,
   WelfareRoute: WelfareRoute,

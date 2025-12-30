@@ -1,8 +1,8 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState, useEffect, useRef } from 'react'
-import type { Notice } from '../../types/notice'
+import type { Notice } from '../../types/notices'
 
-export const Route = createFileRoute('/notice/$noticeId')({
+export const Route = createFileRoute('/notices/$noticeId')({
     component: NoticeDetail,
 })
 
@@ -20,7 +20,7 @@ function NoticeDetail() {
 
             try {
                 setLoading(true)
-                const { noticeApi } = await import('../../lib/api/notice')
+                const { noticeApi } = await import('../../lib/api/notices')
                 const data = await noticeApi.getById(Number(noticeId))
 
                 try {
