@@ -16,7 +16,7 @@ export default function Menu() {
                 행사
             </Link>
             <Link
-                to="/notice"
+                to="/notices"
                 className="transition-colors hover:text-blue-600 [&.active]:text-blue-600 [&.active]:font-bold"
             >
                 공지사항
