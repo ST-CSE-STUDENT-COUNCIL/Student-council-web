@@ -21,6 +21,7 @@ dist-ssr
 # 비주얼스튜디오 환결 설정 파일 무시
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea
 .DS_Store
 *.suo
