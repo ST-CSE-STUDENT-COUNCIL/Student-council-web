@@ -1,7 +1,7 @@
 """
 인증 관련 API 엔드포인트
 """
-from fastapi import APIRouter, HTTPException, Header, Request, UploadFile, File, status
+from fastapi import APIRouter, HTTPException, Header, Request, status
 from typing import Optional
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -17,7 +17,6 @@ from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
     LogoutResponse,
-    UploadVerificationImageResponse,
     ErrorResponse
 )
 from app.utils.email import (
@@ -26,7 +25,6 @@ from app.utils.email import (
     check_email_verified,
     mark_email_used
 )
-from app.utils.storage import upload_verification_image
 from app.database import supabase
 from postgrest.exceptions import APIError
 
@@ -123,42 +121,6 @@ async def verify_email(request: VerifyEmailRequest):
         )
 
 
-@router.post(
-    "/upload-verification-image",
-    response_model=UploadVerificationImageResponse,
-    status_code=status.HTTP_200_OK,
-    summary="학적 인증 이미지 업로드",
-    description="회원가입 시 제출할 학적 인증 이미지를 업로드합니다 (JPG, PNG만 허용, 최대 5MB, 1시간에 3회 제한)",
-    responses={
-        400: {"model": ErrorResponse, "description": "파일 형식 또는 크기 오류"},
-        429: {"model": ErrorResponse, "description": "요청 횟수 초과"},
-        500: {"model": ErrorResponse, "description": "업로드 실패"}
-    }
-)
-@limiter.limit("3/hour")  # 1시간에 3회만 허용 (스팸 방지)
-async def upload_image(request: Request, file: UploadFile = File(..., description="학적 인증 이미지 파일")):
-    """
-    학적 인증 이미지 업로드
-    
-    통합정보시스템 학적 정보 캡처 이미지를 업로드합니다.
-    업로드된 이미지는 Private Storage에 저장되며, 관리자만 확인 가능합니다.
-    반환된 file_path를 회원가입 시 verification_image_url에 포함시켜야 합니다.
-    """
-    try:
-        # 이미지 업로드 및 검증
-        file_path = await upload_verification_image(file)
-        
-        return UploadVerificationImageResponse(
-            file_path=file_path
-        )
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 업로드 실패: {str(e)}"
-        )
 
 
 @router.post(    "/check-student-id",
