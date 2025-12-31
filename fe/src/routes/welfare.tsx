@@ -3,6 +3,7 @@ import React from 'react'
 import { CategoryFilter } from '../components/welfare'
 import { RentalRequestModal, type RentalRequestData } from '../components/welfare/RentalRequestModal'
 import { welfareApi, type WelfareRental } from '../lib/api/welfare'
+import { useAuthStore } from '../store/useAuthStore'
 
 export const Route = createFileRoute('/welfare')({
   component: Welfare,
@@ -15,23 +16,24 @@ function Welfare() {
   const [error, setError] = React.useState<string | null>(null)
   const [selectedItem, setSelectedItem] = React.useState<WelfareRental | null>(null)
   const [isModalOpen, setIsModalOpen] = React.useState(false)
+  const { accessToken, user } = useAuthStore()
+
+  const fetchRentals = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const data = await welfareApi.getRentals()
+      setRentalItems(data)
+    } catch (err) {
+      console.error('대여사업 데이터 로드 실패:', err)
+      setError('데이터를 불러올 수 없습니다.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   React.useEffect(() => {
-    const fetchRentals = async () => {
-      try {
-        setLoading(true)
-        const data = await welfareApi.getRentals()
-        setRentalItems(data)
-      } catch (err) {
-        console.error('대여사업 데이터 로드 실패:', err)
-        setError('데이터를 불러올 수 없습니다.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchRentals()
-  }, [])
+  }, [fetchRentals])
 
   const handleOpenModal = (item: WelfareRental) => {
     setSelectedItem(item)
@@ -44,10 +46,32 @@ function Welfare() {
   }
 
   const handleSubmitRentalRequest = async (data: RentalRequestData) => {
-    // API 호출 또는 상태 업데이트
-    console.log('대여신청:', data)
-    // TODO: 실제 API 호출 구현
-    alert('대여신청이 완료되었습니다.')
+    try {
+      const now = new Date().toISOString()
+
+      if (!user || !accessToken) {
+        alert('로그인이 필요합니다.')
+        return
+      }
+
+      await welfareApi.createRentalRequest({
+        rental_id: data.rental_id,
+        user_id: user.id,
+        status: 'pending',
+        rental_start_date: data.rental_start_date,
+        rental_end_date: data.rental_end_date,
+        actual_return_date: null,
+        notes: null,
+        created_at: now,
+        updated_at: now,
+      }, accessToken)
+
+      alert('대여신청이 완료되었습니다.')
+      fetchRentals()
+    } catch (err) {
+      console.error('대여신청 실패:', err)
+      alert('대여신청에 실패했습니다. 다시 시도해주세요.')
+    }
   }
 
   return (

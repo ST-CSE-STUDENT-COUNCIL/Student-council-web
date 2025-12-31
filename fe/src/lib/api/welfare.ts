@@ -16,6 +16,18 @@ export interface WelfareRental {
     updated_at: string;
 }
 
+export interface RentalRequestPayload {
+    rental_id: number;
+    user_id: string;
+    status: string;
+    rental_start_date: string;
+    rental_end_date: string;
+    actual_return_date: string | null;
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
 export const welfareApi = {
     getRentals: async (): Promise<WelfareRental[]> => {
         const response = await axios.get(`${API_BASE_URL}/welfare_rentals`);
@@ -24,6 +36,17 @@ export const welfareApi = {
 
     getRentalById: async (id: number): Promise<WelfareRental> => {
         const response = await axios.get(`${API_BASE_URL}/welfare_rentals/${id}`);
+        return response.data;
+    },
+
+    createRentalRequest: async (payload: RentalRequestPayload, token?: string | null) => {
+        const response = await axios.post(`${API_BASE_URL}/welfare_rental_requests`, payload, {
+            headers: token
+                ? {
+                    Authorization: `Bearer ${token}`,
+                }
+                : undefined,
+        });
         return response.data;
     }
 };
