@@ -17,6 +17,13 @@ export default function Menu() {
             </Link>
             <Link
                 to="/notices"
+                search={{
+                    mainCategory: 'student_council',
+                    subCategory: 'all',
+                    search: '',
+                    sort: 'newest',
+                    page: 1
+                }}
                 className="transition-colors hover:text-blue-600 [&.active]:text-blue-600 [&.active]:font-bold"
             >
                 공지사항

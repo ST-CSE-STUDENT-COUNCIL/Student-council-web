@@ -1,4 +1,3 @@
-import { useRef } from "react"
 
 export type SortOption = 'newest' | 'oldest'
 export type StatusOption = 'all' | 'active' | 'scheduled' | 'closed'
