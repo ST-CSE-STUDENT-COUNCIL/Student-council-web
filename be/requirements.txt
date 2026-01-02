@@ -1,21 +1,13 @@
-# FastAPI
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
-slowapi==0.1.9  # Rate limiting
-python-multipart==0.0.9  # File upload support
-
-# Supabase
+slowapi==0.1.9
+python-multipart==0.0.9
 supabase==2.10.0
-
-# 환경변수
 python-dotenv==1.0.1
-
-# Pydantic
 pydantic==2.10.0
 pydantic-settings==2.6.0
-
-# 이메일
 email-validator==2.2.0
-google-api-python-client==2.141.0
-google-auth==2.34.0
+google-auth==2.37.0
 google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+google-api-python-client==2.156.0

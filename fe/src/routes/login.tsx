@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { api } from '../lib/axios'
 import { isAxiosError } from 'axios'
 import { useAuthStore } from '../store/useAuthStore'
+import type { LoginResponse } from '../types/users'
 
 export const Route = createFileRoute('/login')({
   component: Login,
@@ -18,12 +19,12 @@ function Login() {
     e.preventDefault()
 
     try {
-      const response = await api.post('/auth/login', {
-        studentId,
-        password
+      const response = await api.post<LoginResponse>('/auth/login', {
+        student_id: studentId,
+        password: password
       })
 
-      login(response.data.user, response.data.accessToken)
+      login(response.data.user, response.data.access_token)
       navigate({ to: '/' })
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 401) {
