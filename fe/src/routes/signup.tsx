@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import axios from 'axios'
+import { api } from '../lib/axios'
 
-export const Route = createFileRoute('/register')({
-    component: Register,
+export const Route = createFileRoute('/signup')({
+    component: SignUp,
 })
 
-function Register() {
+function SignUp() {
     const navigate = useNavigate()
     const [formData, setFormData] = useState({
         name: '',
@@ -31,7 +31,7 @@ function Register() {
         }
 
         try {
-            await axios.post('/api/auth/register', {
+            await api.post('/auth/signup', {
                 name: formData.name,
                 student_id: formData.student_id,
                 email: formData.email,

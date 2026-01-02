@@ -3,8 +3,10 @@ import { useAuthStore } from '../store/useAuthStore';
 
 // 커스텀 Axios 인스턴스 생성
 export const api = axios.create({
-    // 백엔드 생기면, 나중에 연결
-    // baseURL: 'http://localhost:3000', 
+    baseURL: 'http://localhost:8000',
+    headers: {
+        'Content-Type': 'application/json',
+    },
 });
 
 // 헤더에 액세스 토큰을 추가하기 위한 요청 인터셉터

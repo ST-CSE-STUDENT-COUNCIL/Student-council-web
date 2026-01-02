@@ -32,7 +32,7 @@ export const Route = createFileRoute('/')({
 })
 
 const PORTALS = [
-    { name: '대학교 홈페이지', icon: School, url: 'https://www.seoultech.ac.kr/index.jsp', color: 'bg-blue-50 text-blue-600' },
+    { name: '학교 홈페이지', icon: School, url: 'https://www.seoultech.ac.kr/index.jsp', color: 'bg-blue-50 text-blue-600' },
     { name: '학과 홈페이지', icon: Laptop, url: 'https://computer.seoultech.ac.kr/', color: 'bg-slate-50 text-slate-600' },
     { name: 'SUIS', icon: MonitorCheck, url: 'https://suis.seoultech.ac.kr/nxui/index.html', color: 'bg-cyan-50 text-cyan-600' },
     { name: 'E-Class', icon: MonitorPlay, url: 'https://eclass.seoultech.ac.kr/ilos/main/main_form.acl', color: 'bg-cyan-50 text-cyan-600' },

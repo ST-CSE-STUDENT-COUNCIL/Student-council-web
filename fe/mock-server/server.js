@@ -14,7 +14,7 @@ server.use(middlewares)
 server.use(jsonServer.bodyParser)
 
 // 커스텀 로그인 라우트
-server.post('/api/auth/login', (req, res) => {
+server.post('/auth/login', (req, res) => {
     const { studentId, password } = req.body
     const db = router.db
     const user = db.get('users').find({ student_id: studentId }).value()
@@ -57,8 +57,8 @@ server.post('/notices/:id/views', (req, res) => {
 server.use((req, res, next) => {
     // 인증이 필요 없는 공개 라우트
     const publicPaths = [
-        '/api/auth/login',
-        '/api/auth/register',
+        '/auth/login',
+        '/auth/register',
     ]
 
     const isPublic = publicPaths.some(path => req.path.startsWith(path))
@@ -80,7 +80,7 @@ server.use((req, res, next) => {
 })
 
 // 커스텀 회원가입 라우트
-server.post('/api/auth/register', (req, res) => {
+server.post('/auth/register', (req, res) => {
     const { name, student_id, email, phone, password } = req.body
     const db = router.db
 
@@ -114,7 +114,6 @@ server.post('/api/auth/register', (req, res) => {
 
 // URL 재작성 (Rewrites)
 server.use(jsonServer.rewriter({
-    '/api/*': '/$1',
     '/welfare/rentals': '/rentals'
 }))
 
