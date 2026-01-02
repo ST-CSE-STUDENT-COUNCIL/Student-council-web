@@ -21,6 +21,7 @@ from app.schemas.auth import (
 )
 from app.utils.email import (
     send_verification_email,
+    create_email_verification,
     verify_email_code,
     check_email_verified,
     mark_email_used
@@ -46,13 +47,13 @@ limiter = Limiter(key_func=get_remote_address)
     }
 )
 @limiter.limit("1/minute")
-async def send_verification(request: SendVerificationRequest, req: Request):
+async def send_verification(body: SendVerificationRequest, request: Request):
     """이메일 인증번호 발송"""
     try:
         # 1. 이미 가입된 이메일인지 확인
         existing_user = supabase.table('users')\
             .select('email')\
-            .eq('email', request.email)\
+            .eq('email', body.email)\
             .execute()
         
         if existing_user.data:
@@ -64,7 +65,7 @@ async def send_verification(request: SendVerificationRequest, req: Request):
         # 2. 이미 인증 완료되었지만 아직 회원가입 안 한 경우
         already_verified = supabase.table('email_verifications')\
             .select('*')\
-            .eq('email', request.email)\
+            .eq('email', body.email)\
             .eq('verified', True)\
             .eq('used', False)\
             .execute()
@@ -75,10 +76,13 @@ async def send_verification(request: SendVerificationRequest, req: Request):
                 detail="이미 인증 완료된 이메일입니다. 회원가입을 진행해주세요."
             )
         
-        # 3. 인증번호 발송
-        await send_verification_email(request.email)
+        # 3. 인증번호 생성 및 저장
+        code = await create_email_verification(body.email)
         
-        return SendVerificationResponse(email=request.email)
+        # 4. 인증번호 발송
+        await send_verification_email(body.email, code)
+        
+        return SendVerificationResponse(email=body.email)
     
     except HTTPException:
         raise
@@ -121,8 +125,9 @@ async def verify_email(request: VerifyEmailRequest):
         )
 
 
-@router.post(
-    "/check-student-id",
+
+
+@router.post(    "/check-student-id",
     response_model=CheckStudentIdResponse,
     status_code=status.HTTP_200_OK,
     summary="학번 중복 확인",
@@ -279,13 +284,13 @@ async def signup(request: SignupRequest):
     }
 )
 @limiter.limit("10/5minutes")
-async def login(request: LoginRequest, req: Request):
+async def login(body: LoginRequest, request: Request):
     """로그인 (학번 + 비밀번호)"""
     try:
         # 1. 학번으로 사용자 조회
         user_result = supabase.table('users')\
             .select('*')\
-            .eq('student_id', request.student_id)\
+            .eq('student_id', body.student_id)\
             .single()\
             .execute()
         
@@ -302,7 +307,7 @@ async def login(request: LoginRequest, req: Request):
         try:
             auth_response = supabase.auth.sign_in_with_password({
                 "email": email,
-                "password": request.password
+                "password": body.password
             })
         except Exception as auth_error:
             raise HTTPException(
@@ -318,13 +323,8 @@ async def login(request: LoginRequest, req: Request):
         
         access_token = auth_response.session.access_token
         
-        # 3. 승인 상태 확인
-        if user_data['verification_status'] == 'pending':
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="관리자 승인 대기 중입니다"
-            )
-        elif user_data['verification_status'] == 'rejected':
+        # 3. 거절된 사용자는 로그인 차단
+        if user_data['verification_status'] == 'rejected':
             rejection_reason = user_data.get('rejection_reason', '사유 없음')
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
