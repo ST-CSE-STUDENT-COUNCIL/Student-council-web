@@ -1,160 +1,152 @@
 # 🎓 컴퓨터공학과 학생회 서비스 (Student Council Service)
 
-서울과학기술대학교 컴퓨터공학과 학생들을 위한 통합 학생회 서비스입니다.  
-공지사항, 행사 신청, 복지 사업(대여, 사물함), 동아리 홍보, 건의함 등의 기능을 제공합니다.
+<div align="center">
+
+![Project Banner](https://via.placeholder.com/1000x300?text=Computer+Science+Student+Council+Service)
+
+<br/>
+
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=Vite&logoColor=white)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+
+<br/>
+
+**서울과학기술대학교 컴퓨터공학과 학생들을 위한 통합 정보 및 편의 서비스**
+
+[데모 보기](#) • [API 문서](#) • [팀원 소개](#-프로젝트-구성원-team-members)
+
+</div>
 
 ---
 
-## 👥 프로젝트 구성원 (Team Members)
+## 📖 목차 (Table of Contents)
 
-| 이름 | 역할 | GitHub |
-|------|------|----------------|
-| 이재호 | **PM / Frontend** | @jaehoya |
-| 이준석 | **Frontend** | @junsik |
-| 최도현 | **Backend** | @doheon |
+1. [📌 프로젝트 소개](#-프로젝트-소개-project-overview)
+2. [🛠️ 기술 스택](#-기술-스택-tech-stack)
+3. [🏛️ 주요 기능 및 서비스](#-주요-기능-및-서비스-features)
+4. [🚀 시작하기](#-시작하기-getting-started)
+5. [👥 프로젝트 구성원](#-프로젝트-구성원-team-members)
+6. [🔗 관련 링크](#-관련-링크-links)
+
+---
+
+## 📌 프로젝트 소개 (Project Overview)
+
+**Student Council Service**는 학과 내의 정보 불균형을 해소하고 학생들이 학생회 사업(행사, 물품 대여, 사물함 등)을 보다 편리하게 이용할 수 있도록 돕는 웹 플랫폼입니다.
+
+기존의 오프라인 또는 파편화된 온라인 소통 방식을 통합하여 다음과 같은 가치를 제공합니다.
+
+- **📢 통합된 정보 제공**: 공지사항, 행사, 학생회 소식을 한 곳에서 확인
+- **📱 편의성 증대**: 행사 신청, 물품 대여, 사물함 신청의 전산화 및 간편화
+- **🔐 투명성 및 보안**: 학생회비 납부 여부에 따른 권한 관리 및 사업 진행 현황 공유
 
 ---
 
 ## 🛠️ 기술 스택 (Tech Stack)
 
-### Frontend
-<img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" /> <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" /> <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=Vite&logoColor=white" /> <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
-- **State Management**: Zustand, React Query (@tanstack/react-query)
-- **Routing**: React Router Dom
-- **HTTP Client**: Axios
-- **UI/UX**: React Hot Toast
+### Frontend (`fe-demo`)
+| Tech | Description |
+|------|-------------|
+| **React 19** | Component-Based UI 라이브러리 |
+| **TypeScript** | 정적 타입 시스템을 통한 안정성 확보 |
+| **Vite** | 초고속 빌드 및 개발 환경 제공 |
+| **Tailwind CSS 4** | 유틸리티 퍼스트 CSS 스타일링 |
+| **Zustand** | 가볍고 직관적인 전역 상태 관리 |
+| **TanStack Query** | 서버 상태 관리 및 데이터 캐싱 |
+| **React Router Dom 7** | 클라이언트 사이드 라우팅 |
 
-### Backend & Database
-<img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi" /> <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" /> <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
-- **Auth**: Supabase Auth (Google/Email)
-- **Database**: PostgreSQL (with Row Level Security)
-- **Storage**: Supabase Storage (Images, Files)
-
----
-
-## 🔗 프로젝트 링크 (Links)
-
-| 서비스 | URL | 비고 |
-|--------|-----|------|
-| **Figma** | [Figma Link Here](figma.com/design/wQi9vCJzLnIQQHEsV7Npi7/컴퓨터공학과-학생회-홈페이지?node-id=0-1&p=f) | 디자인 시안 |
-| **Notion** | [Notion Link Here](https://notion.so/...) | 기획서 및 회의록(미공개) |
-| **Swagger** | [API Docs Here](http://localhost:8000/api-docs) | API 명세서(미배포) |
-| **Deploy** | [Service Link](https://...) | 배포 주소(미배포) |
+### Backend (`be`)
+| Tech | Description |
+|------|-------------|
+| **FastAPI** | 고성능 Python 비동기 API 프레임워크 |
+| **Supabase** | BaaS (Auth, Database, Storage) 솔루션 |
+| **PostgreSQL** | 강력한 오픈소스 관계형 데이터베이스 |
+| **Pydantic** | 데이터 유효성 검사 및 설정 관리 |
 
 ---
 
-## 🚀 시안 설치 및 실행 방법 (How to Run)
+## 🏛️ 주요 기능 및 서비스 (Features)
 
-### 1. Frontend (`fe-demo`)
+### 1. 홈 및 대시보드 (Home)
+- **바로가기**: 자주 사용하는 학과 관련 사이트 링크 제공
+- **최신 소식**: 주요 공지사항 및 진행 중인 행사 요약 노출
+
+### 2. 학생회 소개 (Intro)
+- **조직도 및 공약**: 학생회 구성원 및 공약 사항 소개
+- **관리자 기능**: 관리자 페이지를 통한 이미지 및 정보 업데이트
+
+### 3. 행사 관리 (Events)
+- **행사 목록**: 예정 / 진행중 / 마감된 행사 필터링 조회
+- **행사 신청**: 학생회비 납부 여부에 따른 신청 권한 제어
+- **만족도 조사**: 행사 종료 후 참여자 대상 설문 조사 기능
+
+### 4. 공지사항 (Notice)
+- **카테고리별 분류**: 학생회(행사, 복지) / 민주자치(회의록, 회칙) 등
+- **검색 및 필터**: 제목/내용 검색 및 첨부파일 다운로드 지원
+
+### 5. 복지 사업 (Welfare)
+- **물품 대여**: 대여 가능 물품 재고 확인 및 실시간 대여 신청
+- **사물함 신청**: 사물함 위치 확인 및 학기별 사용 신청
+
+### 6. 마이 페이지 (My Page)
+- **내 정보 관리**: 학생 정보 수정 및 학생회비 납부 상태 확인
+- **활동 내역**: 신청한 행사, 대여 중인 물품, 사물함 정보 확인
+
+---
+
+## 🚀 시작하기 (Getting Started)
+
+이 프로젝트를 로컬 환경에서 실행하려면 다음 단계가 필요합니다.
+
+### 1. Frontend (`fe-demo`) 실행
+
 ```bash
-# 레포지토리 클론
+# 1. Repository Clone
 git clone https://github.com/jaehoya/Student-council.git
 
-# 프론트엔드 디렉토리로 이동
-cd fe-demo
+# 2. Frontend 디렉토리로 이동
+cd fe
 
-# 의존성 설치
+# 3. 패키지 설치
 npm install
 
-# 개발 서버 실행
+# 4. 개발 서버 실행
 npm run dev
 ```
 
-### 2. Backend & Database
-백엔드 및 데이터베이스 설정에 대한 자세한 내용은 [be/db/README.md](./be/db/README.md) 파일을 참고하세요.
-기본적으로 Supabase 프로젝트를 생성하고 `be/db/schema.sql`을 실행하여 스키마를 설정해야 합니다.
+### 2. Backend 실행
+
+백엔드는 `be/requirements.txt`의 의존성을 설치하고 Supabase 환경 변수를 설정해야 합니다. 자세한 설정 방법은 `be/README.md` (혹은 `be/db/README.md`)를 참고하세요.
+
+```bash
+# Backend 디렉토리로 이동
+cd be
+
+# 의존성 설치
+pip install -r requirements.txt
+
+# 서버 실행 (uvicorn)
+uvicorn app.main:app --reload
+```
 
 ---
 
-## 🏛️ 주요 서비스 및 기능 (Services)
+## 👥 프로젝트 구성원 (Team Members)
 
-### 1. 홈페이지 (Home)
-- **바로가기**: 자주 사용하는 메뉴로 빠른 이동
-- **학생회 공지**: 최신 학생회 중요 공지 사항 노출
-- **최신 행사**: 가장 최근에 진행된 행사 정보 표시
-
-![Home Screenshot](https://via.placeholder.com/800x400?text=Home+Page+Screenshot)
-
-### 2. 학생회 소개 (Intro)
-- **소개 컨텐츠**: 현행 학생회, 공약, 역할, 행사 정보, 조직도, 연락처 등을 이미지로 제공
-- **관리자 기능**: 관리자가 이미지를 업데이트하여 내용 수정 가능
-
-![Intro Screenshot](https://via.placeholder.com/800x400?text=Intro+Page+Screenshot)
-
-### 3. 행사 (Events)
-- **카테고리**: [예정 | 진행중 | 신청 마감] 탭으로 구분
-- **UI**: 3:4 비율의 카드 형태 (썸네일 + 간략 설명)
-- **상세 보기**: 클릭 시 상세 공지/정보 페이지로 이동
-- **신청 시스템**:
-  - **신청 버튼**: 진행중인 행사에만 활성화
-  - **권한 체크**: 학생회비 납부 여부에 따라 신청 가능/불가 구분 (미납부자 신청 불가)
-  - **만족도 조사**: 행사 종료(완료된 카테고리) 후 '만족도 조사 참가하기' 버튼으로 변경
-
-![Event Screenshot](https://via.placeholder.com/800x400?text=Event+Page+Screenshot)
-
-### 4. 공지사항 (Notice)
-- **검색**: 제목/내용 검색 기능
-- **카테고리**:
-  - **학생회**: [행사, 복지, 학과 소식]
-  - **민주자치**: [고시, 공고, 대표자 회의, 학생회칙]
-- **상세 페이지**: 제목, 내용, 작성일시, 사진, 첨부파일 다운로드
-
-![Notice Screenshot](https://via.placeholder.com/800x400?text=Notice+Page+Screenshot)
-
-### 5. 복지사업 (Welfare)
-- **대여사업**: 대여 가능한 물품 목록 및 남은 수량(재고) 확인, 대여 신청
-- **사물함**: 사물함 배치도(표), 내 사물함 위치 확인, 신청하기
-
-![Welfare Screenshot](https://via.placeholder.com/800x400?text=Welfare+Page+Screenshot)
-
-### 6. 동아리 (Clubs)
-- **목록**: 전체 동아리 리스트업
-- **상세 보기**: 동아리 클릭 시 DB에서 상세 소개 이미지 로드 및 라우팅
-- **정보**: 동아리 회장단이 제공한 상세 소개 자료 게시
-
-![Club Screenshot](https://via.placeholder.com/800x400?text=Club+Page+Screenshot)
-
-### 7. 건의함 (Suggestion Box)
-- **익명 게시판**: 누구나 자유롭게 의견 개진 (로그인 필요, 작성자는 관리자만 확인 가능)
-
-### 8. 마이 페이지 (My Page)
-- **내 정보**: 이름, 학번, Email, **학생회비 납부여부** (확인중 / 납부 / 미납부)
-- **신청 행사**: 예정된 행사(신청 완료, 입금 대기, 접수 완료, 반려), 참여 완료한 행사 목록
-- **복지 현황**:
-  - 대여 물품 반납 기간 및 상태
-  - 내 사물함 위치 및 사용 기간
-- **인증 상태**: 학생 가입 인증 대기 상태 확인
-
-![MyPage Screenshot](https://via.placeholder.com/800x400?text=MyPage+Screenshot)
+| Name | Role | GitHub |
+|------|------|--------|
+| **이재호** | PM / Frontend | [@jaehoya](https://github.com/jaehoya) |
+| **이준석** | Frontend | [@biabio503](https://github.com/biabio503) |
+| **최도현** | Backend | [@casing1](https://github.com/casing1) |
 
 ---
 
-## 💾 데이터베이스 구조 (Database Schema)
+## 🔗 관련 링크 (Links)
 
-Supabase PostgreSQL을 사용하며, 주요 테이블 구조는 다음과 같습니다. 상세 내용은 `be/db/schema.sql`을 참조하세요.
-
-| 테이블명 | 설명 | 비고 |
-|----------|------|------|
-| `users` | 사용자 정보 | 학번, 이름, 권한(Student/Council/Admin), 납부여부 |
-| `registrations` | 행사 신청 내역 | 행사ID, 유저ID, 신청상태 |
-| `events` | 행사 정보 | 제목, 일정, 정원, 납부자전용여부 |
-| `posts` | 게시글 | 공지사항, 건의함 (익명/실명) |
-| `welfare_rentals` | 대여 물품 | 물품명, 총수량, 잔여수량 |
-| `welfare_lockers` | 사물함 | 번호, 위치, 점유상태 |
-| `clubs` | 동아리 | 이름, 소개 이미지 URL |
-
-### ERD Diagram (Placeholder)
-![ERD](https://via.placeholder.com/800x400?text=ERD+Diagram)
-
----
-
-## 📄 API 문서 (Swagger)
-
-Backend API는 FastAPI로 구축되어 있으며 Swagger UI를 통해 테스트할 수 있습니다.
-
-![Swagger Screenshot](https://via.placeholder.com/800x400?text=Swagger+UI+Screenshot)
-
-1. 백엔드 서버 실행
-2. `http://localhost:8000/docs` 접속
-
----
+- **Figma Design**: [Link](https://figma.com/design/wQi9vCJzLnIQQHEsV7Npi7)
+- **Notion**: [Link](https://notion.so/...)
+- **API Swagger**: [http://localhost:8000/docs](http://localhost:8000/docs)
