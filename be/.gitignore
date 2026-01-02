@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+.venv/
+venv/
+ENV/
+
+# 환경변수
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 테스트
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 로그
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,14 @@
+@import 'pretendard/dist/web/static/pretendard.css';
+
+@import 'pretendard/dist/web/static/pretendard.css';
+@import 'tailwindcss';
+
+@layer base {
+    :root {
+        --font-pretendard: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    }
+    
+    body {
+        font-family: var(--font-pretendard);
+    }
+}
