@@ -25,17 +25,16 @@ be/
 │   ├── routes/              # API 엔드포인트
 │   │   ├── __init__.py
 │   │   ├── auth.py          # 인증 관련 API
-│   │   ├── admin.py         # 관리자 API (6개)
+│   │   ├── admin.py         # 관리자 API
 │   │   ├── users.py         # 사용자 프로필 API
-│   │   ├── posts.py         # 공지/게시글 API
-│   │   ├── boards.py        # 게시판 메타데이터 API
+│   │   ├── notices.py       # 공지사항 API (통합)
 │   │   └── suggestions.py   # 건의함 API
 │   ├── schemas/             # Pydantic 스키마
 │   │   ├── __init__.py
 │   │   ├── auth.py          # 인증 요청/응답 모델
 │   │   ├── admin.py         # 관리자 요청/응답 모델
 │   │   ├── users.py         # 사용자 요청/응답 모델
-│   │   ├── posts.py         # 게시글 요청/응답 모델
+│   │   ├── notices.py       # 공지사항 요청/응답 모델
 │   │   └── suggestions.py   # 건의함 요청/응답 모델
 │   └── utils/               # 유틸리티
 │       ├── __init__.py
@@ -44,8 +43,10 @@ be/
 │       └── storage.py       # 파일 업로드 관리
 ├── db/
 │   ├── schema.sql           # 데이터베이스 스키마
+│   ├── reset.sql            # 데이터 초기화 스크립트
 │   └── README.md
 ├── .env                     # 환경변수 (gitignore)
+├── .env.render.example      # Render 배포 예시
 ├── .gitignore
 ├── requirements.txt         # 패키지 의존성
 └── README.md
@@ -125,11 +126,40 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ### API 목록 요약
 
 **인증 (Authentication)**
+- `POST /auth/send-verification` - 이메일 인증번호 발송
+- `POST /auth/verify-email` - 이메일 인증 확인
+- `POST /auth/check-student-id` - 학번 중복 확인
+- `POST /auth/signup` - 회원가입
+- `POST /auth/login` - 로그인
+- `POST /auth/logout` - 로그아웃
+
 **사용자 (Users)**
+- `GET /users/me` - 내 프로필 조회
+- `POST /users/me/password` - 비밀번호 변경
+- `POST /users/me/verification-image` - 학적 인증 이미지 업로드
+
 **관리자 (Admin)** ⚠️ 관리자 권한 필요
-**게시글 (Posts)**
-**게시판 (Boards)**
+- `GET /admin/users/pending` - 승인 대기 회원 목록 조회
+- `GET /admin/users` - 전체 회원 목록 조회
+- `POST /admin/users/{user_id}/approve` - 회원 승인
+- `POST /admin/users/{user_id}/reject` - 회원 거부
+- `PATCH /admin/users/{user_id}/role` - 회원 역할 변경
+- `PATCH /admin/users/{user_id}/membership` - 회비 납부 상태 변경
+
+**공지사항 (Notices)** ⚠️ 작성은 관리자만 가능
+- `GET /notices` - 공지사항 목록 조회 (mainCategory, subCategory 필터)
+  - mainCategory: `student_council` (학생회), `democracy` (민주자치)
+  - subCategory: `all`, `event` (행사), `welfare` (복지), `announcement` (공고), `notice` (고시), `meeting` (대표자회의), `rules` (학생회칙)
+- `GET /notices/{notice_id}` - 공지사항 상세 조회
+- `POST /notices` - 공지사항 작성 (admin)
+- `PATCH /notices/{notice_id}` - 공지사항 수정 (admin)
+- `DELETE /notices/{notice_id}` - 공지사항 삭제 (admin, Soft Delete)
+
 **건의함 (Suggestions)**
+- `POST /suggestions` - 건의함 작성 (익명)
+- `GET /suggestions` - 건의함 목록 조회
+- `GET /suggestions/{suggestion_id}` - 건의함 상세 조회
+- `PATCH /suggestions/{suggestion_id}/status` - 건의함 상태 변경 (admin)
 
 > 상세한 Request/Response 스키마는 Swagger 문서에서 확인하세요.
 
@@ -206,19 +236,39 @@ Authorization: Bearer <admin_access_token>
 ```
 응답에 `verification_image_url` 필드에 Signed URL 포함 (1시간 유효)
 
-**공지/게시글 첨부파일 업로드:**
+**공지사항 첨부파일 업로드:**
 - **형식**: JPG, JPEG, PNG, PDF
 - **크기**: 최대 10MB
 - **저장소**: Supabase Storage Private bucket (`post-attachments`)
-- **요청 방식**: `POST /posts`에서 multipart/form-data로 게시글과 함께 업로드
+- **요청 방식**: `POST /notices`에서 multipart/form-data로 게시글과 함께 업로드
 - **보안**: Signed URL로만 접근 가능 (1시간 유효)
+- **제한**: 요청당 최대 5개
 
 ### 📮 건의함
 
-- **작성**: 승인된 사용자만 가능, 첨부파일 없음
-- **익명 처리**: 기본 익명, admin/council만 작성자 확인 가능
-- **상태 관리**: 접수/처리중/반려/승인
-- **사유/반영 내용**: admin과 작성자만 확인 가능
+- **작성**: 승인된 사용자만 가능
+- **익명 처리**: 
+  - 일반 사용자: 본인 작성글만 실명 표시
+  - council: 전체 목록 조회 가능, 작성자 익명
+  - admin: 전체 목록 조회 가능, 작성자 실명 표시
+- **제목 보호**: 본인 또는 관리자/학생회만 제목 조회 가능
+- **상태 관리**: received(접수) → in_progress(처리중) → rejected(반려) / approved(승인)
+- **사유/반영 내용**: 작성자 본인과 관리자만 확인 가능
+
+### 📰 공지사항
+
+- **조회**: 승인된 사용자만 가능
+- **작성/수정/삭제**: 관리자만 가능
+- **카테고리 구조**:
+  - **학생회** (student_council): 행사(event), 복지(welfare)
+  - **민주자치** (democracy): 공고(announcement), 고시(notice), 대표자회의(meeting), 학생회칙(rules)
+- **필터링**: `mainCategory`와 `subCategory`로 게시글 조회
+  - 예: `GET /notices?mainCategory=student_council&subCategory=event`
+  - `subCategory=all`로 해당 카테고리 전체 조회
+- **검색**: 제목 + 내용 검색 지원
+- **정렬**: 고정 게시글 우선, 최신순/오래된순
+- **첨부파일**: 최대 5개, JPG/PNG/PDF, 10MB 제한
+- **Soft Delete**: 삭제 시 is_deleted 플래그 변경 (복구 가능)
 
 ### 📧 이메일 인증
 
