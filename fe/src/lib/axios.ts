@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/useAuthStore';
 
 // 커스텀 Axios 인스턴스 생성
 export const api = axios.create({
-    baseURL: 'http://localhost:8000',
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
     headers: {
         'Content-Type': 'application/json',
     },

@@ -1,30 +1,30 @@
-import axios from 'axios';
+import { api } from '../axios';
 import type { Event } from '../../types/events';
 
-const API_BASE_URL = 'http://localhost:4000';
+const API_BASE_URL = '/events'; // Use relative path since baseURL is set in api instance
 
 export const eventApi = {
     getAll: async (): Promise<Event[]> => {
-        const response = await axios.get(`${API_BASE_URL}/events`);
+        const response = await api.get(`${API_BASE_URL}`);
         return response.data;
     },
 
     getById: async (id: number): Promise<Event> => {
-        const response = await axios.get(`${API_BASE_URL}/events/${id}`);
+        const response = await api.get(`${API_BASE_URL}/${id}`);
         return response.data;
     },
 
     create: async (event: Omit<Event, 'id'>): Promise<Event> => {
-        const response = await axios.post(`${API_BASE_URL}/events`, event);
+        const response = await api.post(`${API_BASE_URL}`, event);
         return response.data;
     },
 
     update: async (id: number, event: Partial<Event>): Promise<Event> => {
-        const response = await axios.patch(`${API_BASE_URL}/events/${id}`, event);
+        const response = await api.patch(`${API_BASE_URL}/${id}`, event);
         return response.data;
     },
 
     delete: async (id: number): Promise<void> => {
-        await axios.delete(`${API_BASE_URL}/events/${id}`);
+        await api.delete(`${API_BASE_URL}/${id}`);
     }
 };
