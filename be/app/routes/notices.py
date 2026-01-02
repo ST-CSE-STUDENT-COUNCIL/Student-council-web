@@ -83,6 +83,28 @@ async def get_notices(
         main_category_kr = CATEGORY_MAP.get(mainCategory) if mainCategory else None
         sub_category_kr = SUBCATEGORY_MAP.get(subCategory) if subCategory and subCategory != "all" else None
         
+        # 대분류 필터가 있으면 먼저 board_id 찾기
+        board_ids = None
+        if main_category_kr:
+            board_result = supabase.table('boards')\
+                .select('id')\
+                .eq('category', main_category_kr)\
+                .execute()
+            board_ids = [b['id'] for b in board_result.data] if board_result.data else []
+            if not board_ids:
+                # 해당 카테고리의 게시판이 없으면 빈 결과 반환
+                return NoticeListResponse(
+                    notices=[],
+                    pagination=PaginationMeta(
+                        total=0,
+                        page=page,
+                        page_size=page_size,
+                        total_pages=0,
+                        has_next=False,
+                        has_prev=False
+                    )
+                )
+        
         # 쿼리 시작 - boards와 posts 조인
         query = supabase.table('posts')\
             .select('''
@@ -93,14 +115,14 @@ async def get_notices(
                 is_pinned,
                 created_at,
                 updated_at,
-                board:boards!inner(id, name, category),
-                author:users!inner(id, name)
+                board:boards(id, name, category),
+                author:users(id, name)
             ''')\
             .eq('is_deleted', False)
         
-        # 대분류 필터링 (게시판 카테고리)
-        if main_category_kr:
-            query = query.eq('board.category', main_category_kr)
+        # board_id 필터링
+        if board_ids:
+            query = query.in_('board_id', board_ids)
         
         # 소분류 필터링 (게시글 서브카테고리)
         # subCategory='all'이면 필터링 안함
@@ -193,8 +215,8 @@ async def get_notice(
                 is_pinned,
                 created_at,
                 updated_at,
-                board:boards!inner(id, name, category),
-                author:users!inner(id, name),
+                board:boards(id, name, category),
+                author:users(id, name),
                 attachments(id, filename, file_url, file_size, mime_type, created_at)
             ''')\
             .eq('id', notice_id)\
