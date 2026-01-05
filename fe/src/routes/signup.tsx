@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { api } from '../lib/axios'
+import { authApi } from '../lib/api/auth'
 import { isAxiosError } from 'axios'
 
 export const Route = createFileRoute('/signup')({
@@ -39,7 +39,7 @@ function SignUp() {
 
         setIsSendingEmail(true)
         try {
-            await api.post('/auth/send-verification', { email: formData.email })
+            await authApi.sendVerification(formData.email)
             setVerificationStep('sent')
             alert('인증번호가 발송되었습니다. 이메일을 확인해주세요.')
         } catch (error) {
@@ -62,7 +62,7 @@ function SignUp() {
 
         setIsVerifying(true)
         try {
-            await api.post('/auth/verify-email', {
+            await authApi.verifyEmail({
                 email: formData.email,
                 code: verificationCode
             })
@@ -95,7 +95,7 @@ function SignUp() {
         }
 
         try {
-            await api.post('/auth/signup', {
+            await authApi.signup({
                 name: formData.name,
                 student_id: formData.student_id,
                 email: formData.email,

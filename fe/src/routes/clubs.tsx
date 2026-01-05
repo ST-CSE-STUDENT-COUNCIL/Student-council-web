@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
-import { api } from '../lib/axios'
+import { clubApi } from '../lib/api/clubs'
 import { ClubsHeader, CategoryFilter, ClubCard, ClubDetailModal } from '../components/clubs'
-import type { Club } from '../components/clubs/ClubCard'
+import type { Club } from '../types/clubs'
 
 export const Route = createFileRoute('/clubs')({
   component: Clubs,
@@ -17,10 +17,8 @@ function Clubs() {
   React.useEffect(() => {
     async function loadClubs() {
       try {
-        const res = await api.get('/api/clubs', {
-          baseURL: 'http://localhost:4000',
-        })
-        setClubs(res.data)
+        const data = await clubApi.getAll()
+        setClubs(data)
       } catch (error) {
         console.error('Failed to load clubs', error)
       } finally {
