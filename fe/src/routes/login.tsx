@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { api } from '../lib/axios'
 import { isAxiosError } from 'axios'
 import { useAuthStore } from '../store/useAuthStore'
-import type { LoginResponse } from '../types/users'
+import { authApi } from '../lib/api/auth'
+
 
 export const Route = createFileRoute('/login')({
   component: Login,
@@ -19,7 +19,7 @@ function Login() {
     e.preventDefault()
 
     try {
-      const response = await api.post<LoginResponse>('/auth/login', {
+      const response = await authApi.login({
         student_id: studentId,
         password: password
       })

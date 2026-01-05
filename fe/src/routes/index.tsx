@@ -61,9 +61,13 @@ function Index() {
         const fetchData = async () => {
             try {
                 // 병렬 데이터 패칭
-                const [eventsData, noticesData] = await Promise.all([
+                const [eventsData, noticesResponse] = await Promise.all([
                     eventApi.getAll(),
-                    noticeApi.getAll()
+                    noticeApi.getAll({
+                        page: 1,
+                        page_size: 5,
+                        sort: 'newest'
+                    })
                 ])
 
                 // 행사 데이터 처리: 진행중/예정 -> ID 내림차순 정렬 -> 상위 5개
@@ -72,17 +76,8 @@ function Index() {
                     .sort((a, b) => b.id - a.id)
                     .slice(0, 5)
 
-                // 공지사항 데이터 처리: 고정 공지 우선 -> 최신순 정렬 -> 상위 5개
-                const sortedNotices = [...noticesData]
-                    .sort((a, b) => {
-                        // 1. 고정 공지 우선
-                        if (a.is_pinned && !b.is_pinned) return -1
-                        if (!a.is_pinned && b.is_pinned) return 1
-
-                        // 2. 최신순 정렬
-                        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-                    })
-                    .slice(0, 5)
+                // 공지사항 데이터 처리: 이미 서버에서 정렬 및 slicing 완료됨
+                const sortedNotices = noticesResponse.notices
 
                 setEvents(activeEvents)
                 setNotices(sortedNotices)
