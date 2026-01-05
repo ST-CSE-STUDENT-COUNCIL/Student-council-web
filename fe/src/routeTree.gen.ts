@@ -11,14 +11,18 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelfareRouteImport } from './routes/welfare'
 import { Route as SuggestionRouteImport } from './routes/suggestion'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as NoticeRouteImport } from './routes/notice'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as MypageRouteImport } from './routes/mypage'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IntroRouteImport } from './routes/intro'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NoticesIndexRouteImport } from './routes/notices/index'
+import { Route as EventsIndexRouteImport } from './routes/events/index'
+import { Route as NoticesNoticeIdRouteImport } from './routes/notices/$noticeId'
+import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
 
 const WelfareRoute = WelfareRouteImport.update({
   id: '/welfare',
@@ -30,14 +34,14 @@ const SuggestionRoute = SuggestionRouteImport.update({
   path: '/suggestion',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NoticeRoute = NoticeRouteImport.update({
-  id: '/notice',
-  path: '/notice',
+const NoticesRoute = NoticesRouteImport.update({
+  id: '/notices',
+  path: '/notices',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MypageRoute = MypageRouteImport.update({
@@ -70,43 +74,73 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NoticesIndexRoute = NoticesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => NoticesRoute,
+} as any)
+const EventsIndexRoute = EventsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => EventsRoute,
+} as any)
+const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
+  id: '/$noticeId',
+  path: '/$noticeId',
+  getParentRoute: () => NoticesRoute,
+} as any)
+const EventsEventIdRoute = EventsEventIdRouteImport.update({
+  id: '/$eventId',
+  path: '/$eventId',
+  getParentRoute: () => EventsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
-  '/events': typeof EventsRoute
+  '/events': typeof EventsRouteWithChildren
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
-  '/notice': typeof NoticeRoute
-  '/register': typeof RegisterRoute
+  '/notices': typeof NoticesRouteWithChildren
+  '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/events/$eventId': typeof EventsEventIdRoute
+  '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/events/': typeof EventsIndexRoute
+  '/notices/': typeof NoticesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
-  '/events': typeof EventsRoute
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
-  '/notice': typeof NoticeRoute
-  '/register': typeof RegisterRoute
+  '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/events/$eventId': typeof EventsEventIdRoute
+  '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/events': typeof EventsIndexRoute
+  '/notices': typeof NoticesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
-  '/events': typeof EventsRoute
+  '/events': typeof EventsRouteWithChildren
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
-  '/notice': typeof NoticeRoute
-  '/register': typeof RegisterRoute
+  '/notices': typeof NoticesRouteWithChildren
+  '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/events/$eventId': typeof EventsEventIdRoute
+  '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/events/': typeof EventsIndexRoute
+  '/notices/': typeof NoticesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,22 +151,28 @@ export interface FileRouteTypes {
     | '/intro'
     | '/login'
     | '/mypage'
-    | '/notice'
-    | '/register'
+    | '/notices'
+    | '/signup'
     | '/suggestion'
     | '/welfare'
+    | '/events/$eventId'
+    | '/notices/$noticeId'
+    | '/events/'
+    | '/notices/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/clubs'
-    | '/events'
     | '/intro'
     | '/login'
     | '/mypage'
-    | '/notice'
-    | '/register'
+    | '/signup'
     | '/suggestion'
     | '/welfare'
+    | '/events/$eventId'
+    | '/notices/$noticeId'
+    | '/events'
+    | '/notices'
   id:
     | '__root__'
     | '/'
@@ -141,21 +181,25 @@ export interface FileRouteTypes {
     | '/intro'
     | '/login'
     | '/mypage'
-    | '/notice'
-    | '/register'
+    | '/notices'
+    | '/signup'
     | '/suggestion'
     | '/welfare'
+    | '/events/$eventId'
+    | '/notices/$noticeId'
+    | '/events/'
+    | '/notices/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClubsRoute: typeof ClubsRoute
-  EventsRoute: typeof EventsRoute
+  EventsRoute: typeof EventsRouteWithChildren
   IntroRoute: typeof IntroRoute
   LoginRoute: typeof LoginRoute
   MypageRoute: typeof MypageRoute
-  NoticeRoute: typeof NoticeRoute
-  RegisterRoute: typeof RegisterRoute
+  NoticesRoute: typeof NoticesRouteWithChildren
+  SignupRoute: typeof SignupRoute
   SuggestionRoute: typeof SuggestionRoute
   WelfareRoute: typeof WelfareRoute
 }
@@ -176,18 +220,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuggestionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/notice': {
-      id: '/notice'
-      path: '/notice'
-      fullPath: '/notice'
-      preLoaderRoute: typeof NoticeRouteImport
+    '/notices': {
+      id: '/notices'
+      path: '/notices'
+      fullPath: '/notices'
+      preLoaderRoute: typeof NoticesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mypage': {
@@ -232,18 +276,72 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notices/': {
+      id: '/notices/'
+      path: '/'
+      fullPath: '/notices/'
+      preLoaderRoute: typeof NoticesIndexRouteImport
+      parentRoute: typeof NoticesRoute
+    }
+    '/events/': {
+      id: '/events/'
+      path: '/'
+      fullPath: '/events/'
+      preLoaderRoute: typeof EventsIndexRouteImport
+      parentRoute: typeof EventsRoute
+    }
+    '/notices/$noticeId': {
+      id: '/notices/$noticeId'
+      path: '/$noticeId'
+      fullPath: '/notices/$noticeId'
+      preLoaderRoute: typeof NoticesNoticeIdRouteImport
+      parentRoute: typeof NoticesRoute
+    }
+    '/events/$eventId': {
+      id: '/events/$eventId'
+      path: '/$eventId'
+      fullPath: '/events/$eventId'
+      preLoaderRoute: typeof EventsEventIdRouteImport
+      parentRoute: typeof EventsRoute
+    }
   }
 }
+
+interface EventsRouteChildren {
+  EventsEventIdRoute: typeof EventsEventIdRoute
+  EventsIndexRoute: typeof EventsIndexRoute
+}
+
+const EventsRouteChildren: EventsRouteChildren = {
+  EventsEventIdRoute: EventsEventIdRoute,
+  EventsIndexRoute: EventsIndexRoute,
+}
+
+const EventsRouteWithChildren =
+  EventsRoute._addFileChildren(EventsRouteChildren)
+
+interface NoticesRouteChildren {
+  NoticesNoticeIdRoute: typeof NoticesNoticeIdRoute
+  NoticesIndexRoute: typeof NoticesIndexRoute
+}
+
+const NoticesRouteChildren: NoticesRouteChildren = {
+  NoticesNoticeIdRoute: NoticesNoticeIdRoute,
+  NoticesIndexRoute: NoticesIndexRoute,
+}
+
+const NoticesRouteWithChildren =
+  NoticesRoute._addFileChildren(NoticesRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClubsRoute: ClubsRoute,
-  EventsRoute: EventsRoute,
+  EventsRoute: EventsRouteWithChildren,
   IntroRoute: IntroRoute,
   LoginRoute: LoginRoute,
   MypageRoute: MypageRoute,
-  NoticeRoute: NoticeRoute,
-  RegisterRoute: RegisterRoute,
+  NoticesRoute: NoticesRouteWithChildren,
+  SignupRoute: SignupRoute,
   SuggestionRoute: SuggestionRoute,
   WelfareRoute: WelfareRoute,
 }

@@ -1,7 +1,7 @@
 import React from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAuthStore } from '../store/useAuthStore'
-import { api } from '../lib/axios'
+import { welfareApi } from '../lib/api/welfare'
 import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, InfoCard, VerifyModal } from '../components/mypage'
 
 export const Route = createFileRoute('/mypage')({
@@ -23,43 +23,31 @@ function MyPage() {
 
     async function loadWelfare() {
       try {
-        const baseURL = 'http://localhost:4000'
-
-        const [requestsRes, rentalsRes, lockerRentalsRes, lockerPeriodsRes] = await Promise.all([
-          api.get('/api/welfare_rental_requests', {
-            baseURL,
-            params: { user_id: userId },
-            signal: controller.signal,
-          }),
-          api.get('/api/welfare_rentals', { baseURL, signal: controller.signal }),
-          api.get('/api/locker_rentals', {
-            baseURL,
-            params: { user_id: userId },
-            signal: controller.signal,
-          }),
-          api.get('/api/locker_periods', { baseURL, signal: controller.signal }),
+        const [requests, rentals, lockers, periods] = await Promise.all([
+          welfareApi.getRentalRequests(userId),
+          welfareApi.getRentalItems(),
+          welfareApi.getLockerRentals(userId),
+          welfareApi.getLockerPeriods(),
         ])
 
         const rentalsMap = new Map<number, { item_name?: string }>()
-        rentalsRes.data.forEach((r: { id: number; item_name?: string }) => rentalsMap.set(r.id, r))
+        rentals.forEach((r) => rentalsMap.set(r.id, r))
 
-        const borrowed = (requestsRes.data as Array<{ rental_id: number; rental_end_date: string }>)
-          .map((req) => {
-            const rental = rentalsMap.get(req.rental_id)
-            return {
-              name: rental?.item_name || '알 수 없는 물품',
-              returnDate: req.rental_end_date,
-            }
-          })
+        const borrowed = requests.map((req) => {
+          const rental = rentalsMap.get(req.rental_id)
+          return {
+            name: rental?.item_name || '알 수 없는 물품',
+            returnDate: req.rental_end_date,
+          }
+        })
 
         setBorrowedItems(borrowed)
 
-        const locker = (lockerRentalsRes.data as Array<{ locker_number: number; period_id?: number }>)[0]
+        const locker = lockers[0]
         if (locker) {
           setLockerLocation(`미래관 3층 ${locker.locker_number}번`)
 
-          const period = (lockerPeriodsRes.data as Array<{ id: number; usage_start: string; usage_end: string }>)
-            .find((p) => p.id === locker.period_id)
+          const period = periods.find((p) => p.id === locker.period_id)
           if (period) {
             setLockerPeriod(`${formatDate(period.usage_start)} ~ ${formatDate(period.usage_end)}`)
           }
@@ -116,10 +104,10 @@ function MyPage() {
     returnPeriod:
       borrowedItems.length > 0
         ? `${formatDate(
-            borrowedItems.reduce((acc, cur) => (cur.returnDate < acc ? cur.returnDate : acc), borrowedItems[0].returnDate),
-          )} ~ ${formatDate(
-            borrowedItems.reduce((acc, cur) => (cur.returnDate > acc ? cur.returnDate : acc), borrowedItems[0].returnDate),
-          )}`
+          borrowedItems.reduce((acc, cur) => (cur.returnDate < acc ? cur.returnDate : acc), borrowedItems[0].returnDate),
+        )} ~ ${formatDate(
+          borrowedItems.reduce((acc, cur) => (cur.returnDate > acc ? cur.returnDate : acc), borrowedItems[0].returnDate),
+        )}`
         : '',
     borrowedItems,
     lockerLocation,
@@ -129,8 +117,8 @@ function MyPage() {
       user.verification_status === 'pending'
         ? '가입 인증 대기'
         : user.verification_status === 'approved'
-        ? '가입 인증 완료'
-        : '미인증',
+          ? '가입 인증 완료'
+          : '미인증',
   }
 
   const sidebarItems = [
@@ -196,11 +184,10 @@ function MyPage() {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as typeof activeTab)}
-                className={`w-full px-4 py-3 text-left font-medium text-sm transition ${
-                  activeTab === item.id
-                    ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
+                className={`w-full px-4 py-3 text-left font-medium text-sm transition ${activeTab === item.id
+                  ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
+                  : 'text-gray-700 hover:bg-gray-50'
+                  }`}
               >
                 {item.label}
               </button>
@@ -352,8 +339,6 @@ function MyPage() {
                     />
                   )}
                 </div>
-
-
               </div>
             </section>
           )}

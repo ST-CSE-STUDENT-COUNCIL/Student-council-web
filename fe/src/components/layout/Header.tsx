@@ -55,7 +55,7 @@ export default function Header() {
                                 로그인
                             </Link>
                             <Link
-                                to="/register"
+                                to="/signup"
                                 className="text-gray-600 hover:text-black transition-colors"
                             >
                                 회원가입

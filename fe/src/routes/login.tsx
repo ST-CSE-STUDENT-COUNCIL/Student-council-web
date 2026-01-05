@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { api } from '../lib/axios'
 import { isAxiosError } from 'axios'
 import { useAuthStore } from '../store/useAuthStore'
+import { authApi } from '../lib/api/auth'
+
 
 export const Route = createFileRoute('/login')({
   component: Login,
@@ -18,12 +19,12 @@ function Login() {
     e.preventDefault()
 
     try {
-      const response = await api.post('/api/auth/login', {
-        studentId,
-        password
+      const response = await authApi.login({
+        student_id: studentId,
+        password: password
       })
 
-      login(response.data.user, response.data.accessToken)
+      login(response.data.user, response.data.access_token)
       navigate({ to: '/' })
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 401) {
@@ -80,7 +81,7 @@ function Login() {
           </div>
 
           <div className="text-center text-sm">
-            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500">
               계정이 없으신가요? 회원가입
             </Link>
           </div>
