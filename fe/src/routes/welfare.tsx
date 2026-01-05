@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 import { CategoryFilter, RentalCard } from '../components/welfare'
-import { welfareApi, type WelfareRental } from '../lib/api/welfare'
+import { welfareApi, type WelfareRental, type LockerPeriod } from '../lib/api/welfare'
 
 export const Route = createFileRoute('/welfare')({
   component: Welfare,
@@ -12,6 +12,7 @@ function Welfare() {
   const [rentalItems, setRentalItems] = React.useState<WelfareRental[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
+  const [lockerPeriod, setLockerPeriod] = React.useState<LockerPeriod | null>(null)
   const rentalRedirectUrl = 'https://www.google.com/?hl=ko'//이곳에 링크를 넣으면 됩니다
   const today = new Date().toISOString().split('T')[0]
   const lockerDeadline = (() => {
@@ -31,13 +32,37 @@ function Welfare() {
   const isReturnActive = isLockerPeriodActive
   const disabledClass = 'border-gray-200 opacity-60 cursor-not-allowed hover:-translate-y-0 hover:shadow-none'
 
+  // 테스트 데이터: 사물함 기간 (나중에 API로 대체할 예정)
+  const testLockerPeriods: LockerPeriod[] = [
+    {
+      id: 1,
+      name: '2026년 1학기 사물함',
+      rental_start: '2026-01-05',
+      rental_end: '2026-01-12',
+      return_start: '2026-05-26',
+      return_end: '2026-06-02',
+      created_at: '2026-01-01',
+      updated_at: '2026-01-01'
+    }
+  ]
+
+  // 사물함 대여/반납 기간 계산
+  const rentalPeriodLabel = lockerPeriod ? `${lockerPeriod.rental_start.slice(5)} ~ ${lockerPeriod.rental_end.slice(5)}` : periodLabel
+  const returnPeriodLabel = lockerPeriod ? `${lockerPeriod.return_start.slice(5)} ~ ${lockerPeriod.return_end.slice(5)}` : periodLabel
+
   const fetchRentals = React.useCallback(async () => {
     try {
       setLoading(true)
-      const data = await welfareApi.getRentals()
-      setRentalItems(data)
+      const rentals = await welfareApi.getRentals()
+      
+      // 테스트: 현재 진행 중인 기간 찾기
+      const current = new Date().toISOString().split('T')[0]
+      const currentPeriod = testLockerPeriods.find(p => p.rental_start <= current && current <= p.rental_end) || null
+      
+      setRentalItems(rentals)
+      setLockerPeriod(currentPeriod)
     } catch (err) {
-      console.error('대여사업 데이터 로드 실패:', err)
+      console.error('복지사업 데이터 로드 실패:', err)
       setError('데이터를 불러올 수 없습니다.')
     } finally {
       setLoading(false)
@@ -103,7 +128,7 @@ function Welfare() {
                   <div className={`mt-1 h-8 w-1.5 rounded-full ${isRentalActive ? 'bg-blue-500' : 'bg-gray-300'}`} aria-hidden />
                   <div className="flex-1">
                     <div className="text-sm font-semibold text-gray-900">사물함 대여 신청</div>
-                    <div className="text-[11px] text-gray-400">{periodLabel}</div>
+                    <div className="text-[11px] text-gray-400">{rentalPeriodLabel}</div>
                   </div>
                 </button>
                 <button
@@ -114,7 +139,7 @@ function Welfare() {
                   <div className={`mt-1 h-8 w-1.5 rounded-full ${isExtendActive ? 'bg-amber-500' : 'bg-gray-300'}`} aria-hidden />
                   <div className="flex-1">
                     <div className="text-sm font-semibold text-gray-900">사물함 연장 신청</div>
-                    <div className="text-[11px] text-gray-400">{periodLabel}</div>
+                    <div className="text-[11px] text-gray-400">{returnPeriodLabel}</div>
                   </div>
                 </button>
                 <button
@@ -125,7 +150,7 @@ function Welfare() {
                   <div className={`mt-1 h-8 w-1.5 rounded-full ${isReturnActive ? 'bg-red-500' : 'bg-gray-300'}`} aria-hidden />
                   <div className="flex-1">
                     <div className="text-sm font-semibold text-gray-900">사물함 반납 신청</div>
-                    <div className="text-[11px] text-gray-400">{periodLabel}</div>
+                    <div className="text-[11px] text-gray-400">{returnPeriodLabel}</div>
                   </div>
                 </button>
               </div>

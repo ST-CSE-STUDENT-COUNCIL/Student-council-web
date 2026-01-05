@@ -28,6 +28,17 @@ export interface RentalRequestPayload {
     updated_at: string;
 }
 
+export interface LockerPeriod {
+    id: number;
+    name: string;
+    rental_start: string;
+    rental_end: string;
+    return_start: string;
+    return_end: string;
+    created_at: string;
+    updated_at: string;
+}
+
 export const welfareApi = {
     getRentals: async (): Promise<WelfareRental[]> => {
         const response = await axios.get(`${API_BASE_URL}/welfare_rentals`);
