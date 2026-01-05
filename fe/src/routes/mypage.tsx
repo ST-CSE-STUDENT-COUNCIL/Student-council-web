@@ -15,7 +15,6 @@ function MyPage() {
   const [borrowedItems, setBorrowedItems] = React.useState<{ name: string; returnDate: string }[]>([])
   const [lockerLocation, setLockerLocation] = React.useState('')
   const [lockerPeriod, setLockerPeriod] = React.useState('')
-
   React.useEffect(() => {
     if (!user) return
     const userId = user.id
@@ -338,24 +337,6 @@ function MyPage() {
                       title="학생 가입 인증"
                       value={welfareInfo.verificationStatus}
                     />
-                  )}
-                </div>
-
-                <div className="border border-gray-100 rounded-xl p-4">
-                  <h3 className="text-sm text-gray-500 mb-3">대여 중인 물품</h3>
-                  {welfareInfo.borrowedItems.length > 0 ? (
-                    <div className="space-y-2">
-                      {[...welfareInfo.borrowedItems]
-                        .sort((a, b) => new Date(a.returnDate).getTime() - new Date(b.returnDate).getTime())
-                        .map((item, index) => (
-                          <div key={index} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-md">
-                            <span className="text-sm font-medium text-gray-900">{item.name}</span>
-                            <span className="text-xs text-gray-500">반납일: {item.returnDate}</span>
-                          </div>
-                        ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-400 text-center py-2">대여 중인 물품이 없습니다</p>
                   )}
                 </div>
               </div>
