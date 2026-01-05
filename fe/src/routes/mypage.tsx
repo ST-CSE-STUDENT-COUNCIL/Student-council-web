@@ -15,7 +15,6 @@ function MyPage() {
   const [borrowedItems, setBorrowedItems] = React.useState<{ name: string; returnDate: string }[]>([])
   const [lockerLocation, setLockerLocation] = React.useState('')
   const [lockerPeriod, setLockerPeriod] = React.useState('')
-
   React.useEffect(() => {
     if (!user) return
     const userId = user.id
