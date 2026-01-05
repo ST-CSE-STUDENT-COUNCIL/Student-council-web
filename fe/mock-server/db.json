@@ -621,7 +621,7 @@
       "category": "우산",
       "description": "일반 장우산",
       "quantity": 20,
-      "available_quantity": 18,
+      "available_quantity": 17,
       "image_url": "https://i.postimg.cc/90KMY7WC/SNC14917.jpg",
       "rental_period_days": 7,
       "is_active": true,
@@ -738,6 +738,20 @@
       "approved_at": "2025-01-29T09:00:00Z",
       "created_at": "2025-01-29",
       "updated_at": "2025-01-29"
+    },
+    {
+      "id": 6,
+      "rental_id": 2,
+      "user_id": "2",
+      "status": "pending",
+      "rental_start_date": "2026-01-04",
+      "rental_end_date": "2026-01-11",
+      "actual_return_date": null,
+      "notes": null,
+      "approved_by": null,
+      "approved_at": null,
+      "created_at": "2026-01-04T05:25:40.922Z",
+      "updated_at": "2026-01-04T05:25:40.922Z"
     }
   ],
   "locker_periods": [
