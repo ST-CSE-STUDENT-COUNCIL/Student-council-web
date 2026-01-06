@@ -762,9 +762,25 @@
       "application_end": "2025-02-10T23:59:59Z",
       "usage_start": "2025-03-02",
       "usage_end": "2025-06-30",
-      "is_active": true,
+      "is_active": false,
       "created_at": "2025-01-10",
       "updated_at": "2025-01-20"
+    },
+    {
+      "id": 2,
+      "name": "2026년 1학기 사물함",
+      "period_name": "2026년 1학기",
+      "rental_start": "2026-01-05",
+      "rental_end": "2026-01-12",
+      "return_start": "2026-05-26",
+      "return_end": "2026-06-02",
+      "application_start": "2026-01-05",
+      "application_end": "2026-01-12",
+      "usage_start": "2026-01-05",
+      "usage_end": "2026-06-02",
+      "is_active": true,
+      "created_at": "2026-01-01",
+      "updated_at": "2026-01-01"
     }
   ],
   "welfare_lockers": [

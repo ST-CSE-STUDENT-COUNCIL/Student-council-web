@@ -30,11 +30,17 @@ export interface RentalRequestPayload {
 
 export interface LockerPeriod {
     id: number;
-    name: string;
-    rental_start: string;
-    rental_end: string;
-    return_start: string;
-    return_end: string;
+    name?: string;
+    period_name?: string;
+    rental_start?: string;
+    rental_end?: string;
+    return_start?: string;
+    return_end?: string;
+    application_start?: string;
+    application_end?: string;
+    usage_start?: string;
+    usage_end?: string;
+    is_active?: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -42,6 +48,11 @@ export interface LockerPeriod {
 export const welfareApi = {
     getRentals: async (): Promise<WelfareRental[]> => {
         const response = await axios.get(`${API_BASE_URL}/welfare_rentals`);
+        return response.data;
+    },
+
+    getLockerPeriods: async (): Promise<LockerPeriod[]> => {
+        const response = await axios.get(`${API_BASE_URL}/locker_periods`);
         return response.data;
     },
 

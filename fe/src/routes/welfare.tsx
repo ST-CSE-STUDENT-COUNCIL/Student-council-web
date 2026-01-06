@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
-import { CategoryFilter, RentalCard } from '../components/welfare'
+import { CategoryFilter, LockerActions, RentalCard } from '../components/welfare'
 import { welfareApi, type WelfareRental, type LockerPeriod } from '../lib/api/welfare'
 
 export const Route = createFileRoute('/welfare')({
@@ -14,51 +14,62 @@ function Welfare() {
   const [error, setError] = React.useState<string | null>(null)
   const [lockerPeriod, setLockerPeriod] = React.useState<LockerPeriod | null>(null)
   const rentalRedirectUrl = 'https://www.google.com/?hl=ko'//이곳에 링크를 넣으면 됩니다
-  const today = new Date().toISOString().split('T')[0]
-  const lockerDeadline = (() => {
+  const lockerRentalUrl = 'https://example.com/locker/rental' // 사물함 대여 신청 링크
+  const lockerExtendUrl = 'https://example.com/locker/extend' // 사물함 연장 신청 링크
+  const lockerReturnUrl = 'https://example.com/locker/return' // 사물함 반납 신청 링크
+  const today = React.useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const lockerDeadline = React.useMemo(() => {
     const d = new Date()
     d.setDate(d.getDate() + 7)
-    return d.toISOString().split('T')[0]
-  })()
+    return d.toISOString().slice(0, 10)
+  }, [])
   const displayToday = today.slice(5)
   const displayDeadline = lockerDeadline.slice(5)
   const periodLabel = `${displayToday} ~ ${displayDeadline}`
-  const isLockerPeriodActive = (() => {
-    const current = new Date().toISOString().split('T')[0]
-    return current >= today && current <= lockerDeadline
-  })()
-  const isRentalActive = isLockerPeriodActive
-  const isExtendActive = isLockerPeriodActive
-  const isReturnActive = isLockerPeriodActive
   const disabledClass = 'border-gray-200 opacity-60 cursor-not-allowed hover:-translate-y-0 hover:shadow-none'
 
-  // 테스트 데이터: 사물함 기간 (나중에 API로 대체할 예정)
-  const testLockerPeriods: LockerPeriod[] = [
-    {
-      id: 1,
-      name: '2026년 1학기 사물함',
-      rental_start: '2026-01-05',
-      rental_end: '2026-01-12',
-      return_start: '2026-05-26',
-      return_end: '2026-06-02',
-      created_at: '2026-01-01',
-      updated_at: '2026-01-01'
-    }
-  ]
+  const { lockerStart, lockerEnd, lockerReturnStart, lockerReturnEnd } = React.useMemo(() => {
+    const start = lockerPeriod?.rental_start || lockerPeriod?.application_start || lockerPeriod?.usage_start || null
+    const end = lockerPeriod?.rental_end || lockerPeriod?.application_end || lockerPeriod?.usage_end || null
+    const returnStart = lockerPeriod?.return_start || start
+    const returnEnd = lockerPeriod?.return_end || end
+    return { lockerStart: start, lockerEnd: end, lockerReturnStart: returnStart, lockerReturnEnd: returnEnd }
+  }, [lockerPeriod])
 
-  // 사물함 대여/반납 기간 계산
-  const rentalPeriodLabel = lockerPeriod ? `${lockerPeriod.rental_start.slice(5)} ~ ${lockerPeriod.rental_end.slice(5)}` : periodLabel
-  const returnPeriodLabel = lockerPeriod ? `${lockerPeriod.return_start.slice(5)} ~ ${lockerPeriod.return_end.slice(5)}` : periodLabel
+  const isWithinRange = (date: string, start?: string | null, end?: string | null) => {
+    if (!start || !end) return false
+    return date >= start.slice(0, 10) && date <= end.slice(0, 10)
+  }
+
+  const isLockerPeriodActive = isWithinRange(today, lockerStart, lockerEnd)
+  const isReturnWindow = isWithinRange(today, lockerReturnStart, lockerReturnEnd)
+  const isRentalActive = isLockerPeriodActive
+  const isExtendActive = isReturnWindow
+  const isReturnActive = isReturnWindow
+
+  const rentalPeriodLabel = lockerStart && lockerEnd
+    ? `${lockerStart.slice(5)} ~ ${lockerEnd.slice(5)}`
+    : periodLabel
+  const returnPeriodLabel = lockerReturnStart && lockerReturnEnd
+    ? `${lockerReturnStart.slice(5)} ~ ${lockerReturnEnd.slice(5)}`
+    : periodLabel
 
   const fetchRentals = React.useCallback(async () => {
     try {
       setLoading(true)
-      const rentals = await welfareApi.getRentals()
-      
-      // 테스트: 현재 진행 중인 기간 찾기
-      const current = new Date().toISOString().split('T')[0]
-      const currentPeriod = testLockerPeriods.find(p => p.rental_start <= current && current <= p.rental_end) || null
-      
+      const [rentals, lockerPeriods] = await Promise.all([
+        welfareApi.getRentals(),
+        welfareApi.getLockerPeriods()
+      ])
+
+      const current = today
+      const currentPeriod = lockerPeriods.find(period => {
+        const start = (period.rental_start || period.application_start || period.usage_start || '').slice(0, 10)
+        const end = (period.rental_end || period.application_end || period.usage_end || '').slice(0, 10)
+        if (!start || !end) return false
+        return current >= start && current <= end
+      }) || null
+
       setRentalItems(rentals)
       setLockerPeriod(currentPeriod)
     } catch (err) {
@@ -67,15 +78,32 @@ function Welfare() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [today])
 
   React.useEffect(() => {
     fetchRentals()
   }, [fetchRentals])
 
-  const handleRentalRedirect = () => {
+  const navigateIfActive = React.useCallback((active: boolean, url: string) => {
+    if (!active) return
+    window.location.href = url
+  }, [])
+
+  const handleRentalRedirect = React.useCallback(() => {
     window.location.href = rentalRedirectUrl
-  }
+  }, [])
+
+  const handleLockerRentalRedirect = React.useCallback(() => {
+    navigateIfActive(isRentalActive, lockerRentalUrl)
+  }, [navigateIfActive, isRentalActive, lockerRentalUrl])
+
+  const handleLockerExtendRedirect = React.useCallback(() => {
+    navigateIfActive(isExtendActive, lockerExtendUrl)
+  }, [navigateIfActive, isExtendActive, lockerExtendUrl])
+
+  const handleLockerReturnRedirect = React.useCallback(() => {
+    navigateIfActive(isReturnActive, lockerReturnUrl)
+  }, [navigateIfActive, isReturnActive, lockerReturnUrl])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -117,43 +145,19 @@ function Welfare() {
             <div className="flex items-start justify-between gap-6 flex-col lg:flex-row lg:items-center">
               <div>
                 <h2 className="text-2xl font-bold mb-2">사물함</h2>
-                <p className="text-gray-600">사물함 대여/연장/반납을 선택하세요.</p>
+                <p className="text-gray-600">사물함 대여/연장/반납을 신청하세요.</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto">
-                <button
-                  className={`flex w-full items-start gap-3 rounded-lg border bg-white px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow ${isRentalActive ? 'border-blue-100 hover:border-blue-300' : disabledClass}`}
-                  disabled={!isRentalActive}
-                  aria-disabled={!isRentalActive}
-                >
-                  <div className={`mt-1 h-8 w-1.5 rounded-full ${isRentalActive ? 'bg-blue-500' : 'bg-gray-300'}`} aria-hidden />
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold text-gray-900">사물함 대여 신청</div>
-                    <div className="text-[11px] text-gray-400">{rentalPeriodLabel}</div>
-                  </div>
-                </button>
-                <button
-                  className={`flex w-full items-start gap-3 rounded-lg border bg-white px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow ${isExtendActive ? 'border-amber-100 hover:border-amber-300' : disabledClass}`}
-                  disabled={!isExtendActive}
-                  aria-disabled={!isExtendActive}
-                >
-                  <div className={`mt-1 h-8 w-1.5 rounded-full ${isExtendActive ? 'bg-amber-500' : 'bg-gray-300'}`} aria-hidden />
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold text-gray-900">사물함 연장 신청</div>
-                    <div className="text-[11px] text-gray-400">{returnPeriodLabel}</div>
-                  </div>
-                </button>
-                <button
-                  className={`flex w-full items-start gap-3 rounded-lg border bg-white px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow ${isReturnActive ? 'border-red-100 hover:border-red-300' : disabledClass}`}
-                  disabled={!isReturnActive}
-                  aria-disabled={!isReturnActive}
-                >
-                  <div className={`mt-1 h-8 w-1.5 rounded-full ${isReturnActive ? 'bg-red-500' : 'bg-gray-300'}`} aria-hidden />
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold text-gray-900">사물함 반납 신청</div>
-                    <div className="text-[11px] text-gray-400">{returnPeriodLabel}</div>
-                  </div>
-                </button>
-              </div>
+              <LockerActions
+                rentalPeriodLabel={rentalPeriodLabel}
+                returnPeriodLabel={returnPeriodLabel}
+                isRentalActive={isRentalActive}
+                isExtendActive={isExtendActive}
+                isReturnActive={isReturnActive}
+                disabledClass={disabledClass}
+                onRentalClick={handleLockerRentalRedirect}
+                onExtendClick={handleLockerExtendRedirect}
+                onReturnClick={handleLockerReturnRedirect}
+              />
             </div>
 
             <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
