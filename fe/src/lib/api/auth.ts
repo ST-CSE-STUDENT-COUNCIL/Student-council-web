@@ -36,5 +36,10 @@ export const authApi = {
     verifyEmail: async (data: { email: string; code: string }) => {
         const response = await api.post<VerifyEmailResponse>(`${API_BASE_URL}/verify-email`, data)
         return response.data
+    },
+
+    resetPassword: async (data: { email: string; new_password: string }) => {
+        const response = await api.post<{ message: string }>(`${API_BASE_URL}/reset-password`, data)
+        return response.data
     }
 }

@@ -17,7 +17,6 @@ import {
     Flag,
     Phone,
     GraduationCap,
-    Clock,
     Laptop,
     Instagram
 } from 'lucide-react'
@@ -32,16 +31,16 @@ export const Route = createFileRoute('/')({
 })
 
 const PORTALS = [
-    { name: '학교 홈페이지', icon: School, url: 'https://www.seoultech.ac.kr/index.jsp', color: 'bg-blue-50 text-blue-600' },
-    { name: '학과 홈페이지', icon: Laptop, url: 'https://computer.seoultech.ac.kr/', color: 'bg-slate-50 text-slate-600' },
-    { name: 'SUIS', icon: MonitorCheck, url: 'https://suis.seoultech.ac.kr/nxui/index.html', color: 'bg-cyan-50 text-cyan-600' },
-    { name: 'E-Class', icon: MonitorPlay, url: 'https://eclass.seoultech.ac.kr/ilos/main/main_form.acl', color: 'bg-cyan-50 text-cyan-600' },
-    { name: '학생포탈', icon: GraduationCap, url: 'https://stportal.seoultech.ac.kr/', color: 'bg-indigo-50 text-indigo-600' },
-    { name: '도서관', icon: BookOpen, url: 'https://library.seoultech.ac.kr/#/', color: 'bg-emerald-50 text-emerald-600' },
-    { name: '생활관', icon: Building, url: 'https://domi.seoultech.ac.kr/', color: 'bg-orange-50 text-orange-600' },
-    { name: '총학생회', icon: Flag, url: 'https://gwack2.seoultech.ac.kr/', color: 'bg-red-50 text-red-600' },
-    { name: '교내연락', icon: Phone, url: 'https://www.seoultech.ac.kr/intro/campinfo/interph/', color: 'bg-green-50 text-green-600' },
-    { name: '인스타그램', icon: Instagram, url: 'https://www.instagram.com/seoultech_com/', color: 'bg-pink-50 text-pink-600' },
+    { name: '학교 홈페이지', icon: School, url: 'https://www.seoultech.ac.kr/index.jsp', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { name: '학과 홈페이지', icon: Laptop, url: 'https://computer.seoultech.ac.kr/', color: 'text-slate-600', bg: 'bg-slate-50' },
+    { name: 'SUIS', icon: MonitorCheck, url: 'https://suis.seoultech.ac.kr/nxui/index.html', color: 'text-cyan-600', bg: 'bg-cyan-50' },
+    { name: 'E-Class', icon: MonitorPlay, url: 'https://eclass.seoultech.ac.kr/ilos/main/main_form.acl', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { name: '학생포탈', icon: GraduationCap, url: 'https://stportal.seoultech.ac.kr/', color: 'text-violet-600', bg: 'bg-violet-50' },
+    { name: '도서관', icon: BookOpen, url: 'https://library.seoultech.ac.kr/#/', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { name: '생활관', icon: Building, url: 'https://domi.seoultech.ac.kr/', color: 'text-orange-600', bg: 'bg-orange-50' },
+    { name: '총학생회', icon: Flag, url: 'https://gwack2.seoultech.ac.kr/', color: 'text-rose-600', bg: 'bg-rose-50' },
+    { name: '교내연락', icon: Phone, url: 'https://www.seoultech.ac.kr/intro/campinfo/interph/', color: 'text-green-600', bg: 'bg-green-50' },
+    { name: '인스타그램', icon: Instagram, url: 'https://www.instagram.com/seoultech_com/', color: 'text-pink-600', bg: 'bg-pink-50' },
 ]
 
 const getSubCategoryLabel = (_main: string, sub: string) => {
@@ -60,27 +59,18 @@ function Index() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // 병렬 데이터 패칭
                 const [eventsData, noticesResponse] = await Promise.all([
                     eventApi.getAll(),
-                    noticeApi.getAll({
-                        page: 1,
-                        page_size: 5,
-                        sort: 'newest'
-                    })
+                    noticeApi.getAll({ page: 1, page_size: 5, sort: 'newest' })
                 ])
 
-                // 행사 데이터 처리: 진행중/예정 -> ID 내림차순 정렬 -> 상위 5개
                 const activeEvents = eventsData
                     .filter(e => e.status === 'active' || e.status === 'scheduled')
                     .sort((a, b) => b.id - a.id)
                     .slice(0, 5)
 
-                // 공지사항 데이터 처리: 이미 서버에서 정렬 및 slicing 완료됨
-                const sortedNotices = noticesResponse.notices
-
                 setEvents(activeEvents)
-                setNotices(sortedNotices)
+                setNotices(noticesResponse.notices)
             } catch (error) {
                 console.error('Failed to fetch data', error)
             } finally {
@@ -91,162 +81,167 @@ function Index() {
     }, [])
 
     if (loading) return (
-        <div className="flex items-center justify-center min-h-screen text-gray-500">
-            데이터 불러오는중...
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-500 font-medium">데이터를 불러오고 있습니다...</p>
         </div>
     )
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
-            {/* 1. 바로가기 섹션 */}
-            <section className="bg-white px-5 pt-8 pb-10 rounded-b-[2.5rem] shadow-sm mb-10 transition-all duration-500 ease-in-out">
-                <div className="max-w-4xl mx-auto">
-                    {/* 환영 인사 헤더 */}
-                    <div className="mb-8 px-1">
-                        <h1 className="text-2xl font-extrabold text-gray-900 mb-1 tracking-tight">안녕하세요, 학우님! 👋</h1>
-                        <p className="text-sm text-gray-500 font-medium">오늘도 즐거운 학교 생활 되세요.</p>
-                    </div>
+        <div className="pb-20 space-y-12">
+            {/* 1. Hero Section */}
+            <section className="relative bg-slate-50 pt-20 pb-32 overflow-hidden -mt-16 sm:-mt-20">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/40 to-indigo-100/40 z-10" />
+                <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" />
+                <div className="absolute top-1/2 right-0 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000" />
 
-                    <div className="grid grid-cols-5 gap-y-6 gap-x-2">
+                <div className="container mx-auto px-6 pt-20 relative z-20 text-center">
+                    <p className="text-slate-700 text-lg max-w-2xl mx-auto leading-relaxed font-medium">
+                        서울과학기술대학교 컴퓨터공학과 홈페이지입니다. <br className="hidden sm:block" />
+                        행사신청, 공지사항, 학과소식, 학생회 정보 등을 확인할 수 있습니다.
+                    </p>
+                </div>
+            </section>
+
+            <div className="container mx-auto px-4 -mt-24 relative z-30">
+                {/* 2. Shortcuts Grid */}
+                <div className="bg-white rounded-2xl shadow-lg p-5 mb-8 border border-gray-100 max-w-5xl mx-auto">
+                    <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2 px-1">
+                        자주 찾는 서비스
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         {PORTALS.map((portal) => (
                             <a
                                 key={portal.name}
                                 href={portal.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex flex-col items-center gap-2 group cursor-pointer"
+                                className="group flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-100"
                             >
-                                <div className={`p-3.5 rounded-2xl ${portal.color} transition-all duration-300 group-hover:scale-110 group-hover:shadow-md ring-1 ring-inset ring-black/5`}>
-                                    <portal.icon size={24} strokeWidth={1.5} />
+                                <div className={`p-2 rounded-lg ${portal.bg} ${portal.color} transition-transform duration-200 group-hover:scale-110 shadow-sm`}>
+                                    <portal.icon size={18} strokeWidth={2} />
                                 </div>
-                                <span className="text-[11px] font-medium text-gray-600 group-hover:text-gray-900 text-center tracking-tight">{portal.name}</span>
+                                <span className="text-sm font-semibold text-gray-600 group-hover:text-gray-900">
+                                    {portal.name}
+                                </span>
                             </a>
                         ))}
                     </div>
                 </div>
-            </section>
 
-            {/* 2. 주요 행사 / 이벤트 슬라이더 섹션 */}
-            <section className="px-4 mb-12 max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-                        <h2 className="text-xl font-bold text-gray-900">지금 주목할 행사</h2>
-                    </div>
-                    <Link
-                        to="/events"
-                        className="text-xs font-medium text-gray-500 flex items-center gap-1 hover:text-blue-600 transition-colors bg-gray-100 px-3 py-1.5 rounded-full"
-                    >
-                        전체보기 <ChevronRight size={14} />
-                    </Link>
-                </div>
-
-                <div className="relative group">
-                    <Swiper
-                        modules={[Autoplay, Pagination, Navigation]}
-                        navigation={{
-                            nextEl: '.swiper-button-next-custom',
-                            prevEl: '.swiper-button-prev-custom',
-                        }}
-                        pagination={{
-                            clickable: true,
-                            dynamicBullets: true
-                        }}
-                        autoplay={{
-                            delay: 5000,
-                            disableOnInteraction: false,
-                        }}
-                        spaceBetween={20}
-                        slidesPerView={1}
-                        className="pb-10"
-                    >
-                        {events.map((event) => (
-                            <SwiperSlide key={event.id} className="pt-2 pb-8 px-1">
-                                <EventCard event={event} />
-                            </SwiperSlide>
-                        ))}
-                        {events.length === 0 && (
-                            <div className="h-64 bg-white rounded-3xl flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 gap-3">
-                                <div className="p-3 bg-gray-50 rounded-full">
-                                    <Megaphone size={24} className="text-gray-300" />
-                                </div>
-                                <span className="text-sm">현재 진행 중인 행사가 없습니다.</span>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+                    {/* 3. Event Slider (Left 7 cols) */}
+                    <div className="lg:col-span-7 space-y-6">
+                        <div className="flex items-center justify-between px-1">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                    지금 주목할 행사
+                                </h2>
+                                <p className="text-sm text-gray-500 mt-1">놓치지 말아야 할 주요 행사들을 확인하세요.</p>
                             </div>
-                        )}
-                    </Swiper>
+                            <Link to="/events" className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1">
+                                더보기 <ChevronRight size={16} />
+                            </Link>
+                        </div>
 
-                    {/* 커스텀 네비게이션 버튼 */}
-                    <button className="swiper-button-prev-custom absolute top-1/2 -left-4 md:-left-12 -translate-y-1/2 z-20 w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 flex items-center justify-center text-gray-700 disabled:opacity-0 transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110 hover:text-blue-600 hover:bg-white hidden md:flex">
-                        <ChevronLeft size={28} strokeWidth={2} />
-                    </button>
-                    <button className="swiper-button-next-custom absolute top-1/2 -right-4 md:-right-12 -translate-y-1/2 z-20 w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-lg ring-1 ring-gray-900/5 flex items-center justify-center text-gray-700 disabled:opacity-0 transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110 hover:text-blue-600 hover:bg-white hidden md:flex">
-                        <ChevronRight size={28} strokeWidth={2} />
-                    </button>
-                </div>
-            </section>
+                        {/* Slider Area with Outside Buttons */}
+                        <div className="relative group px-2">
+                            {/* Swiper Container */}
+                            <div className="rounded-3xl overflow-hidden shadow-lg ring-1 ring-black/5 bg-gray-50">
+                                <Swiper
+                                    modules={[Autoplay, Pagination, Navigation]}
+                                    navigation={{ nextEl: '.custom-next', prevEl: '.custom-prev' }}
+                                    pagination={{ clickable: true, dynamicBullets: true }}
+                                    autoplay={{ delay: 5000, disableOnInteraction: false }}
+                                    spaceBetween={0}
+                                    slidesPerView={1}
+                                    className="h-auto min-h-[500px]"
+                                >
+                                    {events.map((event) => (
+                                        <SwiperSlide key={event.id} className="p-4 sm:p-6 box-border">
+                                            <div className="w-full h-full relative">
+                                                <EventCard event={event} />
+                                            </div>
+                                        </SwiperSlide>
+                                    ))}
+                                    {events.length === 0 && (
+                                        <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-gray-400 gap-4">
+                                            <div className="p-4 bg-white rounded-full shadow-sm">
+                                                <Megaphone size={32} className="text-gray-300" />
+                                            </div>
+                                            <span>현재 진행 중인 행사가 없습니다.</span>
+                                        </div>
+                                    )}
+                                </Swiper>
+                            </div>
 
-            {/* 3. 최근 공지사항 섹션 */}
-            <section className="px-4 max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-6 bg-gray-800 rounded-full"></span>
-                        <h2 className="text-xl font-bold text-gray-900">최근 공지사항</h2>
+                            {/* Navigation Buttons (Outside) */}
+                            <button className="custom-prev absolute -left-4 md:-left-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-center text-gray-700 hover:text-blue-600 hover:scale-110 transition-all cursor-pointer hidden md:flex">
+                                <ChevronLeft size={24} strokeWidth={2.5} />
+                            </button>
+                            <button className="custom-next absolute -right-4 md:-right-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-center text-gray-700 hover:text-blue-600 hover:scale-110 transition-all cursor-pointer hidden md:flex">
+                                <ChevronRight size={24} strokeWidth={2.5} />
+                            </button>
+                        </div>
                     </div>
-                    <Link
-                        to="/notices"
-                        search={{ mainCategory: 'student_council', subCategory: 'all', page: 1, sort: 'newest', search: '' }}
-                        className="text-xs font-medium text-gray-500 flex items-center gap-1 hover:text-blue-600 transition-colors bg-gray-100 px-3 py-1.5 rounded-full"
-                    >
-                        전체보기 <ChevronRight size={14} />
-                    </Link>
-                </div>
 
-                <div className="grid gap-3">
-                    {notices.map((notice) => (
-                        <Link
-                            key={notice.id}
-                            to="/notices/$noticeId"
-                            params={{ noticeId: notice.id.toString() }}
-                            className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group"
-                        >
-                            <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight
-                                            ${notice.main_category === 'student_council'
+                    {/* 4. Recent Notices (Right 5 cols) */}
+                    <div className="lg:col-span-5 space-y-6">
+                        <div className="flex items-center justify-between px-1">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                    최근 공지사항
+                                </h2>
+                                <p className="text-sm text-gray-500 mt-1">학과와 학생회의 새로운 소식입니다.</p>
+                            </div>
+                            <Link
+                                to="/notices"
+                                search={{ page: 1, sort: 'newest', search: '', mainCategory: 'student_council', subCategory: 'all' }}
+                                className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+                            >
+                                더보기 <ChevronRight size={16} />
+                            </Link>
+                        </div>
+
+                        <div className="space-y-4">
+                            {notices.map((notice) => (
+                                <Link
+                                    key={notice.id}
+                                    to="/notices/$noticeId"
+                                    params={{ noticeId: notice.id.toString() }}
+                                    className="block group"
+                                >
+                                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all duration-200">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-tight ${notice.main_category === 'student_council'
                                                 ? 'bg-blue-50 text-blue-700'
                                                 : 'bg-green-50 text-green-700'
-                                            }`}
-                                        >
-                                            {getSubCategoryLabel(notice.main_category, notice.sub_category)}
-                                        </span>
-                                        <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                                            <Clock size={10} />
-                                            {notice.created_at.split('T')[0]}
-                                        </span>
+                                                }`}>
+                                                {getSubCategoryLabel(notice.main_category, notice.sub_category)}
+                                            </span>
+                                            <span className="text-xs text-gray-400 font-medium font-mono">
+                                                {notice.created_at.split('T')[0]}
+                                            </span>
+                                        </div>
+                                        <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                                            {notice.is_pinned && <span className="mr-1.5 text-rose-500">📌</span>}
+                                            {notice.title}
+                                        </h3>
+                                        <p className="text-sm text-gray-500 line-clamp-1 opacity-80">
+                                            {notice.content}
+                                        </p>
                                     </div>
-                                    <h3 className="text-base font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
-                                        {notice.is_pinned && <span className="mr-1.5 text-xs">📌</span>}
-                                        {notice.title}
-                                    </h3>
-                                    <p className="text-sm text-gray-500 line-clamp-1 mt-1 font-medium text-opacity-80">
-                                        {notice.content}
-                                    </p>
+                                </Link>
+                            ))}
+                            {notices.length === 0 && (
+                                <div className="h-64 flex flex-col items-center justify-center bg-white rounded-2xl border border-dashed border-gray-200 text-gray-400">
+                                    <p>등록된 공지사항이 없습니다.</p>
                                 </div>
-                                <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors shrink-0">
-                                    <ChevronRight size={18} />
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
-                    {notices.length === 0 && (
-                        <div className="p-12 text-center text-gray-400 bg-white rounded-2xl border border-gray-100 border-dashed">
-                            <Megaphone size={32} className="mx-auto mb-3 opacity-20" />
-                            <p className="text-sm">등록된 공지사항이 없습니다.</p>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
-            </section>
+            </div>
         </div>
     )
 }

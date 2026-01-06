@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelfareRouteImport } from './routes/welfare'
 import { Route as SuggestionRouteImport } from './routes/suggestion'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as MypageRouteImport } from './routes/mypage'
 import { Route as LoginRouteImport } from './routes/login'
@@ -37,6 +38,11 @@ const SuggestionRoute = SuggestionRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NoticesRoute = NoticesRouteImport.update({
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
   '/notices': typeof NoticesRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
   '/notices': typeof NoticesRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mypage'
     | '/notices'
+    | '/reset-password'
     | '/signup'
     | '/suggestion'
     | '/welfare'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/intro'
     | '/login'
     | '/mypage'
+    | '/reset-password'
     | '/signup'
     | '/suggestion'
     | '/welfare'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mypage'
     | '/notices'
+    | '/reset-password'
     | '/signup'
     | '/suggestion'
     | '/welfare'
@@ -199,6 +211,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MypageRoute: typeof MypageRoute
   NoticesRoute: typeof NoticesRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   SuggestionRoute: typeof SuggestionRoute
   WelfareRoute: typeof WelfareRoute
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notices': {
@@ -341,6 +361,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MypageRoute: MypageRoute,
   NoticesRoute: NoticesRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   SuggestionRoute: SuggestionRoute,
   WelfareRoute: WelfareRoute,
