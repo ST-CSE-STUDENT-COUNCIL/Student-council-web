@@ -152,10 +152,10 @@ function SignUp() {
 
                 <div className="relative z-20 text-center px-12">
                     <h1 className="text-5xl font-bold text-white mb-6 tracking-tight">
-                        Join Us
+                        Student Council
                     </h1>
                     <p className="text-blue-100 text-lg leading-relaxed">
-                        컴퓨터공학과 학생회 홈페이지에서 <br />회원가입하기
+                        회원가입을 통해 다양한 혜택을 누리세요!
                     </p>
                 </div>
             </div>

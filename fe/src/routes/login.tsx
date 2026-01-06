@@ -50,10 +50,10 @@ function Login() {
 
         <div className="relative z-20 text-center px-12">
           <h1 className="text-5xl font-bold text-white mb-6 tracking-tight">
-            Student<br />Council
+            Student Council
           </h1>
           <p className="text-blue-100 text-lg leading-relaxed">
-            컴퓨터공학과 학생회 서비스에<br />오신 것을 환영합니다.
+            컴퓨터공학과 학생회 홈페이지에<br />오신 것을 환영합니다.
           </p>
         </div>
       </div>
