@@ -394,28 +394,23 @@ CREATE INDEX idx_event_surveys_user_id ON event_surveys(user_id);
 -- 9. 동아리
 -- ============================================================================
 -- 동아리 목록 및 정보
--- admin만 CRUD 가능
+-- 공개 조회 가능, admin만 CRUD 가능
 -- ============================================================================
 CREATE TABLE clubs (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,  -- 동아리 이름
-  category VARCHAR(50),  -- 분류 (학술, 스포츠 등)
-  description TEXT,  -- 소개
-  representative VARCHAR(100),  -- 대표자 이름
-  contact VARCHAR(100),  -- 연락처 (이메일/전화)
-  logo_url TEXT,  -- 로고 이미지 (목록용)
-  detail_image_url TEXT,  -- 상세 이미지 (자세히 보기용)
-  is_active BOOLEAN DEFAULT true,  -- 활동 중 여부
+  name VARCHAR(100) NOT NULL,  -- 동아리명 (필수)
+  image_url TEXT NOT NULL,  -- 동아리 이미지 (필수)
+  description TEXT NOT NULL,  -- 동아리 세부 설명 (필수)
+  website_url TEXT,  -- 동아리 사이트 URL (선택)
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 COMMENT ON TABLE clubs IS '[공개] 동아리 목록';
-COMMENT ON COLUMN clubs.category IS '동아리 분류 (IT, 봉사, 문화예술 등)';
-COMMENT ON COLUMN clubs.detail_image_url IS '자세히 보기용 상세 이미지';
-
-CREATE INDEX idx_clubs_category ON clubs(category);
-CREATE INDEX idx_clubs_is_active ON clubs(is_active);
+COMMENT ON COLUMN clubs.name IS '동아리명 (필수)';
+COMMENT ON COLUMN clubs.image_url IS '동아리 대표 이미지 URL (필수)';
+COMMENT ON COLUMN clubs.description IS '동아리 세부 설명 (필수)';
+COMMENT ON COLUMN clubs.website_url IS '동아리 웹사이트 또는 SNS URL (선택)';
 
 -- ============================================================================
 -- 10. 복지사업 - 대여
@@ -477,26 +472,39 @@ CREATE INDEX idx_welfare_rental_requests_status ON welfare_rental_requests(statu
 -- 12. 복지사업 - 사물함 기간 설정
 -- ============================================================================
 -- 학기별 사물함 대여 기간 관리 (관리자가 학기마다 1번 설정)
+-- 
+-- 운영 흐름:
+--   1. 학기 초: 신청 기간 (application_start ~ application_end)
+--   2. 학기 중: 사용 기간 (usage_start ~ usage_end)
+--   3. 종강 즈음: 반납 기간 (return_start ~ return_end)
 -- ============================================================================
 CREATE TABLE locker_periods (
   id SERIAL PRIMARY KEY,
   period_name VARCHAR(50) NOT NULL,  -- '2025-1학기', '2025-여름방학', '2025-2학기', '2025-겨울방학'
   
-  -- 신청 기간
+  -- 신청 기간 (학기 초)
   application_start TIMESTAMPTZ NOT NULL,  -- 신청 시작
   application_end TIMESTAMPTZ NOT NULL,    -- 신청 마감
   
-  -- 사용 기간
+  -- 사용 기간 (개강~종강)
   usage_start DATE NOT NULL,  -- 사용 시작 (개강일)
   usage_end DATE NOT NULL,    -- 사용 종료 (종강일)
   
-  is_active BOOLEAN DEFAULT true,  -- 현재 신청 가능한 기간인지
+  -- 반납 기간 (종강 즈음)
+  return_start TIMESTAMPTZ NOT NULL,  -- 반납 시작 (예: 종강 1주 전)
+  return_end TIMESTAMPTZ NOT NULL,    -- 반납 마감 (예: 종강 후 1주)
+  
+  is_active BOOLEAN DEFAULT true,  -- 현재 활성화된 기간인지
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-COMMENT ON TABLE locker_periods IS '[관리자 전용] 사물함 대여 기간 설정';
-COMMENT ON COLUMN locker_periods.is_active IS '현재 신청 가능한 기간 (하나만 true)';
+COMMENT ON TABLE locker_periods IS '[관리자 전용] 사물함 대여 기간 설정 (신청/사용/반납 기간 관리)';
+COMMENT ON COLUMN locker_periods.is_active IS '현재 활성화된 기간 (하나만 true)';
+COMMENT ON COLUMN locker_periods.application_start IS '신청 시작 시각 (학기 초)';
+COMMENT ON COLUMN locker_periods.application_end IS '신청 마감 시각 (학기 초)';
+COMMENT ON COLUMN locker_periods.return_start IS '반납 시작 시각 (종강 즈음)';
+COMMENT ON COLUMN locker_periods.return_end IS '반납 마감 시각 (종강 후)';
 
 CREATE INDEX idx_locker_periods_is_active ON locker_periods(is_active);
 

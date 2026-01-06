@@ -17,7 +17,6 @@ from app.schemas.auth import ErrorResponse
 from app.utils.auth import require_verified_user, require_admin
 from app.utils.storage import (
     upload_post_attachment,
-    create_signed_url,
     delete_post_attachments
 )
 from app.database import supabase
@@ -256,15 +255,8 @@ async def get_notice(
             'attachments': attachments_result.data if attachments_result.data else []
         }
         
-        # 첨부파일 Signed URL 생성
-        if notice.get('attachments'):
-            for attachment in notice['attachments']:
-                signed_url = create_signed_url(
-                    attachment['file_url'],
-                    expires_in=3600,
-                    bucket='post-attachments'
-                )
-                attachment['file_url'] = signed_url or attachment['file_url']
+        # 첨부파일 URL은 이미 public URL이므로 그대로 사용
+        # post-attachments bucket이 public이므로 signed URL 불필요
         
         return NoticeDetailResponse(**notice)
     
