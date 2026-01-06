@@ -90,13 +90,13 @@ function Index() {
     return (
         <div className="pb-20 space-y-12">
             {/* 1. Hero Section */}
-            <section className="relative bg-[#0F172A] pt-20 pb-32 overflow-hidden -mt-16 sm:-mt-20">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-600/40 z-10" />
-                <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
-                <div className="absolute top-1/2 right-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
+            <section className="relative bg-slate-50 pt-20 pb-32 overflow-hidden -mt-16 sm:-mt-20">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 z-10" />
+                <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" />
+                <div className="absolute top-1/2 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000" />
 
                 <div className="container mx-auto px-6 pt-20 relative z-20 text-center">
-                    <p className="text-blue-100 text-lg max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-slate-600 text-lg max-w-2xl mx-auto leading-relaxed font-medium">
                         서울과학기술대학교 컴퓨터공학과 홈페이지입니다. <br className="hidden sm:block" />
                         행사신청, 공지사항, 학과소식, 학생회 정보 등을 확인할 수 있습니다.
                     </p>
@@ -107,7 +107,6 @@ function Index() {
                 {/* 2. Shortcuts Grid */}
                 <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8 mb-12 border border-blue-50/50 backdrop-blur-sm">
                     <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                        <MonitorPlay className="w-5 h-5 text-blue-600" />
                         자주 찾는 서비스
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 sm:gap-6">

@@ -27,7 +27,7 @@ export default function Menu() {
                     key={item.to}
                     to={item.to}
                     search={item.search}
-                    className="relative px-4 py-2 text-sm font-medium text-gray-600 rounded-full transition-all duration-200 hover:text-blue-600 hover:bg-blue-50 [&.active]:text-blue-700 [&.active]:bg-blue-100"
+                    className="relative px-4 py-2 text-sm font-medium text-gray-500 rounded-full transition-all duration-200 hover:text-indigo-600 hover:bg-indigo-50 [&.active]:text-indigo-700 [&.active]:bg-indigo-50"
                 >
                     {item.label}
                 </Link>

@@ -13,12 +13,12 @@ export default function Header() {
     }
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-gray-200/50 bg-white/80 backdrop-blur-md transition-all">
+        <header className="sticky top-0 z-50 w-full border-b border-indigo-50/80 bg-white/95 backdrop-blur-xl transition-all shadow-sm">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Logo Area */}
                 <div className="flex items-center gap-8">
                     <Link to="/" className="flex items-center gap-2.5 font-bold text-xl text-slate-900 hover:opacity-80 transition-opacity">
-                        <div className="bg-blue-600 p-1.5 rounded-lg text-white shadow-sm">
+                        <div className="bg-slate-900 p-1.5 rounded-lg text-white shadow-sm">
                             <Code2 className="w-5 h-5" />
                         </div>
                         <span className="tracking-tight hidden sm:inline-block">Computer Science Student Council</span>
@@ -37,9 +37,9 @@ export default function Header() {
                         <div className="flex items-center gap-3">
                             <Link
                                 to="/mypage"
-                                className="flex items-center gap-2 pl-1 pr-3 py-1.5 rounded-full hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200"
+                                className="flex items-center gap-2 pl-1 pr-3 py-1.5 rounded-full hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200"
                             >
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white shadow-sm">
+                                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
                                     <span className="text-xs font-bold">{user?.name?.[0] || 'U'}</span>
                                 </div>
                                 <span className="font-semibold text-gray-700 hidden lg:inline-block">
@@ -48,7 +48,7 @@ export default function Header() {
                             </Link>
                             <button
                                 onClick={handleLogout}
-                                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
+                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
                                 title="로그아웃"
                             >
                                 <LogOut className="w-5 h-5" />
@@ -58,14 +58,14 @@ export default function Header() {
                         <div className="flex items-center gap-2">
                             <Link
                                 to="/login"
-                                className="flex items-center gap-1.5 px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                                className="flex items-center gap-1.5 px-4 py-2 text-gray-500 hover:text-indigo-600 font-medium transition-colors"
                             >
                                 <LogIn className="w-4 h-4" />
                                 로그인
                             </Link>
                             <Link
                                 to="/signup"
-                                className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 font-medium shadow-sm active:scale-95 transition-all"
+                                className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm shadow-indigo-200 active:scale-95 transition-all"
                             >
                                 <UserPlus className="w-4 h-4" />
                                 회원가입
