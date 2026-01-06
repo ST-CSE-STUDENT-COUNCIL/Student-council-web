@@ -2,7 +2,7 @@
  * User Profile Response Schema
  * Corresponds to backend `schemas.users.UserProfileResponse`
  */
-export type UserProfileResponse = {
+export type User = {
     id: string
     email: string
     name: string
@@ -26,7 +26,7 @@ export type UserProfileResponse = {
 export type LoginResponse = {
     access_token: string
     token_type: string
-    user: UserProfileResponse
+    user: User
 }
 
 export type SignupResponse = {
