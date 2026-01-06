@@ -57,9 +57,9 @@ export const noticeApi = {
             updated_at: post.updated_at,
             is_deleted: post.is_deleted || false,
             attachments: (post.attachments || []).map((att: any) => ({
-                name: att.filename,
-                url: att.file_url,
-                size: att.file_size ? `${Math.round(att.file_size / 1024)}KB` : ''
+                name: att.name || att.filename,
+                url: att.url || att.file_url,
+                size: att.size || (att.file_size ? `${Math.round(att.file_size / 1024)}KB` : '')
             })),
             images: post.images || []
         }))
@@ -88,9 +88,9 @@ export const noticeApi = {
             updated_at: post.updated_at,
             is_deleted: post.is_deleted || false,
             attachments: (post.attachments || []).map((att: any) => ({
-                name: att.filename,
-                url: att.file_url,
-                size: att.file_size ? `${Math.round(att.file_size / 1024)}KB` : ''
+                name: att.name || att.filename,
+                url: att.url || att.file_url,
+                size: att.size || (att.file_size ? `${Math.round(att.file_size / 1024)}KB` : '')
             })),
             images: post.images || []
         }

@@ -314,7 +314,7 @@ server.get('/notices/:id', (req, res) => {
 
     const notice = populateNotice(db, post)
     // attachments mock
-    notice.attachments = []
+
 
     res.json(notice)
 })
