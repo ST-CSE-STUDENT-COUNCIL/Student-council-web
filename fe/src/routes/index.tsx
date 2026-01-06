@@ -91,12 +91,12 @@ function Index() {
         <div className="pb-20 space-y-12">
             {/* 1. Hero Section */}
             <section className="relative bg-slate-50 pt-20 pb-32 overflow-hidden -mt-16 sm:-mt-20">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 z-10" />
-                <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" />
-                <div className="absolute top-1/2 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000" />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-100/40 to-indigo-100/40 z-10" />
+                <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" />
+                <div className="absolute top-1/2 right-0 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000" />
 
                 <div className="container mx-auto px-6 pt-20 relative z-20 text-center">
-                    <p className="text-slate-600 text-lg max-w-2xl mx-auto leading-relaxed font-medium">
+                    <p className="text-slate-700 text-lg max-w-2xl mx-auto leading-relaxed font-medium">
                         서울과학기술대학교 컴퓨터공학과 홈페이지입니다. <br className="hidden sm:block" />
                         행사신청, 공지사항, 학과소식, 학생회 정보 등을 확인할 수 있습니다.
                     </p>
@@ -105,23 +105,23 @@ function Index() {
 
             <div className="container mx-auto px-4 -mt-24 relative z-30">
                 {/* 2. Shortcuts Grid */}
-                <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8 mb-12 border border-blue-50/50 backdrop-blur-sm">
-                    <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <div className="bg-white rounded-2xl shadow-lg p-5 mb-8 border border-gray-100 max-w-5xl mx-auto">
+                    <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2 px-1">
                         자주 찾는 서비스
                     </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 sm:gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         {PORTALS.map((portal) => (
                             <a
                                 key={portal.name}
                                 href={portal.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="group flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-gray-50 transition-all duration-300 hover:-translate-y-1"
+                                className="group flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-all duration-200 border border-transparent hover:border-gray-100"
                             >
-                                <div className={`p-4 rounded-2xl ${portal.bg} ${portal.color} transition-all duration-300 group-hover:scale-110 shadow-sm ring-1 ring-black/5`}>
-                                    <portal.icon size={24} strokeWidth={2} />
+                                <div className={`p-2 rounded-lg ${portal.bg} ${portal.color} transition-transform duration-200 group-hover:scale-110 shadow-sm`}>
+                                    <portal.icon size={18} strokeWidth={2} />
                                 </div>
-                                <span className="text-sm font-semibold text-gray-600 group-hover:text-gray-900 transition-colors">
+                                <span className="text-sm font-semibold text-gray-600 group-hover:text-gray-900">
                                     {portal.name}
                                 </span>
                             </a>
@@ -135,12 +135,12 @@ function Index() {
                         <div className="flex items-center justify-between px-1">
                             <div>
                                 <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                    지금 주목할 행사 <span className="text-blue-500 animate-pulse">✨</span>
+                                    지금 주목할 행사
                                 </h2>
                                 <p className="text-sm text-gray-500 mt-1">놓치지 말아야 할 주요 행사들을 확인하세요.</p>
                             </div>
                             <Link to="/events" className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1">
-                                전체보기 <ChevronRight size={16} />
+                                더보기 <ChevronRight size={16} />
                             </Link>
                         </div>
 
@@ -190,7 +190,7 @@ function Index() {
                         <div className="flex items-center justify-between px-1">
                             <div>
                                 <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                    최근 공지사항 <Megaphone size={20} className="text-orange-500" />
+                                    최근 공지사항
                                 </h2>
                                 <p className="text-sm text-gray-500 mt-1">학과와 학생회의 새로운 소식입니다.</p>
                             </div>
