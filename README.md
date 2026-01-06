@@ -142,7 +142,7 @@ uvicorn app.main:app --reload
 | **이재호** | PM / Frontend | [@jaehoya](https://github.com/jaehoya) |
 | **이준석** | Frontend | [@biabio503](https://github.com/biabio0503) |
 | **최도현** | Backend | [@casing1](https://github.com/casing1) |
-
+| **황정민** | Frontend | [@surphur](https://github.com/surphur) |
 ---
 
 ## 🔗 관련 링크 (Links)
