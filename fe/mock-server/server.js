@@ -49,8 +49,13 @@ server.post('/auth/send-verification', (req, res) => {
 })
 
 server.post('/auth/verify-email', (req, res) => {
-    // 성공 시뮬레이션
-    res.json({ email: req.body.email })
+    // 목 서버: 어떤 코드를 입력해도 무조건 인증 성공!
+    // 개발 편의를 위해 실제 검증 로직 없이 통과시킵니다.
+    res.json({
+        success: true,
+        email: req.body.email,
+        message: "인증되었습니다."
+    })
 })
 
 server.post('/auth/check-student-id', (req, res) => {
@@ -132,6 +137,23 @@ server.post('/auth/login', (req, res) => {
 
 server.post('/auth/logout', (req, res) => {
     res.json({ message: "Logged out successfully" })
+})
+
+server.post('/auth/reset-password', (req, res) => {
+    const { email, new_password } = req.body
+    const db = router.db
+    const user = db.get('users').find({ email }).value()
+
+    if (!user) {
+        return res.status(404).json({ detail: "가입되지 않은 이메일입니다." })
+    }
+
+    db.get('users')
+        .find({ email })
+        .assign({ password: new_password })
+        .write()
+
+    res.json({ message: "비밀번호가 성공적으로 변경되었습니다." })
 })
 
 // ----------------------------------------------------------------------
