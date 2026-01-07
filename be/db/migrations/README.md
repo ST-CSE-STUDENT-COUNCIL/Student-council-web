@@ -7,7 +7,7 @@
 --       프로덕션 환경에서는 ALTER TABLE을 사용하거나 백업 후 진행하세요.
 -- ============================================================================
 
--- 1단계: Clubs 테이블 마이그레이션
+-- 1단계: Clubs 테이블 마이그레이션 ✅
 -- 파일: 001_update_clubs_table.sql
 -- 
 -- 실행 방법:
@@ -16,7 +16,7 @@
 -- 3. 001_update_clubs_table.sql 내용 복사/붙여넣기
 -- 4. Run 클릭
 
--- 2단계: Locker Periods 테이블 마이그레이션
+-- 2단계: Locker Periods 테이블 마이그레이션 ✅
 -- 파일: 002_update_locker_periods_table.sql
 -- 
 -- 실행 방법:
@@ -24,6 +24,18 @@
 -- 2. Run 클릭
 -- 
 -- 주의: locker_rentals 테이블도 함께 재생성됩니다 (의존성)
+
+-- 3단계: 복지사업 시스템 재설계 ⏳
+-- 파일: 003_redesign_welfare_system.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 003_redesign_welfare_system.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 변경 내용:
+-- - 삭제: welfare_rentals, welfare_rental_requests, welfare_lockers, locker_rentals
+-- - 추가: locker_info (배치도 + 구글폼), rental_items (구글폼 + 스프레드시트)
+-- - 유지: locker_periods (이미 return_start/end 있음)
 
 -- ============================================================================
 -- 마이그레이션 확인

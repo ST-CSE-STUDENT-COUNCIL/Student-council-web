@@ -418,160 +418,57 @@ COMMENT ON COLUMN clubs.website_url IS '동아리 웹사이트 또는 SNS URL (�
 -- 물품 대여 (보드게임, 노트북 등)
 -- 선착순 또는 예약 방식
 -- ============================================================================
-CREATE TABLE welfare_rentals (
+-- 물품대여 정보 (구글폼 + 스프레드시트 연동)
+-- ============================================================================
+CREATE TABLE rental_items (
   id SERIAL PRIMARY KEY,
-  item_name VARCHAR(100) NOT NULL,  -- 물품명
-  category VARCHAR(50),  -- 분류 (충전기, 우산 등)
-  description TEXT,  -- 설명
-  quantity INT NOT NULL,  -- 총 수량
-  available_quantity INT NOT NULL,  -- 대여 가능 수량
-  image_url TEXT,  -- 물품 이미지
-  rental_period_days INT DEFAULT 7,  -- 대여 기간 (일)
-  is_active BOOLEAN DEFAULT true,  -- 대여 가능 여부
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  item_name VARCHAR(100) NOT NULL,  -- 물품명 (장우산, 단우산, 2인용 돗자리 등)
+  category VARCHAR(50),  -- 분류 (우산, 돗자리 등)
+
+  image_url TEXT,  -- 물품 이미지 URL
   
-  CONSTRAINT check_available_quantity CHECK (available_quantity >= 0),
-  CONSTRAINT check_quantity_positive CHECK (quantity > 0)
-);
-
-COMMENT ON TABLE welfare_rentals IS '[인증 필요] 복지사업 - 대여 물품';
-COMMENT ON COLUMN welfare_rentals.available_quantity IS '현재 대여 가능한 수량';
-COMMENT ON COLUMN welfare_rentals.rental_period_days IS '대여 기간 (일)';
-
-CREATE INDEX idx_welfare_rentals_category ON welfare_rentals(category);
-CREATE INDEX idx_welfare_rentals_is_active ON welfare_rentals(is_active);
-
--- ============================================================================
--- 11. 복지사업 - 대여 신청
--- ============================================================================
-CREATE TABLE welfare_rental_requests (
-  id SERIAL PRIMARY KEY,
-  rental_id INT REFERENCES welfare_rentals(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  status VARCHAR(20) DEFAULT 'pending',  -- pending, approved, returned, cancelled
-  rental_start_date DATE NOT NULL,  -- 대여 시작일
-  rental_end_date DATE NOT NULL,  -- 반납 예정일
-  actual_return_date DATE,  -- 실제 반납일
-  notes TEXT,  -- 비고
-  approved_by UUID REFERENCES users(id),  -- 승인한 관리자
-  approved_at TIMESTAMPTZ,  -- 승인 일시
+  -- 구글 시트 연동
+  application_sheet_url TEXT NOT NULL,  -- 구글 시트 URL (물품별로 다른 시트 가능)
+  spreadsheet_id TEXT DEFAULT '1r4MXOaZ-Pp-PYIUcjscWhnyz0hLwrcqpcut2oKDles8',  -- 고정: 대여사업 스프레드시트 ID
+  quantity_sheet_name VARCHAR(100) DEFAULT '물품표',  -- 고정: 시트 이름
+  quantity_cell_range VARCHAR(20) NOT NULL,  -- 물품별 재고 셀 위치 (예: C2, C4, C6)
+  
+  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-COMMENT ON TABLE welfare_rental_requests IS '[인증 필요] 복지사업 - 대여 신청';
-COMMENT ON COLUMN welfare_rental_requests.status IS 'pending: 대기, approved: 승인(대여중), returned: 반납완료, cancelled: 취소';
-COMMENT ON COLUMN welfare_rental_requests.approved_by IS '승인한 관리자 (admin/council)';
+COMMENT ON TABLE rental_items IS '[공개] 물품대여 정보 (구글 시트 연동)';
+COMMENT ON COLUMN rental_items.item_name IS '물품명 (장우산, 단우산 등 세분화)';
+COMMENT ON COLUMN rental_items.application_sheet_url IS '구글 시트 URL (신청 현황 확인용)';
+COMMENT ON COLUMN rental_items.spreadsheet_id IS '구글 스프레드시트 ID (재고 관리용)';
+COMMENT ON COLUMN rental_items.quantity_cell_range IS '현재 재고 수량이 있는 셀 위치 (예: C2, C4)';
 
-CREATE INDEX idx_welfare_rental_requests_rental_id ON welfare_rental_requests(rental_id);
-CREATE INDEX idx_welfare_rental_requests_user_id ON welfare_rental_requests(user_id);
-CREATE INDEX idx_welfare_rental_requests_status ON welfare_rental_requests(status);
+CREATE INDEX idx_rental_items_category ON rental_items(category);
+CREATE INDEX idx_rental_items_is_active ON rental_items(is_active);
 
 -- ============================================================================
--- 12. 복지사업 - 사물함 기간 설정
+-- 11. 복지사업 - 사물함 정보 (배치도 + 구글폼)
 -- ============================================================================
--- 학기별 사물함 대여 기간 관리 (관리자가 학기마다 1번 설정)
--- 
--- 운영 흐름:
---   1. 학기 초: 신청 기간 (application_start ~ application_end)
---   2. 학기 중: 사용 기간 (usage_start ~ usage_end)
---   3. 종강 즈음: 반납 기간 (return_start ~ return_end)
+-- 구글폼으로 신청을 받으므로 복잡한 기간 관리 테이블 불필요
+-- 신청 기간이 아닐 때는 관리자가 application_form_url을 빈 문자열로 설정
 -- ============================================================================
-CREATE TABLE locker_periods (
+CREATE TABLE locker_info (
   id SERIAL PRIMARY KEY,
-  period_name VARCHAR(50) NOT NULL,  -- '2025-1학기', '2025-여름방학', '2025-2학기', '2025-겨울방학'
-  
-  -- 신청 기간 (학기 초)
-  application_start TIMESTAMPTZ NOT NULL,  -- 신청 시작
-  application_end TIMESTAMPTZ NOT NULL,    -- 신청 마감
-  
-  -- 사용 기간 (개강~종강)
-  usage_start DATE NOT NULL,  -- 사용 시작 (개강일)
-  usage_end DATE NOT NULL,    -- 사용 종료 (종강일)
-  
-  -- 반납 기간 (종강 즈음)
-  return_start TIMESTAMPTZ NOT NULL,  -- 반납 시작 (예: 종강 1주 전)
-  return_end TIMESTAMPTZ NOT NULL,    -- 반납 마감 (예: 종강 후 1주)
-  
-  is_active BOOLEAN DEFAULT true,  -- 현재 활성화된 기간인지
+  layout_image_url TEXT NOT NULL,  -- 사물함 배치도 이미지 URL (피그마)
+  application_form_url TEXT NOT NULL,  -- 구글폼 신청 URL (신청 마감 시 빈 문자열)
+  description TEXT,  -- 설명 (예: 19, 35번 고장)
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-COMMENT ON TABLE locker_periods IS '[관리자 전용] 사물함 대여 기간 설정 (신청/사용/반납 기간 관리)';
-COMMENT ON COLUMN locker_periods.is_active IS '현재 활성화된 기간 (하나만 true)';
-COMMENT ON COLUMN locker_periods.application_start IS '신청 시작 시각 (학기 초)';
-COMMENT ON COLUMN locker_periods.application_end IS '신청 마감 시각 (학기 초)';
-COMMENT ON COLUMN locker_periods.return_start IS '반납 시작 시각 (종강 즈음)';
-COMMENT ON COLUMN locker_periods.return_end IS '반납 마감 시각 (종강 후)';
-
-CREATE INDEX idx_locker_periods_is_active ON locker_periods(is_active);
+COMMENT ON TABLE locker_info IS '[공개] 사물함 배치도 및 신청 정보 (미래관 3층 사물함)';
+COMMENT ON COLUMN locker_info.layout_image_url IS '피그마에서 생성된 배치도 이미지 URL';
+COMMENT ON COLUMN locker_info.application_form_url IS '구글폼 신청 URL (신청 마감 시 빈 문자열로 설정)';
+COMMENT ON COLUMN locker_info.updated_at IS '마지막 수정 시각 (관리자가 이미지/URL 업데이트한 시각)';
 
 -- ============================================================================
--- 13. 복지사업 - 사물함 마스터
--- ============================================================================
--- 미래관 3층 사물함 1~40번 (19, 35번 불량)
--- ============================================================================
-CREATE TABLE welfare_lockers (
-  locker_number INT PRIMARY KEY,  -- 1~40
-  is_available BOOLEAN DEFAULT true,  -- false: 고장/사용불가
-  notes TEXT,  -- 고장 사유 등
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-COMMENT ON TABLE welfare_lockers IS '[관리자 전용] 사물함 마스터 데이터 (미래관 3층 1~40번)';
-
--- 1~40번 사물함 생성, 19번과 35번은 불량 처리
-INSERT INTO welfare_lockers (locker_number, is_available, notes)
-SELECT 
-  num,
-  CASE WHEN num IN (19, 35) THEN false ELSE true END,
-  CASE WHEN num IN (19, 35) THEN '고장' ELSE NULL END
-FROM generate_series(1, 40) AS num;
-
-CREATE INDEX idx_welfare_lockers_is_available ON welfare_lockers(is_available);
-
--- ============================================================================
--- 14. 복지사업 - 사물함 대여
--- ============================================================================
--- 학생의 사물함 신청 및 사용 내역
--- ============================================================================
-CREATE TABLE locker_rentals (
-  id SERIAL PRIMARY KEY,
-  locker_number INT REFERENCES welfare_lockers(locker_number),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  period_id INT REFERENCES locker_periods(id) ON DELETE CASCADE,
-  
-  -- 상태
-  status VARCHAR(20) DEFAULT 'pending',  -- pending, approved, in_use, returned, expired
-  
-  -- 승인 정보
-  approved_by UUID REFERENCES users(id),  -- 승인한 관리자
-  approved_at TIMESTAMPTZ,
-  
-  -- 반납 확인 정보
-  return_confirmed_by UUID REFERENCES users(id),  -- 비움 확인한 관리자
-  return_confirmed_at TIMESTAMPTZ,
-  
-  notes TEXT,  -- 비고
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  -- 같은 기간에 같은 사물함은 한 명만
-  UNIQUE(locker_number, period_id)
-);
-
-COMMENT ON TABLE locker_rentals IS '[인증 필요] 사물함 대여 신청 및 내역';
-COMMENT ON COLUMN locker_rentals.status IS 'pending: 신청대기, approved: 승인됨, in_use: 사용중, returned: 반납완료, expired: 기간만료';
-COMMENT ON COLUMN locker_rentals.return_confirmed_by IS '사물함 비움을 확인한 관리자';
-
-CREATE INDEX idx_locker_rentals_user_id ON locker_rentals(user_id);
-CREATE INDEX idx_locker_rentals_period_id ON locker_rentals(period_id);
-CREATE INDEX idx_locker_rentals_status ON locker_rentals(status);
-
--- ============================================================================
--- 15. 선착순 신청 함수 (원자적 트랜잭션 처리)
+-- 12. 선착순 신청 함수 (원자적 트랜잭션 처리)
 -- ============================================================================
 -- 호출: SELECT register_for_event(행사ID, 사용자ID)
 --

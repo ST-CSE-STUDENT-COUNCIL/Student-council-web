@@ -8,7 +8,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.config import settings
-from app.routes import auth, admin, users, suggestions, notices, clubs
+from app.routes import auth, admin, users, suggestions, notices, clubs, welfare
 
 # Rate limiter 설정
 limiter = Limiter(key_func=get_remote_address)
@@ -52,6 +52,7 @@ app.include_router(users.router)
 app.include_router(suggestions.router)
 app.include_router(notices.router)
 app.include_router(clubs.router)
+app.include_router(welfare.router)
 
 # 헬스체크 엔드포인트
 @app.get("/", tags=["헬스체크"])
