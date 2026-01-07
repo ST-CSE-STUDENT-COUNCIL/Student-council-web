@@ -303,8 +303,60 @@ server.get('/notices', (req, res) => {
     })
 })
 
-server.get('/notices/:id', (req, res) => {
-    const { id } = req.params
+// 복지 대여 신청 커스텀 라우트: 요청을 저장하고 재고를 차감합니다.
+server.post('/welfare_rental_requests', (req, res) => {
+    const db = router.db
+    const {
+        rental_id,
+        user_id,
+        status = 'pending',
+        rental_start_date,
+        rental_end_date,
+        actual_return_date = null,
+        notes = null,
+    } = req.body
+
+    if (!rental_id || !user_id || !rental_start_date || !rental_end_date) {
+        return res.status(400).json({ error: '필수 필드가 누락되었습니다.' })
+    }
+
+    const requests = db.get('welfare_rental_requests').value()
+    const nextId = requests.length > 0 ? Math.max(...requests.map((r) => Number(r.id))) + 1 : 1
+    const now = new Date().toISOString()
+
+    const newRequest = {
+        id: nextId,
+        rental_id,
+        user_id,
+        status,
+        rental_start_date,
+        rental_end_date,
+        actual_return_date,
+        notes,
+        approved_by: null,
+        approved_at: null,
+        created_at: req.body.created_at || now,
+        updated_at: req.body.updated_at || now,
+    }
+
+    db.get('welfare_rental_requests').push(newRequest).write()
+
+    const rental = db.get('welfare_rentals').find({ id: Number(rental_id) }).value()
+    if (rental) {
+        const qty = Number(req.body.quantity) || 1
+        const newAvailable = Math.max(0, (rental.available_quantity || 0) - qty)
+        db.get('welfare_rentals')
+            .find({ id: Number(rental_id) })
+            .assign({ available_quantity: newAvailable })
+            .write()
+    }
+
+    return res.status(201).json(newRequest)
+})
+
+// 커스텀 회원가입 라우트
+server.post('/api/auth/register', (req, res) => {
+    const { name, student_id, email, phone, password } = req.body
     const db = router.db
     const post = db.get('posts').find({ id: Number(id) }).value()
 
