@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:4000';
 
-export interface WelfareRental {
+export type WelfareRental = {
     id: number;
     item_name: string;
     category: string;
@@ -14,9 +14,9 @@ export interface WelfareRental {
     is_active: boolean;
     created_at: string;
     updated_at: string;
-}
+};
 
-export interface RentalRequestPayload {
+export type RentalRequestPayload = {
     rental_id: number;
     user_id: string;
     status: string;
@@ -26,9 +26,9 @@ export interface RentalRequestPayload {
     notes: string | null;
     created_at: string;
     updated_at: string;
-}
+};
 
-export interface LockerPeriod {
+export type LockerPeriod = {
     id: number;
     name?: string;
     period_name?: string;
@@ -43,7 +43,7 @@ export interface LockerPeriod {
     is_active?: boolean;
     created_at: string;
     updated_at: string;
-}
+};
 
 export const welfareApi = {
     getRentals: async (): Promise<WelfareRental[]> => {

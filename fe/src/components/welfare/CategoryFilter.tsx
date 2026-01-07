@@ -1,4 +1,4 @@
-interface CategoryFilterProps {
+type CategoryFilterProps = {
   selectedCategory: '대여사업' | '사물함'
   onSelect: (category: '대여사업' | '사물함') => void
 }

@@ -1,6 +1,6 @@
 import React from 'react'
 
-interface LockerActionsProps {
+type LockerActionsProps = {
     rentalPeriodLabel: string
     returnPeriodLabel: string
     isRentalActive: boolean

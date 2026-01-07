@@ -1,7 +1,7 @@
 import React from 'react'
 import type { WelfareRental } from '../../lib/api/welfare'
 
-interface RentalCardProps {
+type RentalCardProps = {
     item: WelfareRental
     onApply: () => void
 }
