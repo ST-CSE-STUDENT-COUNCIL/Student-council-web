@@ -1,16 +1,9 @@
-import { api } from '../axios'
-import type { Suggestion } from '../../types/suggestions' // 타입 파일이 없다면 추후 생성 필요
+import { createFileRoute } from '@tanstack/react-router'
 
-const API_BASE_URL = '/suggestions'
+export const Route = createFileRoute('/suggestion')({
+    component: Suggestion,
+})
 
-export const suggestionApi = {
-    getAll: async (params?: { status_filter?: string; page?: number; page_size?: number }) => {
-        const response = await api.get<{ suggestions: Suggestion[]; pagination: any }>(API_BASE_URL, { params })
-        return response.data
-    },
-
-    create: async (data: { title: string; content: string }) => {
-        const response = await api.post<Suggestion>(API_BASE_URL, data)
-        return response.data
-    }
+function Suggestion() {
+    return <div>Hello "/suggestion"!</div>
 }
