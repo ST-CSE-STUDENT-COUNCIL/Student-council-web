@@ -231,14 +231,15 @@ server.get('/notices', (req, res) => {
     const { mainCategory, subCategory, search, sort, page = 1, page_size = 20 } = req.query
     const db = router.db
     let posts = db.get('posts').filter({ is_deleted: false }).value()
-
     // 1. mainCategory 필터
     if (mainCategory) {
         const categoryMap = { "student_council": "학생회", "democracy": "민주자치" }
         const targetCat = categoryMap[mainCategory]
+
         if (targetCat) {
             const boards = db.get('boards').filter({ category: targetCat }).value()
             const boardIds = boards.map(b => b.id)
+
             posts = posts.filter(p => boardIds.includes(p.board_id))
         }
     }
@@ -251,7 +252,8 @@ server.get('/notices', (req, res) => {
             "announcement": "공고",
             "notice": "고시",
             "meeting": "대표자회의",
-            "rules": "학생회칙"
+            "rules": "학생회칙",
+            "news": "학과소식"
         }
         const targetSub = subCatMap[subCategory]
         if (targetSub) {
@@ -303,6 +305,18 @@ server.get('/notices', (req, res) => {
     })
 })
 
+server.get('/notices/:id', (req, res) => {
+    const { id } = req.params
+    const db = router.db
+    const post = db.get('posts').find({ id: Number(id) }).value()
+
+    if (post && !post.is_deleted) {
+        res.json(populateNotice(db, post))
+    } else {
+        res.status(404).json({ detail: "Notice not found" })
+    }
+})
+
 // 복지 대여 신청 커스텀 라우트: 요청을 저장하고 재고를 차감합니다.
 server.post('/welfare_rental_requests', (req, res) => {
     const db = router.db
@@ -352,23 +366,6 @@ server.post('/welfare_rental_requests', (req, res) => {
     }
 
     return res.status(201).json(newRequest)
-})
-
-// 커스텀 회원가입 라우트
-server.post('/api/auth/register', (req, res) => {
-    const { name, student_id, email, phone, password } = req.body
-    const db = router.db
-    const post = db.get('posts').find({ id: Number(id) }).value()
-
-    if (!post || post.is_deleted) {
-        return res.status(404).json({ detail: "공지사항을 찾을 수 없습니다" })
-    }
-
-    const notice = populateNotice(db, post)
-    // attachments mock
-
-
-    res.json(notice)
 })
 
 server.post('/notices/:id/views', (req, res) => {
