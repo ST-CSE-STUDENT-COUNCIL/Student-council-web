@@ -319,10 +319,10 @@ async def send_password_reset_email(email: str, code: str) -> None:
     try:
         creds = Credentials(
             token=None,
-            refresh_token=settings.GMAIL_REFRESH_TOKEN,
+            refresh_token=settings.GOOGLE_REFRESH_TOKEN,
             token_uri="https://oauth2.googleapis.com/token",
-            client_id=settings.GMAIL_CLIENT_ID,
-            client_secret=settings.GMAIL_CLIENT_SECRET,
+            client_id=settings.GOOGLE_CLIENT_ID,
+            client_secret=settings.GOOGLE_CLIENT_SECRET,
             scopes=[GMAIL_SEND_SCOPE]
         )
         creds.refresh(Request())
