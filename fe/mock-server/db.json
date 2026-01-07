@@ -172,586 +172,6 @@
       "isPinned": true
     }
   ],
-  "clubs": [
-    {
-      "id": 1,
-      "name": "E.C",
-      "category": "학술",
-      "short_desc": "Endless Creaction",
-      "description": "Endless Creaction은 다양한 활동을 하고 있습니다.",
-      "image_url": "https://via.placeholder.com/400x200?text=Endless",
-      "activity_day": "매주 목요일 18:00",
-      "location": "미래관 000호",
-      "president_name": "이재호",
-      "president_contact": "010-1234-5678",
-      "recruitment_period": "상시 모집",
-      "recruitment_target": "컴퓨터공학과 재학생 누구나",
-      "tags": [
-        "학술",
-        "동아리방",
-        "동아리 서버 보유"
-      ]
-    },
-    {
-      "id": 2,
-      "name": "Tools",
-      "category": "학술",
-      "short_desc": "스터디와 프로젝트 중심 동아리",
-      "description": "Tools는 백준 문제 풀이, 프로젝트 진행, 스터디 등 전공 실력 향상을 위한 다양한 활동을 진행합니다.",
-      "image_url": "https://via.placeholder.com/400x200?text=SP+CUBE",
-      "activity_day": "매주 수요일 18:30",
-      "location": "미래관 19호",
-      "president_name": "박지윤",
-      "president_contact": "010-1234-1234",
-      "recruitment_period": "상시 모집",
-      "recruitment_target": "열정 있는 컴퓨터공학과 학생",
-      "tags": [
-        "Tools Exports",
-        "Growing",
-        "Study"
-      ]
-    },
-    {
-      "id": 3,
-      "name": "NL",
-      "category": "학술",
-      "short_desc": "Network Leader",
-      "description": "Network Leader는 네트워크를 위주로 공부합니다.",
-      "image_url": "https://via.placeholder.com/400x200?text=FC+Moomin",
-      "activity_day": "매주 금요일 16:00",
-      "location": "미래관 000호",
-      "president_name": "김네트워크",
-      "president_contact": "010-5555-7777",
-      "recruitment_period": "학기 초",
-      "recruitment_target": "네트워크를 즐기는 누구나",
-      "tags": [
-        "Network",
-        "동아리방 보유"
-      ]
-    },
-    {
-      "id": 4,
-      "name": "PLUM",
-      "category": "학술",
-      "short_desc": "PLUM 동아리",
-      "description": "게임 동아리.",
-      "image_url": "https://via.placeholder.com/400x200?text=FC+Moomin",
-      "activity_day": "매주 금요일 16:00",
-      "location": "미래관 000호",
-      "president_name": "김플럼",
-      "president_contact": "010-5555-7777",
-      "recruitment_period": "학기 초",
-      "recruitment_target": "네트워크를 즐기는 누구나",
-      "tags": [
-        "게임 제작",
-        "C++",
-        "동아리방"
-      ]
-    },
-    {
-      "id": 5,
-      "name": "다락방",
-      "category": "학술",
-      "short_desc": "다락방 동아리",
-      "description": "다락방 학술 위주 동아리.",
-      "image_url": "https://via.placeholder.com/400x200?text=FC+Moomin",
-      "activity_day": "매주 금요일 16:00",
-      "location": "미래관 000호",
-      "president_name": "김다락",
-      "president_contact": "010-5555-7777",
-      "recruitment_period": "학기 초",
-      "recruitment_target": "학점 높게 받고 싶은 자 오라!",
-      "tags": [
-        "학술",
-        "#4.5"
-      ]
-    },
-    {
-      "id": 6,
-      "name": "TCP",
-      "category": "학술",
-      "short_desc": "보안 동아리",
-      "description": "보안 학술 위주 동아리.",
-      "image_url": "https://via.placeholder.com/400x200?text=FC+Moomin",
-      "activity_day": "매주 금요일 16:00",
-      "location": "미래관 000호",
-      "president_name": "김다락",
-      "president_contact": "010-5555-7777",
-      "recruitment_period": "학기 초",
-      "recruitment_target": "보안을 즐기는 누구나",
-      "tags": [
-        "보안",
-        "C++",
-        "동아리방"
-      ]
-    },
-    {
-      "id": 7,
-      "name": "AFK",
-      "category": "축구",
-      "short_desc": "축구 동아리",
-      "description": "Away From The Keyboard 동아리.",
-      "image_url": "https://via.placeholder.com/400x200?text=FC+Moomin",
-      "activity_day": "매주 금요일 16:00",
-      "location": "미래관 000호",
-      "president_name": "김축구",
-      "president_contact": "010-5555-7777",
-      "recruitment_period": "학기 초",
-      "recruitment_target": "축구를 즐기는 누구나",
-      "tags": [
-        "축구"
-      ]
-    }
-  ],
-  "rentals": [
-    {
-      "id": 1,
-      "name": "보드게임 - 루미큐브",
-      "totalQuantity": 3,
-      "rentedQuantity": 1,
-      "image": "https://via.placeholder.com/150"
-    },
-    {
-      "id": 2,
-      "name": "보드게임 - 스플렌더",
-      "totalQuantity": 2,
-      "rentedQuantity": 2,
-      "image": "https://via.placeholder.com/150"
-    },
-    {
-      "id": 16,
-      "main_category": "student_council",
-      "sub_category": "news",
-      "title": "컴퓨터공학과 학술제 개최 안내",
-      "content": "제 30회 컴퓨터공학과 학술제가 열립니다.",
-      "view_count": 7,
-      "is_pinned": true,
-      "is_anonymous": false,
-      "author_name": "학술국장",
-      "created_at": "2025-11-15T00:00:00Z",
-      "updated_at": "2025-11-15T00:00:00Z",
-      "is_deleted": false,
-      "attachments": [],
-      "images": []
-    },
-    {
-      "id": 17,
-      "main_category": "democracy",
-      "sub_category": "meeting",
-      "title": "제5차 운영위원회 회의록 공개",
-      "content": "5월에 진행된 제5차 운영위원회 회의록을 공개합니다.",
-      "view_count": 203,
-      "is_pinned": false,
-      "is_anonymous": false,
-      "author_name": "서기",
-      "created_at": "2025-06-01T00:00:00Z",
-      "updated_at": "2025-06-01T00:00:00Z",
-      "is_deleted": false,
-      "attachments": [],
-      "images": []
-    },
-    {
-      "id": 18,
-      "main_category": "democracy",
-      "sub_category": "announcement",
-      "title": "2025학년도 반대표 모집 공고",
-      "content": "2025학년도 각 학년 반대표를 모집합니다. 자세한 내용은 첨부파일을 확인해주세요.",
-      "view_count": 121,
-      "is_pinned": false,
-      "is_anonymous": false,
-      "author_name": "학생회장",
-      "created_at": "2025-03-02T00:00:00Z",
-      "updated_at": "2025-03-02T00:00:00Z",
-      "is_deleted": false,
-      "attachments": [
-        {
-          "name": "제2호 (반대표 모집 공고).pdf",
-          "url": "/assets/notice/민주자치/공고/제2호 (반대표 모집 공고).pdf",
-          "size": "58KB"
-        }
-      ],
-      "images": []
-    },
-    {
-      "id": 19,
-      "main_category": "democracy",
-      "sub_category": "notice",
-      "title": "자치기구장 및 대표자 명부 고시",
-      "content": "2025학년도 자치기구장 및 대표자 명부를 고시합니다.",
-      "view_count": 46,
-      "is_pinned": false,
-      "is_anonymous": false,
-      "author_name": "선거관리위원장",
-      "created_at": "2025-03-15T00:00:00Z",
-      "updated_at": "2025-03-15T00:00:00Z",
-      "is_deleted": false,
-      "attachments": [
-        {
-          "name": "자치기구장 및 대표자 명부 고시.pdf",
-          "url": "/assets/notice/민주자치/고시/자치기구장 및 대표자 명부 고시.pdf",
-          "size": "24KB"
-        }
-      ],
-      "images": []
-    },
-    {
-      "id": 20,
-      "main_category": "democracy",
-      "sub_category": "rules",
-      "title": "컴퓨터공학과 및 정보통신대학 학생회칙 안내",
-      "content": "컴퓨터공학과 및 정보통신대학 학생회칙입니다.",
-      "view_count": 90,
-      "is_pinned": false,
-      "is_anonymous": false,
-      "author_name": "사법위원장",
-      "created_at": "2025-01-25T00:00:00Z",
-      "updated_at": "2025-01-25T00:00:00Z",
-      "is_deleted": false,
-      "attachments": [
-        {
-          "name": "컴퓨터공학과 학생회 회칙(25.09.29. 시행).pdf",
-          "url": "/assets/notice/민주자치/학생회칙/컴퓨터공학과 학생회 회칙(25.09.29. 시행).pdf",
-          "size": "469KB"
-        },
-        {
-          "name": "정보통신대학 학생회 회칙.pdf",
-          "url": "/assets/notice/민주자치/학생회칙/정보통신대학 학생회 회칙.pdf",
-          "size": "112KB"
-        }
-      ],
-      "images": []
-    }
-  ],
-  "events": [
-    {
-      "id": 1,
-      "title": "2025 신입생 OT",
-      "status": "closed",
-      "description": "컴퓨터공학과 신입생 여러분을 환영합니다! 학교 생활 안내 및 친목 도모의 시간.",
-      "image": "https://via.placeholder.com/400x300",
-      "currentCount": 50,
-      "maxCount": 50
-    },
-    {
-      "id": 2,
-      "title": "개강파티",
-      "status": "closed",
-      "description": "새로운 학기의 시작을 알리는 개강파티! 선후배가 함께하는 즐거운 자리.",
-      "image": "https://via.placeholder.com/400x300",
-      "currentCount": 75,
-      "maxCount": 100
-    },
-    {
-      "id": 3,
-      "title": "중간고사 간식행사",
-      "status": "active",
-      "description": "시험공부에 지친 학우들을 위한 싸이버거 세트 증정! 선착순 100명.",
-      "image": "https://via.placeholder.com/400x300",
-      "currentCount": 82,
-      "maxCount": 100
-    },
-    {
-      "id": 4,
-      "title": "e-Sports 대회",
-      "status": "scheduled",
-      "description": "롤, 발로란트 최강자를 가려라! 총 상금 50만원.",
-      "image": "https://via.placeholder.com/400x300",
-      "currentCount": 0,
-      "maxCount": 32
-    }
-  ],
-  "clubs": [
-    {
-      "id": 1,
-      "name": "Tools",
-      "description": "매주 정기회의, 세미나, 툴스익스퍼츠.",
-      "category": "학술"
-    },
-    {
-      "id": 2,
-      "name": "다락방",
-      "description": "학술 전문, 스터디 진행.",
-      "category": "학술"
-    },
-    {
-      "id": 3,
-      "name": "E.C",
-      "description": "야구 동아리.",
-      "category": "학술"
-    },
-    {
-      "id": 4,
-      "name": "TCP",
-      "description": "보안 동아리.",
-      "category": "학술"
-    },
-    {
-      "id": 5,
-      "name": "NL",
-      "description": "네트워크 동아리.",
-      "category": "학술"
-    },
-    {
-      "id": 6,
-      "name": "PLUM",
-      "description": "게임 동아리.",
-      "category": "학술"
-    },
-    {
-      "id": 7,
-      "name": "AFK",
-      "description": "축구동아리.",
-      "category": "스포츠"
-    }
-  ],
-  "rentals": [
-    {
-      "id": 1,
-      "name": "보드게임 - 루미큐브",
-      "totalQuantity": 3,
-      "rentedQuantity": 1,
-      "image": "https://via.placeholder.com/150"
-    },
-    {
-      "id": 2,
-      "name": "보드게임 - 스플렌더",
-      "totalQuantity": 2,
-      "rentedQuantity": 2,
-      "image": "https://via.placeholder.com/150"
-    },
-    {
-      "id": 3,
-      "name": "우산",
-      "totalQuantity": 10,
-      "rentedQuantity": 5,
-      "image": "https://via.placeholder.com/150"
-    },
-    {
-      "id": 4,
-      "name": "보조배터리",
-      "totalQuantity": 5,
-      "rentedQuantity": 0,
-      "image": "https://via.placeholder.com/150"
-    }
-  ],
-  "welfare_rentals": [
-    {
-      "id": 1,
-      "item_name": "보조 배터리",
-      "category": "충전기",
-      "description": "5V/2A 보조 배터리",
-      "quantity": 10,
-      "available_quantity": 6,
-      "image_url": "https://i.postimg.cc/90KMY7WC/SNC14917.jpg",
-      "rental_period_days": 7,
-      "is_active": true,
-      "created_at": "2025-01-10",
-      "updated_at": "2025-01-20"
-    },
-    {
-      "id": 2,
-      "item_name": "우산",
-      "category": "우산",
-      "description": "일반 장우산",
-      "quantity": 20,
-      "available_quantity": 17,
-      "image_url": "https://i.postimg.cc/90KMY7WC/SNC14917.jpg",
-      "rental_period_days": 7,
-      "is_active": true,
-      "created_at": "2025-01-10",
-      "updated_at": "2025-01-20"
-    },
-    {
-      "id": 3,
-      "item_name": "돗자리",
-      "category": "기타",
-      "description": "2~3인용 돗자리",
-      "quantity": 5,
-      "available_quantity": 2,
-      "image_url": "https://i.postimg.cc/90KMY7WC/SNC14917.jpg",
-      "rental_period_days": 7,
-      "is_active": true,
-      "created_at": "2025-01-10",
-      "updated_at": "2025-01-20"
-    },
-    {
-      "id": 4,
-      "item_name": "케이블",
-      "category": "주변기기",
-      "description": "C타입 충전 케이블",
-      "quantity": 15,
-      "available_quantity": 9,
-      "image_url": "https://i.postimg.cc/90KMY7WC/SNC14917.jpg",
-      "rental_period_days": 7,
-      "is_active": true,
-      "created_at": "2025-01-10",
-      "updated_at": "2025-01-20"
-    },
-    {
-      "id": 5,
-      "item_name": "마우스",
-      "category": "주변기기",
-      "description": "무선 마우스",
-      "quantity": 8,
-      "available_quantity": 4,
-      "image_url": "https://i.postimg.cc/90KMY7WC/SNC14917.jpg",
-      "rental_period_days": 7,
-      "is_active": true,
-      "created_at": "2025-01-10",
-      "updated_at": "2025-01-20"
-    }
-  ],
-  "welfare_rental_requests": [
-    {
-      "id": 1,
-      "rental_id": 1,
-      "user_id": "2",
-      "status": "approved",
-      "rental_start_date": "2025-01-20",
-      "rental_end_date": "2025-01-27",
-      "actual_return_date": null,
-      "notes": null,
-      "approved_by": "1",
-      "approved_at": "2025-01-20T09:00:00Z",
-      "created_at": "2025-01-20",
-      "updated_at": "2025-01-20"
-    },
-    {
-      "id": 2,
-      "rental_id": 2,
-      "user_id": "2",
-      "status": "approved",
-      "rental_start_date": "2025-01-22",
-      "rental_end_date": "2025-01-25",
-      "actual_return_date": null,
-      "notes": null,
-      "approved_by": "1",
-      "approved_at": "2025-01-22T09:00:00Z",
-      "created_at": "2025-01-22",
-      "updated_at": "2025-01-22"
-    },
-    {
-      "id": 3,
-      "rental_id": 3,
-      "user_id": "2",
-      "status": "approved",
-      "rental_start_date": "2025-01-29",
-      "rental_end_date": "2025-02-05",
-      "actual_return_date": null,
-      "notes": null,
-      "approved_by": "1",
-      "approved_at": "2025-01-29T09:00:00Z",
-      "created_at": "2025-01-29",
-      "updated_at": "2025-01-29"
-    },
-    {
-      "id": 4,
-      "rental_id": 4,
-      "user_id": "2",
-      "status": "approved",
-      "rental_start_date": "2025-01-23",
-      "rental_end_date": "2025-01-25",
-      "actual_return_date": null,
-      "notes": null,
-      "approved_by": "1",
-      "approved_at": "2025-01-23T09:00:00Z",
-      "created_at": "2025-01-23",
-      "updated_at": "2025-01-23"
-    },
-    {
-      "id": 5,
-      "rental_id": 5,
-      "user_id": "2",
-      "status": "approved",
-      "rental_start_date": "2025-01-29",
-      "rental_end_date": "2025-02-05",
-      "actual_return_date": null,
-      "notes": null,
-      "approved_by": "1",
-      "approved_at": "2025-01-29T09:00:00Z",
-      "created_at": "2025-01-29",
-      "updated_at": "2025-01-29"
-    },
-    {
-      "id": 6,
-      "rental_id": 2,
-      "user_id": "2",
-      "status": "pending",
-      "rental_start_date": "2026-01-04",
-      "rental_end_date": "2026-01-11",
-      "actual_return_date": null,
-      "notes": null,
-      "approved_by": null,
-      "approved_at": null,
-      "created_at": "2026-01-04T05:25:40.922Z",
-      "updated_at": "2026-01-04T05:25:40.922Z"
-    }
-  ],
-  "locker_periods": [
-    {
-      "id": 1,
-      "period_name": "2025-1학기",
-      "application_start": "2025-02-01T00:00:00Z",
-      "application_end": "2025-02-10T23:59:59Z",
-      "usage_start": "2025-03-02",
-      "usage_end": "2025-06-30",
-      "is_active": false,
-      "created_at": "2025-01-10",
-      "updated_at": "2025-01-20"
-    },
-    {
-      "id": 2,
-      "name": "2026년 1학기 사물함",
-      "period_name": "2026년 1학기",
-      "rental_start": "2026-01-05",
-      "rental_end": "2026-01-12",
-      "return_start": "2026-05-26",
-      "return_end": "2026-06-02",
-      "application_start": "2026-01-05",
-      "application_end": "2026-01-12",
-      "usage_start": "2026-01-05",
-      "usage_end": "2026-06-02",
-      "is_active": true,
-      "created_at": "2026-01-01",
-      "updated_at": "2026-01-01"
-    }
-  ],
-  "welfare_lockers": [
-    {
-      "locker_number": 1,
-      "is_available": true,
-      "notes": null,
-      "created_at": "2025-01-10"
-    },
-    {
-      "locker_number": 2,
-      "is_available": true,
-      "notes": null,
-      "created_at": "2025-01-10"
-    },
-    {
-      "locker_number": 3,
-      "is_available": false,
-      "notes": "고장",
-      "created_at": "2025-01-10"
-    }
-  ],
-  "locker_rentals": [
-    {
-      "id": 1,
-      "locker_number": 2,
-      "user_id": "2",
-      "period_id": 1,
-      "status": "approved",
-      "approved_by": "1",
-      "approved_at": "2025-02-02T09:00:00Z",
-      "return_confirmed_by": null,
-      "return_confirmed_at": null,
-      "notes": null,
-      "created_at": "2025-02-02",
-      "updated_at": "2025-02-02"
-    }
-  ],
   "boards": [
     {
       "id": 1,
@@ -1182,15 +602,472 @@
       ]
     }
   ],
-  "suggestions": [
+  "rentals": [
     {
       "id": 1,
-      "author_id": "2",
-      "title": "휴게실 개선 요청",
-      "content": "휴게실 의자가 너무 낡았습니다.",
-      "status": "received",
-      "created_at": "2025-03-01T10:00:00Z",
-      "updated_at": "2025-03-01T10:00:00Z"
+      "name": "보드게임 - 루미큐브",
+      "totalQuantity": 3,
+      "rentedQuantity": 1,
+      "image": "https://via.placeholder.com/150"
+    },
+    {
+      "id": 2,
+      "name": "보드게임 - 스플렌더",
+      "totalQuantity": 2,
+      "rentedQuantity": 2,
+      "image": "https://via.placeholder.com/150"
+    },
+    {
+      "id": 16,
+      "main_category": "student_council",
+      "sub_category": "news",
+      "title": "컴퓨터공학과 학술제 개최 안내",
+      "content": "제 30회 컴퓨터공학과 학술제가 열립니다.",
+      "view_count": 7,
+      "is_pinned": true,
+      "is_anonymous": false,
+      "author_name": "학술국장",
+      "created_at": "2025-11-15T00:00:00Z",
+      "updated_at": "2025-11-15T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 17,
+      "main_category": "democracy",
+      "sub_category": "meeting",
+      "title": "제5차 운영위원회 회의록 공개",
+      "content": "5월에 진행된 제5차 운영위원회 회의록을 공개합니다.",
+      "view_count": 203,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "서기",
+      "created_at": "2025-06-01T00:00:00Z",
+      "updated_at": "2025-06-01T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [],
+      "images": []
+    },
+    {
+      "id": 18,
+      "main_category": "democracy",
+      "sub_category": "announcement",
+      "title": "2025학년도 반대표 모집 공고",
+      "content": "2025학년도 각 학년 반대표를 모집합니다. 자세한 내용은 첨부파일을 확인해주세요.",
+      "view_count": 121,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "학생회장",
+      "created_at": "2025-03-02T00:00:00Z",
+      "updated_at": "2025-03-02T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [
+        {
+          "name": "제2호 (반대표 모집 공고).pdf",
+          "url": "/assets/notice/민주자치/공고/제2호 (반대표 모집 공고).pdf",
+          "size": "58KB"
+        }
+      ],
+      "images": []
+    },
+    {
+      "id": 19,
+      "main_category": "democracy",
+      "sub_category": "notice",
+      "title": "자치기구장 및 대표자 명부 고시",
+      "content": "2025학년도 자치기구장 및 대표자 명부를 고시합니다.",
+      "view_count": 46,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "선거관리위원장",
+      "created_at": "2025-03-15T00:00:00Z",
+      "updated_at": "2025-03-15T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [
+        {
+          "name": "자치기구장 및 대표자 명부 고시.pdf",
+          "url": "/assets/notice/민주자치/고시/자치기구장 및 대표자 명부 고시.pdf",
+          "size": "24KB"
+        }
+      ],
+      "images": []
+    },
+    {
+      "id": 20,
+      "main_category": "democracy",
+      "sub_category": "rules",
+      "title": "컴퓨터공학과 및 정보통신대학 학생회칙 안내",
+      "content": "컴퓨터공학과 및 정보통신대학 학생회칙입니다.",
+      "view_count": 90,
+      "is_pinned": false,
+      "is_anonymous": false,
+      "author_name": "사법위원장",
+      "created_at": "2025-01-25T00:00:00Z",
+      "updated_at": "2025-01-25T00:00:00Z",
+      "is_deleted": false,
+      "attachments": [
+        {
+          "name": "컴퓨터공학과 학생회 회칙(25.09.29. 시행).pdf",
+          "url": "/assets/notice/민주자치/학생회칙/컴퓨터공학과 학생회 회칙(25.09.29. 시행).pdf",
+          "size": "469KB"
+        },
+        {
+          "name": "정보통신대학 학생회 회칙.pdf",
+          "url": "/assets/notice/민주자치/학생회칙/정보통신대학 학생회 회칙.pdf",
+          "size": "112KB"
+        }
+      ],
+      "images": []
+    }
+  ],
+  "welfare_rentals": [
+    {
+      "id": 1,
+      "item_name": "보조 배터리",
+      "category": "충전기",
+      "description": "5V/2A 보조 배터리",
+      "quantity": 10,
+      "available_quantity": 6,
+      "image_url": "https://i.postimg.cc/90KMY7WC/SNC14917.jpg",
+      "rental_period_days": 7,
+      "is_active": true,
+      "created_at": "2025-01-10",
+      "updated_at": "2025-01-20"
+    },
+    {
+      "id": 2,
+      "item_name": "우산",
+      "category": "우산",
+      "description": "일반 장우산",
+      "quantity": 20,
+      "available_quantity": 17,
+      "image_url": "https://i.postimg.cc/90KMY7WC/SNC14917.jpg",
+      "rental_period_days": 7,
+      "is_active": true,
+      "created_at": "2025-01-10",
+      "updated_at": "2025-01-20"
+    },
+    {
+      "id": 3,
+      "item_name": "돗자리",
+      "category": "기타",
+      "description": "2~3인용 돗자리",
+      "quantity": 5,
+      "available_quantity": 2,
+      "image_url": "https://i.postimg.cc/90KMY7WC/SNC14917.jpg",
+      "rental_period_days": 7,
+      "is_active": true,
+      "created_at": "2025-01-10",
+      "updated_at": "2025-01-20"
+    },
+    {
+      "id": 4,
+      "item_name": "케이블",
+      "category": "주변기기",
+      "description": "C타입 충전 케이블",
+      "quantity": 15,
+      "available_quantity": 9,
+      "image_url": "https://i.postimg.cc/90KMY7WC/SNC14917.jpg",
+      "rental_period_days": 7,
+      "is_active": true,
+      "created_at": "2025-01-10",
+      "updated_at": "2025-01-20"
+    },
+    {
+      "id": 5,
+      "item_name": "마우스",
+      "category": "주변기기",
+      "description": "무선 마우스",
+      "quantity": 8,
+      "available_quantity": 4,
+      "image_url": "https://i.postimg.cc/90KMY7WC/SNC14917.jpg",
+      "rental_period_days": 7,
+      "is_active": true,
+      "created_at": "2025-01-10",
+      "updated_at": "2025-01-20"
+    }
+  ],
+  "welfare_rental_requests": [
+    {
+      "id": 1,
+      "rental_id": 1,
+      "user_id": "2",
+      "status": "approved",
+      "rental_start_date": "2025-01-20",
+      "rental_end_date": "2025-01-27",
+      "actual_return_date": null,
+      "notes": null,
+      "approved_by": "1",
+      "approved_at": "2025-01-20T09:00:00Z",
+      "created_at": "2025-01-20",
+      "updated_at": "2025-01-20"
+    },
+    {
+      "id": 2,
+      "rental_id": 2,
+      "user_id": "2",
+      "status": "approved",
+      "rental_start_date": "2025-01-22",
+      "rental_end_date": "2025-01-25",
+      "actual_return_date": null,
+      "notes": null,
+      "approved_by": "1",
+      "approved_at": "2025-01-22T09:00:00Z",
+      "created_at": "2025-01-22",
+      "updated_at": "2025-01-22"
+    },
+    {
+      "id": 3,
+      "rental_id": 3,
+      "user_id": "2",
+      "status": "approved",
+      "rental_start_date": "2025-01-29",
+      "rental_end_date": "2025-02-05",
+      "actual_return_date": null,
+      "notes": null,
+      "approved_by": "1",
+      "approved_at": "2025-01-29T09:00:00Z",
+      "created_at": "2025-01-29",
+      "updated_at": "2025-01-29"
+    },
+    {
+      "id": 4,
+      "rental_id": 4,
+      "user_id": "2",
+      "status": "approved",
+      "rental_start_date": "2025-01-23",
+      "rental_end_date": "2025-01-25",
+      "actual_return_date": null,
+      "notes": null,
+      "approved_by": "1",
+      "approved_at": "2025-01-23T09:00:00Z",
+      "created_at": "2025-01-23",
+      "updated_at": "2025-01-23"
+    },
+    {
+      "id": 5,
+      "rental_id": 5,
+      "user_id": "2",
+      "status": "approved",
+      "rental_start_date": "2025-01-29",
+      "rental_end_date": "2025-02-05",
+      "actual_return_date": null,
+      "notes": null,
+      "approved_by": "1",
+      "approved_at": "2025-01-29T09:00:00Z",
+      "created_at": "2025-01-29",
+      "updated_at": "2025-01-29"
+    },
+    {
+      "id": 6,
+      "rental_id": 2,
+      "user_id": "2",
+      "status": "pending",
+      "rental_start_date": "2026-01-04",
+      "rental_end_date": "2026-01-11",
+      "actual_return_date": null,
+      "notes": null,
+      "approved_by": null,
+      "approved_at": null,
+      "created_at": "2026-01-04T05:25:40.922Z",
+      "updated_at": "2026-01-04T05:25:40.922Z"
+    }
+  ],
+  "locker_periods": [
+    {
+      "id": 1,
+      "period_name": "2025-1학기",
+      "application_start": "2025-02-01T00:00:00Z",
+      "application_end": "2025-02-10T23:59:59Z",
+      "usage_start": "2025-03-02",
+      "usage_end": "2025-06-30",
+      "is_active": false,
+      "created_at": "2025-01-10",
+      "updated_at": "2025-01-20"
+    },
+    {
+      "id": 2,
+      "name": "2026년 1학기 사물함",
+      "period_name": "2026년 1학기",
+      "rental_start": "2026-01-05",
+      "rental_end": "2026-01-12",
+      "return_start": "2026-05-26",
+      "return_end": "2026-06-02",
+      "application_start": "2026-01-05",
+      "application_end": "2026-01-12",
+      "usage_start": "2026-01-05",
+      "usage_end": "2026-06-02",
+      "is_active": true,
+      "created_at": "2026-01-01",
+      "updated_at": "2026-01-01"
+    }
+  ],
+  "welfare_lockers": [
+    {
+      "locker_number": 1,
+      "is_available": true,
+      "notes": null,
+      "created_at": "2025-01-10"
+    },
+    {
+      "locker_number": 2,
+      "is_available": true,
+      "notes": null,
+      "created_at": "2025-01-10"
+    },
+    {
+      "locker_number": 3,
+      "is_available": false,
+      "notes": "고장",
+      "created_at": "2025-01-10"
+    }
+  ],
+  "locker_rentals": [
+    {
+      "id": 1,
+      "locker_number": 2,
+      "user_id": "2",
+      "period_id": 1,
+      "status": "approved",
+      "approved_by": "1",
+      "approved_at": "2025-02-02T09:00:00Z",
+      "return_confirmed_by": null,
+      "return_confirmed_at": null,
+      "notes": null,
+      "created_at": "2025-02-02",
+      "updated_at": "2025-02-02"
+    }
+  ],
+  "clubs": [
+    {
+      "id": 1,
+      "name": "E.C",
+      "category": "학술",
+      "short_desc": "Endless Creaction",
+      "description": "Endless Creaction은 다양한 활동을 하고 있습니다.",
+      "image_url": "https://via.placeholder.com/400x200?text=Endless",
+      "activity_day": "매주 목요일 18:00",
+      "location": "미래관 000호",
+      "president_name": "이재호",
+      "president_contact": "010-1234-5678",
+      "recruitment_period": "상시 모집",
+      "recruitment_target": "컴퓨터공학과 재학생 누구나",
+      "tags": [
+        "학술",
+        "동아리방",
+        "동아리 서버 보유"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Tools",
+      "category": "학술",
+      "short_desc": "스터디와 프로젝트 중심 동아리",
+      "description": "Tools는 백준 문제 풀이, 프로젝트 진행, 스터디 등 전공 실력 향상을 위한 다양한 활동을 진행합니다.",
+      "image_url": "https://via.placeholder.com/400x200?text=SP+CUBE",
+      "activity_day": "매주 수요일 18:30",
+      "location": "미래관 19호",
+      "president_name": "박지윤",
+      "president_contact": "010-1234-1234",
+      "recruitment_period": "상시 모집",
+      "recruitment_target": "열정 있는 컴퓨터공학과 학생",
+      "tags": [
+        "Tools Exports",
+        "Growing",
+        "Study"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "NL",
+      "category": "학술",
+      "short_desc": "Network Leader",
+      "description": "Network Leader는 네트워크를 위주로 공부합니다.",
+      "image_url": "https://via.placeholder.com/400x200?text=FC+Moomin",
+      "activity_day": "매주 금요일 16:00",
+      "location": "미래관 000호",
+      "president_name": "김네트워크",
+      "president_contact": "010-5555-7777",
+      "recruitment_period": "학기 초",
+      "recruitment_target": "네트워크를 즐기는 누구나",
+      "tags": [
+        "Network",
+        "동아리방 보유"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "PLUM",
+      "category": "학술",
+      "short_desc": "PLUM 동아리",
+      "description": "게임 동아리.",
+      "image_url": "https://via.placeholder.com/400x200?text=FC+Moomin",
+      "activity_day": "매주 금요일 16:00",
+      "location": "미래관 000호",
+      "president_name": "김플럼",
+      "president_contact": "010-5555-7777",
+      "recruitment_period": "학기 초",
+      "recruitment_target": "네트워크를 즐기는 누구나",
+      "tags": [
+        "게임 제작",
+        "C++",
+        "동아리방"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "다락방",
+      "category": "학술",
+      "short_desc": "다락방 동아리",
+      "description": "다락방 학술 위주 동아리.",
+      "image_url": "https://via.placeholder.com/400x200?text=FC+Moomin",
+      "activity_day": "매주 금요일 16:00",
+      "location": "미래관 000호",
+      "president_name": "김다락",
+      "president_contact": "010-5555-7777",
+      "recruitment_period": "학기 초",
+      "recruitment_target": "학점 높게 받고 싶은 자 오라!",
+      "tags": [
+        "학술",
+        "#4.5"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "TCP",
+      "category": "학술",
+      "short_desc": "보안 동아리",
+      "description": "보안 학술 위주 동아리.",
+      "image_url": "https://via.placeholder.com/400x200?text=FC+Moomin",
+      "activity_day": "매주 금요일 16:00",
+      "location": "미래관 000호",
+      "president_name": "김다락",
+      "president_contact": "010-5555-7777",
+      "recruitment_period": "학기 초",
+      "recruitment_target": "보안을 즐기는 누구나",
+      "tags": [
+        "보안",
+        "C++",
+        "동아리방"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "AFK",
+      "category": "축구",
+      "short_desc": "축구 동아리",
+      "description": "Away From The Keyboard 동아리.",
+      "image_url": "https://via.placeholder.com/400x200?text=FC+Moomin",
+      "activity_day": "매주 금요일 16:00",
+      "location": "미래관 000호",
+      "president_name": "김축구",
+      "president_contact": "010-5555-7777",
+      "recruitment_period": "학기 초",
+      "recruitment_target": "축구를 즐기는 누구나",
+      "tags": [
+        "축구"
+      ]
     }
   ]
 }
