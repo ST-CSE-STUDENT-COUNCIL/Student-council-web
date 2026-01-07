@@ -14,6 +14,7 @@ function NoticeDetail() {
     const processedNoticeId = useRef<string | null>(null)
 
     useEffect(() => {
+        window.scrollTo(0, 0)
         const fetchNotice = async () => {
             if (processedNoticeId.current === noticeId) return
             processedNoticeId.current = noticeId
