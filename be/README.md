@@ -144,6 +144,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `POST /auth/signup` - 회원가입
 - `POST /auth/login` - 로그인
 - `POST /auth/logout` - 로그아웃
+- `POST /auth/forgot-password` - 비밀번호 찾기 (학번 입력 → 이메일 인증번호 발송) 🆕
+- `POST /auth/verify-reset-code` - 비밀번호 재설정 인증번호 확인 🆕
+- `POST /auth/reset-password` - 비밀번호 재설정 🆕
 
 **마이페이지 (MyPage)** ⚠️ 로그인 필요
 - `GET /mypage` - 내 프로필 조회
@@ -157,6 +160,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `POST /admin/users/{user_id}/reject` - 회원 거부
 - `PATCH /admin/users/{user_id}/role` - 회원 역할 변경
 - `PATCH /admin/users/{user_id}/membership` - 회비 납부 상태 변경
+- `GET /admin/users/blocked` - 차단된 사용자 목록 조회 (IP 로그 포함) 🆕
+- `POST /admin/users/{student_id}/unblock` - 사용자 차단 해제 🆕
 
 **공지사항 (Notices)** ⚠️ 작성은 관리자만 가능
 - `GET /notices` - 공지사항 목록 조회 (공개, 로그인 불필요)
@@ -205,6 +210,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    └─> Supabase Auth에 계정 생성
    └─> users 테이블에 프로필 저장
    └─> verification_status = 'pending' (관리자 승인 대기)
+   💡 프론트엔드: password와 passwordConfirm 일치 확인 후 API 호출
 
 5. 로그인 (POST /auth/login)
    ⚠️ pending 상태에서도 로그인 가능
@@ -213,6 +219,23 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 6. 학적 인증 이미지 업로드 (POST /users/me/verification-image)
    └─> 로그인 필수 (JWT 토큰 필요)
    └─> Private Storage에 저장
+```
+
+## 비밀번호 재설정 플로우 (로그인 전)
+
+```
+1. 비밀번호 찾기 (POST /auth/forgot-password)
+   └─> 학번 입력
+   └─> 등록된 이메일로 6자리 인증번호 발송 (5분 유효, 1분 1회 제한)
+
+2. 인증번호 확인 (POST /auth/verify-reset-code)
+   └─> 학번 + 인증번호 검증
+
+3. 비밀번호 재설정 (POST /auth/reset-password)
+   └─> 새 비밀번호 설정 (8자 이상)
+   └─> 로그인 차단 정보도 자동 초기화
+   💡 프론트엔드: newPassword와 newPasswordConfirm 일치 확인 후 API 호출
+```
    └─> users 테이블에 자동 FK 연결 (orphan 파일 방지)
    └─> Rate limit: 1시간에 3회
 
@@ -332,7 +355,7 @@ Authorization: Bearer <admin_access_token>
 slowapi를 사용한 요청 횟수 제한:
 
 - `POST /auth/send-verification` - 1분에 1회
-- `POST /auth/login` - 5분에 10회
+- `POST /auth/login` - **IP 기반: 5분에 100회** (공용 IP 고려)
 - `POST /auth/upload-verification-image` - 1시간에 3회 (deprecated)
 - `POST /users/me/verification-image` - 1시간에 3회
 
@@ -347,6 +370,26 @@ slowapi를 사용한 요청 횟수 제한:
 - 6자리 랜덤 코드 생성
 - 5분간 유효
 - 인증 완료 후 회원가입 가능
+
+### 로그인 보안 (학번 기반 차단)
+
+**누적 실패 횟수에 따른 차단 정책:**
+- **누적 5회 실패** → 10분간 로그인 차단
+- **누적 10회 실패** → 1시간 동안 로그인 차단
+- **누적 15회 실패** → 영구 차단 (계정 삭제 안 함, 관리자 문의 필요)
+
+**보안 기능:**
+- 로그인 성공 시 실패 횟수 자동 초기화
+- `login_attempts` 테이블: 모든 시도 기록 (학번, 성공/실패, IP, 시간)
+- `login_blocks` 테이블: 차단 상태 관리 (실패 횟수, 차단 만료 시각, 차단 사유)
+- 실패 시 남은 횟수 표시 (예: "실패 3/15")
+- 차단 중일 때 남은 시간 안내
+
+**악의적 공격 방어:**
+- 15회 실패 시 계정 삭제하지 않고 **영구 차단**만 적용
+- 관리자가 `/admin/users/blocked` API로 IP 로그 확인
+- 실제 본인 확인 시 `/admin/users/{student_id}/unblock` API로 차단 해제
+- 타인 학번으로 공격해도 계정 삭제되지 않음
 
 ### 관리자 승인
 - 회원가입 후 `verification_status='pending'`
@@ -482,7 +525,7 @@ FRONTEND_URL=https://yourdomain.com
 
 마이그레이션 실행:
 ```bash
-psql -h <host> -U <user> -d <database> -f db/migrations/003_redesign_welfare_system.sql
+psql -h <host> -U <user> -d <database> -f db/migrations/005_add_password_reset_table.sql
 ```
 
 ## 문제 해결

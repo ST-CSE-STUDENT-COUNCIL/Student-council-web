@@ -25,7 +25,7 @@
 -- 
 -- 주의: locker_rentals 테이블도 함께 재생성됩니다 (의존성)
 
--- 3단계: 복지사업 시스템 재설계 ⏳
+-- 3단계: 복지사업 시스템 재설계 ✅
 -- 파일: 003_redesign_welfare_system.sql
 -- 
 -- 실행 방법:
@@ -36,6 +36,27 @@
 -- - 삭제: welfare_rentals, welfare_rental_requests, welfare_lockers, locker_rentals
 -- - 추가: locker_info (배치도 + 구글폼), rental_items (구글폼 + 스프레드시트)
 -- - 유지: locker_periods (이미 return_start/end 있음)
+
+-- 4단계: 로그인 시도 추적 시스템 ✅
+-- 파일: 004_add_login_attempt_tracking.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 004_add_login_attempt_tracking.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 추가 내용:
+-- - login_attempts: 로그인 시도 이력 추적
+-- - login_blocks: 학번별 차단 상태 관리 (실패 횟수, 차단 시간)
+
+-- 5단계: 비밀번호 재설정 ⏳
+-- 파일: 005_add_password_reset_table.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 005_add_password_reset_table.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 추가 내용:
+-- - password_resets: 비밀번호 찾기 이메일 인증
 
 -- ============================================================================
 -- 마이그레이션 확인

@@ -56,6 +56,60 @@ CREATE INDEX idx_email_verifications_expires_at ON email_verifications(expires_a
 -- 대안: FastAPI 백그라운드 태스크로 주기적 삭제
 
 -- ============================================================================
+-- 0-0-1. 비밀번호 재설정 인증
+-- ============================================================================
+-- 비밀번호 찾기 시 이메일 인증용 테이블
+-- ============================================================================
+CREATE TABLE password_resets (
+  id SERIAL PRIMARY KEY,
+  student_id VARCHAR(20) NOT NULL,           -- 학번
+  email VARCHAR(255) NOT NULL,               -- 이메일
+  code VARCHAR(6) NOT NULL,                  -- 6자리 인증 코드
+  verified BOOLEAN DEFAULT false,            -- 인증 완료 여부
+  used BOOLEAN DEFAULT false,                -- 비밀번호 재설정에 사용됨
+  expires_at TIMESTAMPTZ NOT NULL,           -- 만료 시각 (5분)
+  created_at TIMESTAMPTZ DEFAULT NOW(),      -- 생성 시각
+  verified_at TIMESTAMPTZ                    -- 인증 완료 시각
+);
+
+-- 인덱스
+CREATE INDEX idx_password_resets_student_id ON password_resets(student_id);
+CREATE INDEX idx_password_resets_email ON password_resets(email);
+CREATE INDEX idx_password_resets_expires_at ON password_resets(expires_at);
+
+-- ============================================================================
+-- 0-1. 로그인 시도 추적 (보안)
+-- ============================================================================
+-- 학번별 로그인 시도 추적 테이블
+CREATE TABLE login_attempts (
+  id SERIAL PRIMARY KEY,
+  student_id VARCHAR(20) NOT NULL,           -- 학번
+  attempt_time TIMESTAMPTZ DEFAULT NOW(),    -- 시도 시각
+  success BOOLEAN NOT NULL,                  -- 성공 여부
+  ip_address VARCHAR(45),                    -- IP 주소 (IPv4/IPv6)
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 인덱스
+CREATE INDEX idx_login_attempts_student_id ON login_attempts(student_id);
+CREATE INDEX idx_login_attempts_time ON login_attempts(attempt_time);
+
+-- 학번별 로그인 차단 상태 테이블
+CREATE TABLE login_blocks (
+  id SERIAL PRIMARY KEY,
+  student_id VARCHAR(20) UNIQUE NOT NULL,    -- 학번
+  failed_attempts INT DEFAULT 0,             -- 누적 실패 횟수
+  block_until TIMESTAMPTZ,                   -- 차단 만료 시각
+  block_reason VARCHAR(50),                  -- 차단 사유 (10분/1시간/영구)
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 인덱스
+CREATE INDEX idx_login_blocks_student_id ON login_blocks(student_id);
+CREATE INDEX idx_login_blocks_until ON login_blocks(block_until);
+
+-- ============================================================================
 -- 1. 사용자
 -- ============================================================================
 -- 접근 권한:
