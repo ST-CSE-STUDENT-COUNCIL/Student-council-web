@@ -22,7 +22,7 @@ export const NoticeList = ({ notices }: NoticeListProps) => {
                 <div className="w-24 shrink-0">분류</div>
                 <div className="flex-1 text-left px-4">제목</div>
                 <div className="w-28 shrink-0">작성일</div>
-                <div className="w-20 shrink-0">조회</div>
+
             </div>
 
             {/* List Items */}
@@ -67,16 +67,13 @@ export const NoticeList = ({ notices }: NoticeListProps) => {
 
                         {/* Mobile: Bottom Row with Author and Views */}
                         <div className="flex items-center w-full md:hidden text-xs text-gray-500 mt-1 gap-3">
-                            <span>조회 {notice.view_count}</span>
                         </div>
 
                         {/* Desktop: Author, Date, Views */}
                         <div className="hidden md:block w-28 text-center text-gray-500 text-sm shrink-0">
                             {notice.created_at.split('T')[0]}
                         </div>
-                        <div className="hidden md:block w-20 text-center text-gray-500 text-sm shrink-0">
-                            {notice.view_count.toLocaleString()}
-                        </div>
+
                     </Link>
                 ))}
 

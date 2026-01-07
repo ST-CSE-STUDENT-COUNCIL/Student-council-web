@@ -23,19 +23,7 @@ function NoticeDetail() {
                 const { noticeApi } = await import('../../lib/api/notices')
                 const data = await noticeApi.getById(Number(noticeId))
 
-                try {
-                    // 조회수 증가 시도
-                    await noticeApi.incrementViews(Number(noticeId))
-
-                    setNotice({
-                        ...data,
-                        view_count: data.view_count + 1
-                    })
-                } catch (viewError) {
-                    // 조회수 증가 실패 시 (예: 권한 없음) 원본 데이터만 표시
-                    console.warn('Failed to increment views', viewError)
-                    setNotice(data)
-                }
+                setNotice(data)
             } catch (error) {
                 console.error('Failed to fetch notice', error)
             } finally {
@@ -81,9 +69,24 @@ function NoticeDetail() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto px-4 pt-24 pb-12">
             <button
-                onClick={() => router.history.go(-1)}
+                onClick={() => {
+                    if (window.history.length > 1) {
+                        router.history.go(-1)
+                    } else {
+                        router.navigate({
+                            to: '/notices',
+                            search: {
+                                mainCategory: 'student_council',
+                                subCategory: 'all',
+                                search: '',
+                                sort: 'newest',
+                                page: 1
+                            }
+                        })
+                    }
+                }}
                 className="inline-flex items-center text-gray-500 hover:text-blue-600 mb-6 transition-colors"
             >
                 <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
@@ -106,9 +109,8 @@ function NoticeDetail() {
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 leading-tight">{notice.title}</h1>
                     <div className="flex items-center text-sm text-gray-500 gap-4">
                         {/* Format Date if possible, assuming YYYY-MM-DDTHH:mm:ssZ */}
-                        <span>{notice.created_at.split('T')[0]}</span>
-                        <span className="w-px h-3 bg-gray-300"></span>
-                        <span>조회 {notice.view_count.toLocaleString()}</span>
+                        <span>{notice.created_at ? notice.created_at.split('T')[0] : ''}</span>
+
                     </div>
                 </div>
 
@@ -129,29 +131,34 @@ function NoticeDetail() {
                 </div>
 
                 {/* Attachments */}
-                {notice.attachments && notice.attachments.length > 0 && (
-                    <div className="px-8 py-6 bg-gray-50 border-t border-gray-100">
-                        <h3 className="text-sm font-semibold text-gray-900 mb-3">첨부파일</h3>
+                <div className="px-8 py-6 bg-gray-50 border-t border-gray-100">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">첨부파일</h3>
+                    {notice.attachments && notice.attachments.length > 0 ? (
                         <div className="space-y-2">
                             {notice.attachments.map((file, idx) => (
                                 <a
                                     key={idx}
-                                    href={file.url}
+                                    href={file.url ? encodeURI(file.url) : '#'} // URL 없으면 # 처리
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center p-3 bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all group"
+                                    onClick={(e) => !file.url && e.preventDefault()}
                                 >
                                     <span className="text-2xl mr-3">📄</span>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600">{file.name}</p>
-                                        <p className="text-xs text-gray-500">{file.size}</p>
+                                        <p className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600">
+                                            {file.name || (file.url ? decodeURIComponent(file.url.split('/').pop() || '파일') : '파일')}
+                                        </p>
+                                        <p className="text-xs text-gray-500">{file.size || 'Unknown size'}</p>
                                     </div>
                                     <span className="text-gray-400 group-hover:text-blue-600">⬇️</span>
                                 </a>
                             ))}
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <p className="text-sm text-gray-400">첨부된 파일이 없습니다.</p>
+                    )}
+                </div>
             </article>
         </div>
     )

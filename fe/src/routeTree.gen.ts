@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelfareRouteImport } from './routes/welfare'
-import { Route as RegisterRouteImport } from './routes/register'
+import { Route as SuggestionRouteImport } from './routes/suggestion'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as MypageRouteImport } from './routes/mypage'
 import { Route as LoginRouteImport } from './routes/login'
@@ -19,16 +21,28 @@ import { Route as EventsRouteImport } from './routes/events'
 import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NoticesIndexRouteImport } from './routes/notices/index'
+import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as NoticesNoticeIdRouteImport } from './routes/notices/$noticeId'
+import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
 
 const WelfareRoute = WelfareRouteImport.update({
   id: '/welfare',
   path: '/welfare',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
+const SuggestionRoute = SuggestionRouteImport.update({
+  id: '/suggestion',
+  path: '/suggestion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NoticesRoute = NoticesRouteImport.update({
@@ -71,49 +85,70 @@ const NoticesIndexRoute = NoticesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => NoticesRoute,
 } as any)
+const EventsIndexRoute = EventsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => EventsRoute,
+} as any)
 const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
   id: '/$noticeId',
   path: '/$noticeId',
   getParentRoute: () => NoticesRoute,
 } as any)
+const EventsEventIdRoute = EventsEventIdRouteImport.update({
+  id: '/$eventId',
+  path: '/$eventId',
+  getParentRoute: () => EventsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
-  '/events': typeof EventsRoute
+  '/events': typeof EventsRouteWithChildren
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
   '/notices': typeof NoticesRouteWithChildren
-  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRoute
+  '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/events/$eventId': typeof EventsEventIdRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/events/': typeof EventsIndexRoute
   '/notices/': typeof NoticesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
-  '/events': typeof EventsRoute
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
-  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRoute
+  '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/events/$eventId': typeof EventsEventIdRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/events': typeof EventsIndexRoute
   '/notices': typeof NoticesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
-  '/events': typeof EventsRoute
+  '/events': typeof EventsRouteWithChildren
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
   '/notices': typeof NoticesRouteWithChildren
-  '/register': typeof RegisterRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRoute
+  '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/events/$eventId': typeof EventsEventIdRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/events/': typeof EventsIndexRoute
   '/notices/': typeof NoticesIndexRoute
 }
 export interface FileRouteTypes {
@@ -126,21 +161,28 @@ export interface FileRouteTypes {
     | '/login'
     | '/mypage'
     | '/notices'
-    | '/register'
+    | '/reset-password'
+    | '/signup'
+    | '/suggestion'
     | '/welfare'
+    | '/events/$eventId'
     | '/notices/$noticeId'
+    | '/events/'
     | '/notices/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/clubs'
-    | '/events'
     | '/intro'
     | '/login'
     | '/mypage'
-    | '/register'
+    | '/reset-password'
+    | '/signup'
+    | '/suggestion'
     | '/welfare'
+    | '/events/$eventId'
     | '/notices/$noticeId'
+    | '/events'
     | '/notices'
   id:
     | '__root__'
@@ -151,21 +193,27 @@ export interface FileRouteTypes {
     | '/login'
     | '/mypage'
     | '/notices'
-    | '/register'
+    | '/reset-password'
+    | '/signup'
+    | '/suggestion'
     | '/welfare'
+    | '/events/$eventId'
     | '/notices/$noticeId'
+    | '/events/'
     | '/notices/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClubsRoute: typeof ClubsRoute
-  EventsRoute: typeof EventsRoute
+  EventsRoute: typeof EventsRouteWithChildren
   IntroRoute: typeof IntroRoute
   LoginRoute: typeof LoginRoute
   MypageRoute: typeof MypageRoute
   NoticesRoute: typeof NoticesRouteWithChildren
-  RegisterRoute: typeof RegisterRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SignupRoute: typeof SignupRoute
+  SuggestionRoute: typeof SuggestionRoute
   WelfareRoute: typeof WelfareRoute
 }
 
@@ -178,11 +226,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WelfareRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
+    '/suggestion': {
+      id: '/suggestion'
+      path: '/suggestion'
+      fullPath: '/suggestion'
+      preLoaderRoute: typeof SuggestionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notices': {
@@ -241,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NoticesIndexRouteImport
       parentRoute: typeof NoticesRoute
     }
+    '/events/': {
+      id: '/events/'
+      path: '/'
+      fullPath: '/events/'
+      preLoaderRoute: typeof EventsIndexRouteImport
+      parentRoute: typeof EventsRoute
+    }
     '/notices/$noticeId': {
       id: '/notices/$noticeId'
       path: '/$noticeId'
@@ -248,8 +317,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NoticesNoticeIdRouteImport
       parentRoute: typeof NoticesRoute
     }
+    '/events/$eventId': {
+      id: '/events/$eventId'
+      path: '/$eventId'
+      fullPath: '/events/$eventId'
+      preLoaderRoute: typeof EventsEventIdRouteImport
+      parentRoute: typeof EventsRoute
+    }
   }
 }
+
+interface EventsRouteChildren {
+  EventsEventIdRoute: typeof EventsEventIdRoute
+  EventsIndexRoute: typeof EventsIndexRoute
+}
+
+const EventsRouteChildren: EventsRouteChildren = {
+  EventsEventIdRoute: EventsEventIdRoute,
+  EventsIndexRoute: EventsIndexRoute,
+}
+
+const EventsRouteWithChildren =
+  EventsRoute._addFileChildren(EventsRouteChildren)
 
 interface NoticesRouteChildren {
   NoticesNoticeIdRoute: typeof NoticesNoticeIdRoute
@@ -267,12 +356,14 @@ const NoticesRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClubsRoute: ClubsRoute,
-  EventsRoute: EventsRoute,
+  EventsRoute: EventsRouteWithChildren,
   IntroRoute: IntroRoute,
   LoginRoute: LoginRoute,
   MypageRoute: MypageRoute,
   NoticesRoute: NoticesRouteWithChildren,
-  RegisterRoute: RegisterRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SignupRoute: SignupRoute,
+  SuggestionRoute: SuggestionRoute,
   WelfareRoute: WelfareRoute,
 }
 export const routeTree = rootRouteImport

@@ -17,13 +17,12 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str
     SUPABASE_ANON_KEY: str
     
-    # SMTP (이메일)
-    SMTP_HOST: str
-    SMTP_PORT: int
-    SMTP_USER: str
-    SMTP_PASSWORD: str
-    SMTP_FROM_EMAIL: str
-    SMTP_FROM_NAME: str
+    # Gmail HTTP API
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
+    GOOGLE_REFRESH_TOKEN: str
+    GMAIL_FROM_EMAIL: str
+    GMAIL_FROM_NAME: str
     
     # Security
     SECRET_KEY: str

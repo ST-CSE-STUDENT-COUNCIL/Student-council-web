@@ -5,6 +5,12 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 
 
+class UploadVerificationImageResponse(BaseModel):
+    """학적 인증 이미지 업로드 응답"""
+    file_path: str = Field(..., description="Storage 내 파일 경로")
+    message: str = "이미지가 업로드되었습니다"
+
+
 class SendVerificationRequest(BaseModel):
     """이메일 인증번호 발송 요청"""
     email: EmailStr = Field(..., description="서울과기대 이메일")
