@@ -127,7 +127,7 @@ function RouteComponent() {
                                 />
                             </div>
 
-                            <div className="flex-1 overflow-y-auto custom-scrollbar mb-4">
+                            <div className="flex-1 overflow-y-auto custom-scrollbar mb-4 px-2 py-2">
                                 <EventList
                                     events={paginatedEvents}
                                     onEventSelect={setSelectedEvent}
