@@ -33,8 +33,7 @@ export const NoticeFilters = ({
         ? [
             { value: 'all', label: '전체보기' },
             { value: 'event', label: '행사' },
-            { value: 'welfare', label: '복지' },
-            { value: 'news', label: '학과소식' }
+            { value: 'welfare', label: '복지' }
         ]
         : [
             { value: 'all', label: '전체보기' },

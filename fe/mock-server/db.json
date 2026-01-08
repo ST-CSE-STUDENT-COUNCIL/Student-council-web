@@ -1,4 +1,4 @@
-{
+﻿{
   "users": [
     {
       "id": "1",
@@ -255,7 +255,7 @@
       "author_id": "1",
       "title": "3월 월간회의 결과 보고",
       "content": "3월 월간회의 결과를 보고합니다.\n\n안건 1. 신입생 환영회 결산 보고\n안건 2. 과잠바 공동구매 진행 현황 공유",
-      "subcategory": "학과소식",
+      "subcategory": "복지",
       "is_pinned": false,
       "view_count": 341,
       "is_deleted": false,
@@ -509,7 +509,7 @@
       "author_id": "1",
       "title": "컴퓨터공학과 학술제 개최 안내",
       "content": "제 30회 컴퓨터공학과 학술제가 열립니다.",
-      "subcategory": "학과소식",
+      "subcategory": "복지",
       "is_pinned": true,
       "view_count": 13,
       "is_deleted": false,
@@ -620,7 +620,7 @@
     {
       "id": 16,
       "main_category": "student_council",
-      "sub_category": "news",
+      "sub_category": "welfare",
       "title": "컴퓨터공학과 학술제 개최 안내",
       "content": "제 30회 컴퓨터공학과 학술제가 열립니다.",
       "view_count": 7,

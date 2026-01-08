@@ -8,7 +8,7 @@ type NoticeListProps = {
 export const NoticeList = ({ notices }: NoticeListProps) => {
     const getSubCategoryLabel = (_main: string, sub: string) => {
         const labels: Record<string, string> = {
-            'event': '행사', 'welfare': '복지', 'news': '학과소식',
+            'event': '행사', 'welfare': '복지',
             'announcement': '공고', 'notice': '고시', 'meeting': '대표자회의', 'rules': '학생회칙'
         };
         return labels[sub] || sub;

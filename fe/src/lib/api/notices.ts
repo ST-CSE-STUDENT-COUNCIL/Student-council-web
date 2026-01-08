@@ -34,8 +34,7 @@ const subCategoryMap: Record<string, string> = {
     '공고': 'announcement',
     '고시': 'notice',
     '대표자회의': 'meeting',
-    '학생회칙': 'rules',
-    '학과소식': 'news'
+    '학생회칙': 'rules'
 }
 
 export const noticeApi = {

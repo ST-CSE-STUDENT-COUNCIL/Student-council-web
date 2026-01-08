@@ -252,8 +252,7 @@ server.get('/notices', (req, res) => {
             "announcement": "공고",
             "notice": "고시",
             "meeting": "대표자회의",
-            "rules": "학생회칙",
-            "news": "학과소식"
+            "rules": "학생회칙"
         }
         const targetSub = subCatMap[subCategory]
         if (targetSub) {
