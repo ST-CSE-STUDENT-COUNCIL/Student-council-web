@@ -421,7 +421,7 @@ server.delete('/notices/:id', (req, res) => {
 // ----------------------------------------------------------------------
 
 server.get('/suggestions', (req, res) => {
-    const { status_filter, page = 1, page_size = 20 } = req.query
+    const { status_filter, page = 1, page_size } = req.query
     const userId = getUserIdFromToken(req)
     const db = router.db
     const user = userId ? getUser(db, userId) : null
@@ -447,35 +447,43 @@ server.get('/suggestions', (req, res) => {
         items = items.filter(i => i.status === status_filter)
     }
 
-    // Pagination
+    // Pagination (allow page_size=all to return everything)
     const total = items.length
-    const total_pages = Math.ceil(total / page_size)
-    const start = (page - 1) * page_size
-    const end = start + Number(page_size)
+    const resolvedPageSize =
+        page_size === 'all'
+            ? Number.MAX_SAFE_INTEGER
+            : Number(page_size) || (items.length || 20)
+    const resolvedPage = Number(page) || 1
+    const total_pages = Math.max(1, Math.ceil(total / resolvedPageSize))
+    const start = (resolvedPage - 1) * resolvedPageSize
+    const end = start + resolvedPageSize
     const slicedItems = items.slice(start, end)
 
     // 매핑
     const suggestions = slicedItems.map(item => {
         const isAuthor = userId && String(item.author_id) === String(userId)
         const canViewDetail = isAdmin || isAuthor
+        const displayAuthor = isAuthor ? "나" : (canViewDetail ? (item.author_name || "익명") : "익명")
 
         return {
             id: item.id,
             author_id: canViewDetail ? item.author_id : null,
-            author_name: canViewDetail ? (item.author_name || "익명") : "익명",
-            title: canViewDetail ? item.title : "익명 건의사항",
+            author_name: displayAuthor,
+            title: item.title,
+            content: item.content,
             status: item.status,
             rejection_reason: canViewDetail ? item.rejection_reason : null,
             resolution_note: canViewDetail ? item.resolution_note : null,
-            created_at: item.created_at
+            created_at: item.created_at,
+            updated_at: item.updated_at || item.created_at
         }
     })
 
     res.json({
         suggestions,
         pagination: {
-            page: Number(page),
-            limit: Number(page_size),
+            page: resolvedPage,
+            limit: resolvedPageSize,
             total,
             total_pages
         }
@@ -491,21 +499,29 @@ server.post('/suggestions', (req, res) => {
     const suggestions = db.get('suggestions').value() || []
     const nextId = suggestions.length > 0 ? Math.max(...suggestions.map(s => Number(s.id))) + 1 : 1
 
+    // 사용자 정보 조회하여 author_name 얻기
+    const user = getUser(db, userId)
+    const authorName = user ? user.name : '익명'
+
     const newSuggestion = {
         id: nextId,
         author_id: userId,
+        author_name: authorName,
         title,
         content,
         status: 'received',
+        rejection_reason: null,
+        resolution_note: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     }
 
+    // db.json 파일에 저장
     db.get('suggestions').push(newSuggestion).write()
 
     res.status(201).json({
         ...newSuggestion,
-        author_name: "나" // Mock return
+        author_name: authorName
     })
 })
 
