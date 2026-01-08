@@ -48,7 +48,7 @@
 -- - login_attempts: 로그인 시도 이력 추적
 -- - login_blocks: 학번별 차단 상태 관리 (실패 횟수, 차단 시간)
 
--- 5단계: 비밀번호 재설정 ⏳
+-- 5단계: 비밀번호 재설정 ✅
 -- 파일: 005_add_password_reset_table.sql
 -- 
 -- 실행 방법:
@@ -57,6 +57,17 @@
 -- 
 -- 추가 내용:
 -- - password_resets: 비밀번호 찾기 이메일 인증
+
+-- 6단계: 학생회 소개 이미지 Storage ⏳
+-- 파일: 006_create_introduction_images_storage.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 006_create_introduction_images_storage.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 추가 내용:
+-- - Storage 버킷: introduction-images (public, 10MB, jpg/png)
+-- - RLS 정책: 모든 사용자 읽기 가능, 관리자만 쓰기/수정/삭제 가능
 
 -- ============================================================================
 -- 마이그레이션 확인

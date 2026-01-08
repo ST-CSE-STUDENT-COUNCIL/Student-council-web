@@ -1,7 +1,7 @@
 """
 동아리 관련 스키마
 """
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, Field
 from typing import Optional
 from datetime import datetime
 
@@ -12,6 +12,20 @@ class ClubBase(BaseModel):
     image_url: str
     description: str
     website_url: Optional[str] = None
+
+
+class ClubCreate(BaseModel):
+    """동아리 생성 요청"""
+    name: str = Field(..., max_length=100, description="동아리명")
+    description: str = Field(..., min_length=1, description="동아리 설명")
+    website_url: Optional[str] = Field(None, description="동아리 웹사이트 또는 SNS URL")
+
+
+class ClubUpdate(BaseModel):
+    """동아리 수정 요청"""
+    name: Optional[str] = Field(None, max_length=100, description="동아리명")
+    description: Optional[str] = Field(None, min_length=1, description="동아리 설명")
+    website_url: Optional[str] = Field(None, description="동아리 웹사이트 또는 SNS URL")
 
 
 class ClubListItem(BaseModel):
