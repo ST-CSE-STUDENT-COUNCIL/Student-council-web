@@ -58,16 +58,28 @@
 -- 추가 내용:
 -- - password_resets: 비밀번호 찾기 이메일 인증
 
--- 6단계: 학생회 소개 이미지 Storage ⏳
+-- 6단계: 학생회 소개 이미지 Storage (더 이상 사용 안 함) ⚠️
 -- 파일: 006_create_introduction_images_storage.sql
 -- 
+-- ⚠️ Cloudflare R2로 마이그레이션 완료되어 실행 불필요
+-- 
+-- 변경 사항:
+-- - Supabase Storage → Cloudflare R2 (introduction-images bucket)
+-- - RLS 정책 대신 R2 Public Access 사용
+
+-- 7단계: 비회원 행사 신청 지원 ✅ 🆕
+-- 파일: 007_add_guest_registration_support.sql
+-- 
 -- 실행 방법:
--- 1. SQL Editor에서 006_create_introduction_images_storage.sql 내용 복사/붙여넣기
+-- 1. SQL Editor에서 007_add_guest_registration_support.sql 내용 복사/붙여넣기
 -- 2. Run 클릭
 -- 
 -- 추가 내용:
--- - Storage 버킷: introduction-images (public, 10MB, jpg/png)
--- - RLS 정책: 모든 사용자 읽기 가능, 관리자만 쓰기/수정/삭제 가능
+-- - registrations 테이블: user_id nullable 변경
+-- - 비회원 필드 추가: guest_student_id, guest_name, guest_phone
+-- - CHECK constraint: 회원 OR 비회원 중 하나 필수
+-- - 부분 UNIQUE 인덱스: 회원/비회원 각각 중복 방지
+-- - register_for_event_guest() 함수: 회원/비회원 모두 처리
 
 -- ============================================================================
 -- 마이그레이션 확인
@@ -86,8 +98,13 @@ FROM information_schema.columns
 WHERE table_name = 'locker_periods' 
 ORDER BY ordinal_position;
 
--- locker_rentals 테이블 컬럼 확인
+-- registrations 테이블 컬럼 확인 (비회원 필드 확인)
 SELECT column_name, data_type, is_nullable 
 FROM information_schema.columns 
-WHERE table_name = 'locker_rentals' 
+WHERE table_name = 'registrations' 
 ORDER BY ordinal_position;
+
+-- register_for_event_guest 함수 확인
+SELECT routine_name, routine_definition
+FROM information_schema.routines
+WHERE routine_name = 'register_for_event_guest';

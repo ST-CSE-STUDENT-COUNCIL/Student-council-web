@@ -14,7 +14,7 @@ from app.schemas.welfare import (
 from app.database import get_supabase
 from app.utils.auth import get_current_user, require_council
 from app.utils.sheets import get_sheet_value
-from app.utils.storage import upload_file_to_supabase
+from app.utils.r2_storage import upload_file_to_r2 as upload_file_to_supabase
 
 router = APIRouter(prefix="/welfare", tags=["Welfare"])
 

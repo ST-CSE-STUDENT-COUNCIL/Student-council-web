@@ -1,14 +1,14 @@
 # 서울과기대 컴공학생회 홈페이지 백엔드
 
-FastAPI + Supabase 기반 학생회 홈페이지 백엔드 API
+FastAPI + Supabase + Cloudflare R2 기반 학생회 홈페이지 백엔드 API
 
 ## 기술 스택
 
 - **Framework**: FastAPI 0.115.0
 - **Database**: PostgreSQL (Supabase)
 - **Authentication**: Supabase Auth (JWT)
-- **Storage**: Supabase Storage (Private bucket)
- - **Email**: Gmail HTTP API (google-auth/googleapiclient) — migrated from SMTP
+- **Storage**: Cloudflare R2 (5 Public Buckets)
+- **Email**: Gmail HTTP API (google-auth/googleapiclient)
 - **Rate Limiting**: slowapi
 - **File Upload**: python-multipart
 - **Python**: 3.12+
@@ -27,8 +27,10 @@ be/
 │   │   ├── auth.py          # 인증 관련 API
 │   │   ├── admin.py         # 관리자 API
 │   │   ├── users.py         # 마이페이지 API (경로: /mypage)
-│   │   ├── notices.py       # 공지사항 API (boards + posts 통합)
+│   │   ├── boards.py        # 게시판 API
+│   │   ├── posts.py         # 게시글 API (공지사항)
 │   │   ├── clubs.py         # 동아리 API
+│   │   ├── events.py        # 행사 API 🆕
 │   │   ├── welfare.py       # 복지사업 API (사물함, 물품대여)
 │   │   ├── introductions.py # 학생회 소개 이미지 API
 │   │   └── suggestions.py   # 건의함 API
@@ -37,8 +39,10 @@ be/
 │   │   ├── auth.py          # 인증 요청/응답 모델
 │   │   ├── admin.py         # 관리자 요청/응답 모델
 │   │   ├── users.py         # 사용자 요청/응답 모델
-│   │   ├── notices.py       # 공지사항 요청/응답 모델
+│   │   ├── boards.py        # 게시판 요청/응답 모델
+│   │   ├── posts.py         # 게시글 요청/응답 모델
 │   │   ├── clubs.py         # 동아리 요청/응답 모델
+│   │   ├── events.py        # 행사 요청/응답 모델 🆕
 │   │   ├── welfare.py       # 복지사업 요청/응답 모델
 │   │   ├── introductions.py # 학생회 소개 이미지 요청/응답 모델
 │   │   └── suggestions.py   # 건의함 요청/응답 모델
@@ -46,7 +50,7 @@ be/
 │       ├── __init__.py
 │       ├── email.py         # 이메일 발송
 │       ├── auth.py          # 인증/권한 미들웨어
-│       ├── storage.py       # 파일 업로드 관리
+│       ├── r2_storage.py    # Cloudflare R2 스토리지 🆕
 │       └── sheets.py        # Google Sheets API
 ├── db/
 │   ├── schema.sql           # 데이터베이스 스키마
@@ -54,8 +58,15 @@ be/
 │   ├── migrations/          # 마이그레이션 SQL 파일
 │   │   ├── 001_update_clubs_table.sql
 │   │   ├── 002_update_locker_periods_table.sql
+│   │   ├── 003_redesign_welfare_system.sql
+│   │   ├── 004_add_login_attempt_tracking.sql
+│   │   ├── 005_add_password_reset_table.sql
+│   │   ├── 006_create_introduction_images_storage.sql
+│   │   ├── 007_add_guest_registration_support.sql 🆕
 │   │   └── README.md
 │   └── README.md
+├── postman/                 # Postman 테스트 컬렉션 🆕
+│   └── Events_API.postman_collection.json
 ├── .env                     # 환경변수 (gitignore)
 ├── .env.render.example      # Render 배포 예시
 ├── .gitignore
@@ -87,23 +98,34 @@ pip install -r requirements.txt
 ```env
 # Supabase
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your_service_role_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 SUPABASE_ANON_KEY=your_anon_key
 
-# Gmail HTTP API (OAuth2)
-# Use OAuth2 client ID/secret + refresh token for the Gmail HTTP API migration.
-GMAIL_CLIENT_ID=your_gmail_oauth_client_id
-GMAIL_CLIENT_SECRET=your_gmail_oauth_client_secret
-GMAIL_REFRESH_TOKEN=your_gmail_refresh_token
+# Gmail OAuth2 API
+GOOGLE_CLIENT_ID=your_gmail_oauth_client_id
+GOOGLE_CLIENT_SECRET=your_gmail_oauth_client_secret
+GOOGLE_REFRESH_TOKEN=your_gmail_refresh_token
 GMAIL_FROM_EMAIL=your_email@gmail.com
 GMAIL_FROM_NAME=서울과기대 컴공학생회
+
+# Google Sheets API (복지사업 물품 재고 관리)
+GOOGLE_SHEETS_API_KEY=your_google_sheets_api_key
+
+# Cloudflare R2 Storage
+R2_ACCOUNT_ID=your_cloudflare_account_id
+R2_ACCESS_KEY_ID=your_r2_access_key_id
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
+
+# R2 Public Bucket URLs (각 버킷의 R2.dev 서브도메인)
+R2_CLUB_IMAGES_URL=https://pub-xxxxx.r2.dev
+R2_EVENT_IMAGES_URL=https://pub-xxxxx.r2.dev
+R2_INTRODUCTION_IMAGES_URL=https://pub-xxxxx.r2.dev
+R2_POST_ATTACHMENTS_URL=https://pub-xxxxx.r2.dev
+R2_WELFARE_IMAGES_URL=https://pub-xxxxx.r2.dev
 
 # Security
 SECRET_KEY=your_secret_key_here
 ALLOWED_EMAIL_DOMAIN=seoultech.ac.kr
-
-# Google Sheets API (for welfare rental items inventory)
-GOOGLE_SHEETS_API_KEY=your_google_sheets_api_key
 
 # Environment
 ENVIRONMENT=development
@@ -146,9 +168,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `POST /auth/signup` - 회원가입
 - `POST /auth/login` - 로그인
 - `POST /auth/logout` - 로그아웃
-- `POST /auth/forgot-password` - 비밀번호 찾기 (학번 입력 → 이메일 인증번호 발송) 🆕
-- `POST /auth/verify-reset-code` - 비밀번호 재설정 인증번호 확인 🆕
-- `POST /auth/reset-password` - 비밀번호 재설정 🆕
+- `POST /auth/forgot-password` - 비밀번호 찾기 (학번 입력 → 이메일 인증번호 발송)
+- `POST /auth/verify-reset-code` - 비밀번호 재설정 인증번호 확인
+- `POST /auth/reset-password` - 비밀번호 재설정
 
 **마이페이지 (MyPage)** ⚠️ 로그인 필요
 - `GET /mypage` - 내 프로필 조회
@@ -162,31 +184,56 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `POST /admin/users/{user_id}/reject` - 회원 거부
 - `PATCH /admin/users/{user_id}/role` - 회원 역할 변경
 - `PATCH /admin/users/{user_id}/membership` - 회비 납부 상태 변경
-- `GET /admin/users/blocked` - 차단된 사용자 목록 조회 (IP 로그 포함) 🆕
-- `POST /admin/users/{student_id}/unblock` - 사용자 차단 해제 🆕
+- `GET /admin/users/blocked` - 차단된 사용자 목록 조회 (IP 로그 포함)
+- `POST /admin/users/{student_id}/unblock` - 사용자 차단 해제
 
-**공지사항 (Notices)** ⚠️ 작성은 관리자만 가능
-- `GET /notices` - 공지사항 목록 조회 (공개, 로그인 불필요)
-  - mainCategory: `student_council` (학생회), `democracy` (민주자치)
-  - subCategory: `all`, `event` (행사), `welfare` (복지), `announcement` (공고), `notice` (고시), `meeting` (대표자회의), `rules` (학생회칙)
-- `GET /notices/{notice_id}` - 공지사항 상세 조회 (공개, 로그인 불필요)
-- `POST /notices` - 공지사항 작성 (admin)
-- `PATCH /notices/{notice_id}` - 공지사항 수정 (admin)
-- `DELETE /notices/{notice_id}` - 공지사항 삭제 (admin, Soft Delete)
+**게시판 (Boards)**
+- `GET /boards` - 게시판 목록 조회
+- `GET /boards/{board_id}` - 게시판 상세 조회
 
-**동아리 (Clubs)** 🆕
+**게시글 (Posts)** ⚠️ 작성은 관리자만 가능
+- `GET /posts` - 게시글 목록 조회 (공개, 로그인 불필요)
+  - board_id: 특정 게시판 필터링
+  - is_pinned: 고정글 필터
+  - search: 제목/내용 검색
+- `GET /posts/{post_id}` - 게시글 상세 조회 (공개, 로그인 불필요)
+- `POST /posts` - 게시글 작성 (admin, multipart/form-data)
+- `PATCH /posts/{post_id}` - 게시글 수정 (admin)
+- `DELETE /posts/{post_id}` - 게시글 삭제 (admin, Soft Delete)
+
+**동아리 (Clubs)**
 - `GET /clubs` - 동아리 목록 조회 (공개, 로그인 불필요)
 - `GET /clubs/{club_id}` - 동아리 상세 조회 (공개, 로그인 불필요)
+- `POST /clubs` - 동아리 추가 (admin, multipart/form-data)
+- `PATCH /clubs/{club_id}` - 동아리 수정 (admin)
+- `DELETE /clubs/{club_id}` - 동아리 삭제 (admin)
 
-**복지사업 (Welfare)** 🆕
+**행사 (Events)** 🆕
+- `GET /events` - 행사 목록 조회 (공개, 로그인 불필요)
+- `GET /events/{event_id}` - 행사 상세 조회 (공개, 로그인 불필요)
+- `POST /events/{event_id}/register` - 행사 신청 (회원/비회원 모두 가능)
+- `DELETE /events/{event_id}/register` - 신청 취소 (로그인 필요)
+- `GET /events/{event_id}/my-registration` - 내 신청 확인 (로그인 필요)
+- `POST /events/{event_id}/survey` - 만족도 조사 제출 (로그인 필요)
+- `POST /events` - 행사 생성 (admin, multipart/form-data, 이미지 여러 장 가능)
+- `PATCH /events/{event_id}` - 행사 수정 (admin)
+- `DELETE /events/{event_id}` - 행사 삭제 (admin, Soft Delete)
+- `GET /events/{event_id}/registrations` - 참가자 목록 (admin)
+- `GET /events/{event_id}/survey/results` - 만족도 통계 (admin)
+
+**복지사업 (Welfare)**
 - `GET /welfare/locker_periods` - 사물함 정보 조회 (공개, 로그인 불필요)
-  - 사물함 배치도 이미지 URL, 신청 구글폼 URL 포함
 - `PUT /welfare/locker_periods` - 사물함 정보 수정 (admin)
 - `GET /welfare/welfare_rentals` - 물품대여 목록 조회 (공개, 로그인 불필요)
-  - Google Sheets에서 실시간 재고 수량 조회
 - `POST /welfare/welfare_rentals` - 물품대여 항목 추가 (admin, multipart/form-data)
 - `PUT /welfare/welfare_rentals/{rental_id}` - 물품대여 항목 수정 (admin)
 - `DELETE /welfare/welfare_rentals/{rental_id}` - 물품대여 항목 삭제 (admin)
+
+**학생회 소개 (Introductions)**
+- `GET /introductions/images` - 소개 이미지 목록 조회 (공개, 로그인 불필요)
+- `POST /introductions/images` - 이미지 업로드 (admin, multipart/form-data)
+- `PATCH /introductions/images/{image_id}` - 이미지 수정 (admin)
+- `DELETE /introductions/images/{image_id}` - 이미지 삭제 (admin)
 
 **건의함 (Suggestions)**
 - `POST /suggestions` - 건의함 작성 (익명)
@@ -270,12 +317,17 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ### 📤 파일 업로드 시스템
 
-**Supabase Storage Buckets:**
-- `club-images` (🌐 Public) - 동아리 이미지
-- `post-attachments` (🌐 Public) - 공지사항 첨부파일
-- `verification-images` (🔒 Private) - 학번 인증 이미지
-- `welfare-images` (🌐 Public) - 복지사업 물품 이미지
-- `introduction-images` (🌐 Public, 관리자 전용 업로드) - 학생회 소개 이미지
+**Cloudflare R2 Storage Buckets:** (모두 Public)
+- `club-images` - 동아리 이미지
+- `event-images` - 행사 이미지 🆕
+- `introduction-images` - 학생회 소개 이미지
+- `post-attachments` - 공지사항 첨부파일
+- `welfare-images` - 복지사업 물품 이미지
+
+**설정:**
+- **Public URL**: 각 버킷별 R2.dev 서브도메인 설정
+- **업로드**: boto3 S3 호환 API 사용
+- **접근**: Public URL로 영구 접근 가능
 
 **학적 인증 이미지 업로드:**
 - **엔드포인트**: `POST /mypage/verification-image`
@@ -293,23 +345,39 @@ Authorization: Bearer <admin_access_token>
 ```
 응답에 `verification_image_url` 필드에 Signed URL 포함 (1시간 유효)
 
-**공지사항 첨부파일 업로드:**
+**게시글 첨부파일 업로드:**
 - **형식**: JPG, JPEG, PNG, PDF
 - **크기**: 최대 10MB
-- **저장소**: Supabase Storage Public bucket (`post-attachments`)
-- **요청 방식**: `POST /notices`에서 multipart/form-data로 게시글과 함께 업로드
+- **저장소**: Cloudflare R2 (`post-attachments`)
+- **요청 방식**: `POST /posts`에서 multipart/form-data로 게시글과 함께 업로드
 - **접근**: Public URL로 영구적 접근 가능 (로그인 불필요)
 - **제한**: 요청당 최대 5개
 
 **동아리 이미지:**
-- **저장소**: Supabase Storage Public bucket (`club-images`)
+- **저장소**: Cloudflare R2 (`club-images`)
+- **접근**: Public URL로 영구적 접근 가능
+
+**행사 이미지:** 🆕
+- **저장소**: Cloudflare R2 (`event-images`)
+- **형식**: JPG, JPEG, PNG
+- **크기**: 최대 5MB (썸네일), 10MB (상세 이미지)
+- **요청 방식**: 
+  - 행사 생성: `POST /events` - multipart/form-data, 여러 장 업로드 가능
+  - 이미지 추가: `POST /events/{event_id}/images` - 추가 업로드 가능
 - **접근**: Public URL로 영구적 접근 가능
 
 **복지사업 물품 이미지:**
-- **저장소**: Supabase Storage Public bucket (`welfare-images`)
+- **저장소**: Cloudflare R2 (`welfare-images`)
 - **형식**: JPG, JPEG, PNG
 - **크기**: 최대 5MB
 - **요청 방식**: `POST /welfare/welfare_rentals`에서 multipart/form-data로 업로드
+- **접근**: Public URL로 영구적 접근 가능
+
+**학생회 소개 이미지:**
+- **저장소**: Cloudflare R2 (`introduction-images`)
+- **형식**: JPG, JPEG, PNG
+- **크기**: 최대 10MB
+- **요청 방식**: `POST /introductions/images`에서 multipart/form-data로 업로드 (admin 전용)
 - **접근**: Public URL로 영구적 접근 가능
 
 ### 📮 건의함
@@ -323,27 +391,60 @@ Authorization: Bearer <admin_access_token>
 - **상태 관리**: received(접수) → in_progress(처리중) → rejected(반려) / approved(승인)
 - **사유/반영 내용**: 작성자 본인과 관리자만 확인 가능
 
-### 📰 공지사항
+### 📰 게시글 (Posts)
 
 - **조회**: 로그인 불필요 (공개 API)
 - **작성/수정/삭제**: 관리자만 가능
-- **카테고리 구조**:
-  - **학생회** (student_council): 행사(event), 복지(welfare)
-  - **민주자치** (democracy): 공고(announcement), 고시(notice), 대표자회의(meeting), 학생회칙(rules)
-- **필터링**: `mainCategory`와 `subCategory`로 게시글 조회
-  - 예: `GET /notices?mainCategory=student_council&subCategory=event`
-  - `subCategory=all`로 해당 카테고리 전체 조회
-- **검색**: 제목 + 내용 검색 지원
+- **게시판별 조회**: board_id 파라미터로 필터링
+- **필터링**: 
+  - `board_id`: 특정 게시판 필터
+  - `is_pinned`: 고정글만 조회
+  - `search`: 제목 + 내용 검색
 - **정렬**: 고정 게시글 우선, 최신순/오래된순
 - **첨부파일**: 최대 5개, JPG/PNG/PDF, 10MB 제한, Public URL (영구적)
 - **Soft Delete**: 삭제 시 is_deleted 플래그 변경 (복구 가능)
 
-### 🎯 동아리
+### 🎯 동아리 API
 
-- **조회**: 로그인 불필요 (공개 API)
-- **필드**: 동아리명, 이미지, 소개, 웹사이트 URL
-- **이미지**: Public bucket (`club-images`) 저장
-- **관리**: 관리자 페이지에서 CRUD (향후 구현 예정)
+**공개 엔드포인트:**
+- `GET /clubs` - 동아리 목록 조회
+- `GET /clubs/{club_id}` - 동아리 상세 조회
+
+**관리자 전용 엔드포인트:**
+- `POST /clubs` - 동아리 추가 (multipart/form-data: name, description, website_url, image)
+- `PATCH /clubs/{club_id}` - 동아리 정보 수정 (JSON: name, description, website_url)
+- `DELETE /clubs/{club_id}` - 동아리 삭제
+
+### 🎉 행사 API (Events)
+
+**공개 엔드포인트 (인증 필요):**
+- `GET /events` - 행사 목록 조회
+  - Query: `include_inactive` (비활성 행사 포함 여부)
+- `GET /events/{event_id}` - 행사 상세 조회 (이미지 포함)
+- `POST /events/{event_id}/register` - 행사 참가 신청 ⭐
+  - 회원: 자동으로 정보 사용 (학번, 이름, 전화번호)
+  - 비회원: `guest_info` Body 필수 (student_id, name, phone)
+  - 트랜잭션 처리: 정원 확인, 중복 방지, 선착순 번호 부여
+- `DELETE /events/{event_id}/register` - 신청 취소
+- `GET /events/{event_id}/my-registration` - 내 신청 확인
+- `POST /events/{event_id}/survey` - 만족도 조사 제출 (1-5점 + 의견)
+
+**관리자 전용 엔드포인트:**
+- `POST /events` - 행사 생성 (multipart/form-data: 썸네일 업로드)
+- `PATCH /events/{event_id}` - 행사 정보 수정
+- `DELETE /events/{event_id}` - 행사 삭제 (Soft Delete)
+- `POST /events/{event_id}/images` - 상세 이미지 추가 (여러 장 가능)
+- `DELETE /events/{event_id}/images/{image_id}` - 이미지 삭제
+- `GET /events/{event_id}/registrations` - 참가자 목록 (회원/비회원 구분)
+- `GET /events/{event_id}/survey/results` - 만족도 통계
+
+**특징:**
+- 회원/비회원 모두 신청 가능
+- 회원 이점: 자동 정보 입력, 마이페이지에서 내역 확인
+- 선착순 신청: `register_for_event_guest()` DB 함수로 트랜잭션 처리
+- 정원 관리: current_count/max_capacity 자동 관리
+- 회비 납부자 전용: `require_membership=true` 설정 가능
+- Soft Delete: 과거 행사 데이터 보존
 
 ### 📧 이메일 인증
 
@@ -418,28 +519,55 @@ FROM users
 WHERE role = 'admin';
 ```
 
-## Supabase Storage 설정
+## Cloudflare R2 Storage 설정
 
 ### Bucket 구조
 
-프로젝트는 3개의 Storage bucket을 사용합니다:
+프로젝트는 5개의 R2 Public bucket을 사용합니다:
 
-1. **club-images** (🌐 Public)
+1. **club-images**
    - 용도: 동아리 이미지
-   - 접근: Public URL로 영구 접근
-   - 생성 방법: Dashboard → Storage → New bucket → Public 체크
+   - 접근: Public URL (R2.dev)
 
-2. **post-attachments** (🌐 Public)
+2. **event-images** 🆕
+   - 용도: 행사 이미지
+   - 접근: Public URL (R2.dev)
+
+3. **introduction-images**
+   - 용도: 학생회 소개 이미지
+   - 접근: Public URL (R2.dev)
+
+4. **post-attachments**
    - 용도: 공지사항 첨부파일
-   - 접근: Public URL로 영구 접근
-   - 생성 방법: Dashboard → Storage → New bucket → Public 체크
+   - 접근: Public URL (R2.dev)
 
-3. **verification-images** (🔒 Private)
-   - 용도: 학번 인증 이미지
-   - 접근: Signed URL (1시간 유효)
-   - 생성 방법: Dashboard → Storage → New bucket → Public 체크 해제
+5. **welfare-images**
+   - 용도: 복지사업 물품 이미지
+   - 접근: Public URL (R2.dev)
 
-### Private Bucket 생성
+### R2 Bucket 생성 방법
+
+1. Cloudflare Dashboard → R2 → Create bucket
+2. Bucket name 입력 (예: `club-images`)
+3. Location: Automatic
+4. **Public Access 활성화**:
+   - Settings → Public Access → Allow Access
+   - R2.dev subdomain 자동 생성됨
+5. 생성된 R2.dev URL을 `.env` 파일의 해당 변수에 설정
+
+### API Keys 발급
+
+1. Cloudflare Dashboard → R2 → Manage R2 API Tokens
+2. Create API Token
+3. Permissions: Object Read & Write
+4. 생성된 키를 `.env` 파일에 설정:
+   - `R2_ACCOUNT_ID`
+   - `R2_ACCESS_KEY_ID`
+   - `R2_SECRET_ACCESS_KEY`
+
+### Supabase Storage 설정 (학적 인증용)
+
+**Private Bucket 생성** (학적 인증 이미지 전용):
 
 1. Supabase Dashboard → Storage
 2. `New bucket` 클릭
@@ -447,36 +575,7 @@ WHERE role = 'admin';
 4. **Public bucket**: ❌ 체크 해제 (Private)
 5. `Create bucket`
 
-### Public Bucket 생성
-
-1. Supabase Dashboard → Storage
-2. `New bucket` 클릭
-3. Name: `club-images`, `post-attachments`, `welfare-images`, 또는 `introduction-images`
-4. **Public bucket**: ✅ 체크
-5. `Create bucket`
-6. `introduction-images`의 경우 `006_create_introduction_images_storage.sql` 마이그레이션으로 RLS 정책 적용 필요
-
-### RLS (Row Level Security) 정책
-
-Public buckets의 경우 다음 정책 설정:
-
-```sql
--- welfare-images bucket 예시
--- 1. Public read policy
-INSERT INTO storage.policies (bucket_id, name, definition, operation, type)
-VALUES ('welfare-images', 'Public read access', 'true', 'SELECT', 'PERMISSIVE');
-
--- 2. Authenticated insert policy
-INSERT INTO storage.policies (bucket_id, name, definition, operation, type)
-VALUES ('welfare-images', 'Authenticated insert', '(SELECT auth.role()) = ''authenticated''', 'INSERT', 'PERMISSIVE');
-
--- 3. Authenticated update policy
-INSERT INTO storage.policies (bucket_id, name, definition, operation, type)
-VALUES ('welfare-images', 'Authenticated update', '(SELECT auth.role()) = ''authenticated''', 'UPDATE', 'PERMISSIVE');
-
--- 4. Authenticated delete policy
-INSERT INTO storage.policies (bucket_id, name, definition, operation, type)
-VALUES ('welfare-images', 'Authenticated delete', '(SELECT auth.role()) = ''authenticated''', 'DELETE', 'PERMISSIVE');
+> **Note**: Cloudflare R2로 마이그레이션 완료. 학적 인증 이미지만 Supabase Private Storage 사용.
 ```
 
 ## 개발
@@ -552,12 +651,15 @@ FRONTEND_URL=https://yourdomain.com
 3. `003_redesign_welfare_system.sql` - 복지사업 시스템 재설계 (Google Sheets 통합)
 4. `004_add_login_attempt_tracking.sql` - 로그인 시도 추적 및 차단 시스템
 5. `005_add_password_reset_table.sql` - 비밀번호 재설정 테이블 추가
-6. `006_create_introduction_images_storage.sql` - 학생회 소개 이미지 Storage 버킷 및 정책
+6. `006_create_introduction_images_storage.sql` - 학생회 소개 이미지 (Supabase Storage 정책 - 더 이상 사용 안 함)
+7. `007_add_guest_registration_support.sql` - 비회원 행사 신청 지원 🆕
 
-마이그레이션 실행:
-```bash
-psql -h <host> -U <user> -d <database> -f db/migrations/005_add_password_reset_table.sql
+마이그레이션 실행 (Supabase SQL Editor):
+```sql
+-- 각 파일의 SQL을 복사해서 SQL Editor에 붙여넣고 Run
 ```
+
+> **Note**: Migration 006은 Cloudflare R2로 마이그레이션 완료되어 더 이상 사용하지 않음.
 
 ## 문제 해결
 

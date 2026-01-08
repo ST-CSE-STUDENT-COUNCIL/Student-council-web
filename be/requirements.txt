@@ -7,6 +7,9 @@ python-multipart==0.0.9  # File upload support
 # Supabase
 supabase==2.10.0
 
+# Cloudflare R2 (S3 compatible)
+boto3==1.35.0
+
 # 환경변수
 python-dotenv==1.0.1
 

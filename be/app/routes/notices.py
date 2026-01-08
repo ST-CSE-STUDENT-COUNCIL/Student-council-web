@@ -15,7 +15,7 @@ from app.schemas.notices import (
 )
 from app.schemas.auth import ErrorResponse
 from app.utils.auth import require_verified_user, require_admin
-from app.utils.storage import (
+from app.utils.r2_storage import (
     upload_post_attachment,
     delete_post_attachments
 )
