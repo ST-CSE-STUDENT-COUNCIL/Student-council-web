@@ -30,6 +30,7 @@ be/
 │   │   ├── notices.py       # 공지사항 API (boards + posts 통합)
 │   │   ├── clubs.py         # 동아리 API
 │   │   ├── welfare.py       # 복지사업 API (사물함, 물품대여)
+│   │   ├── introductions.py # 학생회 소개 이미지 API
 │   │   └── suggestions.py   # 건의함 API
 │   ├── schemas/             # Pydantic 스키마
 │   │   ├── __init__.py
@@ -39,6 +40,7 @@ be/
 │   │   ├── notices.py       # 공지사항 요청/응답 모델
 │   │   ├── clubs.py         # 동아리 요청/응답 모델
 │   │   ├── welfare.py       # 복지사업 요청/응답 모델
+│   │   ├── introductions.py # 학생회 소개 이미지 요청/응답 모델
 │   │   └── suggestions.py   # 건의함 요청/응답 모델
 │   └── utils/               # 유틸리티
 │       ├── __init__.py
@@ -273,6 +275,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `post-attachments` (🌐 Public) - 공지사항 첨부파일
 - `verification-images` (🔒 Private) - 학번 인증 이미지
 - `welfare-images` (🌐 Public) - 복지사업 물품 이미지
+- `introduction-images` (🌐 Public, 관리자 전용 업로드) - 학생회 소개 이미지
 
 **학적 인증 이미지 업로드:**
 - **엔드포인트**: `POST /mypage/verification-image`
@@ -448,9 +451,10 @@ WHERE role = 'admin';
 
 1. Supabase Dashboard → Storage
 2. `New bucket` 클릭
-3. Name: `club-images`, `post-attachments`, 또는 `welfare-images`
+3. Name: `club-images`, `post-attachments`, `welfare-images`, 또는 `introduction-images`
 4. **Public bucket**: ✅ 체크
 5. `Create bucket`
+6. `introduction-images`의 경우 `006_create_introduction_images_storage.sql` 마이그레이션으로 RLS 정책 적용 필요
 
 ### RLS (Row Level Security) 정책
 
@@ -507,6 +511,30 @@ DEBUG=false
 FRONTEND_URL=https://yourdomain.com
 ```
 
+### 동아리 API
+
+**공개 엔드포인트:**
+- `GET /clubs` - 동아리 목록 조회
+- `GET /clubs/{club_id}` - 동아리 상세 조회
+
+**관리자 전용 엔드포인트:**
+- `POST /clubs` - 동아리 추가 (multipart/form-data: name, description, website_url, image)
+- `PATCH /clubs/{club_id}` - 동아리 정보 수정 (JSON: name, description, website_url)
+- `DELETE /clubs/{club_id}` - 동아리 삭제
+
+### 학생회 소개 이미지 API
+
+**공개 엔드포인트:**
+- `GET /introductions/images` - 학생회 소개 이미지 목록 조회
+  - Query: `active_only` (boolean, 기본값: true)
+
+**관리자 전용 엔드포인트:**
+- `POST /introductions/images` - 이미지 업로드 (multipart/form-data: title, display_order, image)
+  - 최대 10MB, jpg/jpeg/png만 허용
+  - Storage 정책: 모든 사용자 읽기 가능, 관리자만 쓰기/수정/삭제
+- `PATCH /introductions/images/{image_id}` - 이미지 정보 수정 (JSON: title, display_order, is_active)
+- `DELETE /introductions/images/{image_id}` - 이미지 삭제
+
 ### 페이지네이션
 - 기본 페이지 크기: 20 (posts API 기본값)
 
@@ -519,9 +547,12 @@ FRONTEND_URL=https://yourdomain.com
 
 데이터베이스 스키마 변경 사항은 `db/migrations/` 디렉토리에 순차적으로 관리됩니다:
 
-1. `001_add_clubs_table.sql` - 동아리 테이블 추가
-2. `002_add_clubs_description.sql` - 동아리 설명 컬럼 추가
+1. `001_update_clubs_table.sql` - 동아리 테이블 업데이트
+2. `002_update_locker_periods_table.sql` - 사물함 기간 테이블 업데이트
 3. `003_redesign_welfare_system.sql` - 복지사업 시스템 재설계 (Google Sheets 통합)
+4. `004_add_login_attempt_tracking.sql` - 로그인 시도 추적 및 차단 시스템
+5. `005_add_password_reset_table.sql` - 비밀번호 재설정 테이블 추가
+6. `006_create_introduction_images_storage.sql` - 학생회 소개 이미지 Storage 버킷 및 정책
 
 마이그레이션 실행:
 ```bash
