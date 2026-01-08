@@ -233,3 +233,186 @@ async def mark_email_used(email: str) -> None:
         .eq('verified', True)\
         .eq('used', False)\
         .execute()
+
+
+# ============================================================================
+# 비밀번호 재설정 관련 함수
+# ============================================================================
+
+async def create_password_reset(student_id: str, email: str) -> str:
+    """
+    비밀번호 재설정 인증번호 생성 및 저장
+    
+    Args:
+        student_id: 학번
+        email: 이메일 주소
+    
+    Returns:
+        str: 6자리 인증번호
+    """
+    code = _generate_verification_code()
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+    
+    # 기존 인증번호 무효화
+    supabase.table('password_resets')\
+        .delete()\
+        .eq('student_id', student_id)\
+        .execute()
+    
+    # 새 인증번호 저장
+    supabase.table('password_resets').insert({
+        'student_id': student_id,
+        'email': email,
+        'code': code,
+        'expires_at': expires_at.isoformat()
+    }).execute()
+    
+    return code
+
+
+async def send_password_reset_email(email: str, code: str) -> None:
+    """
+    비밀번호 재설정 인증번호 이메일 발송
+    
+    Args:
+        email: 이메일 주소
+        code: 6자리 인증번호
+    """
+    message = EmailMessage()
+    message["From"] = f"{settings.GMAIL_FROM_NAME} <{settings.GMAIL_FROM_EMAIL}>"
+    message["To"] = email
+    message["Subject"] = "[서울과기대 컴공학생회] 비밀번호 재설정 인증번호"
+    
+    # HTML 본문
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #0066cc;">비밀번호 재설정</h2>
+            <p>비밀번호 재설정을 위한 인증번호입니다.</p>
+            <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <p style="margin: 0; font-size: 14px; color: #666;">인증번호</p>
+                <p style="margin: 10px 0 0 0; font-size: 32px; font-weight: bold; color: #0066cc; letter-spacing: 5px;">
+                    {code}
+                </p>
+            </div>
+            <p style="color: #666; font-size: 14px;">
+                ⏰ 이 인증번호는 <strong>5분간</strong> 유효합니다.<br>
+                ⚠️ 본인이 요청하지 않았다면 이 메일을 무시하세요.
+            </p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            <p style="color: #999; font-size: 12px;">
+                서울과학기술대학교 컴퓨터공학과 학생회<br>
+                이 메일은 발신 전용입니다.
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    message.add_alternative(html_content, subtype="html")
+    
+    try:
+        creds = Credentials(
+            token=None,
+            refresh_token=settings.GOOGLE_REFRESH_TOKEN,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=settings.GOOGLE_CLIENT_ID,
+            client_secret=settings.GOOGLE_CLIENT_SECRET,
+            scopes=[GMAIL_SEND_SCOPE]
+        )
+        creds.refresh(Request())
+        
+        service = build("gmail", "v1", credentials=creds)
+        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+        send_message = {"raw": raw_message}
+        service.users().messages().send(userId="me", body=send_message).execute()
+        
+        logger.info(f"비밀번호 재설정 이메일 발송 성공: {email}")
+    
+    except Exception as e:
+        logger.error(f"비밀번호 재설정 이메일 발송 실패: {str(e)}")
+        raise Exception(f"이메일 발송 실패: {str(e)}")
+
+
+async def verify_password_reset_code(student_id: str, code: str) -> bool:
+    """
+    비밀번호 재설정 인증번호 확인
+    
+    Args:
+        student_id: 학번
+        code: 6자리 인증번호
+    
+    Returns:
+        bool: 인증 성공 여부
+    """
+    result = supabase.table('password_resets')\
+        .select('*')\
+        .eq('student_id', student_id)\
+        .eq('code', code)\
+        .eq('verified', False)\
+        .order('created_at', desc=True)\
+        .limit(1)\
+        .execute()
+    
+    if not result.data:
+        return False
+    
+    reset_data = result.data[0]
+    expires_at = datetime.fromisoformat(reset_data['expires_at'].replace('Z', '+00:00'))
+    now = datetime.now(timezone.utc)
+    
+    if now > expires_at:
+        return False
+    
+    # 인증 완료 표시
+    supabase.table('password_resets')\
+        .update({
+            'verified': True,
+            'verified_at': now.isoformat()
+        })\
+        .eq('id', reset_data['id'])\
+        .execute()
+    
+    return True
+
+
+async def check_password_reset_verified(student_id: str) -> bool:
+    """
+    비밀번호 재설정 인증 완료 여부 확인
+    
+    Args:
+        student_id: 학번
+    
+    Returns:
+        bool: 인증 완료 여부
+    """
+    result = supabase.table('password_resets')\
+        .select('*')\
+        .eq('student_id', student_id)\
+        .eq('verified', True)\
+        .eq('used', False)\
+        .order('verified_at', desc=True)\
+        .limit(1)\
+        .execute()
+    
+    return bool(result.data)
+
+
+async def mark_password_reset_used(student_id: str) -> None:
+    """
+    비밀번호 재설정 완료 표시
+    
+    Args:
+        student_id: 학번
+    """
+    supabase.table('password_resets')\
+        .update({'used': True})\
+        .eq('student_id', student_id)\
+        .eq('verified', True)\
+        .eq('used', False)\
+        .execute()

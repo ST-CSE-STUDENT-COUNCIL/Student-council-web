@@ -326,3 +326,101 @@ async def delete_verification_image(file_path: str) -> bool:
     except Exception as e:
         print(f"파일 삭제 실패: {str(e)}")
         return False
+
+
+async def upload_file_to_supabase(
+    file: UploadFile,
+    bucket_name: str,
+    folder: str = "",
+    allowed_extensions: set = {'.jpg', '.jpeg', '.png', '.svg'},
+    max_size_mb: int = 5
+) -> str:
+    """
+    범용 파일 업로드 함수
+    
+    Supabase Storage에 파일을 업로드하고 공개 URL을 반환합니다.
+    
+    Args:
+        file: 업로드할 파일
+        bucket_name: 버킷 이름 (예: 'welfare-images')
+        folder: 폴더 경로 (예: 'items')
+        allowed_extensions: 허용할 확장자 집합
+        max_size_mb: 최대 파일 크기 (MB)
+    
+    Returns:
+        str: 파일의 공개 URL
+    
+    Raises:
+        HTTPException: 파일 검증 실패 또는 업로드 실패
+    """
+    if not file or not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="파일이 없습니다"
+        )
+    
+    # 확장자 검증
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"허용되지 않은 파일 형식입니다. 허용: {', '.join(allowed_extensions)}"
+        )
+    
+    # 파일 읽기 및 크기 검증
+    try:
+        file_content = await file.read()
+        file_size = len(file_content)
+        max_size_bytes = max_size_mb * 1024 * 1024
+        
+        if file_size > max_size_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"파일 크기가 너무 큽니다 (최대 {max_size_mb}MB)"
+            )
+        
+        if file_size == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="빈 파일은 업로드할 수 없습니다"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"파일 읽기 실패: {str(e)}"
+        )
+    
+    # 고유 파일명 생성
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    storage_path = f"{folder}/{unique_filename}" if folder else unique_filename
+    
+    # Supabase Storage에 업로드
+    try:
+        result = supabase.storage.from_(bucket_name).upload(
+            path=storage_path,
+            file=file_content,
+            file_options={
+                "content-type": file.content_type or "application/octet-stream",
+                "cache-control": "3600"
+            }
+        )
+        
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="파일 업로드 실패"
+            )
+        
+        # 공개 URL 생성
+        public_url = supabase.storage.from_(bucket_name).get_public_url(storage_path)
+        return public_url
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Storage 업로드 실패: {str(e)}"
+        )

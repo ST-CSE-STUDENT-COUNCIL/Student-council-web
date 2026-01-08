@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     GMAIL_FROM_EMAIL: str
     GMAIL_FROM_NAME: str
     
+    # Google Sheets API
+    GOOGLE_SHEETS_API_KEY: str
+    
     # Security
     SECRET_KEY: str
     ALLOWED_EMAIL_DOMAIN: str
