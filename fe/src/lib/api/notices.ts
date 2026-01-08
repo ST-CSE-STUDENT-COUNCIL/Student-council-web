@@ -38,6 +38,46 @@ const subCategoryMap: Record<string, string> = {
 }
 
 export const noticeApi = {
+    create: async (data: {
+        title: string
+        content: string
+        board_id: number
+        subcategory?: string
+        is_pinned?: boolean
+        attachments?: File[]
+    }): Promise<Notice> => {
+        const formData = new FormData()
+        formData.append('title', data.title)
+        formData.append('content', data.content)
+        formData.append('board_id', data.board_id.toString())
+        if (data.subcategory) formData.append('subcategory', data.subcategory)
+        formData.append('is_pinned', String(data.is_pinned || false))
+
+        if (data.attachments) {
+            data.attachments.forEach((file) => {
+                formData.append('attachments', file)
+            })
+        }
+
+        const response = await api.post<Notice>(`${API_BASE_URL}`, formData)
+        return response.data
+    },
+
+    update: async (id: number, data: {
+        title?: string
+        content?: string
+        subcategory?: string
+        is_pinned?: boolean
+    }): Promise<Notice> => {
+        const url = `${API_BASE_URL}/${id}`
+        const response = await api.patch<Notice>(url, data)
+        return response.data
+    },
+
+    delete: async (id: number): Promise<void> => {
+        await api.delete(`${API_BASE_URL}/${id}`)
+    },
+
     getAll: async (params?: NoticeParams): Promise<{ notices: Notice[], pagination: NoticeListResponse['pagination'] }> => {
         const response = await api.get<NoticeListResponse>(`${API_BASE_URL}`, { params })
 
@@ -47,8 +87,8 @@ export const noticeApi = {
             sub_category: subCategoryMap[post.subcategory] || 'event',
             title: post.title,
             content: post.content,
-            view_count: post.view_count || 0,
-            is_pinned: post.is_pinned,
+
+            is_pinned: post.is_pinned === true || post.is_pinned === 'true',
             is_anonymous: false, // Backend doesn't support anonymous notices yet
             author_id: post.author?.id,
             author_name: post.author?.name,
@@ -78,8 +118,8 @@ export const noticeApi = {
             sub_category: subCategoryMap[post.subcategory] || 'event',
             title: post.title,
             content: post.content,
-            view_count: post.view_count || 0,
-            is_pinned: post.is_pinned,
+
+            is_pinned: post.is_pinned === true || post.is_pinned === 'true',
             is_anonymous: false,
             author_id: post.author?.id,
             author_name: post.author?.name,
@@ -93,9 +133,7 @@ export const noticeApi = {
             })),
             images: post.images || []
         }
-    },
-
-    incrementViews: async (id: number): Promise<void> => {
-        await api.post(`${API_BASE_URL}/${id}/views`)
     }
 }
+
+

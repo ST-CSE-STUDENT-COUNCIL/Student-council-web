@@ -4,7 +4,7 @@ export type Notice = {
     sub_category: string
     title: string
     content: string
-    view_count: number
+
     is_pinned: boolean
     is_anonymous: boolean
     author_id?: string
