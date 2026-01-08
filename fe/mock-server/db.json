@@ -8,7 +8,7 @@
       "email": "idjaeho@seoultech.ac.kr",
       "department": "컴퓨터공학과",
       "phone": "010-9936-9064",
-      "role": "student",
+      "role": "admin",
       "is_verified": true,
       "verification_image_url": "https://via.placeholder.com/150",
       "verification_status": "approved",
