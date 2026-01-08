@@ -17,13 +17,19 @@ import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as MypageRouteImport } from './routes/mypage'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IntroRouteImport } from './routes/intro'
-import { Route as EventsRouteImport } from './routes/events'
 import { Route as ClubsRouteImport } from './routes/clubs'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NoticesIndexRouteImport } from './routes/notices/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as NoticesNoticeIdRouteImport } from './routes/notices/$noticeId'
-import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
+import { Route as AdminWelfareRouteImport } from './routes/admin/welfare'
+import { Route as AdminSuggestionsRouteImport } from './routes/admin/suggestions'
+import { Route as AdminNoticesRouteImport } from './routes/admin/notices'
+import { Route as AdminIntroRouteImport } from './routes/admin/intro'
+import { Route as AdminEventsRouteImport } from './routes/admin/events'
+import { Route as AdminClubsRouteImport } from './routes/admin/clubs'
 
 const WelfareRoute = WelfareRouteImport.update({
   id: '/welfare',
@@ -65,14 +71,14 @@ const IntroRoute = IntroRouteImport.update({
   path: '/intro',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EventsRoute = EventsRouteImport.update({
-  id: '/events',
-  path: '/events',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ClubsRoute = ClubsRouteImport.update({
   id: '/clubs',
   path: '/clubs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -86,25 +92,55 @@ const NoticesIndexRoute = NoticesIndexRouteImport.update({
   getParentRoute: () => NoticesRoute,
 } as any)
 const EventsIndexRoute = EventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => EventsRoute,
+  getParentRoute: () => AdminRoute,
 } as any)
 const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
   id: '/$noticeId',
   path: '/$noticeId',
   getParentRoute: () => NoticesRoute,
 } as any)
-const EventsEventIdRoute = EventsEventIdRouteImport.update({
-  id: '/$eventId',
-  path: '/$eventId',
-  getParentRoute: () => EventsRoute,
+const AdminWelfareRoute = AdminWelfareRouteImport.update({
+  id: '/welfare',
+  path: '/welfare',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSuggestionsRoute = AdminSuggestionsRouteImport.update({
+  id: '/suggestions',
+  path: '/suggestions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNoticesRoute = AdminNoticesRouteImport.update({
+  id: '/notices',
+  path: '/notices',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminIntroRoute = AdminIntroRouteImport.update({
+  id: '/intro',
+  path: '/intro',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEventsRoute = AdminEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminClubsRoute = AdminClubsRouteImport.update({
+  id: '/clubs',
+  path: '/clubs',
+  getParentRoute: () => AdminRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/clubs': typeof ClubsRoute
-  '/events': typeof EventsRouteWithChildren
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
@@ -113,9 +149,15 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
-  '/events/$eventId': typeof EventsEventIdRoute
+  '/admin/clubs': typeof AdminClubsRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/intro': typeof AdminIntroRoute
+  '/admin/notices': typeof AdminNoticesRoute
+  '/admin/suggestions': typeof AdminSuggestionsRoute
+  '/admin/welfare': typeof AdminWelfareRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
-  '/events/': typeof EventsIndexRoute
+  '/admin/': typeof AdminIndexRoute
+  '/events': typeof EventsIndexRoute
   '/notices/': typeof NoticesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -128,16 +170,22 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
-  '/events/$eventId': typeof EventsEventIdRoute
+  '/admin/clubs': typeof AdminClubsRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/intro': typeof AdminIntroRoute
+  '/admin/notices': typeof AdminNoticesRoute
+  '/admin/suggestions': typeof AdminSuggestionsRoute
+  '/admin/welfare': typeof AdminWelfareRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/admin': typeof AdminIndexRoute
   '/events': typeof EventsIndexRoute
   '/notices': typeof NoticesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/clubs': typeof ClubsRoute
-  '/events': typeof EventsRouteWithChildren
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
@@ -146,8 +194,14 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
-  '/events/$eventId': typeof EventsEventIdRoute
+  '/admin/clubs': typeof AdminClubsRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/intro': typeof AdminIntroRoute
+  '/admin/notices': typeof AdminNoticesRoute
+  '/admin/suggestions': typeof AdminSuggestionsRoute
+  '/admin/welfare': typeof AdminWelfareRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/admin/': typeof AdminIndexRoute
   '/events/': typeof EventsIndexRoute
   '/notices/': typeof NoticesIndexRoute
 }
@@ -155,8 +209,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/clubs'
-    | '/events'
     | '/intro'
     | '/login'
     | '/mypage'
@@ -165,9 +219,15 @@ export interface FileRouteTypes {
     | '/signup'
     | '/suggestion'
     | '/welfare'
-    | '/events/$eventId'
+    | '/admin/clubs'
+    | '/admin/events'
+    | '/admin/intro'
+    | '/admin/notices'
+    | '/admin/suggestions'
+    | '/admin/welfare'
     | '/notices/$noticeId'
-    | '/events/'
+    | '/admin/'
+    | '/events'
     | '/notices/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -180,15 +240,21 @@ export interface FileRouteTypes {
     | '/signup'
     | '/suggestion'
     | '/welfare'
-    | '/events/$eventId'
+    | '/admin/clubs'
+    | '/admin/events'
+    | '/admin/intro'
+    | '/admin/notices'
+    | '/admin/suggestions'
+    | '/admin/welfare'
     | '/notices/$noticeId'
+    | '/admin'
     | '/events'
     | '/notices'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/clubs'
-    | '/events'
     | '/intro'
     | '/login'
     | '/mypage'
@@ -197,16 +263,22 @@ export interface FileRouteTypes {
     | '/signup'
     | '/suggestion'
     | '/welfare'
-    | '/events/$eventId'
+    | '/admin/clubs'
+    | '/admin/events'
+    | '/admin/intro'
+    | '/admin/notices'
+    | '/admin/suggestions'
+    | '/admin/welfare'
     | '/notices/$noticeId'
+    | '/admin/'
     | '/events/'
     | '/notices/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   ClubsRoute: typeof ClubsRoute
-  EventsRoute: typeof EventsRouteWithChildren
   IntroRoute: typeof IntroRoute
   LoginRoute: typeof LoginRoute
   MypageRoute: typeof MypageRoute
@@ -215,6 +287,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SuggestionRoute: typeof SuggestionRoute
   WelfareRoute: typeof WelfareRoute
+  EventsIndexRoute: typeof EventsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -275,18 +348,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntroRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/events': {
-      id: '/events'
-      path: '/events'
-      fullPath: '/events'
-      preLoaderRoute: typeof EventsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/clubs': {
       id: '/clubs'
       path: '/clubs'
       fullPath: '/clubs'
       preLoaderRoute: typeof ClubsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -305,10 +378,17 @@ declare module '@tanstack/react-router' {
     }
     '/events/': {
       id: '/events/'
-      path: '/'
-      fullPath: '/events/'
+      path: '/events'
+      fullPath: '/events'
       preLoaderRoute: typeof EventsIndexRouteImport
-      parentRoute: typeof EventsRoute
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/notices/$noticeId': {
       id: '/notices/$noticeId'
@@ -317,28 +397,72 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NoticesNoticeIdRouteImport
       parentRoute: typeof NoticesRoute
     }
-    '/events/$eventId': {
-      id: '/events/$eventId'
-      path: '/$eventId'
-      fullPath: '/events/$eventId'
-      preLoaderRoute: typeof EventsEventIdRouteImport
-      parentRoute: typeof EventsRoute
+    '/admin/welfare': {
+      id: '/admin/welfare'
+      path: '/welfare'
+      fullPath: '/admin/welfare'
+      preLoaderRoute: typeof AdminWelfareRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/suggestions': {
+      id: '/admin/suggestions'
+      path: '/suggestions'
+      fullPath: '/admin/suggestions'
+      preLoaderRoute: typeof AdminSuggestionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notices': {
+      id: '/admin/notices'
+      path: '/notices'
+      fullPath: '/admin/notices'
+      preLoaderRoute: typeof AdminNoticesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/intro': {
+      id: '/admin/intro'
+      path: '/intro'
+      fullPath: '/admin/intro'
+      preLoaderRoute: typeof AdminIntroRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/events': {
+      id: '/admin/events'
+      path: '/events'
+      fullPath: '/admin/events'
+      preLoaderRoute: typeof AdminEventsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/clubs': {
+      id: '/admin/clubs'
+      path: '/clubs'
+      fullPath: '/admin/clubs'
+      preLoaderRoute: typeof AdminClubsRouteImport
+      parentRoute: typeof AdminRoute
     }
   }
 }
 
-interface EventsRouteChildren {
-  EventsEventIdRoute: typeof EventsEventIdRoute
-  EventsIndexRoute: typeof EventsIndexRoute
+interface AdminRouteChildren {
+  AdminClubsRoute: typeof AdminClubsRoute
+  AdminEventsRoute: typeof AdminEventsRoute
+  AdminIntroRoute: typeof AdminIntroRoute
+  AdminNoticesRoute: typeof AdminNoticesRoute
+  AdminSuggestionsRoute: typeof AdminSuggestionsRoute
+  AdminWelfareRoute: typeof AdminWelfareRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
-const EventsRouteChildren: EventsRouteChildren = {
-  EventsEventIdRoute: EventsEventIdRoute,
-  EventsIndexRoute: EventsIndexRoute,
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminClubsRoute: AdminClubsRoute,
+  AdminEventsRoute: AdminEventsRoute,
+  AdminIntroRoute: AdminIntroRoute,
+  AdminNoticesRoute: AdminNoticesRoute,
+  AdminSuggestionsRoute: AdminSuggestionsRoute,
+  AdminWelfareRoute: AdminWelfareRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 
-const EventsRouteWithChildren =
-  EventsRoute._addFileChildren(EventsRouteChildren)
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface NoticesRouteChildren {
   NoticesNoticeIdRoute: typeof NoticesNoticeIdRoute
@@ -355,8 +479,8 @@ const NoticesRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   ClubsRoute: ClubsRoute,
-  EventsRoute: EventsRouteWithChildren,
   IntroRoute: IntroRoute,
   LoginRoute: LoginRoute,
   MypageRoute: MypageRoute,
@@ -365,6 +489,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SuggestionRoute: SuggestionRoute,
   WelfareRoute: WelfareRoute,
+  EventsIndexRoute: EventsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

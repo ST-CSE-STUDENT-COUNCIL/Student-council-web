@@ -1,9 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import type { UserProfileResponse } from '../types/users'
-
-export type User = UserProfileResponse
+import type { User } from '../types/users'
 
 type AuthState = {
     user: User | null

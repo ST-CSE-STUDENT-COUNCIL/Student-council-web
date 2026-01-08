@@ -367,19 +367,7 @@ server.post('/welfare_rental_requests', (req, res) => {
     return res.status(201).json(newRequest)
 })
 
-server.post('/notices/:id/views', (req, res) => {
-    const { id } = req.params
-    const db = router.db
-    const post = db.get('posts').find({ id: Number(id) }).value()
 
-    if (post) {
-        const newViews = (post.view_count || 0) + 1
-        db.get('posts').find({ id: Number(id) }).assign({ view_count: newViews }).write()
-        res.json({ ...post, view_count: newViews })
-    } else {
-        res.status(404).json({ detail: "Notice not found" })
-    }
-})
 
 // Notice Create/Update/Delete (Simplified: assuming admin)
 server.post('/notices', upload.array('attachments'), (req, res) => {
@@ -397,7 +385,7 @@ server.post('/notices', upload.array('attachments'), (req, res) => {
         content,
         subcategory,
         is_pinned: is_pinned === 'true',
-        view_count: 0,
+
         is_deleted: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -414,6 +402,22 @@ server.delete('/notices/:id', (req, res) => {
         .assign({ is_deleted: true, deleted_at: new Date().toISOString() })
         .write()
     res.status(204).send()
+})
+
+server.patch('/notices/:id', (req, res) => {
+    const { id } = req.params
+    const db = router.db
+    const updates = { ...req.body, updated_at: new Date().toISOString() }
+
+    const post = db.get('posts').find({ id: Number(id) }).value()
+    if (!post) return res.status(404).json({ detail: "Notice not found" })
+
+    db.get('posts').find({ id: Number(id) })
+        .assign(updates)
+        .write()
+
+    const updated = db.get('posts').find({ id: Number(id) }).value()
+    res.json(populateNotice(db, updated))
 })
 
 // ----------------------------------------------------------------------

@@ -1,4 +1,4 @@
-import type { Club } from './ClubCard'
+import type { Club } from '../../types/clubs'
 
 type Props = {
     club: Club | null

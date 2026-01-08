@@ -46,6 +46,14 @@ export default function Header() {
                                     {user?.name}
                                 </span>
                             </Link>
+                            {(user?.role === 'admin' || user?.role === 'council') && (
+                                <Link
+                                    to="/admin"
+                                    className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                >
+                                    <span>⚙️ 관리자</span>
+                                </Link>
+                            )}
                             <button
                                 onClick={handleLogout}
                                 className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
