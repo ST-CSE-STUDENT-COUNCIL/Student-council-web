@@ -2,7 +2,7 @@
  * Attachment Response
  * Corresponds to backend `schemas.posts.AttachmentResponse`
  */
-export interface Attachment {
+export type Attachment = {
     id: number;
     filename: string;
     file_url: string; // Signed URL
@@ -15,7 +15,7 @@ export interface Attachment {
  * Post Response (Detail)
  * Corresponds to backend `schemas.posts.PostResponse`
  */
-export interface Post {
+export type Post = {
     id: number;
     board_id: number;
     author_id?: string | null; // UUID, null if anonymous
@@ -34,7 +34,7 @@ export interface Post {
  * Post List Item (Summary)
  * Corresponds to backend `schemas.posts.PostListItem`
  */
-export interface PostListItem {
+export type PostListItem = {
     id: number;
     board_id: number;
     author_name?: string | null;
@@ -49,7 +49,7 @@ export interface PostListItem {
  * Pagination Metadata
  * Corresponds to backend `schemas.posts.PaginationMeta`
  */
-export interface PaginationMeta {
+export type PaginationMeta = {
     page: number;
     limit: number;
     total: number;
@@ -60,13 +60,13 @@ export interface PaginationMeta {
  * Post List Response
  * Corresponds to backend `schemas.posts.PostListResponse`
  */
-export interface PostListResponse {
+export type PostListResponse = {
     posts: PostListItem[];
     pagination: PaginationMeta;
 }
 
 // Frontend specific types (Legacy compatibility if needed)
-export interface Event extends Post {
+export type Event = Post & {
     // Frontend 'Event' type used to have these, mapping them to Post fields
     // status: 'active' | 'closed' | 'scheduled'; // -> Derived from created_at/content? Backend doesn't have status yet.
     // image: string; // -> attachments[0]?.file_url

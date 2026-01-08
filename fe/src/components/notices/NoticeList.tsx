@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import type { Notice } from '../../types/notices';
 
-interface NoticeListProps {
+type NoticeListProps = {
     notices: Notice[];
 }
 

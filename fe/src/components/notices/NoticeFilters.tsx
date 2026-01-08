@@ -1,6 +1,6 @@
 import type { ChangeEvent } from 'react';
 
-interface NoticeFiltersProps {
+type NoticeFiltersProps = {
     mainCategory: string;
     onMainCategoryChange: (category: string) => void;
     subCategory: string;

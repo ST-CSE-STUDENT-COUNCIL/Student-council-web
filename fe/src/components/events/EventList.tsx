@@ -1,6 +1,6 @@
 import type { Event } from '../../types/events'
 
-interface EventListProps {
+type EventListProps = {
     events: Event[]
     onEventSelect?: (event: Event) => void
     selectedEventId?: number

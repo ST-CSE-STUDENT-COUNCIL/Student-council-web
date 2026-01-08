@@ -5,7 +5,7 @@ import type { UserProfileResponse } from '../types/users'
 
 export type User = UserProfileResponse
 
-interface AuthState {
+type AuthState = {
     user: User | null
     isAuthenticated: boolean
     accessToken: string | null

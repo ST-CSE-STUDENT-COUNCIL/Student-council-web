@@ -2,7 +2,7 @@
 export type SortOption = 'newest' | 'oldest'
 export type StatusOption = 'all' | 'active' | 'scheduled' | 'closed'
 
-interface EventFilterProps {
+type EventFilterProps = {
     search: string
     onSearchChange: (value: string) => void
     sort: SortOption

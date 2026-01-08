@@ -11,7 +11,7 @@ import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/navigation'
 
-interface EventCardProps {
+type EventCardProps = {
     event: Event
     isActive?: boolean
 }

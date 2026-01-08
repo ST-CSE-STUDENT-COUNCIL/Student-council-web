@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Modal } from '../../common/Modal'
 import type { Event } from '../../../types/events'
 
-interface EventSurveyModalProps {
+type EventSurveyModalProps = {
     isOpen: boolean
     onClose: () => void
     event: Event

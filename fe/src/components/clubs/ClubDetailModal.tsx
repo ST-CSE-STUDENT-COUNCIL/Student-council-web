@@ -1,6 +1,6 @@
 import type { Club } from './ClubCard'
 
-interface Props {
+type Props = {
     club: Club | null
     onClose: () => void
 }

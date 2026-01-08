@@ -4,7 +4,7 @@ import { NoticeFilters } from '../../components/notices/NoticeFilters'
 import { NoticeList } from '../../components/notices/NoticeList'
 import type { Notice } from '../../types/notices'
 
-interface NoticeSearch {
+type NoticeSearch = {
   mainCategory: string
   subCategory: string
   search: string
