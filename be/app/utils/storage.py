@@ -112,9 +112,10 @@ async def upload_verification_image(file: UploadFile) -> str:
     file_ext = os.path.splitext(filename)[1].lower()
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     
-    # 4. Supabase Storage에 업로드
+    # 4. Supabase Storage에 업로드 (admin 클라이언트 사용 - RLS 우회)
     try:
-        result = supabase.storage.from_('verification-images').upload(
+        admin_client = get_supabase_admin()
+        result = admin_client.storage.from_('verification-images').upload(
             path=unique_filename,
             file=file_content,
             file_options={

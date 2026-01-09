@@ -104,7 +104,7 @@ async def create_suggestion(
     **권한:**
     - admin: 전체 목록 조회 가능, 작성자 실명 표시
     - council: 전체 목록 조회 가능, 작성자 익명
-    - 일반 사용자: 본인 작성 건만 조회 가능
+    - 일반 사용자: 전체 목록 조회 가능, 본인 작성 건만 실명 표시
     """,
     responses={
         401: {"model": ErrorResponse, "description": "인증 필요"},
@@ -132,8 +132,6 @@ async def get_suggestions(
         
         # 전체 개수 조회
         count_query = supabase.table("suggestions").select("id")
-        if not can_view_all:
-            count_query = count_query.eq("author_id", current_user["id"])
         if status_filter:
             count_query = count_query.eq("status", status_filter)
         
@@ -145,8 +143,6 @@ async def get_suggestions(
             .select("*")\
             .order("created_at", desc=True)
         
-        if not can_view_all:
-            query = query.eq("author_id", current_user["id"])
         if status_filter:
             query = query.eq("status", status_filter)
         
