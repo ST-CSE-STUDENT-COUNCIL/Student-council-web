@@ -15,6 +15,7 @@ from app.schemas.suggestions import (
     ErrorResponse
 )
 from app.utils.auth import require_verified_user, require_admin
+from app.utils.turnstile import verify_turnstile
 from app.database import supabase
 
 
@@ -53,6 +54,11 @@ async def create_suggestion(
 ):
     """건의함 작성 (승인된 사용자만 가능)"""
     try:
+        # 1. Turnstile 검증
+        if body.turnstile_token:
+            await verify_turnstile(token=body.turnstile_token)
+        
+        # 2. 건의함 데이터 생성
         suggestion_data = {
             "author_id": current_user["id"],
             "title": body.title,

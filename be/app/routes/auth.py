@@ -45,6 +45,7 @@ from app.utils.login_security import (
     reset_failed_attempts,
     unblock_user
 )
+from app.utils.turnstile import verify_turnstile
 from app.database import supabase
 from postgrest.exceptions import APIError
 
@@ -81,7 +82,7 @@ async def send_verification(body: SendVerificationRequest, request: Request):
                 detail="이미 가입된 이메일입니다"
             )
         
-        # 2. 이미 인증 완료되었지만 아직 회원가입 안 한 경우
+        # 3. 이미 인증 완료되었지만 아직 회원가입 안 한 경우
         already_verified = supabase.table('email_verifications')\
             .select('*')\
             .eq('email', body.email)\
@@ -95,10 +96,10 @@ async def send_verification(body: SendVerificationRequest, request: Request):
                 detail="이미 인증 완료된 이메일입니다. 회원가입을 진행해주세요."
             )
         
-        # 3. 인증번호 생성 및 저장
+        # 4. 인증번호 생성 및 저장
         code = await create_email_verification(body.email)
         
-        # 4. 인증번호 발송
+        # 5. 인증번호 발송
         await send_verification_email(body.email, code)
         
         return SendVerificationResponse(email=body.email)
@@ -192,7 +193,11 @@ async def check_student_id(request: CheckStudentIdRequest):
 async def signup(request: SignupRequest):
     """회원가입"""
     try:
-        # 1. 이메일이 인증되었는지 확인
+        # 1. Turnstile 검증
+        if request.turnstile_token:
+            await verify_turnstile(token=request.turnstile_token)
+        
+        # 2. 이메일이 인증되었는지 확인
         is_email_verified = await check_email_verified(request.email)
         if not is_email_verified:
             raise HTTPException(
@@ -200,7 +205,7 @@ async def signup(request: SignupRequest):
                 detail="이메일 인증이 완료되지 않았습니다. 먼저 이메일 인증을 완료해주세요."
             )
         
-        # 2. 이메일 중복 확인
+        # 3. 이메일 중복 확인
         existing_email = supabase.table('users')\
             .select('email')\
             .eq('email', request.email)\
@@ -212,7 +217,7 @@ async def signup(request: SignupRequest):
                 detail="이미 가입된 이메일입니다"
             )
         
-        # 3. 학번 중복 확인
+        # 4. 학번 중복 확인
         existing_student = supabase.table('users')\
             .select('student_id')\
             .eq('student_id', request.student_id)\
@@ -224,7 +229,7 @@ async def signup(request: SignupRequest):
                 detail="이미 사용 중인 학번입니다"
             )
         
-        # 4. Supabase Auth에 사용자 생성
+        # 5. Supabase Auth에 사용자 생성
         try:
             auth_response = supabase.auth.admin.create_user({
                 "email": request.email,
@@ -252,7 +257,7 @@ async def signup(request: SignupRequest):
         
         user_id = auth_response.user.id
         
-        # 5. users 테이블에 프로필 정보 저장
+        # 6. users 테이블에 프로필 정보 저장
         user_data = {
             'id': user_id,
             'email': request.email,
@@ -266,7 +271,7 @@ async def signup(request: SignupRequest):
         
         supabase.table('users').insert(user_data).execute()
         
-        # 6. 이메일 인증 사용됨으로 표시
+        # 7. 이메일 인증 사용됨으로 표시
         await mark_email_used(request.email)
         
         return SignupResponse(
@@ -308,7 +313,14 @@ async def login(body: LoginRequest, request: Request):
     client_ip = get_remote_address(request)
     
     try:
-        # 1. 학번으로 사용자 조회
+        # 1. Turnstile 검증
+        if body.turnstile_token:
+            await verify_turnstile(
+                token=body.turnstile_token,
+                remote_ip=client_ip
+            )
+        
+        # 2. 학번으로 사용자 조회
         user_result = supabase.table('users')\
             .select('*')\
             .eq('student_id', body.student_id)\
@@ -324,7 +336,7 @@ async def login(body: LoginRequest, request: Request):
         user_data = user_result.data
         email = user_data['email']
         
-        # 2. 학번 기반 차단 확인
+        # 3. 학번 기반 차단 확인
         block_status = await check_login_block(body.student_id)
         
         if block_status['is_permanent']:
@@ -353,6 +365,56 @@ async def login(body: LoginRequest, request: Request):
                 )
         
         # 3. Supabase Auth로 로그인 시도
+        try:
+            auth_response = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": body.password
+            })
+        except Exception as auth_error:
+            # 로그인 실패 기록
+            await record_login_attempt(body.student_id, False, client_ip)
+            
+            # 실패 횟수 증가 및 차단 처리
+            result = await increment_failed_attempts(body.student_id)
+            
+            if result['is_permanent']:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="로그인 시도 횟수 초과로 계정이 차단되었습니다. 본인이 맞다면 관리자에게 문의하여 차단 해제를 요청하세요."
+                )
+            elif result['is_blocked']:
+                reason = result['block_reason']
+                if reason == '10_minutes':
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="로그인 5회 실패로 10분간 차단되었습니다."
+                    )
+                elif reason == '1_hour':
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="로그인 10회 실패로 1시간 동안 차단되었습니다."
+                    )
+            
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"학번 또는 비밀번호가 올바르지 않습니다. (실패 {result['failed_attempts']}/15)"
+            )
+        
+        if not auth_response.user or not auth_response.session:
+            # 로그인 실패 기록
+            await record_login_attempt(body.student_id, False, client_ip)
+            
+            # 실패 횟수 증가
+            result = await increment_failed_attempts(body.student_id)
+            
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"학번 또는 비밀번호가 올바르지 않습니다. (실패 {result['failed_attempts']}/15)"
+            )
+        
+        access_token = auth_response.session.access_token
+        
+        # 4. 거절된 사용자는 로그인 차단
         try:
             auth_response = supabase.auth.sign_in_with_password({
                 "email": email,

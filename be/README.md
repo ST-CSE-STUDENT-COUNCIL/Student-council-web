@@ -7,10 +7,12 @@ FastAPI + Supabase + Cloudflare R2 기반 학생회 홈페이지 백엔드 API
 - **Framework**: FastAPI 0.115.0
 - **Database**: PostgreSQL (Supabase)
 - **Authentication**: Supabase Auth (JWT)
-- **Storage**: Cloudflare R2 (5 Public Buckets)
+- **Storage**: Cloudflare R2 (5 Public Buckets) + Supabase Storage (Private)
+- **Bot Prevention**: Cloudflare Turnstile 🆕
 - **Email**: Gmail HTTP API (google-auth/googleapiclient)
 - **Rate Limiting**: slowapi
 - **File Upload**: python-multipart
+- **HTTP Client**: httpx (Turnstile 검증용)
 - **Python**: 3.12+
 
 ## 프로젝트 구조
@@ -50,7 +52,10 @@ be/
 │       ├── __init__.py
 │       ├── email.py         # 이메일 발송
 │       ├── auth.py          # 인증/권한 미들웨어
-│       ├── r2_storage.py    # Cloudflare R2 스토리지 🆕
+│       ├── login_security.py # 로그인 보안 (차단 관리)
+│       ├── storage.py       # Supabase Storage (Private)
+│       ├── r2_storage.py    # Cloudflare R2 스토리지 (Public) 🆕
+│       ├── turnstile.py     # Cloudflare Turnstile 검증 🆕
 │       └── sheets.py        # Google Sheets API
 ├── db/
 │   ├── schema.sql           # 데이터베이스 스키마
@@ -67,7 +72,12 @@ be/
 │   └── README.md
 ├── postman/                 # Postman 테스트 컬렉션 🆕
 │   └── Events_API.postman_collection.json
+├── test_turnstile.py        # Turnstile 테스트 스크립트 🆕
+├── test_turnstile_api.sh    # API 테스트 가이드 🆕
+├── TURNSTILE_SETUP_GUIDE.md # Turnstile 설정 가이드 🆕
+├── R2_SETUP_GUIDE.md        # Cloudflare R2 설정 가이드
 ├── .env                     # 환경변수 (gitignore)
+├── .env.example             # 환경변수 예시
 ├── .env.render.example      # Render 배포 예시
 ├── .gitignore
 ├── requirements.txt         # 패키지 의존성
@@ -123,6 +133,10 @@ R2_INTRODUCTION_IMAGES_URL=https://pub-xxxxx.r2.dev
 R2_POST_ATTACHMENTS_URL=https://pub-xxxxx.r2.dev
 R2_WELFARE_IMAGES_URL=https://pub-xxxxx.r2.dev
 
+# Cloudflare Turnstile (봇 방지)
+TURNSTILE_SECRET_KEY=your_secret_key_here
+TURNSTILE_SITE_KEY=your_site_key_here
+
 # Security
 SECRET_KEY=your_secret_key_here
 ALLOWED_EMAIL_DOMAIN=seoultech.ac.kr
@@ -165,8 +179,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `POST /auth/send-verification` - 이메일 인증번호 발송
 - `POST /auth/verify-email` - 이메일 인증 확인
 - `POST /auth/check-student-id` - 학번 중복 확인
-- `POST /auth/signup` - 회원가입
-- `POST /auth/login` - 로그인
+- `POST /auth/signup` - 회원가입 (Turnstile 적용 🆕)
+- `POST /auth/login` - 로그인 (Turnstile 적용 🆕)
 - `POST /auth/logout` - 로그아웃
 - `POST /auth/forgot-password` - 비밀번호 찾기 (학번 입력 → 이메일 인증번호 발송)
 - `POST /auth/verify-reset-code` - 비밀번호 재설정 인증번호 확인
@@ -236,8 +250,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `DELETE /introductions/images/{image_id}` - 이미지 삭제 (admin)
 
 **건의함 (Suggestions)**
-- `POST /suggestions` - 건의함 작성 (익명)
-- `GET /suggestions` - 건의함 목록 조회
+- `POST /suggestions` - 건의함 작성 (Turnstile 적용 🆕)
+- `GET /suggestions` - 건의함 목록 조회 (본인 작성 건만 실명 표시)
 - `GET /suggestions/{suggestion_id}` - 건의함 상세 조회
 - `PATCH /suggestions/{suggestion_id}/status` - 건의함 상태 변경 (admin)
 
@@ -660,6 +674,35 @@ FRONTEND_URL=https://yourdomain.com
 ```
 
 > **Note**: Migration 006은 Cloudflare R2로 마이그레이션 완료되어 더 이상 사용하지 않음.
+
+## 보안 기능
+
+### Cloudflare Turnstile (봇 방지) 🆕
+
+다음 API에 Turnstile 캡챠가 적용되어 있습니다:
+- 회원가입
+- 로그인
+- 건의함 작성
+
+**설정 방법**: [TURNSTILE_SETUP_GUIDE.md](TURNSTILE_SETUP_GUIDE.md) 참고
+
+**동작 방식**:
+- `TURNSTILE_SECRET_KEY`가 설정된 경우: 모든 요청에 `turnstile_token` 필요
+- `TURNSTILE_SECRET_KEY`가 미설정된 경우: 검증 우회 (개발 환경)
+
+**프론트엔드 Site Key**: `.env`의 `TURNSTILE_SITE_KEY` 값을 프론트엔드에 전달
+
+### 로그인 보안
+
+- 5회 실패 → 10분 차단
+- 10회 실패 → 1시간 차단
+- 15회 실패 → 영구 차단 (관리자 해제 필요)
+- IP 기반 로깅
+
+### RLS (Row Level Security)
+
+- Supabase Storage의 private 버킷(verification-images)에 RLS 정책 적용
+- 학적 인증 이미지는 관리자만 조회 가능
 
 ## 문제 해결
 

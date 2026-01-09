@@ -10,6 +10,9 @@ supabase==2.10.0
 # Cloudflare R2 (S3 compatible)
 boto3==1.35.0
 
+# HTTP Client (Turnstile 검증용)
+httpx==0.27.0
+
 # 환경변수
 python-dotenv==1.0.1
 

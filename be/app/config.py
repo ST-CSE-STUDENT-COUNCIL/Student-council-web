@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     R2_POST_ATTACHMENTS_URL: str
     R2_WELFARE_IMAGES_URL: str
     
+    # Cloudflare Turnstile (선택사항 - 미설정시 검증 우회)
+    TURNSTILE_SECRET_KEY: str = ""
+    TURNSTILE_SITE_KEY: str = ""
+    
     # Security
     SECRET_KEY: str
     ALLOWED_EMAIL_DOMAIN: str
