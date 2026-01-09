@@ -27,6 +27,22 @@ class Settings(BaseSettings):
     # Google Sheets API
     GOOGLE_SHEETS_API_KEY: str
     
+    # Cloudflare R2
+    R2_ACCOUNT_ID: str
+    R2_ACCESS_KEY_ID: str
+    R2_SECRET_ACCESS_KEY: str
+    
+    # R2 버킷별 Public URL
+    R2_CLUB_IMAGES_URL: str
+    R2_EVENT_IMAGES_URL: str
+    R2_INTRODUCTION_IMAGES_URL: str
+    R2_POST_ATTACHMENTS_URL: str
+    R2_WELFARE_IMAGES_URL: str
+    
+    # Cloudflare Turnstile (선택사항 - 미설정시 검증 우회)
+    TURNSTILE_SECRET_KEY: str = ""
+    TURNSTILE_SITE_KEY: str = ""
+    
     # Security
     SECRET_KEY: str
     ALLOWED_EMAIL_DOMAIN: str

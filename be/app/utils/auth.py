@@ -2,7 +2,7 @@
 인증 및 권한 검증 유틸리티
 FastAPI Depends를 통해 라우트별 권한 제어를 수행합니다.
 """
-from fastapi import HTTPException, status, Security, Depends
+from fastapi import HTTPException, status, Security, Depends, Request
 from typing import Optional, List
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.database import supabase
@@ -175,3 +175,30 @@ async def require_admin(user: dict = Depends(require_verified_user)) -> dict:
         )
     
     return user
+
+
+async def optional_current_user(
+    authorization: Optional[HTTPAuthorizationCredentials] = Security(
+        HTTPBearer(auto_error=False)
+    )
+) -> Optional[dict]:
+    """
+    선택적 사용자 인증 (로그인하지 않아도 접근 가능)
+    
+    게스트 등록 등 인증이 선택적인 엔드포인트에 사용합니다.
+    토큰이 있으면 검증하고, 없으면 None을 반환합니다.
+    
+    Args:
+        authorization: HTTP Authorization 헤더 (Bearer 토큰, 선택적)
+    
+    Returns:
+        Optional[dict]: 사용자 정보 또는 None
+    """
+    if not authorization:
+        return None
+    
+    try:
+        return await get_current_user(authorization)
+    except HTTPException:
+        # 토큰이 유효하지 않으면 None 반환
+        return None

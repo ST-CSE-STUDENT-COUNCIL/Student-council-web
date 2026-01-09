@@ -12,7 +12,7 @@ from app.schemas.introductions import (
     ErrorResponse
 )
 from app.utils.auth import require_admin
-from app.utils.storage import upload_file_to_supabase
+from app.utils.r2_storage import upload_file_to_r2 as upload_file_to_supabase
 from app.database import supabase
 
 

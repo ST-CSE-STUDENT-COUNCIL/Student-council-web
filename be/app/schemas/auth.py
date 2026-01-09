@@ -72,6 +72,7 @@ class SignupRequest(BaseModel):
     student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
     phone: str = Field(..., pattern=r'^010-?\d{4}-?\d{4}$', description="전화번호")
     department: str = Field(..., description="학과")
+    turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile 토큰")
     
     @field_validator('password')
     @classmethod
@@ -111,6 +112,7 @@ class LoginRequest(BaseModel):
     """로그인 요청"""
     student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
     password: str
+    turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile 토큰")
 
 
 class LoginResponse(BaseModel):

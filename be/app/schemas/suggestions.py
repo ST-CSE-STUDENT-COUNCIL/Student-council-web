@@ -10,6 +10,7 @@ class SuggestionCreateRequest(BaseModel):
     """건의함 작성 요청"""
     title: str = Field(..., min_length=1, max_length=200, description="제목")
     content: str = Field(..., min_length=1, description="내용")
+    turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile 토큰")
 
 
 class SuggestionStatusUpdateRequest(BaseModel):

@@ -6,9 +6,9 @@
 
 - **DBMS**: PostgreSQL 15+ (Supabase 호스팅)
 - **인증**: Supabase Auth (회원가입/로그인 위임)
-- **테이블**: 15개
+- **테이블**: 19개 🆕
 - **보안**: Row Level Security (RLS) + JWT 인증
-- **특징**: 선착순 신청 트랜잭션, Soft Delete, 익명 게시, 복지사업 관리
+- **특징**: 선착순 신청 트랜잭션, Soft Delete, 익명 게시, 복지사업 관리, 회원/비회원 행사 신청 🆕
 
 ## 🔐 Supabase Auth 통합
 
@@ -43,79 +43,91 @@ posts, events, registrations 등
 - 5분 만료
 - 회원가입 전 필수
 
-### 2. users (사용자 프로필)
+### 2. password_resets (비밀번호 재설정)
+- 비밀번호 찾기 이메일 인증
+- 5분 만료
+- 학번 기반 인증
+
+### 3. login_attempts (로그인 시도 이력)
+- 모든 로그인 시도 기록
+- 학번, IP, 성공/실패, 타임스탬프
+
+### 4. login_blocks (로그인 차단 관리)
+- 학번별 차단 상태 관리
+- 누적 실패 횟수, 차단 만료 시각
+
+### 5. users (사용자 프로필)
 - `auth.users`와 1:1 매핑
 - 학번 기반 로그인
 - 권한: `student`, `council`, `admin`
 - 학생회비 납부 여부 관리
 - 관리자 승인 시스템
 
-### 3. introduction_images (학생회 소개 이미지)
+### 6. introduction_images (학생회 소개 이미지)
 - 학생회 소개 이미지 관리
+- Cloudflare R2 저장 🆕
 - admin만 수정 가능
 - 순서 지정 가능
 
-### 4. boards (게시판)
+### 7. boards (게시판)
 - 학생회/민주자치 공지사항, 건의함
 - 대카테고리 분류
 - 익명 허용 여부 설정
 
-### 5. posts (게시글)
+### 8. posts (게시글)
 - 소카테고리 지원
 - Soft Delete 지원
 - 익명 게시 가능 (관리자만 실명 확인)
 - admin만 공지사항 작성
 
-### 6. attachments (첨부파일)
+### 9. attachments (첨부파일)
 - 게시글 첨부파일 관리
+- Cloudflare R2 저장 🆕
 - 파일명, URL, 크기, MIME 타입 저장
 
-### 7. events (행사)
+### 10. events (행사)
 - 선착순 신청 시스템
 - 회비 납부자 전용 행사 설정 가능
 - Soft Delete 지원
+- 회원/비회원 모두 신청 가능 🆕
 
-### 7. event_images (행사 이미지)
+### 11. event_images (행사 이미지) 🆕
 - 행사당 여러 장 등록
+- Cloudflare R2 저장
 - 순서 지정 가능
 
-### 9. registrations (행사 신청)
+### 12. registrations (행사 신청) 🆕
 - 중복 신청 방지 (UNIQUE 제약)
 - 선착순 번호 자동 부여
+- **회원**: user_id 사용
+- **비회원**: guest_student_id, guest_name, guest_phone 필수
+- 부분 UNIQUE 인덱스로 회원/비회원 각각 중복 방지
 
-### 10. event_surveys (행사 만족도 조사)
+### 13. event_surveys (행사 만족도 조사)
 - 완료된 행사에 대한 만족도 조사
 - 1~5점 평점 및 피드백
 - 중복 제출 방지
 
-### 11. clubs (동아리)
+### 14. clubs (동아리)
 - 동아리 목록 및 정보
+- Cloudflare R2 저장 🆕
 - 카테고리별 분류
 - 상세 이미지 지원
 
-### 12. welfare_rentals (복지사업 - 대여물품)
+### 15. welfare_rentals (복지사업 - 대여물품)
 - 대여 물품 관리
-- 재고 수량 추적
+- Cloudflare R2 저장 🆕
+- Google Sheets 실시간 재고 조회
 
-### 13. welfare_rental_requests (복지사업 - 대여신청)
-- 대여 신청 및 승인 관리
-- 승인자 추적 (approved_by)
-- 반납 일자 추적
-
-### 14. locker_periods (사물함 대여 기간)
+### 16. locker_periods (사물함 대여 기간)
 - 학기별 대여 기간 설정
 - 신청 기간 및 사용 기간 관리
 - 관리자가 학기당 1회 설정
 
-### 15. welfare_lockers (사물함 마스터)
-- 미래관 3층 1~40번 사물함
-- 19번, 35번 불량 처리
-- 사물함 상태 관리
-
-### 16. locker_rentals (사물함 대여)
-- 학생 신청 및 사용 내역
-- 승인자 및 반납 확인자 추적
-- 기간별 중복 방지
+### 17. suggestions (건의함)
+- 익명 건의 및 응답 관리
+- 상태 변경 추적
+- council/admin만 작성자 확인 가능
 
 ## 🔐 보안 정책
 
@@ -153,9 +165,25 @@ posts, events, registrations 등
 
 ## 🚀 주요 기능
 
-### 선착순 신청 시스템
+### 선착순 신청 시스템 (회원/비회원 통합) 🆕
 ```sql
-SELECT register_for_event(행사ID, 사용자ID);
+-- 회원 신청
+SELECT register_for_event_guest(
+  p_event_id := 1,
+  p_user_id := 'uuid-here',
+  p_guest_student_id := NULL,
+  p_guest_name := NULL,
+  p_guest_phone := NULL
+);
+
+-- 비회원 신청
+SELECT register_for_event_guest(
+  p_event_id := 1,
+  p_user_id := NULL,
+  p_guest_student_id := '20241234',
+  p_guest_name := '홍길동',
+  p_guest_phone := '010-1234-5678'
+);
 ```
 
 **동시성 제어**:
@@ -164,10 +192,16 @@ SELECT register_for_event(행사ID, 사용자ID);
 
 **검증 순서**:
 1. 행사 존재 및 활성화 확인
-2. 회비 납부 여부 확인
-3. 신청 기간 확인
-4. 정원 확인
-5. 중복 신청 확인
+2. 회원 OR 비회원 정보 검증 (하나만 필수)
+3. 회비 납부 여부 확인 (회원만, require_membership=true인 경우)
+4. 신청 기간 확인
+5. 정원 확인
+6. 중복 신청 확인 (회원/비회원 각각)
+
+**특징**:
+- 회원: 학번, 이름, 전화번호 자동 입력
+- 비회원: guest_student_id, guest_name, guest_phone 필수
+- 부분 UNIQUE 인덱스로 회원/비회원 중복 방지
 
 ### 사물함 관리 시스템
 
@@ -198,6 +232,40 @@ SELECT register_for_event(행사ID, 사용자ID);
 2. **New Project** 생성
    - Name: `seoultech-comeng-council`
    - Database Password: 강력한 비밀번호 설정
+   - Region: Northeast Asia (Seoul)
+
+### 2. 스키마 배포
+1. Supabase Dashboard → **SQL Editor**
+2. [`schema.sql`](schema.sql) 파일 내용 전체 복사
+3. **Run** 버튼 클릭
+
+### 3. 마이그레이션 실행
+순서대로 실행:
+1. `001_update_clubs_table.sql`
+2. `002_update_locker_periods_table.sql`
+3. `003_redesign_welfare_system.sql`
+4. `004_add_login_attempt_tracking.sql`
+5. `005_add_password_reset_table.sql`
+6. ~~`006_create_introduction_images_storage.sql`~~ (Cloudflare R2로 마이그레이션 완료)
+7. `007_add_guest_registration_support.sql` 🆕
+
+### 4. API 키 확인
+**Settings** → **API** 페이지에서 확인:
+
+```env
+# 백엔드 (.env)
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...  # service_role key (절대 노출 금지!)
+SUPABASE_ANON_KEY=eyJ...  # anon key
+```
+
+### 5. Supabase Storage 버킷 생성
+**학적 인증 이미지 전용 (Private)**:
+- Name: `verification-images`
+- Public: ❌ (Private)
+- File size limit: 5MB
+
+> **Note**: 다른 이미지들은 Cloudflare R2 사용 (club-images, event-images, introduction-images, post-attachments, welfare-images)
    - Region: Northeast Asia (Seoul)
 
 ### 2. 스키마 배포
@@ -323,6 +391,14 @@ ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 
 ## 📝 변경 이력
 
+- **2026-01-09**: 행사 시스템 확장 🆕
+  - 비회원 행사 신청 지원 (Migration 007)
+  - registrations 테이블: user_id nullable, guest_* 필드 추가
+  - register_for_event_guest() 함수: 회원/비회원 통합 처리
+  - 부분 UNIQUE 인덱스로 회원/비회원 각각 중복 방지
+  - Cloudflare R2로 전면 마이그레이션 (5개 bucket)
+  - event_images 테이블 추가
+
 - **2025-12-26**: 사물함 관리 시스템 재설계
   - 테이블 구조 변경 (12개 → 15개)
   - 사물함 기간 관리 테이블 추가 (locker_periods)
@@ -345,7 +421,6 @@ ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 
 ## 🔄 향후 추가 예정
 
-- [ ] 첨부파일 테이블 (게시글 첨부)
 - [ ] 관리자 활동 로그
 
 ## 📞 문의
