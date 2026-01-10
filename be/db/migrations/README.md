@@ -67,7 +67,7 @@
 -- - Supabase Storage → Cloudflare R2 (introduction-images bucket)
 -- - RLS 정책 대신 R2 Public Access 사용
 
--- 7단계: 비회원 행사 신청 지원 ✅ 🆕
+-- 7단계: 비회원 행사 신청 지원 ✅
 -- 파일: 007_add_guest_registration_support.sql
 -- 
 -- 실행 방법:
@@ -80,6 +80,39 @@
 -- - CHECK constraint: 회원 OR 비회원 중 하나 필수
 -- - 부분 UNIQUE 인덱스: 회원/비회원 각각 중복 방지
 -- - register_for_event_guest() 함수: 회원/비회원 모두 처리
+
+-- 8단계: 통합 활동 시스템 ✅ 🆕
+-- 파일: 008_add_activities_system.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 008_add_activities_system.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 추가 내용:
+-- - activities 테이블: 6가지 활동 유형 통합 관리 (event, demand_survey, survey, kakao_invite, fee_payment, notice)
+-- - activity_registrations 테이블: 신청/참여 기록
+--   - form_data: 신청 시 추가 정보 입력 (예: 식사 선호도, 알레르기)
+--   - survey_responses: 설문 응답 (예: {"q1": "매우 만족", "q2": "text response"})
+-- - activity_images 테이블: 활동당 여러 이미지 관리
+-- - register_for_activity(): 활동 신청/참여 (트랜잭션 처리)
+-- - cancel_activity_registration(): 활동 신청 취소
+-- 
+-- survey_config 설계:
+-- {
+--   "questions": [
+--     {
+--       "id": "q1",
+--       "type": "multiple_choice",
+--       "question": "행사 만족도를 평가해주세요",
+--       "options": ["매우 만족", "만족", "보통", "불만족", "매우 불만족"]
+--     },
+--     {
+--       "id": "q2",
+--       "type": "text",
+--       "question": "개선이 필요한 점이 있다면 작성해주세요"
+--     }
+--   ]
+-- }
 
 -- ============================================================================
 -- 마이그레이션 확인

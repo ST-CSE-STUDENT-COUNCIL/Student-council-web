@@ -146,15 +146,17 @@ async def create_email_verification(email: str) -> str:
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
     
     # DB에 인증번호 저장
-    result = supabase.table('email_verifications').insert({
-        'email': email,
-        'code': code,
-        'expires_at': expires_at.isoformat()
-    }).execute()
-
-    # Supabase 에러 체크
-    if getattr(result, 'error', None):
-        logger.error('Supabase insert error: %s', result.error)
+    try:
+        result = supabase.table('email_verifications').insert({
+            'email': email,
+            'code': code,
+            'expires_at': expires_at.isoformat()
+        }).execute()
+        
+        if not result.data:
+            raise Exception('DB 저장 실패')
+    except Exception as e:
+        logger.error(f'Supabase insert error: {str(e)}')
         raise Exception('DB 저장 실패')
 
     return code

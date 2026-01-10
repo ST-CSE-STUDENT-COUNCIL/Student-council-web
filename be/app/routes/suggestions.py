@@ -400,3 +400,58 @@ async def update_suggestion_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"건의함 상태 변경 실패: {str(e)}"
         )
+
+
+@router.delete(
+    "/{suggestion_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="건의함 삭제",
+    description="건의함을 삭제합니다. (관리자 및 학생회 권한 필요)",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "권한 없음"},
+        404: {"model": ErrorResponse, "description": "건의함 없음"}
+    }
+)
+async def delete_suggestion(
+    suggestion_id: int,
+    current_user: dict = Depends(require_verified_user)
+):
+    """건의함 삭제 (admin, council 권한 필요)"""
+    try:
+        role = current_user.get("role", "student")
+        
+        # 권한 확인: admin 또는 council만 삭제 가능
+        if role not in ["admin", "council"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="건의함 삭제 권한이 없습니다"
+            )
+        
+        # 건의함 존재 여부 확인
+        check_result = supabase.table("suggestions")\
+            .select("id")\
+            .eq("id", suggestion_id)\
+            .execute()
+        
+        if not check_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="건의함을 찾을 수 없습니다"
+            )
+        
+        # 삭제 실행
+        supabase.table("suggestions")\
+            .delete()\
+            .eq("id", suggestion_id)\
+            .execute()
+        
+        return None
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"건의함 삭제 실패: {str(e)}"
+        )
