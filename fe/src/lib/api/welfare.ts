@@ -64,7 +64,7 @@ export const welfareApi = {
     },
 
     createRental: async (formData: FormData, token?: string | null) => {
-        const response = await axios.post(`${API_BASE_URL}/welfare/welfare_rentals`, formData, {
+        const response = await axios.post(`${API_BASE_URL}/admin/welfare/welfare_rentals`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -74,7 +74,7 @@ export const welfareApi = {
     },
 
     createRentalRequest: async (payload: RentalRequestPayload, token?: string | null) => {
-        const response = await axios.post(`${API_BASE_URL}/welfare/welfare_rental_requests`, payload, {
+        const response = await axios.post(`${API_BASE_URL}/admin/welfare/welfare_rental_requests`, payload, {
             headers: token
                 ? {
                     Authorization: `Bearer ${token}`,
@@ -85,7 +85,7 @@ export const welfareApi = {
     },
 
     deleteRental: async (itemId: number, token?: string | null) => {
-        const response = await axios.delete(`${API_BASE_URL}/welfare/welfare_rentals/${itemId}`, {
+        const response = await axios.delete(`${API_BASE_URL}/admin/welfare/welfare_rentals/${itemId}`, {
             headers: token
                 ? {
                     Authorization: `Bearer ${token}`,
@@ -96,7 +96,7 @@ export const welfareApi = {
     },
 
     updateRental: async (itemId: number, payload: Partial<WelfareRental>, token?: string | null) => {
-        const response = await axios.put(`${API_BASE_URL}/welfare/welfare_rentals/${itemId}`, payload, {
+        const response = await axios.put(`${API_BASE_URL}/admin/welfare/welfare_rentals/${itemId}`, payload, {
             headers: token
                 ? {
                     Authorization: `Bearer ${token}`,
