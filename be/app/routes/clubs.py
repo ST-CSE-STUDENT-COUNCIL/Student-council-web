@@ -16,12 +16,11 @@ from app.utils.r2_storage import upload_file_to_r2 as upload_file_to_supabase
 from app.database import supabase
 
 
-router = APIRouter(prefix="/clubs", tags=["동아리"])
-admin_router = APIRouter(prefix="/clubs", tags=["동아리(관리자)"])
+router = APIRouter(tags=["동아리"])
 
 
 @router.get(
-    "",
+    "/clubs",
     response_model=ClubListResponse,
     status_code=status.HTTP_200_OK,
     summary="동아리 목록 조회",
@@ -57,7 +56,7 @@ async def get_clubs():
 
 
 @router.get(
-    "/{club_id}",
+    "/clubs/{club_id}",
     response_model=ClubDetail,
     status_code=status.HTTP_200_OK,
     summary="동아리 상세 조회",
@@ -97,11 +96,11 @@ async def get_club(club_id: int):
         )
 
 
-@admin_router.post(
-    "",
+@router.post(
+    "/admin/clubs",
     response_model=ClubDetail,
     status_code=status.HTTP_201_CREATED,
-    summary="동아리 추가",
+    summary="동아리 추가 (관리자)",
     description="새로운 동아리를 추가합니다 (관리자 전용, multipart/form-data)",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않음"},
@@ -154,10 +153,10 @@ async def create_club(
         )
 
 
-@admin_router.patch(
-    "/{club_id}",
+@router.patch(
+    "/admin/clubs/{club_id}",
     response_model=ClubDetail,
-    summary="동아리 정보 수정",
+    summary="동아리 정보 수정 (관리자)",
     description="동아리 정보를 수정합니다 (관리자 전용)",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않음"},
@@ -212,10 +211,10 @@ async def update_club(
         )
 
 
-@admin_router.delete(
-    "/{club_id}",
+@router.delete(
+    "/admin/clubs/{club_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="동아리 삭제",
+    summary="동아리 삭제 (관리자)",
     description="동아리를 삭제합니다 (관리자 전용)",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않음"},

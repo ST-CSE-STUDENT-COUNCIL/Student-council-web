@@ -56,14 +56,6 @@ app.include_router(welfare.router)
 app.include_router(introductions.router)
 app.include_router(activities.router)
 
-# 관리자 전용 라우터 등록 (/admin prefix)
-app.include_router(notices.admin_router, prefix="/admin")
-app.include_router(clubs.admin_router, prefix="/admin")
-app.include_router(welfare.admin_router, prefix="/admin")
-app.include_router(introductions.admin_router, prefix="/admin")
-app.include_router(activities.admin_router, prefix="/admin")
-app.include_router(suggestions.admin_router, prefix="/admin")
-
 # 헬스체크 엔드포인트
 @app.get("/", tags=["헬스체크"])
 async def health_check():

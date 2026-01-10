@@ -11,12 +11,17 @@ from typing import Optional
 # ============================================================================
 
 class LockerInfo(BaseModel):
-    """사물함 배치도 및 신청 정보"""
+    """사물함 배치도 및 신청/반납 정보"""
     id: int
     layout_image_url: str = Field(..., description="피그마 배치도 이미지 URL")
-    application_form_url: str = Field(..., description="구글폼 신청 URL (신청 마감 시 빈 문자열)")
-    description: Optional[str] = Field(None, description="설명 (예: 19, 35번 고장)")
-    updated_at: datetime = Field(..., description="마지막 수정 시각")
+    application_form_url: str = Field(..., description="구글폼 신청 URL (신청 기간 아닐 때 빈 문자열)")
+    return_extension_form_url: str = Field(..., description="구글폼 반납/연장 URL (반납 기간 아닐 때 빈 문자열)")
+    application_start: Optional[datetime] = Field(None, description="신청 시작 날짜 (KST)")
+    application_end: Optional[datetime] = Field(None, description="신청 종료 날짜 (KST)")
+    return_extension_start: Optional[datetime] = Field(None, description="반납/연장 시작 날짜 (KST)")
+    return_extension_end: Optional[datetime] = Field(None, description="반납/연장 종료 날짜 (KST)")
+    description: Optional[str] = Field(None, description="설명 (예: 19, 35번 고장, 2024-1학기)")
+    updated_at: datetime = Field(..., description="마지막 수정 시각 (KST)")
 
     class Config:
         from_attributes = True
@@ -24,8 +29,12 @@ class LockerInfo(BaseModel):
 
 class LockerInfoUpdate(BaseModel):
     """사물함 정보 수정 (관리자용)"""
-    layout_image_url: Optional[str] = Field(None, description="피그마 배치도 이미지 URL")
     application_form_url: Optional[str] = Field(None, description="구글폼 신청 URL")
+    return_extension_form_url: Optional[str] = Field(None, description="구글폼 반납/연장 URL")
+    application_start: Optional[datetime] = Field(None, description="신청 시작 날짜 (KST)")
+    application_end: Optional[datetime] = Field(None, description="신청 종료 날짜 (KST)")
+    return_extension_start: Optional[datetime] = Field(None, description="반납/연장 시작 날짜 (KST)")
+    return_extension_end: Optional[datetime] = Field(None, description="반납/연장 종료 날짜 (KST)")
     description: Optional[str] = Field(None, description="설명")
 
 

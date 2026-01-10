@@ -22,8 +22,7 @@ from app.utils.r2_storage import (
 from app.database import supabase
 
 
-router = APIRouter(prefix="/notices", tags=["공지사항"])
-admin_router = APIRouter(prefix="/notices", tags=["공지사항(관리자)"])
+router = APIRouter(tags=["공지사항"])
 
 
 # 영어-한글 매핑
@@ -43,7 +42,7 @@ SUBCATEGORY_MAP = {
 
 
 @router.get(
-    "",
+    "/notices",
     response_model=NoticeListResponse,
     status_code=status.HTTP_200_OK,
     summary="공지사항 목록 조회",
@@ -199,7 +198,7 @@ async def get_notices(
 
 
 @router.get(
-    "/{notice_id}",
+    "/notices/{notice_id}",
     response_model=NoticeDetailResponse,
     status_code=status.HTTP_200_OK,
     summary="공지사항 상세 조회",
@@ -270,11 +269,11 @@ async def get_notice(
         )
 
 
-@admin_router.post(
-    "",
+@router.post(
+    "/admin/notices",
     response_model=NoticeDetailResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="공지사항 작성",
+    summary="공지사항 작성 (관리자)",
     description="관리자만 공지사항을 작성할 수 있습니다",
     responses={
         401: {"model": ErrorResponse},
@@ -348,10 +347,10 @@ async def create_notice(
         )
 
 
-@admin_router.patch(
-    "/{notice_id}",
+@router.patch(
+    "/admin/notices/{notice_id}",
     response_model=NoticeDetailResponse,
-    summary="공지사항 수정",
+    summary="공지사항 수정 (관리자)",
     responses={
         401: {"model": ErrorResponse},
         403: {"model": ErrorResponse},
@@ -405,10 +404,10 @@ async def update_notice(
         )
 
 
-@admin_router.delete(
-    "/{notice_id}",
+@router.delete(
+    "/admin/notices/{notice_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="공지사항 삭제",
+    summary="공지사항 삭제 (관리자)",
     description="Soft delete - 실제 삭제하지 않고 is_deleted 플래그만 변경",
     responses={
         401: {"model": ErrorResponse},

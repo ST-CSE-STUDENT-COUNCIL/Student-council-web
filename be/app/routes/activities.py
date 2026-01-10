@@ -31,8 +31,7 @@ from app.utils.r2_storage import upload_file_to_r2, delete_file_from_r2
 from app.database import supabase
 
 
-router = APIRouter(prefix="/activities", tags=["활동"])
-admin_router = APIRouter(prefix="/activities", tags=["활동(관리자)"])
+router = APIRouter(tags=["활동"])
 
 
 # ============================================================================
@@ -40,7 +39,7 @@ admin_router = APIRouter(prefix="/activities", tags=["활동(관리자)"])
 # ============================================================================
 
 @router.get(
-    "",
+    "/activities",
     response_model=ActivityListResponse,
     status_code=status.HTTP_200_OK,
     summary="활동 목록 조회",
@@ -146,7 +145,7 @@ async def get_activities(
 
 
 @router.get(
-    "/{activity_id}",
+    "/activities/{activity_id}",
     response_model=ActivityResponse,
     status_code=status.HTTP_200_OK,
     summary="활동 상세 조회",
@@ -229,7 +228,7 @@ async def get_activity(
 # ============================================================================
 
 @router.post(
-    "/{activity_id}/register",
+    "/activities/{activity_id}/register",
     response_model=ActivityRegistrationResponse,
     status_code=status.HTTP_201_CREATED,
     summary="활동 신청",
@@ -379,7 +378,7 @@ async def register_for_activity(
 
 
 @router.delete(
-    "/{activity_id}/register",
+    "/activities/{activity_id}/register",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="활동 신청 취소",
     description="활동 신청을 취소합니다. (로그인 필요)",
@@ -450,7 +449,7 @@ async def cancel_activity_registration(
 # ============================================================================
 
 @router.post(
-    "/{activity_id}/survey",
+    "/activities/{activity_id}/survey",
     status_code=status.HTTP_200_OK,
     summary="설문조사 제출",
     description="설문조사에 응답합니다. (로그인 필요)",
@@ -524,11 +523,11 @@ async def submit_survey(
 # 관리자 엔드포인트
 # ============================================================================
 
-@admin_router.post(
-    "",
+@router.post(
+    "/admin/activities",
     response_model=ActivityResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="활동 생성",
+    summary="활동 생성 (관리자)",
     description="새로운 활동을 생성합니다. 이미지 업로드 가능 (관리자 권한 필요)",
     responses={
         201: {"description": "생성 완료"},
@@ -651,11 +650,11 @@ async def create_activity(
         )
 
 
-@admin_router.patch(
-    "/{activity_id}",
+@router.patch(
+    "/admin/activities/{activity_id}",
     response_model=ActivityResponse,
     status_code=status.HTTP_200_OK,
-    summary="활동 수정",
+    summary="활동 수정 (관리자)",
     description="활동 정보를 수정합니다. (관리자 권한 필요)",
     responses={
         200: {"description": "수정 완료"},
@@ -745,10 +744,10 @@ async def update_activity(
         )
 
 
-@admin_router.delete(
-    "/{activity_id}",
+@router.delete(
+    "/admin/activities/{activity_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="활동 삭제",
+    summary="활동 삭제 (관리자)",
     description="활동을 삭제합니다. (Soft Delete, 관리자 권한 필요)",
     responses={
         204: {"description": "삭제 완료"},
@@ -790,11 +789,11 @@ async def delete_activity(
         )
 
 
-@admin_router.get(
-    "/{activity_id}/registrations",
+@router.get(
+    "/admin/activities/{activity_id}/registrations",
     response_model=ActivityRegistrationListResponse,
     status_code=status.HTTP_200_OK,
-    summary="활동 신청자 목록 조회",
+    summary="활동 신청자 목록 조회 (관리자)",
     description="활동의 신청자 목록을 조회합니다. (관리자 권한 필요)",
     responses={
         200: {"description": "성공"},
@@ -863,7 +862,7 @@ async def get_activity_registrations(
 
 
 @router.get(
-    "/{activity_id}/survey/results",
+    "/activities/{activity_id}/survey/results",
     response_model=SurveyStatsResponse,
     status_code=status.HTTP_200_OK,
     summary="설문조사 통계 조회",
@@ -962,10 +961,10 @@ async def get_survey_stats(
 # 이미지 관리 API
 # ============================================================================
 
-@admin_router.post(
-    "/{activity_id}/images",
+@router.post(
+    "/admin/activities/{activity_id}/images",
     status_code=status.HTTP_201_CREATED,
-    summary="활동 이미지 추가",
+    summary="활동 이미지 추가 (관리자)",
     description="활동에 이미지를 추가합니다 (관리자 권한 필요)",
     responses={
         201: {"description": "이미지 추가 완료"},
@@ -1036,10 +1035,10 @@ async def add_activity_image(
         )
 
 
-@admin_router.delete(
-    "/{activity_id}/images/{image_id}",
+@router.delete(
+    "/admin/activities/{activity_id}/images/{image_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="활동 이미지 삭제",
+    summary="활동 이미지 삭제 (관리자)",
     description="활동의 특정 이미지를 삭제합니다 (관리자 권한 필요)",
     responses={
         204: {"description": "삭제 완료"},

@@ -19,8 +19,7 @@ from app.utils.turnstile import verify_turnstile
 from app.database import supabase
 
 
-router = APIRouter(prefix="/suggestions", tags=["건의함"])
-admin_router = APIRouter(prefix="/suggestions", tags=["건의함(관리자)"])
+router = APIRouter(tags=["건의함"])
 
 ALLOWED_STATUSES = {"received", "in_progress", "rejected", "approved"}
 
@@ -39,7 +38,7 @@ def _get_author_name(author_id: str) -> str:
 
 
 @router.post(
-    "",
+    "/suggestions",
     response_model=SuggestionResponse,
     status_code=status.HTTP_201_CREATED,
     summary="건의함 작성",
@@ -101,7 +100,7 @@ async def create_suggestion(
 
 
 @router.get(
-    "",
+    "/suggestions",
     response_model=SuggestionListResponse,
     status_code=status.HTTP_200_OK,
     summary="건의함 목록 조회",
@@ -213,7 +212,7 @@ async def get_suggestions(
 
 
 @router.get(
-    "/{suggestion_id}",
+    "/suggestions/{suggestion_id}",
     response_model=SuggestionResponse,
     status_code=status.HTTP_200_OK,
     summary="건의함 상세 조회",
@@ -302,11 +301,11 @@ async def get_suggestion(
         )
 
 
-@admin_router.patch(
-    "/{suggestion_id}/status",
+@router.patch(
+    "/admin/suggestions/{suggestion_id}/status",
     response_model=SuggestionResponse,
     status_code=status.HTTP_200_OK,
-    summary="건의함 상태 변경 (관리자 전용)",
+    summary="건의함 상태 변경 (관리자)",
     description="""
     건의함 상태를 변경합니다.
     
@@ -404,7 +403,7 @@ async def update_suggestion_status(
 
 
 @router.delete(
-    "/{suggestion_id}",
+    "/suggestions/{suggestion_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="건의함 삭제",
     description="건의함을 삭제합니다. (관리자 및 학생회 권한 필요)",

@@ -376,24 +376,36 @@ CREATE INDEX idx_rental_items_category ON rental_items(category);
 CREATE INDEX idx_rental_items_is_active ON rental_items(is_active);
 
 -- ============================================================================
--- 7. 복지사업 - 사물함 정보 (배치도 + 구글폼)
+-- 7. 복지사업 - 사물함 정보 (배치도 + 구글폼 + 신청/반납 기간)
 -- ============================================================================
--- 구글폼으로 신청을 받으므로 복잡한 기간 관리 테이블 불필요
--- 신청 기간이 아닐 때는 관리자가 application_form_url을 빈 문자열로 설정
+-- 관리자가 신청 기간, 반납/연장 기간과 각각의 구글폼 URL을 함께 관리
+-- 1학기, 방학 등 주기적으로 날짜와 URL 업데이트
+-- 모든 시간은 한국 시간(KST, Asia/Seoul) 기준
 -- ============================================================================
 CREATE TABLE locker_info (
   id SERIAL PRIMARY KEY,
-  layout_image_url TEXT NOT NULL,  -- 사물함 배치도 이미지 URL (피그마)
-  application_form_url TEXT NOT NULL,  -- 구글폼 신청 URL (신청 마감 시 빈 문자열)
-  description TEXT,  -- 설명 (예: 19, 35번 고장)
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  layout_image_url TEXT NOT NULL,  -- 사물함 배치도 이미지 URL
+  application_form_url TEXT NOT NULL,  -- 구글폼 신청 URL (신청 마감 시 빈 문자열 또는 NULL)
+  return_extension_form_url TEXT NOT NULL,  -- 구글폼 반납/연장 URL (기간 아닐 때 빈 문자열 또는 NULL)
+  application_start TIMESTAMPTZ,  -- 신청 시작 날짜 (KST)
+  application_end TIMESTAMPTZ,  -- 신청 종료 날짜 (KST)
+  return_extension_start TIMESTAMPTZ,  -- 반납/연장 시작 날짜 (KST)
+  return_extension_end TIMESTAMPTZ,  -- 반납/연장 종료 날짜 (KST)
+  description TEXT,  -- 설명 (예: 19, 35번 고장, 2024-1학기)
+  created_at TIMESTAMPTZ DEFAULT (NOW() AT TIME ZONE 'Asia/Seoul'),
+  updated_at TIMESTAMPTZ DEFAULT (NOW() AT TIME ZONE 'Asia/Seoul')
 );
 
-COMMENT ON TABLE locker_info IS '[공개] 사물함 배치도 및 신청 정보 (미래관 3층 사물함)';
+COMMENT ON TABLE locker_info IS '[공개] 사물함 배치도 및 신청/반납 정보 (미래관 3층 사물함)';
 COMMENT ON COLUMN locker_info.layout_image_url IS '피그마에서 생성된 배치도 이미지 URL';
-COMMENT ON COLUMN locker_info.application_form_url IS '구글폼 신청 URL (신청 마감 시 빈 문자열로 설정)';
-COMMENT ON COLUMN locker_info.updated_at IS '마지막 수정 시각 (관리자가 이미지/URL 업데이트한 시각)';
+COMMENT ON COLUMN locker_info.application_form_url IS '구글폼 신청 URL (신청 기간 아닐 때 빈 문자열 또는 NULL)';
+COMMENT ON COLUMN locker_info.return_extension_form_url IS '구글폼 반납/연장 URL (반납 기간 아닐 때 빈 문자열 또는 NULL)';
+COMMENT ON COLUMN locker_info.application_start IS '신청 시작 날짜 (한국 시간 KST)';
+COMMENT ON COLUMN locker_info.application_end IS '신청 종료 날짜 (한국 시간 KST)';
+COMMENT ON COLUMN locker_info.return_extension_start IS '반납/연장 시작 날짜 (한국 시간 KST)';
+COMMENT ON COLUMN locker_info.return_extension_end IS '반납/연장 종료 날짜 (한국 시간 KST)';
+COMMENT ON COLUMN locker_info.description IS '설명 (예: 19, 35번 고장, 2024-1학기)';
+COMMENT ON COLUMN locker_info.updated_at IS '마지막 수정 시각 (한국 시간 KST)';
 
 -- ============================================================================
 -- 8. Activities 시스템 (통합 활동 관리)

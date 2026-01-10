@@ -16,12 +16,11 @@ from app.utils.r2_storage import upload_file_to_r2 as upload_file_to_supabase
 from app.database import supabase
 
 
-router = APIRouter(prefix="/introductions", tags=["학생회 소개"])
-admin_router = APIRouter(prefix="/introductions", tags=["학생회 소개(관리자)"])
+router = APIRouter(tags=["학생회 소개"])
 
 
 @router.get(
-    "/images",
+    "/introductions/images",
     response_model=IntroductionImageListResponse,
     status_code=status.HTTP_200_OK,
     summary="학생회 소개 이미지 목록 조회",
@@ -56,11 +55,11 @@ async def get_introduction_images(
         )
 
 
-@admin_router.post(
-    "/images",
+@router.post(
+    "/admin/introductions/images",
     response_model=IntroductionImageResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="학생회 소개 이미지 업로드",
+    summary="학생회 소개 이미지 업로드 (관리자)",
     description="학생회 소개 이미지를 업로드합니다 (관리자 전용, multipart/form-data)",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않음"},
@@ -112,10 +111,10 @@ async def create_introduction_image(
         )
 
 
-@admin_router.patch(
-    "/images/{image_id}",
+@router.patch(
+    "/admin/introductions/images/{image_id}",
     response_model=IntroductionImageResponse,
-    summary="학생회 소개 이미지 수정",
+    summary="학생회 소개 이미지 수정 (관리자)",
     description="학생회 소개 이미지 정보를 수정합니다 (관리자 전용)",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않음"},
@@ -170,10 +169,10 @@ async def update_introduction_image(
         )
 
 
-@admin_router.delete(
-    "/images/{image_id}",
+@router.delete(
+    "/admin/introductions/images/{image_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="학생회 소개 이미지 삭제",
+    summary="학생회 소개 이미지 삭제 (관리자)",
     description="학생회 소개 이미지를 삭제합니다 (관리자 전용)",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않음"},
