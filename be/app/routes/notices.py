@@ -296,7 +296,7 @@ async def create_notice(
     - title: 제목
     - content: 내용
     - board_id: 게시판 ID (1: 학생회, 2: 민주자치)
-    - subcategory: 소분류 (행사, 복지, 학과소식 등)
+    - subcategory: 소분류 (행사, 복지 등)
     - is_pinned: 상단 고정 여부
     - attachments: 첨부파일 (최대 5개)
     """

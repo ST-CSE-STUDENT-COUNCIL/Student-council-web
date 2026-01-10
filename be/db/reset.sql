@@ -86,7 +86,7 @@ TRUNCATE TABLE boards RESTART IDENTITY CASCADE;
 
 -- 게시판 재생성
 INSERT INTO boards (name, slug, description, category, require_admin, allow_anonymous) VALUES
-('학생회 공지', 'student-council', '학생회 공지사항 (소카테고리: 행사, 복지, 학과소식)', '학생회', true, false),
+('학생회 공지', 'student-council', '학생회 공지사항 (소카테고리: 행사, 복지)', '학생회', true, false),
 ('민주자치 공지', 'democracy', '민주자치 공지사항 (소카테고리: 고시, 공고, 대표자회의, 학생회칙)', '민주자치', true, false),
 ('건의함', 'suggestion', '익명으로 건의할 수 있습니다', '건의함', false, true);
 

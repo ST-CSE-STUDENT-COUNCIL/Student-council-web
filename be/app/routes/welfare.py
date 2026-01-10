@@ -85,12 +85,10 @@ async def upload_locker_image(
                 'layout_image_url': image_url
             }).eq('id', 1).execute()
         else:
-            # 새 레코드 생성
+            # 새 레코드 생성 (URL 필드는 NULL로 초기화)
             result = supabase.table('locker_info').insert({
                 'id': 1,
-                'layout_image_url': image_url,
-                'application_form_url': '',
-                'return_extension_form_url': ''
+                'layout_image_url': image_url
             }).execute()
         
         return {"image_url": image_url}
@@ -156,13 +154,13 @@ async def update_locker_info(
         insert_data = {
             'id': 1,
             'layout_image_url': '',  # 이미지는 별도 API로 업로드
-            'application_form_url': update_data.get('application_form_url', ''),
-            'return_extension_form_url': update_data.get('return_extension_form_url', ''),
+            'application_form_url': update_data.get('application_form_url'),
+            'return_extension_form_url': update_data.get('return_extension_form_url'),
             'application_start': update_data.get('application_start'),
             'application_end': update_data.get('application_end'),
             'return_extension_start': update_data.get('return_extension_start'),
             'return_extension_end': update_data.get('return_extension_end'),
-            'description': update_data.get('description', '')
+            'description': update_data.get('description')
         }
         result = supabase.table('locker_info').insert(insert_data).execute()
     else:
