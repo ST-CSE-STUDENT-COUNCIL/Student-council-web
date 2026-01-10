@@ -402,20 +402,40 @@ CREATE INDEX idx_event_images_event_id ON event_images(event_id);
 CREATE TABLE registrations (
   id SERIAL PRIMARY KEY,
   event_id INT REFERENCES events(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,  -- nullable (비회원 지원)
+  
+  -- 비회원 정보 (마이그레이션 007에서 추가)
+  guest_student_id VARCHAR(20),
+  guest_name VARCHAR(50),
+  guest_phone VARCHAR(20),
+  
   status VARCHAR(20) DEFAULT 'confirmed',  -- confirmed, cancelled
   registration_number INT,  -- 선착순 번호 (1번부터 시작)
   created_at TIMESTAMPTZ DEFAULT NOW(),
   
-  -- 중복 신청 방지
-  UNIQUE(event_id, user_id)
+  -- CHECK: 회원 OR 비회원 중 하나는 필수
+  CONSTRAINT check_user_or_guest CHECK (
+    (user_id IS NOT NULL) OR 
+    (guest_student_id IS NOT NULL AND guest_name IS NOT NULL)
+  )
 );
 
-COMMENT ON TABLE registrations IS '[인증 필요] 행사 신청 내역 (본인 것만 조회)';
+COMMENT ON TABLE registrations IS '행사 신청 내역 (회원/비회원 모두 가능, 마이그레이션 007)';
+COMMENT ON COLUMN registrations.user_id IS '회원 ID (비회원은 NULL)';
+COMMENT ON COLUMN registrations.guest_student_id IS '비회원 학번';
+COMMENT ON COLUMN registrations.guest_name IS '비회원 이름';
+COMMENT ON COLUMN registrations.guest_phone IS '비회원 전화번호';
 COMMENT ON COLUMN registrations.registration_number IS '선착순 번호 (1번이 1등)';
 COMMENT ON COLUMN registrations.status IS 'confirmed: 확정, cancelled: 취소';
-COMMENT ON CONSTRAINT registrations_event_id_user_id_key ON registrations 
-  IS '중복 신청 방지 (같은 행사에 1번만 신청 가능)';
+
+-- 중복 신청 방지 (부분 UNIQUE 인덱스)
+CREATE UNIQUE INDEX idx_registrations_event_user 
+ON registrations(event_id, user_id) 
+WHERE user_id IS NOT NULL;
+
+CREATE UNIQUE INDEX idx_registrations_event_guest 
+ON registrations(event_id, guest_student_id) 
+WHERE guest_student_id IS NOT NULL;
 
 CREATE INDEX idx_registrations_event_id ON registrations(event_id);
 CREATE INDEX idx_registrations_user_id ON registrations(user_id);
@@ -617,6 +637,315 @@ END;
 $$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION register_for_event(INT, UUID) IS '[인증 필요] 선착순 행사 신청 (트랜잭션)';
+
+-- 7-2. 회원/비회원 모두 지원하는 행사 신청 함수 (마이그레이션 007)
+CREATE OR REPLACE FUNCTION register_for_event_guest(
+  p_event_id INT,
+  p_user_id UUID DEFAULT NULL,
+  p_guest_student_id VARCHAR DEFAULT NULL,
+  p_guest_name VARCHAR DEFAULT NULL,
+  p_guest_phone VARCHAR DEFAULT NULL
+) RETURNS JSON AS $$
+DECLARE
+  v_current_count INT;
+  v_max_capacity INT;
+  v_registration_number INT;
+  v_registration_start TIMESTAMPTZ;
+  v_registration_end TIMESTAMPTZ;
+  v_require_membership BOOLEAN;
+  v_user_membership_paid BOOLEAN := false;
+BEGIN
+  -- 입력 검증
+  IF p_user_id IS NULL AND (p_guest_student_id IS NULL OR p_guest_name IS NULL) THEN
+    RETURN json_build_object('success', false, 'message', '회원 로그인 또는 비회원 정보(학번, 이름)가 필요합니다');
+  END IF;
+
+  -- 행사 정보 조회 및 락
+  SELECT current_count, max_capacity, registration_start, registration_end, require_membership
+  INTO v_current_count, v_max_capacity, v_registration_start, v_registration_end, v_require_membership
+  FROM events
+  WHERE id = p_event_id AND is_active = true AND is_deleted = false
+  FOR UPDATE;
+  
+  IF NOT FOUND THEN
+    RETURN json_build_object('success', false, 'message', '행사를 찾을 수 없습니다');
+  END IF;
+  
+  -- 회원인 경우 회비 납부 여부 확인
+  IF p_user_id IS NOT NULL THEN
+    SELECT membership_paid INTO v_user_membership_paid
+    FROM users WHERE id = p_user_id;
+  END IF;
+  
+  -- 회비 납부자 전용 행사 체크
+  IF v_require_membership AND NOT v_user_membership_paid THEN
+    RETURN json_build_object('success', false, 'message', '학생회비 납부자만 신청 가능합니다');
+  END IF;
+  
+  -- 신청 기간 체크
+  IF NOW() < v_registration_start THEN
+    RETURN json_build_object('success', false, 'message', '신청 시작 전입니다');
+  END IF;
+  
+  IF NOW() > v_registration_end THEN
+    RETURN json_build_object('success', false, 'message', '신청 기간이 종료되었습니다');
+  END IF;
+  
+  -- 정원 확인
+  IF v_current_count >= v_max_capacity THEN
+    RETURN json_build_object('success', false, 'message', '정원이 마감되었습니다');
+  END IF;
+  
+  -- 중복 신청 체크
+  IF p_user_id IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM registrations WHERE event_id = p_event_id AND user_id = p_user_id) THEN
+      RETURN json_build_object('success', false, 'message', '이미 신청하셨습니다');
+    END IF;
+  ELSE
+    IF EXISTS (SELECT 1 FROM registrations WHERE event_id = p_event_id AND guest_student_id = p_guest_student_id) THEN
+      RETURN json_build_object('success', false, 'message', '이미 신청하셨습니다');
+    END IF;
+  END IF;
+  
+  -- 신청 순번 생성
+  v_registration_number := v_current_count + 1;
+  
+  -- 신청 삽입
+  INSERT INTO registrations (event_id, user_id, guest_student_id, guest_name, guest_phone, registration_number)
+  VALUES (p_event_id, p_user_id, p_guest_student_id, p_guest_name, p_guest_phone, v_registration_number);
+  
+  -- 카운트 증가
+  UPDATE events 
+  SET current_count = current_count + 1, updated_at = NOW()
+  WHERE id = p_event_id;
+  
+  -- 성공 반환
+  RETURN json_build_object('success', true, 'message', '신청 완료', 'registration_number', v_registration_number);
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION register_for_event_guest IS '[회원/비회원] 행사 신청 (트랜잭션, 마이그레이션 007)';
+
+-- ============================================================================
+-- 8. Activities 시스템 (통합 활동 관리)
+-- ============================================================================
+-- 마이그레이션 008에서 추가됨
+-- 행사/수요조사/설문조사/카톡방 초대/공지를 통합 관리
+-- ============================================================================
+
+-- 8-1. Activities 테이블
+CREATE TABLE activities (
+  id SERIAL PRIMARY KEY,
+  type VARCHAR(50) NOT NULL,  -- 'event', 'demand_survey', 'survey', 'kakao_invite', 'fee_payment', 'notice'
+  title VARCHAR(200) NOT NULL,
+  description TEXT,
+  registration_start TIMESTAMPTZ,
+  registration_end TIMESTAMPTZ,
+  max_capacity INT,
+  current_count INT DEFAULT 0,
+  require_membership BOOLEAN DEFAULT false,
+  config JSONB NOT NULL DEFAULT '{}',
+  form_fields JSONB DEFAULT '[]',
+  thumbnail_url TEXT,
+  is_active BOOLEAN DEFAULT true,
+  is_deleted BOOLEAN DEFAULT false,
+  deleted_at TIMESTAMPTZ,
+  deleted_by UUID REFERENCES users(id),
+  created_by UUID REFERENCES users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT check_activity_capacity CHECK (max_capacity IS NULL OR current_count <= max_capacity),
+  CONSTRAINT check_activity_type CHECK (type IN ('event', 'demand_survey', 'survey', 'kakao_invite', 'fee_payment', 'notice'))
+);
+
+COMMENT ON TABLE activities IS '통합 활동 관리 (행사/수요조사/설문조사/카톡방초대/회비납부/공지)';
+
+CREATE INDEX idx_activities_type ON activities(type);
+CREATE INDEX idx_activities_registration_dates ON activities(registration_start, registration_end);
+CREATE INDEX idx_activities_is_deleted ON activities(is_deleted);
+CREATE INDEX idx_activities_is_active ON activities(is_active);
+CREATE INDEX idx_activities_created_at ON activities(created_at DESC);
+CREATE INDEX idx_activities_config ON activities USING GIN (config);
+CREATE INDEX idx_activities_form_fields ON activities USING GIN (form_fields);
+
+-- 8-2. Activity Images 테이블
+CREATE TABLE activity_images (
+  id SERIAL PRIMARY KEY,
+  activity_id INT REFERENCES activities(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL,
+  display_order INT DEFAULT 0,
+  caption TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE activity_images IS '활동 상세 이미지 (여러 장 가능)';
+
+CREATE INDEX idx_activity_images_activity_id ON activity_images(activity_id);
+CREATE INDEX idx_activity_images_display_order ON activity_images(activity_id, display_order);
+
+-- 8-3. Activity Registrations 테이블
+CREATE TABLE activity_registrations (
+  id SERIAL PRIMARY KEY,
+  activity_id INT REFERENCES activities(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id),
+  name VARCHAR(100),
+  student_id VARCHAR(20),
+  department VARCHAR(100),
+  phone VARCHAR(20),
+  email VARCHAR(255),
+  form_responses JSONB DEFAULT '{}',
+  verification_image_url TEXT,
+  kakao_id VARCHAR(100),
+  survey_responses JSONB DEFAULT '{}',
+  status VARCHAR(50) DEFAULT 'pending',
+  admin_note TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT unique_activity_user UNIQUE(activity_id, user_id)
+);
+
+COMMENT ON TABLE activity_registrations IS '활동 신청 내역 (회원/비회원 모두 가능)';
+
+CREATE INDEX idx_activity_registrations_activity_id ON activity_registrations(activity_id);
+CREATE INDEX idx_activity_registrations_user_id ON activity_registrations(user_id);
+CREATE INDEX idx_activity_registrations_status ON activity_registrations(status);
+CREATE INDEX idx_activity_registrations_created_at ON activity_registrations(created_at DESC);
+CREATE INDEX idx_activity_registrations_form_responses ON activity_registrations USING GIN (form_responses);
+CREATE INDEX idx_activity_registrations_survey_responses ON activity_registrations USING GIN (survey_responses);
+
+-- 8-4. 활동 신청 함수 (선착순 처리)
+CREATE OR REPLACE FUNCTION register_for_activity(
+  p_activity_id INT,
+  p_user_id UUID,
+  p_name VARCHAR,
+  p_student_id VARCHAR,
+  p_department VARCHAR,
+  p_phone VARCHAR,
+  p_email VARCHAR,
+  p_form_responses JSONB DEFAULT '{}',
+  p_verification_image_url TEXT DEFAULT NULL,
+  p_kakao_id VARCHAR DEFAULT NULL
+) RETURNS TABLE(success BOOLEAN, message TEXT, registration_id INT) AS $$
+DECLARE
+  v_max_capacity INT;
+  v_current_count INT;
+  v_require_membership BOOLEAN;
+  v_user_membership BOOLEAN;
+  v_registration_id INT;
+  v_registration_start TIMESTAMPTZ;
+  v_registration_end TIMESTAMPTZ;
+BEGIN
+  SELECT max_capacity, current_count, require_membership, registration_start, registration_end
+  INTO v_max_capacity, v_current_count, v_require_membership, v_registration_start, v_registration_end
+  FROM activities
+  WHERE id = p_activity_id AND is_active = true AND is_deleted = false
+  FOR UPDATE;
+  
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, '존재하지 않거나 비활성화된 활동입니다', NULL::INT;
+    RETURN;
+  END IF;
+  
+  IF v_registration_start IS NOT NULL AND NOW() < v_registration_start THEN
+    RETURN QUERY SELECT false, '아직 신청 기간이 아닙니다', NULL::INT;
+    RETURN;
+  END IF;
+  
+  IF v_registration_end IS NOT NULL AND NOW() > v_registration_end THEN
+    RETURN QUERY SELECT false, '신청 기간이 종료되었습니다', NULL::INT;
+    RETURN;
+  END IF;
+  
+  IF v_max_capacity IS NOT NULL AND v_current_count >= v_max_capacity THEN
+    RETURN QUERY SELECT false, '정원이 마감되었습니다', NULL::INT;
+    RETURN;
+  END IF;
+  
+  IF p_user_id IS NOT NULL AND v_require_membership = true THEN
+    SELECT membership_paid INTO v_user_membership
+    FROM users WHERE id = p_user_id;
+    
+    IF v_user_membership = false THEN
+      RETURN QUERY SELECT false, '회비 납부자만 신청 가능합니다', NULL::INT;
+      RETURN;
+    END IF;
+  END IF;
+  
+  IF p_user_id IS NOT NULL THEN
+    IF EXISTS (SELECT 1 FROM activity_registrations WHERE activity_id = p_activity_id AND user_id = p_user_id) THEN
+      RETURN QUERY SELECT false, '이미 신청하셨습니다', NULL::INT;
+      RETURN;
+    END IF;
+  END IF;
+  
+  INSERT INTO activity_registrations (
+    activity_id, user_id, name, student_id, department, phone, email,
+    form_responses, verification_image_url, kakao_id
+  ) VALUES (
+    p_activity_id, p_user_id, p_name, p_student_id, p_department, p_phone, p_email,
+    p_form_responses, p_verification_image_url, p_kakao_id
+  ) RETURNING id INTO v_registration_id;
+  
+  UPDATE activities
+  SET current_count = current_count + 1, updated_at = NOW()
+  WHERE id = p_activity_id;
+  
+  RETURN QUERY SELECT true, '신청이 완료되었습니다', v_registration_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 8-5. 신청 취소 함수
+CREATE OR REPLACE FUNCTION cancel_activity_registration(
+  p_registration_id INT,
+  p_user_id UUID
+) RETURNS TABLE(success BOOLEAN, message TEXT) AS $$
+DECLARE
+  v_activity_id INT;
+  v_reg_user_id UUID;
+BEGIN
+  SELECT activity_id, user_id INTO v_activity_id, v_reg_user_id
+  FROM activity_registrations WHERE id = p_registration_id;
+  
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT false, '신청 내역을 찾을 수 없습니다';
+    RETURN;
+  END IF;
+  
+  IF v_reg_user_id != p_user_id THEN
+    RETURN QUERY SELECT false, '본인의 신청만 취소할 수 있습니다';
+    RETURN;
+  END IF;
+  
+  UPDATE activity_registrations
+  SET status = 'cancelled', updated_at = NOW()
+  WHERE id = p_registration_id;
+  
+  UPDATE activities
+  SET current_count = GREATEST(current_count - 1, 0), updated_at = NOW()
+  WHERE id = v_activity_id;
+  
+  RETURN QUERY SELECT true, '신청이 취소되었습니다';
+END;
+$$ LANGUAGE plpgsql;
+
+-- 8-6. 트리거: updated_at 자동 갱신
+CREATE OR REPLACE FUNCTION update_activities_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_activities_updated_at
+  BEFORE UPDATE ON activities
+  FOR EACH ROW
+  EXECUTE FUNCTION update_activities_updated_at();
+
+CREATE TRIGGER trigger_activity_registrations_updated_at
+  BEFORE UPDATE ON activity_registrations
+  FOR EACH ROW
+  EXECUTE FUNCTION update_activities_updated_at();
 
 -- ============================================================================
 -- RLS (Row Level Security) 정책

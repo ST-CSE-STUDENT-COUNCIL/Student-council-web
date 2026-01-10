@@ -29,10 +29,10 @@ be/
 │   │   ├── auth.py          # 인증 관련 API
 │   │   ├── admin.py         # 관리자 API
 │   │   ├── users.py         # 마이페이지 API (경로: /mypage)
+│   │   ├── activities.py    # 통합 활동 관리 API (행사/수요조사/설문/카톡초대/회비/공지) 🆕
 │   │   ├── boards.py        # 게시판 API
 │   │   ├── posts.py         # 게시글 API (공지사항)
 │   │   ├── clubs.py         # 동아리 API
-│   │   ├── events.py        # 행사 API 🆕
 │   │   ├── welfare.py       # 복지사업 API (사물함, 물품대여)
 │   │   ├── introductions.py # 학생회 소개 이미지 API
 │   │   └── suggestions.py   # 건의함 API
@@ -128,7 +128,7 @@ R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
 
 # R2 Public Bucket URLs (각 버킷의 R2.dev 서브도메인)
 R2_CLUB_IMAGES_URL=https://pub-xxxxx.r2.dev
-R2_EVENT_IMAGES_URL=https://pub-xxxxx.r2.dev
+R2_EVENT_IMAGES_URL=https://pub-xxxxx.r2.dev  # Activities 이미지 저장 (activity-images 또는 event-images 사용)
 R2_INTRODUCTION_IMAGES_URL=https://pub-xxxxx.r2.dev
 R2_POST_ATTACHMENTS_URL=https://pub-xxxxx.r2.dev
 R2_WELFARE_IMAGES_URL=https://pub-xxxxx.r2.dev
@@ -144,7 +144,7 @@ ALLOWED_EMAIL_DOMAIN=seoultech.ac.kr
 # Environment
 ENVIRONMENT=development
 DEBUG=true
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:5173  # 쉼표로 구분하여 여러 URL 설정 가능 (예: http://localhost:5173,http://localhost:3000)
 
 # Server
 HOST=0.0.0.0
@@ -222,18 +222,34 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `PATCH /clubs/{club_id}` - 동아리 수정 (admin)
 - `DELETE /clubs/{club_id}` - 동아리 삭제 (admin)
 
-**행사 (Events)** 🆕
-- `GET /events` - 행사 목록 조회 (공개, 로그인 불필요)
-- `GET /events/{event_id}` - 행사 상세 조회 (공개, 로그인 불필요)
-- `POST /events/{event_id}/register` - 행사 신청 (회원/비회원 모두 가능)
-- `DELETE /events/{event_id}/register` - 신청 취소 (로그인 필요)
-- `GET /events/{event_id}/my-registration` - 내 신청 확인 (로그인 필요)
-- `POST /events/{event_id}/survey` - 만족도 조사 제출 (로그인 필요)
-- `POST /events` - 행사 생성 (admin, multipart/form-data, 이미지 여러 장 가능)
-- `PATCH /events/{event_id}` - 행사 수정 (admin)
-- `DELETE /events/{event_id}` - 행사 삭제 (admin, Soft Delete)
-- `GET /events/{event_id}/registrations` - 참가자 목록 (admin)
-- `GET /events/{event_id}/survey/results` - 만족도 통계 (admin)
+**통합 활동 관리 (Activities)** 🆕
+6가지 활동 유형을 통합 관리하는 새로운 API입니다.
+
+| 활동 유형 | type 값 | 설명 |
+|---------|---------|------|
+| 행사 | `event` | 학생회 주최 행사 (MT, 축제 등) |
+| 수요조사 | `demand_survey` | 학생들의 의견/수요 파악 (행사 기획 전) |
+| 설문조사 | `survey` | 사후 만족도 조사 또는 일반 설문 |
+| 카카오톡 초대 | `kakao_invite` | 오픈채팅방 링크 제공 |
+| 회비 안내 | `fee_payment` | 회비 납부 안내 및 정보 |
+| 공지사항 | `notice` | 일반 공지 (신청/설문 불필요) |
+
+**사용자용 API**
+- `GET /activities` - 활동 목록 조회 (공개, 로그인 불필요)
+  - type: 활동 유형 필터 (event, demand_survey, survey, kakao_invite, fee_payment, notice)
+- `GET /activities/{activity_id}` - 활동 상세 조회 (공개, 로그인 불필요)
+- `POST /activities/{activity_id}/register` - 활동 신청/참여 (로그인 필요)
+  - form_fields 입력 (식사 선호도, 알레르기 정보 등 관리자가 수집하려는 추가 정보)
+- `DELETE /activities/{activity_id}/register` - 신청/참여 취소 (로그인 필요)
+- `POST /activities/{activity_id}/survey` - 설문 응답 제출 (로그인 필요)
+  - survey_config의 questions 응답 (예: {"q1": "매우 만족", "q2": "음식이 좋았습니다"})
+
+**관리자용 API** ⚠️ 관리자 권한 필요
+- `POST /activities` - 활동 생성 (multipart/form-data, 이미지 여러 장 가능)
+- `PATCH /activities/{activity_id}` - 활동 수정
+- `DELETE /activities/{activity_id}` - 활동 삭제 (Soft Delete)
+- `GET /activities/{activity_id}/registrations` - 참여자/응답자 목록
+- `GET /activities/{activity_id}/survey-stats` - 설문 통계 (객관식 문항 집계)
 
 **복지사업 (Welfare)**
 - `GET /welfare/locker_periods` - 사물함 정보 조회 (공개, 로그인 불필요)
@@ -418,47 +434,80 @@ Authorization: Bearer <admin_access_token>
 - **첨부파일**: 최대 5개, JPG/PNG/PDF, 10MB 제한, Public URL (영구적)
 - **Soft Delete**: 삭제 시 is_deleted 플래그 변경 (복구 가능)
 
-### 🎯 동아리 API
+### � 통합 활동 시스템 (Activities)
+
+**6가지 활동 유형**을 하나의 테이블로 통합 관리:
+
+| 활동 유형 | type 값 | 설명 | 예시 |
+|---------|---------|------|------|
+| 행사 | `event` | 학생회 주최 행사 | MT, 축제, 체육대회 |
+| 수요조사 | `demand_survey` | 학생 의견 수렴 | 어떤 행사를 원하시나요? |
+| 설문조사 | `survey` | 사후 만족도 조사 | MT 만족도 조사 |
+| 카카오톡 초대 | `kakao_invite` | 오픈채팅방 링크 제공 | 새내기 오픈채팅방 |
+| 회비 안내 | `fee_payment` | 회비 납부 정보 | 학생회비 납부 안내 |
+| 공지사항 | `notice` | 일반 공지 | 학과 행사 일정 공지 |
+
+**form_fields vs survey_config**
+- **form_fields**: 신청 시 추가 정보 수집 (예: 식사 선호도, 알레르기, 티셔츠 사이즈)
+  ```json
+  {
+    "meal_preference": "채식",
+    "allergies": "땅콩 알레르기",
+    "tshirt_size": "L"
+  }
+  ```
+- **survey_config**: 설문 문항 (객관식/주관식 구분, 문항 ID는 q1, q2 등)
+  ```json
+  {
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple_choice",
+        "question": "행사 만족도를 평가해주세요",
+        "options": ["매우 만족", "만족", "보통", "불만족", "매우 불만족"]
+      },
+      {
+        "id": "q2",
+        "type": "text",
+        "question": "개선이 필요한 점이 있다면 작성해주세요"
+      }
+    ]
+  }
+  ```
+
+**설문 응답 형식**
+```json
+{
+  "q1": "매우 만족",
+  "q2": "음식이 좋았습니다. 다음에도 참여하고 싶어요."
+}
+```
 
 **공개 엔드포인트:**
-- `GET /clubs` - 동아리 목록 조회
-- `GET /clubs/{club_id}` - 동아리 상세 조회
+- `GET /activities` - 활동 목록 조회 (type으로 필터링 가능)
+- `GET /activities/{activity_id}` - 활동 상세 조회 (이미지 포함)
+- `POST /activities/{activity_id}/register` - 활동 신청/참여
+  - 로그인 필수
+  - Body: form_fields (관리자가 정의한 추가 입력 필드)
+- `DELETE /activities/{activity_id}/register` - 신청/참여 취소
+- `POST /activities/{activity_id}/survey` - 설문 응답 제출
+  - Body: survey_responses (예: {"q1": "매우 만족", "q2": "text response"})
 
 **관리자 전용 엔드포인트:**
-- `POST /clubs` - 동아리 추가 (multipart/form-data: name, description, website_url, image)
-- `PATCH /clubs/{club_id}` - 동아리 정보 수정 (JSON: name, description, website_url)
-- `DELETE /clubs/{club_id}` - 동아리 삭제
-
-### 🎉 행사 API (Events)
-
-**공개 엔드포인트 (인증 필요):**
-- `GET /events` - 행사 목록 조회
-  - Query: `include_inactive` (비활성 행사 포함 여부)
-- `GET /events/{event_id}` - 행사 상세 조회 (이미지 포함)
-- `POST /events/{event_id}/register` - 행사 참가 신청 ⭐
-  - 회원: 자동으로 정보 사용 (학번, 이름, 전화번호)
-  - 비회원: `guest_info` Body 필수 (student_id, name, phone)
-  - 트랜잭션 처리: 정원 확인, 중복 방지, 선착순 번호 부여
-- `DELETE /events/{event_id}/register` - 신청 취소
-- `GET /events/{event_id}/my-registration` - 내 신청 확인
-- `POST /events/{event_id}/survey` - 만족도 조사 제출 (1-5점 + 의견)
-
-**관리자 전용 엔드포인트:**
-- `POST /events` - 행사 생성 (multipart/form-data: 썸네일 업로드)
-- `PATCH /events/{event_id}` - 행사 정보 수정
-- `DELETE /events/{event_id}` - 행사 삭제 (Soft Delete)
-- `POST /events/{event_id}/images` - 상세 이미지 추가 (여러 장 가능)
-- `DELETE /events/{event_id}/images/{image_id}` - 이미지 삭제
-- `GET /events/{event_id}/registrations` - 참가자 목록 (회원/비회원 구분)
-- `GET /events/{event_id}/survey/results` - 만족도 통계
+- `POST /activities` - 활동 생성 (multipart/form-data: 여러 이미지 업로드 가능)
+- `PATCH /activities/{activity_id}` - 활동 정보 수정
+- `DELETE /activities/{activity_id}` - 활동 삭제 (Soft Delete)
+- `GET /activities/{activity_id}/registrations` - 참여자/응답자 목록
+- `GET /activities/{activity_id}/survey-stats` - 설문 통계 (객관식 문항 집계)
 
 **특징:**
-- 회원/비회원 모두 신청 가능
-- 회원 이점: 자동 정보 입력, 마이페이지에서 내역 확인
-- 선착순 신청: `register_for_event_guest()` DB 함수로 트랜잭션 처리
+- 트랜잭션 처리: 정원 확인, 중복 방지 (`register_for_activity()` DB 함수)
 - 정원 관리: current_count/max_capacity 자동 관리
 - 회비 납부자 전용: `require_membership=true` 설정 가능
-- Soft Delete: 과거 행사 데이터 보존
+- 회원/비회원 모두 신청 가능
+- Soft Delete: 과거 활동 데이터 보존
+- 이미지 업로드: Cloudflare R2에 저장, 여러 장 가능
+- 이미지 관리: `POST /activities/{id}/images`, `DELETE /activities/{id}/images/{image_id}`
 
 ### 📧 이메일 인증
 
@@ -543,8 +592,8 @@ WHERE role = 'admin';
    - 용도: 동아리 이미지
    - 접근: Public URL (R2.dev)
 
-2. **event-images** 🆕
-   - 용도: 행사 이미지
+2. **event-images** (또는 activity-images) 🆕
+   - 용도: 활동 이미지 (행사, 수요조사, 설문 등)
    - 접근: Public URL (R2.dev)
 
 3. **introduction-images**
@@ -666,7 +715,8 @@ FRONTEND_URL=https://yourdomain.com
 4. `004_add_login_attempt_tracking.sql` - 로그인 시도 추적 및 차단 시스템
 5. `005_add_password_reset_table.sql` - 비밀번호 재설정 테이블 추가
 6. `006_create_introduction_images_storage.sql` - 학생회 소개 이미지 (Supabase Storage 정책 - 더 이상 사용 안 함)
-7. `007_add_guest_registration_support.sql` - 비회원 행사 신청 지원 🆕
+7. `007_add_guest_registration_support.sql` - 비회원 행사 신청 지원
+8. `008_add_activities_system.sql` - 통합 활동 관리 시스템 (행사/수요조사/설문/카톡초대/회비/공지) 🆕
 
 마이그레이션 실행 (Supabase SQL Editor):
 ```sql
