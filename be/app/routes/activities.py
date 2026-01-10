@@ -32,6 +32,7 @@ from app.database import supabase
 
 
 router = APIRouter(prefix="/activities", tags=["활동"])
+admin_router = APIRouter(prefix="/activities", tags=["활동(관리자)"])
 
 
 # ============================================================================
@@ -523,7 +524,7 @@ async def submit_survey(
 # 관리자 엔드포인트
 # ============================================================================
 
-@router.post(
+@admin_router.post(
     "",
     response_model=ActivityResponse,
     status_code=status.HTTP_201_CREATED,
@@ -650,7 +651,7 @@ async def create_activity(
         )
 
 
-@router.patch(
+@admin_router.patch(
     "/{activity_id}",
     response_model=ActivityResponse,
     status_code=status.HTTP_200_OK,
@@ -744,7 +745,7 @@ async def update_activity(
         )
 
 
-@router.delete(
+@admin_router.delete(
     "/{activity_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="활동 삭제",
@@ -789,7 +790,7 @@ async def delete_activity(
         )
 
 
-@router.get(
+@admin_router.get(
     "/{activity_id}/registrations",
     response_model=ActivityRegistrationListResponse,
     status_code=status.HTTP_200_OK,
@@ -961,7 +962,7 @@ async def get_survey_stats(
 # 이미지 관리 API
 # ============================================================================
 
-@router.post(
+@admin_router.post(
     "/{activity_id}/images",
     status_code=status.HTTP_201_CREATED,
     summary="활동 이미지 추가",
@@ -1035,7 +1036,7 @@ async def add_activity_image(
         )
 
 
-@router.delete(
+@admin_router.delete(
     "/{activity_id}/images/{image_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="활동 이미지 삭제",

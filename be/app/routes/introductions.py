@@ -17,6 +17,7 @@ from app.database import supabase
 
 
 router = APIRouter(prefix="/introductions", tags=["학생회 소개"])
+admin_router = APIRouter(prefix="/introductions", tags=["학생회 소개(관리자)"])
 
 
 @router.get(
@@ -55,7 +56,7 @@ async def get_introduction_images(
         )
 
 
-@router.post(
+@admin_router.post(
     "/images",
     response_model=IntroductionImageResponse,
     status_code=status.HTTP_201_CREATED,
@@ -111,7 +112,7 @@ async def create_introduction_image(
         )
 
 
-@router.patch(
+@admin_router.patch(
     "/images/{image_id}",
     response_model=IntroductionImageResponse,
     summary="학생회 소개 이미지 수정",
@@ -169,7 +170,7 @@ async def update_introduction_image(
         )
 
 
-@router.delete(
+@admin_router.delete(
     "/images/{image_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="학생회 소개 이미지 삭제",

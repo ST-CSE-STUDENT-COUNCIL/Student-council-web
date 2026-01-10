@@ -20,6 +20,7 @@ from app.database import supabase
 
 
 router = APIRouter(prefix="/suggestions", tags=["건의함"])
+admin_router = APIRouter(prefix="/suggestions", tags=["건의함(관리자)"])
 
 ALLOWED_STATUSES = {"received", "in_progress", "rejected", "approved"}
 
@@ -301,7 +302,7 @@ async def get_suggestion(
         )
 
 
-@router.patch(
+@admin_router.patch(
     "/{suggestion_id}/status",
     response_model=SuggestionResponse,
     status_code=status.HTTP_200_OK,

@@ -16,7 +16,8 @@ from app.utils.auth import get_current_user, require_council
 from app.utils.sheets import get_sheet_value
 from app.utils.r2_storage import upload_file_to_r2 as upload_file_to_supabase
 
-router = APIRouter(prefix="/welfare", tags=["Welfare"])
+router = APIRouter(prefix="/welfare", tags=["복지사업"])
+admin_router = APIRouter(prefix="/welfare", tags=["복지사업(관리자)"])
 
 
 # ============================================================================
@@ -43,7 +44,7 @@ async def get_locker_info():
     return result.data
 
 
-@router.put("/locker_periods", response_model=LockerInfo, summary="사물함 정보 수정 (관리자)")
+@admin_router.put("/locker_periods", response_model=LockerInfo, summary="사물함 정보 수정 (관리자)")
 async def update_locker_info(
     data: LockerInfoUpdate,
     current_user: dict = Depends(require_council)
@@ -111,7 +112,7 @@ async def get_rental_items():
     return items
 
 
-@router.post("/welfare_rentals", response_model=RentalItem, summary="대여 물품 추가 (관리자)", status_code=201)
+@admin_router.post("/welfare_rentals", response_model=RentalItem, summary="대여 물품 추가 (관리자)", status_code=201)
 async def create_rental_item(
     item_name: str = Form(..., description="물품명 (예: 장우산, 단우산)"),
     application_sheet_url: str = Form(..., description="구글 시트 URL"),
@@ -161,7 +162,7 @@ async def create_rental_item(
     }
 
 
-@router.put("/welfare_rentals/{item_id}", response_model=RentalItem, summary="대여 물품 수정 (관리자)")
+@admin_router.put("/welfare_rentals/{item_id}", response_model=RentalItem, summary="대여 물품 수정 (관리자)")
 async def update_rental_item(
     item_id: int,
     data: RentalItemUpdate,
@@ -194,7 +195,7 @@ async def update_rental_item(
     }
 
 
-@router.delete("/welfare_rentals/{item_id}", status_code=204, summary="대여 물품 삭제 (관리자)")
+@admin_router.delete("/welfare_rentals/{item_id}", status_code=204, summary="대여 물품 삭제 (관리자)")
 async def delete_rental_item(
     item_id: int,
     current_user: dict = Depends(require_council)

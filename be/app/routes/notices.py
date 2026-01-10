@@ -23,6 +23,7 @@ from app.database import supabase
 
 
 router = APIRouter(prefix="/notices", tags=["공지사항"])
+admin_router = APIRouter(prefix="/notices", tags=["공지사항(관리자)"])
 
 
 # 영어-한글 매핑
@@ -269,7 +270,7 @@ async def get_notice(
         )
 
 
-@router.post(
+@admin_router.post(
     "",
     response_model=NoticeDetailResponse,
     status_code=status.HTTP_201_CREATED,
@@ -347,7 +348,7 @@ async def create_notice(
         )
 
 
-@router.patch(
+@admin_router.patch(
     "/{notice_id}",
     response_model=NoticeDetailResponse,
     summary="공지사항 수정",
@@ -404,7 +405,7 @@ async def update_notice(
         )
 
 
-@router.delete(
+@admin_router.delete(
     "/{notice_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="공지사항 삭제",

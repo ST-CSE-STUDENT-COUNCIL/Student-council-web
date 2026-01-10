@@ -17,6 +17,7 @@ from app.database import supabase
 
 
 router = APIRouter(prefix="/clubs", tags=["동아리"])
+admin_router = APIRouter(prefix="/clubs", tags=["동아리(관리자)"])
 
 
 @router.get(
@@ -96,7 +97,7 @@ async def get_club(club_id: int):
         )
 
 
-@router.post(
+@admin_router.post(
     "",
     response_model=ClubDetail,
     status_code=status.HTTP_201_CREATED,
@@ -153,7 +154,7 @@ async def create_club(
         )
 
 
-@router.patch(
+@admin_router.patch(
     "/{club_id}",
     response_model=ClubDetail,
     summary="동아리 정보 수정",
@@ -211,7 +212,7 @@ async def update_club(
         )
 
 
-@router.delete(
+@admin_router.delete(
     "/{club_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="동아리 삭제",
