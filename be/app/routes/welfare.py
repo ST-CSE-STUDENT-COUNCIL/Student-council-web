@@ -145,7 +145,8 @@ async def update_locker_info(
     if description is not None:
         update_data['description'] = description
     
-    if not update_data:
+    # 레코드가 이미 존재하면서 수정할 데이터가 없으면 에러
+    if record_exists and not update_data:
         raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
     
     # 레코드가 없으면 생성, 있으면 수정 (UPSERT)
