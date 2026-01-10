@@ -80,10 +80,9 @@ async def upload_locker_image(
         
         # DB 업데이트 또는 생성
         if existing.data:
-            # 기존 레코드 업데이트
+            # 기존 레코드 업데이트 (updated_at은 DEFAULT 트리거로 자동 설정됨)
             result = supabase.table('locker_info').update({
-                'layout_image_url': image_url,
-                'updated_at': 'NOW() AT TIME ZONE \'Asia/Seoul\''
+                'layout_image_url': image_url
             }).eq('id', 1).execute()
         else:
             # 새 레코드 생성
@@ -167,8 +166,7 @@ async def update_locker_info(
         }
         result = supabase.table('locker_info').insert(insert_data).execute()
     else:
-        # updated_at 자동 갱신 (한국 시간)
-        update_data['updated_at'] = 'NOW() AT TIME ZONE \'Asia/Seoul\''
+        # updated_at은 DEFAULT 트리거로 자동 갱신됨 (한국 시간)
         
         # locker_info 업데이트 (id=1)
         result = supabase.table('locker_info').update(update_data).eq('id', 1).execute()
