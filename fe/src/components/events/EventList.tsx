@@ -1,6 +1,6 @@
 import type { Event } from '../../types/events'
 
-interface EventListProps {
+type EventListProps = {
     events: Event[]
     onEventSelect?: (event: Event) => void
     selectedEventId?: number
@@ -23,9 +23,11 @@ export const EventList = ({ events, onEventSelect, selectedEventId, className }:
                     key={event.id}
                     onClick={() => onEventSelect?.(event)}
                     className={`
-                        bg-white p-4 rounded-lg shadow-sm border border-gray-100 cursor-pointer 
+                        bg-white p-4 rounded-lg shadow-sm border border-gray-100 cursor-pointer relative
                         transition-all duration-200 hover:shadow-md hover:border-blue-200
-                        ${selectedEventId === event.id ? 'ring-2 ring-blue-500 border-transparent bg-blue-50' : ''}
+                        ${selectedEventId === event.id
+                            ? 'ring-2 ring-blue-500 border-transparent bg-blue-50 z-10 -translate-y-1 shadow-lg'
+                            : 'hover:-translate-y-0.5'}
                     `}
                 >
                     <div className="flex items-center gap-3">

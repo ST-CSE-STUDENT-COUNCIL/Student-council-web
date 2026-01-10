@@ -8,7 +8,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.config import settings
-from app.routes import auth, admin, users, suggestions, notices
+from app.routes import auth, admin, users, suggestions, notices, clubs, welfare, introductions, activities
 
 # Rate limiter 설정
 limiter = Limiter(key_func=get_remote_address)
@@ -39,7 +39,7 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_handler)  # type: ignore
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL] if not settings.DEBUG else ["*"],
+    allow_origins=settings.get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -51,6 +51,10 @@ app.include_router(admin.router)
 app.include_router(users.router)
 app.include_router(suggestions.router)
 app.include_router(notices.router)
+app.include_router(clubs.router)
+app.include_router(welfare.router)
+app.include_router(introductions.router)
+app.include_router(activities.router)
 
 # 헬스체크 엔드포인트
 @app.get("/", tags=["헬스체크"])

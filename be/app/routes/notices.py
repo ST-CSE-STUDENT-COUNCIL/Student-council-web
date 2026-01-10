@@ -15,9 +15,8 @@ from app.schemas.notices import (
 )
 from app.schemas.auth import ErrorResponse
 from app.utils.auth import require_verified_user, require_admin
-from app.utils.storage import (
+from app.utils.r2_storage import (
     upload_post_attachment,
-    create_signed_url,
     delete_post_attachments
 )
 from app.database import supabase
@@ -48,7 +47,7 @@ SUBCATEGORY_MAP = {
     status_code=status.HTTP_200_OK,
     summary="공지사항 목록 조회",
     description="""
-    공지사항 목록을 조회합니다.
+    공지사항 목록을 조회합니다. 로그인 없이 접근 가능합니다.
     
     쿼리 파라미터:
     - mainCategory: 대분류 (student_council, democracy)
@@ -57,11 +56,7 @@ SUBCATEGORY_MAP = {
     - page_size: 페이지당 항목 수 (기본값: 20)
     - search: 검색어 (제목 + 내용)
     - sort: 정렬 (newest/oldest)
-    """,
-    responses={
-        401: {"model": ErrorResponse, "description": "인증 필요"},
-        403: {"model": ErrorResponse, "description": "승인 대기 중"}
-    }
+    """
 )
 async def get_notices(
     mainCategory: Optional[str] = Query(None, description="대분류: student_council, democracy"),
@@ -69,8 +64,7 @@ async def get_notices(
     page: int = Query(1, ge=1, description="페이지 번호"),
     page_size: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
     search: Optional[str] = Query(None, description="검색어"),
-    sort: str = Query("newest", regex="^(newest|oldest)$", description="정렬"),
-    current_user: dict = Depends(require_verified_user)
+    sort: str = Query("newest", regex="^(newest|oldest)$", description="정렬")
 ):
     """
     공지사항 목록 조회 (페이지네이션)
@@ -83,24 +77,36 @@ async def get_notices(
         main_category_kr = CATEGORY_MAP.get(mainCategory) if mainCategory else None
         sub_category_kr = SUBCATEGORY_MAP.get(subCategory) if subCategory and subCategory != "all" else None
         
+        # 대분류 필터가 있으면 먼저 board_id 찾기
+        board_ids = None
+        if main_category_kr:
+            board_result = supabase.table('boards')\
+                .select('id')\
+                .eq('category', main_category_kr)\
+                .execute()
+            board_ids = [b['id'] for b in board_result.data] if board_result.data else []
+            if not board_ids:
+                # 해당 카테고리의 게시판이 없으면 빈 결과 반환
+                return NoticeListResponse(
+                    notices=[],
+                    pagination=PaginationMeta(
+                        total=0,
+                        page=page,
+                        page_size=page_size,
+                        total_pages=0,
+                        has_next=False,
+                        has_prev=False
+                    )
+                )
+        
         # 쿼리 시작 - boards와 posts 조인
         query = supabase.table('posts')\
-            .select('''
-                id,
-                title,
-                content,
-                subcategory,
-                is_pinned,
-                created_at,
-                updated_at,
-                board:boards!inner(id, name, category),
-                author:users!inner(id, name)
-            ''')\
+            .select('*')\
             .eq('is_deleted', False)
         
-        # 대분류 필터링 (게시판 카테고리)
-        if main_category_kr:
-            query = query.eq('board.category', main_category_kr)
+        # board_id 필터링
+        if board_ids:
+            query = query.in_('board_id', board_ids)
         
         # 소분류 필터링 (게시글 서브카테고리)
         # subCategory='all'이면 필터링 안함
@@ -123,7 +129,30 @@ async def get_notices(
         
         result = query.execute()
         
-        notices = result.data if result.data else []
+        posts_data = result.data if result.data else []
+        
+        # board와 author 정보 추가
+        notices = []
+        for post in posts_data:
+            # board 정보 조회
+            board_result = supabase.table('boards')\
+                .select('id, name, category')\
+                .eq('id', post['board_id'])\
+                .single()\
+                .execute()
+            
+            # author 정보 조회
+            author_result = supabase.table('users')\
+                .select('id, name')\
+                .eq('id', post['author_id'])\
+                .single()\
+                .execute()
+            
+            notices.append({
+                **post,
+                'board': board_result.data if board_result.data else {'id': post['board_id'], 'name': '', 'category': ''},
+                'author': author_result.data if author_result.data else {'id': post['author_id'], 'name': '알 수 없음'}
+            })
         
         # 전체 개수 조회 (필터 적용)
         count_query = supabase.table('posts')\
@@ -173,30 +202,19 @@ async def get_notices(
     response_model=NoticeDetailResponse,
     status_code=status.HTTP_200_OK,
     summary="공지사항 상세 조회",
+    description="공지사항 상세를 조회합니다. 로그인 없이 접근 가능합니다.",
     responses={
-        401: {"model": ErrorResponse},
         404: {"model": ErrorResponse, "description": "공지사항을 찾을 수 없음"}
     }
 )
 async def get_notice(
-    notice_id: int,
-    current_user: dict = Depends(require_verified_user)
+    notice_id: int
 ):
     """공지사항 상세 조회"""
     try:
+        # 게시글 조회
         result = supabase.table('posts')\
-            .select('''
-                id,
-                title,
-                content,
-                subcategory,
-                is_pinned,
-                created_at,
-                updated_at,
-                board:boards!inner(id, name, category),
-                author:users!inner(id, name),
-                attachments(id, filename, file_url, file_size, mime_type, created_at)
-            ''')\
+            .select('*')\
             .eq('id', notice_id)\
             .eq('is_deleted', False)\
             .single()\
@@ -208,17 +226,37 @@ async def get_notice(
                 detail="공지사항을 찾을 수 없습니다"
             )
         
-        notice = result.data
+        post = result.data
         
-        # 첨부파일 Signed URL 생성
-        if notice.get('attachments'):
-            for attachment in notice['attachments']:
-                signed_url = create_signed_url(
-                    attachment['file_url'],
-                    expires_in=3600,
-                    bucket='post-attachments'
-                )
-                attachment['file_url'] = signed_url or attachment['file_url']
+        # board 정보 조회
+        board_result = supabase.table('boards')\
+            .select('id, name, category')\
+            .eq('id', post['board_id'])\
+            .single()\
+            .execute()
+        
+        # author 정보 조회
+        author_result = supabase.table('users')\
+            .select('id, name')\
+            .eq('id', post['author_id'])\
+            .single()\
+            .execute()
+        
+        # 첨부파일 조회
+        attachments_result = supabase.table('attachments')\
+            .select('id, filename, file_url, file_size, mime_type, created_at')\
+            .eq('post_id', notice_id)\
+            .execute()
+        
+        notice = {
+            **post,
+            'board': board_result.data if board_result.data else {'id': post['board_id'], 'name': '', 'category': ''},
+            'author': author_result.data if author_result.data else {'id': post['author_id'], 'name': '알 수 없음'},
+            'attachments': attachments_result.data if attachments_result.data else []
+        }
+        
+        # 첨부파일 URL은 이미 public URL이므로 그대로 사용
+        # post-attachments bucket이 public이므로 signed URL 불필요
         
         return NoticeDetailResponse(**notice)
     
@@ -298,7 +336,7 @@ async def create_notice(
                     }).execute()
         
         # 생성된 공지사항 조회
-        return await get_notice(post_id, current_user)
+        return await get_notice(post_id)
     
     except HTTPException:
         raise
@@ -355,7 +393,7 @@ async def update_notice(
                 detail="공지사항 수정 실패"
             )
         
-        return await get_notice(notice_id, current_user)
+        return await get_notice(notice_id)
     
     except HTTPException:
         raise

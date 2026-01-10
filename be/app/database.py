@@ -21,15 +21,12 @@ def get_supabase() -> Client:
     return supabase
 
 
-def get_supabase_admin() -> Optional[Client]:
+def get_supabase_admin() -> Client:
     """
-    관리자 권한 Supabase 클라이언트 반환
+    관리자 권한 Supabase 클라이언트 반환 (Service Role Key)
     
-    SUPABASE_KEY가 설정되어 있으면 admin 클라이언트를 생성합니다.
+    RLS를 우회하여 Storage 업로드 등에 사용됩니다.
     """
-    if not settings.SUPABASE_KEY:
-        return None
-    
     return create_client(
         supabase_url=settings.SUPABASE_URL,
         supabase_key=settings.SUPABASE_KEY

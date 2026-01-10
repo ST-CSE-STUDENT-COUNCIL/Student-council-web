@@ -20,6 +20,7 @@ from app.schemas.admin import (
 )
 from app.utils.auth import require_admin
 from app.utils.storage import create_signed_url
+from app.utils.login_security import unblock_user
 from app.database import supabase
 from postgrest.exceptions import APIError
 
@@ -406,4 +407,128 @@ async def update_membership_status(user_id: str, request: UpdateMembershipReques
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"회비 상태 변경 실패: {str(e)}"
+        )
+
+
+@router.get(
+    "/users/blocked",
+    summary="차단된 사용자 목록 조회",
+    description="로그인 실패로 차단된 사용자 목록을 조회합니다 (IP 로그 포함)",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"}
+    }
+)
+async def get_blocked_users():
+    """
+    차단된 사용자 목록 조회
+    
+    로그인 실패로 차단된 사용자와 최근 로그인 시도 IP 로그를 함께 반환합니다.
+    관리자가 실제 본인의 시도인지 악의적인 공격인지 판단할 수 있습니다.
+    """
+    try:
+        # 차단된 사용자 조회
+        blocks_result = supabase.table('login_blocks')\
+            .select('*')\
+            .execute()
+        
+        if not blocks_result.data:
+            return {
+                'blocked_users': [],
+                'total': 0
+            }
+        
+        blocked_users = []
+        for block in blocks_result.data:
+            student_id = block['student_id']
+            
+            # 사용자 정보 조회
+            user_result = supabase.table('users')\
+                .select('name, email, department')\
+                .eq('student_id', student_id)\
+                .single()\
+                .execute()
+            
+            user_info = user_result.data if user_result.data else {}
+            
+            # 최근 로그인 시도 이력 조회 (최근 20개)
+            attempts_result = supabase.table('login_attempts')\
+                .select('*')\
+                .eq('student_id', student_id)\
+                .order('attempt_time', desc=True)\
+                .limit(20)\
+                .execute()
+            
+            attempts = attempts_result.data if attempts_result.data else []
+            
+            blocked_users.append({
+                'student_id': student_id,
+                'name': user_info.get('name'),
+                'email': user_info.get('email'),
+                'department': user_info.get('department'),
+                'failed_attempts': block.get('failed_attempts', 0),
+                'block_reason': block.get('block_reason'),
+                'block_until': block.get('block_until'),
+                'created_at': block.get('created_at'),
+                'recent_attempts': attempts  # IP 로그 포함
+            })
+        
+        return {
+            'blocked_users': blocked_users,
+            'total': len(blocked_users)
+        }
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"차단 목록 조회 실패: {str(e)}"
+        )
+
+
+@router.post(
+    "/users/{student_id}/unblock",
+    summary="사용자 차단 해제",
+    description="로그인 차단된 사용자의 차단을 해제합니다 (IP 로그 확인 후 본인 확인 시)",
+    responses={
+        200: {"description": "차단 해제 성공"},
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        404: {"model": ErrorResponse, "description": "사용자 없음"}
+    }
+)
+async def unblock_user_by_admin(student_id: str):
+    """
+    사용자 차단 해제
+    
+    관리자가 IP 로그를 확인하여 실제 본인의 시도로 판단한 경우
+    차단을 해제하고 로그인 실패 횟수를 초기화합니다.
+    """
+    try:
+        # 1. 사용자 존재 확인
+        user_result = supabase.table('users')\
+            .select('id')\
+            .eq('student_id', student_id)\
+            .single()\
+            .execute()
+        
+        if not user_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="사용자를 찾을 수 없습니다"
+            )
+        
+        # 2. 차단 해제
+        await unblock_user(student_id)
+        
+        return {
+            'student_id': student_id,
+            'message': '차단이 해제되었습니다'
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"차단 해제 실패: {str(e)}"
         )

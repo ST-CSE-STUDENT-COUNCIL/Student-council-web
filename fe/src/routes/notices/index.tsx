@@ -4,7 +4,7 @@ import { NoticeFilters } from '../../components/notices/NoticeFilters'
 import { NoticeList } from '../../components/notices/NoticeList'
 import type { Notice } from '../../types/notices'
 
-interface NoticeSearch {
+type NoticeSearch = {
   mainCategory: string
   subCategory: string
   search: string
@@ -30,18 +30,28 @@ function Notices() {
   const navigate = useNavigate({ from: Route.fullPath })
 
   const [notices, setNotices] = useState<Notice[]>([])
+  const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
 
-  const itemsPerPage = 10
+  const itemsPerPage = 20
 
   const fetchNotices = async () => {
     try {
       setLoading(true)
       const { noticeApi } = await import('../../lib/api/notices')
-      const data = await noticeApi.getAll()
+      const { notices: data, pagination } = await noticeApi.getAll({
+        mainCategory,
+        subCategory,
+        search,
+        sort,
+        page,
+        page_size: itemsPerPage
+      })
       setNotices(data)
+      setTotalPages(pagination.total_pages)
     } catch (error) {
       console.error('Failed to fetch notices', error)
+      setNotices([]) // Clear notices on error
     } finally {
       setLoading(false)
     }
@@ -49,42 +59,10 @@ function Notices() {
 
   useEffect(() => {
     fetchNotices()
-  }, [])
+  }, [mainCategory, subCategory, search, sort, page])
 
-  // Filtering Logic
-  const filteredNotices = notices.filter(notice => {
-    // 1. Board filter
-    if (notice.main_category !== mainCategory) return false
-
-    // 2. Sub Category filter
-    if (subCategory !== 'all' && notice.sub_category !== subCategory) return false
-
-    // 3. Search filter
-    if (search) {
-      const searchLower = search.toLowerCase()
-      return notice.title.toLowerCase().includes(searchLower) ||
-        notice.content.toLowerCase().includes(searchLower)
-    }
-
-    return true
-  }).sort((a, b) => {
-    // 0. Pin logic (Priority) - is_pinned
-    if (a.is_pinned && !b.is_pinned) return -1
-    if (!a.is_pinned && b.is_pinned) return 1
-
-    // Normal sort
-    if (sort === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    if (sort === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    if (sort === 'views') return b.view_count - a.view_count
-    return 0
-  })
-
-  // Pagination Logic
-  const totalPages = Math.ceil(filteredNotices.length / itemsPerPage)
-  const paginatedNotices = filteredNotices.slice(
-    (page - 1) * itemsPerPage,
-    page * itemsPerPage
-  )
+  // Pagination Logic handled by server
+  const paginatedNotices = notices
 
   // Navigation Handlers
   const updateSearch = (updates: Partial<NoticeSearch>) => {

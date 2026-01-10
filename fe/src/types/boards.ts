@@ -2,7 +2,7 @@
  * Board Schema
  * Corresponds to backend `schemas.boards.BoardResponse`
  */
-export interface Board {
+export type Board = {
     id: number;
     name: string;
     slug: string; // URL identifier
@@ -18,7 +18,7 @@ export interface Board {
  * Board List Response
  * Corresponds to backend `schemas.boards.BoardListResponse`
  */
-export interface BoardListResponse {
+export type BoardListResponse = {
     boards: Board[];
     total: number;
 }

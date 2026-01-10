@@ -1,6 +1,6 @@
 import type { ChangeEvent } from 'react';
 
-interface NoticeFiltersProps {
+type NoticeFiltersProps = {
     mainCategory: string;
     onMainCategoryChange: (category: string) => void;
     subCategory: string;
@@ -33,8 +33,7 @@ export const NoticeFilters = ({
         ? [
             { value: 'all', label: '전체보기' },
             { value: 'event', label: '행사' },
-            { value: 'welfare', label: '복지' },
-            { value: 'news', label: '학과소식' }
+            { value: 'welfare', label: '복지' }
         ]
         : [
             { value: 'all', label: '전체보기' },
@@ -109,7 +108,7 @@ export const NoticeFilters = ({
                     >
                         <option value="newest">최신순</option>
                         <option value="oldest">오래된순</option>
-                        <option value="views">조회순</option>
+
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
                         <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

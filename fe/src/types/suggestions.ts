@@ -2,7 +2,7 @@
  * Suggestion Response (Detail)
  * Corresponds to backend `schemas.suggestions.SuggestionResponse`
  */
-export interface Suggestion {
+export type Suggestion = {
     id: number;
     author_id?: string | null;
     author_name: string;
@@ -19,7 +19,7 @@ export interface Suggestion {
  * Suggestion List Item
  * Corresponds to backend `schemas.suggestions.SuggestionListItem`
  */
-export interface SuggestionListItem {
+export type SuggestionListItem = {
     id: number;
     author_id?: string | null;
     author_name: string;
@@ -34,7 +34,7 @@ export interface SuggestionListItem {
  * Suggestion List Response
  * Corresponds to backend `schemas.suggestions.SuggestionListResponse`
  */
-export interface SuggestionListResponse {
+export type SuggestionListResponse = {
     suggestions: SuggestionListItem[];
     pagination: {
         page: number;

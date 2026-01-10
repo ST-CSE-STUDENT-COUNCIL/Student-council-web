@@ -1,0 +1,93 @@
+import { useEffect, useState } from 'react'
+
+import { Modal } from '../common/Modal'
+
+export function SuggestionCreateModal({
+    isOpen,
+    submitting,
+    onClose,
+    onSubmit,
+}: {
+    isOpen: boolean
+    submitting: boolean
+    onClose: () => void
+    onSubmit: (payload: { title: string; content: string }) => Promise<void>
+}) {
+    const [title, setTitle] = useState('')
+    const [content, setContent] = useState('')
+
+    useEffect(() => {
+        if (!isOpen) {
+            setTitle('')
+            setContent('')
+        }
+    }, [isOpen])
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        if (submitting) return
+        const trimmedTitle = title.trim()
+        const trimmedContent = content.trim()
+
+        if (trimmedTitle.length < 2 || trimmedContent.length < 5) {
+            alert('제목은 2자 이상, 내용은 5자 이상 입력해주세요.')
+            return
+        }
+
+        await onSubmit({ title: trimmedTitle, content: trimmedContent })
+    }
+
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={() => {
+                if (submitting) return
+                onClose()
+            }}
+            title="새 건의 작성"
+            maxWidth="max-w-xl"
+        >
+            <form className="space-y-5" onSubmit={handleSubmit}>
+                <div>
+                    <label className="block text-sm font-medium text-slate-700">제목</label>
+                    <input
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="예: 자습실 콘센트 추가 설치 요청"
+                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-slate-700">내용</label>
+                    <textarea
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        placeholder="구체적인 위치, 문제 상황, 필요 조치 등을 작성해주세요."
+                        rows={6}
+                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 resize-y"
+                    />
+                    <p className="mt-2 text-xs text-slate-500">익명 건의함으로 처리되며, 관리자가 확인 후 진행됩니다.</p>
+                </div>
+                <div className="flex items-center justify-end gap-3">
+                    <button
+                        type="button"
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                        onClick={() => {
+                            if (submitting) return
+                            onClose()
+                        }}
+                    >
+                        취소
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className={`rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition ${submitting ? 'bg-slate-400' : 'bg-slate-900 hover:-translate-y-0.5 hover:shadow-md'}`}
+                    >
+                        {submitting ? '등록 중...' : '등록하기'}
+                    </button>
+                </div>
+            </form>
+        </Modal>
+    )
+}

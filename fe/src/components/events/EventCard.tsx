@@ -11,7 +11,7 @@ import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/navigation'
 
-interface EventCardProps {
+type EventCardProps = {
     event: Event
     isActive?: boolean
 }
@@ -21,10 +21,10 @@ export const EventCard = ({ event, isActive }: EventCardProps) => {
     const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false)
     const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false)
 
-    // 이미지가 없거나 비어있는 경우, 단일 이미지 또는 플레이스홀더 사용
-    const displayImages = event.images && event.images.length > 0
+    // 이미지가 없거나 비어있는 경우 처리
+    const displayImages: string[] = (event.images && event.images.length > 0)
         ? event.images
-        : [event.image || 'https://via.placeholder.com/600x450']
+        : (event.image ? [event.image] : [])
 
     const handleApplicationSubmit = async (data: any) => {
         console.log('Application Submitted:', data)
@@ -44,27 +44,38 @@ export const EventCard = ({ event, isActive }: EventCardProps) => {
             <div className={`flex flex-col md:flex-row bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300 ${isActive ? 'ring-2 ring-blue-500' : ''}`}>
                 {/* Image Section - Stack on mobile, Left Side on Desktop */}
                 <div className="w-full md:w-7/12 relative group bg-gray-100">
-                    {/* 4:5 Aspect Ratio Container */}
-                    <div className="relative w-full" style={{ paddingBottom: '125%' }}>
-                        <div className="absolute inset-0 w-full h-full">
-                            <Swiper
-                                modules={[Pagination, Navigation]}
-                                pagination={{ clickable: true }}
-                                navigation={true}
-                                className="w-full h-full"
-                                spaceBetween={0}
-                                slidesPerView={1}
-                            >
-                                {displayImages.map((img, idx) => (
-                                    <SwiperSlide key={idx}>
-                                        <img
-                                            src={img}
-                                            alt={`${event.title} - ${idx + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </SwiperSlide>
-                                ))}
-                            </Swiper>
+                    {/* Portrait Poster Container (3:4 Ratio) */}
+                    <div className="relative w-full" style={{ paddingBottom: '133%' }}> {/* 세로형 포스터 비율 (3:4 ≈ 133%) */}
+                        <div className="absolute inset-0 w-full h-full bg-gray-200">
+                            {displayImages.length > 0 ? (
+                                <Swiper
+                                    modules={[Pagination, Navigation]}
+                                    pagination={{ clickable: true }}
+                                    navigation={true}
+                                    className="w-full h-full"
+                                    spaceBetween={0}
+                                    slidesPerView={1}
+                                >
+                                    {displayImages.map((img, idx) => (
+                                        <SwiperSlide key={idx} className="bg-gray-50 flex items-center justify-center">
+                                            <img
+                                                src={img}
+                                                alt={`${event.title} - ${idx + 1}`}
+                                                className="w-full h-full object-contain"
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                    e.currentTarget.parentElement?.classList.add('bg-gray-200', 'flex', 'items-center', 'justify-center');
+                                                }}
+                                            />
+                                        </SwiperSlide>
+                                    ))}
+                                </Swiper>
+                            ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                                    <img src="/assets/logo.svg" alt="Logo" className="w-16 h-16 opacity-20 mb-2 brightness-0" />
+                                    <span className="text-sm font-medium">이미지가 없습니다</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 

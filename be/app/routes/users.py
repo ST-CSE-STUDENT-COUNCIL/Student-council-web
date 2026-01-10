@@ -15,12 +15,12 @@ from app.database import supabase
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-router = APIRouter(prefix="/users", tags=["사용자"])
+router = APIRouter(prefix="/mypage", tags=["마이페이지"])
 limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get(
-    "/me",
+    "",
     response_model=UserProfileResponse,
     status_code=status.HTTP_200_OK,
     summary="내 프로필 조회",
@@ -35,7 +35,7 @@ async def get_my_profile(current_user: dict = Depends(get_current_user)):
 
 
 @router.post(
-    "/me/password",
+    "/password",
     response_model=ChangePasswordResponse,
     status_code=status.HTTP_200_OK,
     summary="비밀번호 변경",
@@ -87,7 +87,7 @@ async def change_password(
 
 
 @router.post(
-    "/me/verification-image",
+    "/verification-image",
     response_model=UploadVerificationImageResponse,
     status_code=status.HTTP_200_OK,
     summary="학적 인증 이미지 업로드",
@@ -113,6 +113,13 @@ async def upload_my_verification_image(
     업로드 후 자동으로 users 테이블의 verification_image_url에 저장됩니다.
     """
     try:
+        # 이미 승인된 사용자는 업로드 불가
+        if current_user.get('verification_status') == 'approved':
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="이미 승인된 사용자는 학적 인증 이미지를 재업로드할 수 없습니다"
+            )
+        
         # 이미지 업로드 및 검증
         file_path = await upload_verification_image(file)
         

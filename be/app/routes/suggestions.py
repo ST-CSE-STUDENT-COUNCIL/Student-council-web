@@ -15,6 +15,7 @@ from app.schemas.suggestions import (
     ErrorResponse
 )
 from app.utils.auth import require_verified_user, require_admin
+from app.utils.turnstile import verify_turnstile
 from app.database import supabase
 
 
@@ -53,6 +54,11 @@ async def create_suggestion(
 ):
     """건의함 작성 (승인된 사용자만 가능)"""
     try:
+        # 1. Turnstile 검증
+        if body.turnstile_token:
+            await verify_turnstile(token=body.turnstile_token)
+        
+        # 2. 건의함 데이터 생성
         suggestion_data = {
             "author_id": current_user["id"],
             "title": body.title,
@@ -104,7 +110,7 @@ async def create_suggestion(
     **권한:**
     - admin: 전체 목록 조회 가능, 작성자 실명 표시
     - council: 전체 목록 조회 가능, 작성자 익명
-    - 일반 사용자: 본인 작성 건만 조회 가능
+    - 일반 사용자: 전체 목록 조회 가능, 본인 작성 건만 실명 표시
     """,
     responses={
         401: {"model": ErrorResponse, "description": "인증 필요"},
@@ -132,8 +138,6 @@ async def get_suggestions(
         
         # 전체 개수 조회
         count_query = supabase.table("suggestions").select("id")
-        if not can_view_all:
-            count_query = count_query.eq("author_id", current_user["id"])
         if status_filter:
             count_query = count_query.eq("status", status_filter)
         
@@ -145,8 +149,6 @@ async def get_suggestions(
             .select("*")\
             .order("created_at", desc=True)
         
-        if not can_view_all:
-            query = query.eq("author_id", current_user["id"])
         if status_filter:
             query = query.eq("status", status_filter)
         
@@ -397,4 +399,59 @@ async def update_suggestion_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"건의함 상태 변경 실패: {str(e)}"
+        )
+
+
+@router.delete(
+    "/{suggestion_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="건의함 삭제",
+    description="건의함을 삭제합니다. (관리자 및 학생회 권한 필요)",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "권한 없음"},
+        404: {"model": ErrorResponse, "description": "건의함 없음"}
+    }
+)
+async def delete_suggestion(
+    suggestion_id: int,
+    current_user: dict = Depends(require_verified_user)
+):
+    """건의함 삭제 (admin, council 권한 필요)"""
+    try:
+        role = current_user.get("role", "student")
+        
+        # 권한 확인: admin 또는 council만 삭제 가능
+        if role not in ["admin", "council"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="건의함 삭제 권한이 없습니다"
+            )
+        
+        # 건의함 존재 여부 확인
+        check_result = supabase.table("suggestions")\
+            .select("id")\
+            .eq("id", suggestion_id)\
+            .execute()
+        
+        if not check_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="건의함을 찾을 수 없습니다"
+            )
+        
+        # 삭제 실행
+        supabase.table("suggestions")\
+            .delete()\
+            .eq("id", suggestion_id)\
+            .execute()
+        
+        return None
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"건의함 삭제 실패: {str(e)}"
         )

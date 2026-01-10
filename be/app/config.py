@@ -24,6 +24,25 @@ class Settings(BaseSettings):
     GMAIL_FROM_EMAIL: str
     GMAIL_FROM_NAME: str
     
+    # Google Sheets API
+    GOOGLE_SHEETS_API_KEY: str
+    
+    # Cloudflare R2
+    R2_ACCOUNT_ID: str
+    R2_ACCESS_KEY_ID: str
+    R2_SECRET_ACCESS_KEY: str
+    
+    # R2 버킷별 Public URL
+    R2_CLUB_IMAGES_URL: str
+    R2_EVENT_IMAGES_URL: str
+    R2_INTRODUCTION_IMAGES_URL: str
+    R2_POST_ATTACHMENTS_URL: str
+    R2_WELFARE_IMAGES_URL: str
+    
+    # Cloudflare Turnstile (선택사항 - 미설정시 검증 우회)
+    TURNSTILE_SECRET_KEY: str = ""
+    TURNSTILE_SITE_KEY: str = ""
+    
     # Security
     SECRET_KEY: str
     ALLOWED_EMAIL_DOMAIN: str
@@ -31,7 +50,7 @@ class Settings(BaseSettings):
     # Environment
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
-    FRONTEND_URL: str = "*"  # 기본값: 모든 origin 허용 (프론트 배포 후 변경 권장)
+    FRONTEND_URL: str = "*"  # 쉼표로 구분된 여러 URL 가능 (예: http://localhost:5173,https://yourdomain.com)
     
     # Server
     HOST: str = "0.0.0.0"
@@ -42,6 +61,13 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=True
     )
+    
+    def get_cors_origins(self) -> list[str]:
+        """FRONTEND_URL을 파싱하여 CORS origins 리스트 반환"""
+        if self.FRONTEND_URL == "*":
+            return ["*"]
+        # 쉼표로 구분된 URL들을 리스트로 변환 (공백 제거)
+        return [url.strip() for url in self.FRONTEND_URL.split(",") if url.strip()]
 
 
 # 싱글톤 인스턴스

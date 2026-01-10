@@ -72,6 +72,7 @@ class SignupRequest(BaseModel):
     student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
     phone: str = Field(..., pattern=r'^010-?\d{4}-?\d{4}$', description="전화번호")
     department: str = Field(..., description="학과")
+    turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile 토큰")
     
     @field_validator('password')
     @classmethod
@@ -111,6 +112,7 @@ class LoginRequest(BaseModel):
     """로그인 요청"""
     student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
     password: str
+    turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile 토큰")
 
 
 class LoginResponse(BaseModel):
@@ -123,6 +125,40 @@ class LoginResponse(BaseModel):
 class LogoutResponse(BaseModel):
     """로그아웃 응답"""
     message: str = "로그아웃되었습니다"
+
+
+class ForgotPasswordRequest(BaseModel):
+    """비밀번호 찾기 요청"""
+    student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
+
+
+class ForgotPasswordResponse(BaseModel):
+    """비밀번호 찾기 응답"""
+    message: str = "인증번호가 이메일로 발송되었습니다"
+    email: str
+
+
+class VerifyResetCodeRequest(BaseModel):
+    """비밀번호 재설정 인증 코드 확인 요청"""
+    student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
+    code: str = Field(..., min_length=6, max_length=6, description="6자리 인증번호")
+
+
+class VerifyResetCodeResponse(BaseModel):
+    """비밀번호 재설정 인증 코드 확인 응답"""
+    message: str = "인증이 완료되었습니다. 새 비밀번호를 설정해주세요."
+    student_id: str
+
+
+class ResetPasswordRequest(BaseModel):
+    """비밀번호 재설정 요청"""
+    student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
+    new_password: str = Field(..., min_length=8, description="새 비밀번호 (8자 이상)")
+
+
+class ResetPasswordResponse(BaseModel):
+    """비밀번호 재설정 응답"""
+    message: str = "비밀번호가 재설정되었습니다"
 
 
 class ErrorResponse(BaseModel):

@@ -1,16 +1,18 @@
 # 서울과기대 컴공학생회 홈페이지 백엔드
 
-FastAPI + Supabase 기반 학생회 홈페이지 백엔드 API
+FastAPI + Supabase + Cloudflare R2 기반 학생회 홈페이지 백엔드 API
 
 ## 기술 스택
 
 - **Framework**: FastAPI 0.115.0
 - **Database**: PostgreSQL (Supabase)
 - **Authentication**: Supabase Auth (JWT)
-- **Storage**: Supabase Storage (Private bucket)
- - **Email**: Gmail HTTP API (google-auth/googleapiclient) — migrated from SMTP
+- **Storage**: Cloudflare R2 (5 Public Buckets) + Supabase Storage (Private)
+- **Bot Prevention**: Cloudflare Turnstile 🆕
+- **Email**: Gmail HTTP API (google-auth/googleapiclient)
 - **Rate Limiting**: slowapi
 - **File Upload**: python-multipart
+- **HTTP Client**: httpx (Turnstile 검증용)
 - **Python**: 3.12+
 
 ## 프로젝트 구조
@@ -26,26 +28,56 @@ be/
 │   │   ├── __init__.py
 │   │   ├── auth.py          # 인증 관련 API
 │   │   ├── admin.py         # 관리자 API
-│   │   ├── users.py         # 사용자 프로필 API
-│   │   ├── notices.py       # 공지사항 API (통합)
+│   │   ├── users.py         # 마이페이지 API (경로: /mypage)
+│   │   ├── activities.py    # 통합 활동 관리 API (행사/수요조사/설문/카톡초대/회비/공지) 🆕
+│   │   ├── boards.py        # 게시판 API
+│   │   ├── posts.py         # 게시글 API (공지사항)
+│   │   ├── clubs.py         # 동아리 API
+│   │   ├── welfare.py       # 복지사업 API (사물함, 물품대여)
+│   │   ├── introductions.py # 학생회 소개 이미지 API
 │   │   └── suggestions.py   # 건의함 API
 │   ├── schemas/             # Pydantic 스키마
 │   │   ├── __init__.py
 │   │   ├── auth.py          # 인증 요청/응답 모델
 │   │   ├── admin.py         # 관리자 요청/응답 모델
 │   │   ├── users.py         # 사용자 요청/응답 모델
-│   │   ├── notices.py       # 공지사항 요청/응답 모델
+│   │   ├── boards.py        # 게시판 요청/응답 모델
+│   │   ├── posts.py         # 게시글 요청/응답 모델
+│   │   ├── clubs.py         # 동아리 요청/응답 모델
+│   │   ├── events.py        # 행사 요청/응답 모델 🆕
+│   │   ├── welfare.py       # 복지사업 요청/응답 모델
+│   │   ├── introductions.py # 학생회 소개 이미지 요청/응답 모델
 │   │   └── suggestions.py   # 건의함 요청/응답 모델
 │   └── utils/               # 유틸리티
 │       ├── __init__.py
 │       ├── email.py         # 이메일 발송
 │       ├── auth.py          # 인증/권한 미들웨어
-│       └── storage.py       # 파일 업로드 관리
+│       ├── login_security.py # 로그인 보안 (차단 관리)
+│       ├── storage.py       # Supabase Storage (Private)
+│       ├── r2_storage.py    # Cloudflare R2 스토리지 (Public) 🆕
+│       ├── turnstile.py     # Cloudflare Turnstile 검증 🆕
+│       └── sheets.py        # Google Sheets API
 ├── db/
 │   ├── schema.sql           # 데이터베이스 스키마
 │   ├── reset.sql            # 데이터 초기화 스크립트
+│   ├── migrations/          # 마이그레이션 SQL 파일
+│   │   ├── 001_update_clubs_table.sql
+│   │   ├── 002_update_locker_periods_table.sql
+│   │   ├── 003_redesign_welfare_system.sql
+│   │   ├── 004_add_login_attempt_tracking.sql
+│   │   ├── 005_add_password_reset_table.sql
+│   │   ├── 006_create_introduction_images_storage.sql
+│   │   ├── 007_add_guest_registration_support.sql 🆕
+│   │   └── README.md
 │   └── README.md
+├── postman/                 # Postman 테스트 컬렉션 🆕
+│   └── Events_API.postman_collection.json
+├── test_turnstile.py        # Turnstile 테스트 스크립트 🆕
+├── test_turnstile_api.sh    # API 테스트 가이드 🆕
+├── TURNSTILE_SETUP_GUIDE.md # Turnstile 설정 가이드 🆕
+├── R2_SETUP_GUIDE.md        # Cloudflare R2 설정 가이드
 ├── .env                     # 환경변수 (gitignore)
+├── .env.example             # 환경변수 예시
 ├── .env.render.example      # Render 배포 예시
 ├── .gitignore
 ├── requirements.txt         # 패키지 의존성
@@ -76,16 +108,34 @@ pip install -r requirements.txt
 ```env
 # Supabase
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your_service_role_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 SUPABASE_ANON_KEY=your_anon_key
 
-# Gmail HTTP API (OAuth2)
-# Use OAuth2 client ID/secret + refresh token for the Gmail HTTP API migration.
-GMAIL_CLIENT_ID=your_gmail_oauth_client_id
-GMAIL_CLIENT_SECRET=your_gmail_oauth_client_secret
-GMAIL_REFRESH_TOKEN=your_gmail_refresh_token
+# Gmail OAuth2 API
+GOOGLE_CLIENT_ID=your_gmail_oauth_client_id
+GOOGLE_CLIENT_SECRET=your_gmail_oauth_client_secret
+GOOGLE_REFRESH_TOKEN=your_gmail_refresh_token
 GMAIL_FROM_EMAIL=your_email@gmail.com
 GMAIL_FROM_NAME=서울과기대 컴공학생회
+
+# Google Sheets API (복지사업 물품 재고 관리)
+GOOGLE_SHEETS_API_KEY=your_google_sheets_api_key
+
+# Cloudflare R2 Storage
+R2_ACCOUNT_ID=your_cloudflare_account_id
+R2_ACCESS_KEY_ID=your_r2_access_key_id
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
+
+# R2 Public Bucket URLs (각 버킷의 R2.dev 서브도메인)
+R2_CLUB_IMAGES_URL=https://pub-xxxxx.r2.dev
+R2_EVENT_IMAGES_URL=https://pub-xxxxx.r2.dev  # Activities 이미지 저장 (activity-images 또는 event-images 사용)
+R2_INTRODUCTION_IMAGES_URL=https://pub-xxxxx.r2.dev
+R2_POST_ATTACHMENTS_URL=https://pub-xxxxx.r2.dev
+R2_WELFARE_IMAGES_URL=https://pub-xxxxx.r2.dev
+
+# Cloudflare Turnstile (봇 방지)
+TURNSTILE_SECRET_KEY=your_secret_key_here
+TURNSTILE_SITE_KEY=your_site_key_here
 
 # Security
 SECRET_KEY=your_secret_key_here
@@ -94,7 +144,7 @@ ALLOWED_EMAIL_DOMAIN=seoultech.ac.kr
 # Environment
 ENVIRONMENT=development
 DEBUG=true
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:5173  # 쉼표로 구분하여 여러 URL 설정 가능 (예: http://localhost:5173,http://localhost:3000)
 
 # Server
 HOST=0.0.0.0
@@ -129,14 +179,17 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `POST /auth/send-verification` - 이메일 인증번호 발송
 - `POST /auth/verify-email` - 이메일 인증 확인
 - `POST /auth/check-student-id` - 학번 중복 확인
-- `POST /auth/signup` - 회원가입
-- `POST /auth/login` - 로그인
+- `POST /auth/signup` - 회원가입 (Turnstile 적용 🆕)
+- `POST /auth/login` - 로그인 (Turnstile 적용 🆕)
 - `POST /auth/logout` - 로그아웃
+- `POST /auth/forgot-password` - 비밀번호 찾기 (학번 입력 → 이메일 인증번호 발송)
+- `POST /auth/verify-reset-code` - 비밀번호 재설정 인증번호 확인
+- `POST /auth/reset-password` - 비밀번호 재설정
 
-**사용자 (Users)**
-- `GET /users/me` - 내 프로필 조회
-- `POST /users/me/password` - 비밀번호 변경
-- `POST /users/me/verification-image` - 학적 인증 이미지 업로드
+**마이페이지 (MyPage)** ⚠️ 로그인 필요
+- `GET /mypage` - 내 프로필 조회
+- `POST /mypage/password` - 비밀번호 변경
+- `POST /mypage/verification-image` - 학적 인증 이미지 업로드
 
 **관리자 (Admin)** ⚠️ 관리자 권한 필요
 - `GET /admin/users/pending` - 승인 대기 회원 목록 조회
@@ -145,19 +198,76 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `POST /admin/users/{user_id}/reject` - 회원 거부
 - `PATCH /admin/users/{user_id}/role` - 회원 역할 변경
 - `PATCH /admin/users/{user_id}/membership` - 회비 납부 상태 변경
+- `GET /admin/users/blocked` - 차단된 사용자 목록 조회 (IP 로그 포함)
+- `POST /admin/users/{student_id}/unblock` - 사용자 차단 해제
 
-**공지사항 (Notices)** ⚠️ 작성은 관리자만 가능
-- `GET /notices` - 공지사항 목록 조회 (mainCategory, subCategory 필터)
-  - mainCategory: `student_council` (학생회), `democracy` (민주자치)
-  - subCategory: `all`, `event` (행사), `welfare` (복지), `announcement` (공고), `notice` (고시), `meeting` (대표자회의), `rules` (학생회칙)
-- `GET /notices/{notice_id}` - 공지사항 상세 조회
-- `POST /notices` - 공지사항 작성 (admin)
-- `PATCH /notices/{notice_id}` - 공지사항 수정 (admin)
-- `DELETE /notices/{notice_id}` - 공지사항 삭제 (admin, Soft Delete)
+**게시판 (Boards)**
+- `GET /boards` - 게시판 목록 조회
+- `GET /boards/{board_id}` - 게시판 상세 조회
+
+**게시글 (Posts)** ⚠️ 작성은 관리자만 가능
+- `GET /posts` - 게시글 목록 조회 (공개, 로그인 불필요)
+  - board_id: 특정 게시판 필터링
+  - is_pinned: 고정글 필터
+  - search: 제목/내용 검색
+- `GET /posts/{post_id}` - 게시글 상세 조회 (공개, 로그인 불필요)
+- `POST /posts` - 게시글 작성 (admin, multipart/form-data)
+- `PATCH /posts/{post_id}` - 게시글 수정 (admin)
+- `DELETE /posts/{post_id}` - 게시글 삭제 (admin, Soft Delete)
+
+**동아리 (Clubs)**
+- `GET /clubs` - 동아리 목록 조회 (공개, 로그인 불필요)
+- `GET /clubs/{club_id}` - 동아리 상세 조회 (공개, 로그인 불필요)
+- `POST /clubs` - 동아리 추가 (admin, multipart/form-data)
+- `PATCH /clubs/{club_id}` - 동아리 수정 (admin)
+- `DELETE /clubs/{club_id}` - 동아리 삭제 (admin)
+
+**통합 활동 관리 (Activities)** 🆕
+6가지 활동 유형을 통합 관리하는 새로운 API입니다.
+
+| 활동 유형 | type 값 | 설명 |
+|---------|---------|------|
+| 행사 | `event` | 학생회 주최 행사 (MT, 축제 등) |
+| 수요조사 | `demand_survey` | 학생들의 의견/수요 파악 (행사 기획 전) |
+| 설문조사 | `survey` | 사후 만족도 조사 또는 일반 설문 |
+| 카카오톡 초대 | `kakao_invite` | 오픈채팅방 링크 제공 |
+| 회비 안내 | `fee_payment` | 회비 납부 안내 및 정보 |
+| 공지사항 | `notice` | 일반 공지 (신청/설문 불필요) |
+
+**사용자용 API**
+- `GET /activities` - 활동 목록 조회 (공개, 로그인 불필요)
+  - type: 활동 유형 필터 (event, demand_survey, survey, kakao_invite, fee_payment, notice)
+- `GET /activities/{activity_id}` - 활동 상세 조회 (공개, 로그인 불필요)
+- `POST /activities/{activity_id}/register` - 활동 신청/참여 (로그인 필요)
+  - form_fields 입력 (식사 선호도, 알레르기 정보 등 관리자가 수집하려는 추가 정보)
+- `DELETE /activities/{activity_id}/register` - 신청/참여 취소 (로그인 필요)
+- `POST /activities/{activity_id}/survey` - 설문 응답 제출 (로그인 필요)
+  - survey_config의 questions 응답 (예: {"q1": "매우 만족", "q2": "음식이 좋았습니다"})
+
+**관리자용 API** ⚠️ 관리자 권한 필요
+- `POST /activities` - 활동 생성 (multipart/form-data, 이미지 여러 장 가능)
+- `PATCH /activities/{activity_id}` - 활동 수정
+- `DELETE /activities/{activity_id}` - 활동 삭제 (Soft Delete)
+- `GET /activities/{activity_id}/registrations` - 참여자/응답자 목록
+- `GET /activities/{activity_id}/survey-stats` - 설문 통계 (객관식 문항 집계)
+
+**복지사업 (Welfare)**
+- `GET /welfare/locker_periods` - 사물함 정보 조회 (공개, 로그인 불필요)
+- `PUT /welfare/locker_periods` - 사물함 정보 수정 (admin)
+- `GET /welfare/welfare_rentals` - 물품대여 목록 조회 (공개, 로그인 불필요)
+- `POST /welfare/welfare_rentals` - 물품대여 항목 추가 (admin, multipart/form-data)
+- `PUT /welfare/welfare_rentals/{rental_id}` - 물품대여 항목 수정 (admin)
+- `DELETE /welfare/welfare_rentals/{rental_id}` - 물품대여 항목 삭제 (admin)
+
+**학생회 소개 (Introductions)**
+- `GET /introductions/images` - 소개 이미지 목록 조회 (공개, 로그인 불필요)
+- `POST /introductions/images` - 이미지 업로드 (admin, multipart/form-data)
+- `PATCH /introductions/images/{image_id}` - 이미지 수정 (admin)
+- `DELETE /introductions/images/{image_id}` - 이미지 삭제 (admin)
 
 **건의함 (Suggestions)**
-- `POST /suggestions` - 건의함 작성 (익명)
-- `GET /suggestions` - 건의함 목록 조회
+- `POST /suggestions` - 건의함 작성 (Turnstile 적용 🆕)
+- `GET /suggestions` - 건의함 목록 조회 (본인 작성 건만 실명 표시)
 - `GET /suggestions/{suggestion_id}` - 건의함 상세 조회
 - `PATCH /suggestions/{suggestion_id}/status` - 건의함 상태 변경 (admin)
 
@@ -179,6 +289,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    └─> Supabase Auth에 계정 생성
    └─> users 테이블에 프로필 저장
    └─> verification_status = 'pending' (관리자 승인 대기)
+   💡 프론트엔드: password와 passwordConfirm 일치 확인 후 API 호출
 
 5. 로그인 (POST /auth/login)
    ⚠️ pending 상태에서도 로그인 가능
@@ -187,6 +298,23 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 6. 학적 인증 이미지 업로드 (POST /users/me/verification-image)
    └─> 로그인 필수 (JWT 토큰 필요)
    └─> Private Storage에 저장
+```
+
+## 비밀번호 재설정 플로우 (로그인 전)
+
+```
+1. 비밀번호 찾기 (POST /auth/forgot-password)
+   └─> 학번 입력
+   └─> 등록된 이메일로 6자리 인증번호 발송 (5분 유효, 1분 1회 제한)
+
+2. 인증번호 확인 (POST /auth/verify-reset-code)
+   └─> 학번 + 인증번호 검증
+
+3. 비밀번호 재설정 (POST /auth/reset-password)
+   └─> 새 비밀번호 설정 (8자 이상)
+   └─> 로그인 차단 정보도 자동 초기화
+   💡 프론트엔드: newPassword와 newPasswordConfirm 일치 확인 후 API 호출
+```
    └─> users 테이블에 자동 FK 연결 (orphan 파일 방지)
    └─> Rate limit: 1시간에 3회
 
@@ -219,13 +347,24 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ### 📤 파일 업로드 시스템
 
+**Cloudflare R2 Storage Buckets:** (모두 Public)
+- `club-images` - 동아리 이미지
+- `event-images` - 행사 이미지 🆕
+- `introduction-images` - 학생회 소개 이미지
+- `post-attachments` - 공지사항 첨부파일
+- `welfare-images` - 복지사업 물품 이미지
+
+**설정:**
+- **Public URL**: 각 버킷별 R2.dev 서브도메인 설정
+- **업로드**: boto3 S3 호환 API 사용
+- **접근**: Public URL로 영구 접근 가능
+
 **학적 인증 이미지 업로드:**
+- **엔드포인트**: `POST /mypage/verification-image`
 - **형식**: JPG, PNG만 허용
 - **크기**: 최대 5MB
 - **저장소**: Supabase Storage Private bucket (`verification-images`)
 - **보안**: Signed URL로만 접근 가능 (1시간 유효)
-
-Note: Attachment endpoints integration is in Phase 2 — helpers and schema exist, final wiring and tests pending.
 - **Rate Limiting**: 1시간에 3회 제한
 - **로그인**: 필수 (FK 관계 보장)
 
@@ -236,13 +375,40 @@ Authorization: Bearer <admin_access_token>
 ```
 응답에 `verification_image_url` 필드에 Signed URL 포함 (1시간 유효)
 
-**공지사항 첨부파일 업로드:**
+**게시글 첨부파일 업로드:**
 - **형식**: JPG, JPEG, PNG, PDF
 - **크기**: 최대 10MB
-- **저장소**: Supabase Storage Private bucket (`post-attachments`)
-- **요청 방식**: `POST /notices`에서 multipart/form-data로 게시글과 함께 업로드
-- **보안**: Signed URL로만 접근 가능 (1시간 유효)
+- **저장소**: Cloudflare R2 (`post-attachments`)
+- **요청 방식**: `POST /posts`에서 multipart/form-data로 게시글과 함께 업로드
+- **접근**: Public URL로 영구적 접근 가능 (로그인 불필요)
 - **제한**: 요청당 최대 5개
+
+**동아리 이미지:**
+- **저장소**: Cloudflare R2 (`club-images`)
+- **접근**: Public URL로 영구적 접근 가능
+
+**행사 이미지:** 🆕
+- **저장소**: Cloudflare R2 (`event-images`)
+- **형식**: JPG, JPEG, PNG
+- **크기**: 최대 5MB (썸네일), 10MB (상세 이미지)
+- **요청 방식**: 
+  - 행사 생성: `POST /events` - multipart/form-data, 여러 장 업로드 가능
+  - 이미지 추가: `POST /events/{event_id}/images` - 추가 업로드 가능
+- **접근**: Public URL로 영구적 접근 가능
+
+**복지사업 물품 이미지:**
+- **저장소**: Cloudflare R2 (`welfare-images`)
+- **형식**: JPG, JPEG, PNG
+- **크기**: 최대 5MB
+- **요청 방식**: `POST /welfare/welfare_rentals`에서 multipart/form-data로 업로드
+- **접근**: Public URL로 영구적 접근 가능
+
+**학생회 소개 이미지:**
+- **저장소**: Cloudflare R2 (`introduction-images`)
+- **형식**: JPG, JPEG, PNG
+- **크기**: 최대 10MB
+- **요청 방식**: `POST /introductions/images`에서 multipart/form-data로 업로드 (admin 전용)
+- **접근**: Public URL로 영구적 접근 가능
 
 ### 📮 건의함
 
@@ -255,20 +421,93 @@ Authorization: Bearer <admin_access_token>
 - **상태 관리**: received(접수) → in_progress(처리중) → rejected(반려) / approved(승인)
 - **사유/반영 내용**: 작성자 본인과 관리자만 확인 가능
 
-### 📰 공지사항
+### 📰 게시글 (Posts)
 
-- **조회**: 승인된 사용자만 가능
+- **조회**: 로그인 불필요 (공개 API)
 - **작성/수정/삭제**: 관리자만 가능
-- **카테고리 구조**:
-  - **학생회** (student_council): 행사(event), 복지(welfare)
-  - **민주자치** (democracy): 공고(announcement), 고시(notice), 대표자회의(meeting), 학생회칙(rules)
-- **필터링**: `mainCategory`와 `subCategory`로 게시글 조회
-  - 예: `GET /notices?mainCategory=student_council&subCategory=event`
-  - `subCategory=all`로 해당 카테고리 전체 조회
-- **검색**: 제목 + 내용 검색 지원
+- **게시판별 조회**: board_id 파라미터로 필터링
+- **필터링**: 
+  - `board_id`: 특정 게시판 필터
+  - `is_pinned`: 고정글만 조회
+  - `search`: 제목 + 내용 검색
 - **정렬**: 고정 게시글 우선, 최신순/오래된순
-- **첨부파일**: 최대 5개, JPG/PNG/PDF, 10MB 제한
+- **첨부파일**: 최대 5개, JPG/PNG/PDF, 10MB 제한, Public URL (영구적)
 - **Soft Delete**: 삭제 시 is_deleted 플래그 변경 (복구 가능)
+
+### � 통합 활동 시스템 (Activities)
+
+**6가지 활동 유형**을 하나의 테이블로 통합 관리:
+
+| 활동 유형 | type 값 | 설명 | 예시 |
+|---------|---------|------|------|
+| 행사 | `event` | 학생회 주최 행사 | MT, 축제, 체육대회 |
+| 수요조사 | `demand_survey` | 학생 의견 수렴 | 어떤 행사를 원하시나요? |
+| 설문조사 | `survey` | 사후 만족도 조사 | MT 만족도 조사 |
+| 카카오톡 초대 | `kakao_invite` | 오픈채팅방 링크 제공 | 새내기 오픈채팅방 |
+| 회비 안내 | `fee_payment` | 회비 납부 정보 | 학생회비 납부 안내 |
+| 공지사항 | `notice` | 일반 공지 | 학과 행사 일정 공지 |
+
+**form_fields vs survey_config**
+- **form_fields**: 신청 시 추가 정보 수집 (예: 식사 선호도, 알레르기, 티셔츠 사이즈)
+  ```json
+  {
+    "meal_preference": "채식",
+    "allergies": "땅콩 알레르기",
+    "tshirt_size": "L"
+  }
+  ```
+- **survey_config**: 설문 문항 (객관식/주관식 구분, 문항 ID는 q1, q2 등)
+  ```json
+  {
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple_choice",
+        "question": "행사 만족도를 평가해주세요",
+        "options": ["매우 만족", "만족", "보통", "불만족", "매우 불만족"]
+      },
+      {
+        "id": "q2",
+        "type": "text",
+        "question": "개선이 필요한 점이 있다면 작성해주세요"
+      }
+    ]
+  }
+  ```
+
+**설문 응답 형식**
+```json
+{
+  "q1": "매우 만족",
+  "q2": "음식이 좋았습니다. 다음에도 참여하고 싶어요."
+}
+```
+
+**공개 엔드포인트:**
+- `GET /activities` - 활동 목록 조회 (type으로 필터링 가능)
+- `GET /activities/{activity_id}` - 활동 상세 조회 (이미지 포함)
+- `POST /activities/{activity_id}/register` - 활동 신청/참여
+  - 로그인 필수
+  - Body: form_fields (관리자가 정의한 추가 입력 필드)
+- `DELETE /activities/{activity_id}/register` - 신청/참여 취소
+- `POST /activities/{activity_id}/survey` - 설문 응답 제출
+  - Body: survey_responses (예: {"q1": "매우 만족", "q2": "text response"})
+
+**관리자 전용 엔드포인트:**
+- `POST /activities` - 활동 생성 (multipart/form-data: 여러 이미지 업로드 가능)
+- `PATCH /activities/{activity_id}` - 활동 정보 수정
+- `DELETE /activities/{activity_id}` - 활동 삭제 (Soft Delete)
+- `GET /activities/{activity_id}/registrations` - 참여자/응답자 목록
+- `GET /activities/{activity_id}/survey-stats` - 설문 통계 (객관식 문항 집계)
+
+**특징:**
+- 트랜잭션 처리: 정원 확인, 중복 방지 (`register_for_activity()` DB 함수)
+- 정원 관리: current_count/max_capacity 자동 관리
+- 회비 납부자 전용: `require_membership=true` 설정 가능
+- 회원/비회원 모두 신청 가능
+- Soft Delete: 과거 활동 데이터 보존
+- 이미지 업로드: Cloudflare R2에 저장, 여러 장 가능
+- 이미지 관리: `POST /activities/{id}/images`, `DELETE /activities/{id}/images/{image_id}`
 
 ### 📧 이메일 인증
 
@@ -283,7 +522,7 @@ Authorization: Bearer <admin_access_token>
 slowapi를 사용한 요청 횟수 제한:
 
 - `POST /auth/send-verification` - 1분에 1회
-- `POST /auth/login` - 5분에 10회
+- `POST /auth/login` - **IP 기반: 5분에 100회** (공용 IP 고려)
 - `POST /auth/upload-verification-image` - 1시간에 3회 (deprecated)
 - `POST /users/me/verification-image` - 1시간에 3회
 
@@ -298,6 +537,26 @@ slowapi를 사용한 요청 횟수 제한:
 - 6자리 랜덤 코드 생성
 - 5분간 유효
 - 인증 완료 후 회원가입 가능
+
+### 로그인 보안 (학번 기반 차단)
+
+**누적 실패 횟수에 따른 차단 정책:**
+- **누적 5회 실패** → 10분간 로그인 차단
+- **누적 10회 실패** → 1시간 동안 로그인 차단
+- **누적 15회 실패** → 영구 차단 (계정 삭제 안 함, 관리자 문의 필요)
+
+**보안 기능:**
+- 로그인 성공 시 실패 횟수 자동 초기화
+- `login_attempts` 테이블: 모든 시도 기록 (학번, 성공/실패, IP, 시간)
+- `login_blocks` 테이블: 차단 상태 관리 (실패 횟수, 차단 만료 시각, 차단 사유)
+- 실패 시 남은 횟수 표시 (예: "실패 3/15")
+- 차단 중일 때 남은 시간 안내
+
+**악의적 공격 방어:**
+- 15회 실패 시 계정 삭제하지 않고 **영구 차단**만 적용
+- 관리자가 `/admin/users/blocked` API로 IP 로그 확인
+- 실제 본인 확인 시 `/admin/users/{student_id}/unblock` API로 차단 해제
+- 타인 학번으로 공격해도 계정 삭제되지 않음
 
 ### 관리자 승인
 - 회원가입 후 `verification_status='pending'`
@@ -323,9 +582,55 @@ FROM users
 WHERE role = 'admin';
 ```
 
-## Supabase Storage 설정
+## Cloudflare R2 Storage 설정
 
-### Private Bucket 생성
+### Bucket 구조
+
+프로젝트는 5개의 R2 Public bucket을 사용합니다:
+
+1. **club-images**
+   - 용도: 동아리 이미지
+   - 접근: Public URL (R2.dev)
+
+2. **event-images** (또는 activity-images) 🆕
+   - 용도: 활동 이미지 (행사, 수요조사, 설문 등)
+   - 접근: Public URL (R2.dev)
+
+3. **introduction-images**
+   - 용도: 학생회 소개 이미지
+   - 접근: Public URL (R2.dev)
+
+4. **post-attachments**
+   - 용도: 공지사항 첨부파일
+   - 접근: Public URL (R2.dev)
+
+5. **welfare-images**
+   - 용도: 복지사업 물품 이미지
+   - 접근: Public URL (R2.dev)
+
+### R2 Bucket 생성 방법
+
+1. Cloudflare Dashboard → R2 → Create bucket
+2. Bucket name 입력 (예: `club-images`)
+3. Location: Automatic
+4. **Public Access 활성화**:
+   - Settings → Public Access → Allow Access
+   - R2.dev subdomain 자동 생성됨
+5. 생성된 R2.dev URL을 `.env` 파일의 해당 변수에 설정
+
+### API Keys 발급
+
+1. Cloudflare Dashboard → R2 → Manage R2 API Tokens
+2. Create API Token
+3. Permissions: Object Read & Write
+4. 생성된 키를 `.env` 파일에 설정:
+   - `R2_ACCOUNT_ID`
+   - `R2_ACCESS_KEY_ID`
+   - `R2_SECRET_ACCESS_KEY`
+
+### Supabase Storage 설정 (학적 인증용)
+
+**Private Bucket 생성** (학적 인증 이미지 전용):
 
 1. Supabase Dashboard → Storage
 2. `New bucket` 클릭
@@ -333,11 +638,7 @@ WHERE role = 'admin';
 4. **Public bucket**: ❌ 체크 해제 (Private)
 5. `Create bucket`
 
-### RLS (Row Level Security) 정책
-
-```sql
--- Service Key를 사용하므로 RLS 정책 불필요
--- 백엔드에서 Signed URL로 접근 제어
+> **Note**: Cloudflare R2로 마이그레이션 완료. 학적 인증 이미지만 Supabase Private Storage 사용.
 ```
 
 ## 개발
@@ -372,12 +673,86 @@ DEBUG=false
 FRONTEND_URL=https://yourdomain.com
 ```
 
+### 동아리 API
+
+**공개 엔드포인트:**
+- `GET /clubs` - 동아리 목록 조회
+- `GET /clubs/{club_id}` - 동아리 상세 조회
+
+**관리자 전용 엔드포인트:**
+- `POST /clubs` - 동아리 추가 (multipart/form-data: name, description, website_url, image)
+- `PATCH /clubs/{club_id}` - 동아리 정보 수정 (JSON: name, description, website_url)
+- `DELETE /clubs/{club_id}` - 동아리 삭제
+
+### 학생회 소개 이미지 API
+
+**공개 엔드포인트:**
+- `GET /introductions/images` - 학생회 소개 이미지 목록 조회
+  - Query: `active_only` (boolean, 기본값: true)
+
+**관리자 전용 엔드포인트:**
+- `POST /introductions/images` - 이미지 업로드 (multipart/form-data: title, display_order, image)
+  - 최대 10MB, jpg/jpeg/png만 허용
+  - Storage 정책: 모든 사용자 읽기 가능, 관리자만 쓰기/수정/삭제
+- `PATCH /introductions/images/{image_id}` - 이미지 정보 수정 (JSON: title, display_order, is_active)
+- `DELETE /introductions/images/{image_id}` - 이미지 삭제
+
 ### 페이지네이션
 - 기본 페이지 크기: 20 (posts API 기본값)
 
 ### 기타 업데이트
 - `db/reset.sql` 스크립트가 `db/`에 추가되어 데이터 초기화 및 시퀀스 리셋을 돕습니다.
 - 배포용 예시 환경 파일 `.env.render.example`를 루트에 추가했습니다. 민감값은 Render Secrets에 설정하세요.
+- Google Sheets API 통합으로 복지사업 물품 재고를 실시간 조회합니다.
+
+### 마이그레이션
+
+데이터베이스 스키마 변경 사항은 `db/migrations/` 디렉토리에 순차적으로 관리됩니다:
+
+1. `001_update_clubs_table.sql` - 동아리 테이블 업데이트
+2. `002_update_locker_periods_table.sql` - 사물함 기간 테이블 업데이트
+3. `003_redesign_welfare_system.sql` - 복지사업 시스템 재설계 (Google Sheets 통합)
+4. `004_add_login_attempt_tracking.sql` - 로그인 시도 추적 및 차단 시스템
+5. `005_add_password_reset_table.sql` - 비밀번호 재설정 테이블 추가
+6. `006_create_introduction_images_storage.sql` - 학생회 소개 이미지 (Supabase Storage 정책 - 더 이상 사용 안 함)
+7. `007_add_guest_registration_support.sql` - 비회원 행사 신청 지원
+8. `008_add_activities_system.sql` - 통합 활동 관리 시스템 (행사/수요조사/설문/카톡초대/회비/공지) 🆕
+
+마이그레이션 실행 (Supabase SQL Editor):
+```sql
+-- 각 파일의 SQL을 복사해서 SQL Editor에 붙여넣고 Run
+```
+
+> **Note**: Migration 006은 Cloudflare R2로 마이그레이션 완료되어 더 이상 사용하지 않음.
+
+## 보안 기능
+
+### Cloudflare Turnstile (봇 방지) 🆕
+
+다음 API에 Turnstile 캡챠가 적용되어 있습니다:
+- 회원가입
+- 로그인
+- 건의함 작성
+
+**설정 방법**: [TURNSTILE_SETUP_GUIDE.md](TURNSTILE_SETUP_GUIDE.md) 참고
+
+**동작 방식**:
+- `TURNSTILE_SECRET_KEY`가 설정된 경우: 모든 요청에 `turnstile_token` 필요
+- `TURNSTILE_SECRET_KEY`가 미설정된 경우: 검증 우회 (개발 환경)
+
+**프론트엔드 Site Key**: `.env`의 `TURNSTILE_SITE_KEY` 값을 프론트엔드에 전달
+
+### 로그인 보안
+
+- 5회 실패 → 10분 차단
+- 10회 실패 → 1시간 차단
+- 15회 실패 → 영구 차단 (관리자 해제 필요)
+- IP 기반 로깅
+
+### RLS (Row Level Security)
+
+- Supabase Storage의 private 버킷(verification-images)에 RLS 정책 적용
+- 학적 인증 이미지는 관리자만 조회 가능
 
 ## 문제 해결
 
@@ -403,7 +778,3 @@ kill -9 <PID>
 ## 라이선스
 
 MIT
-
-## 기여
-
-Pull Request 환영합니다!

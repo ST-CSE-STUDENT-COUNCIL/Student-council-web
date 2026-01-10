@@ -1,6 +1,6 @@
-import type { Club } from './ClubCard'
+import type { Club } from '../../types/clubs'
 
-interface Props {
+type Props = {
     club: Club | null
     onClose: () => void
 }
