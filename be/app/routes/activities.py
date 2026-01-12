@@ -34,7 +34,7 @@ from app.utils.r2_storage import (
     validate_file_extension,
     get_bucket_url
 )
-from app.database import supabase
+from app.database import supabase, get_supabase_admin
 import uuid
 import os
 
@@ -585,7 +585,8 @@ async def create_activity(
             "created_by": current_user["id"]
         }
         
-        result = supabase.table("activities").insert(activity_data).execute()
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table("activities").insert(activity_data).execute()
         
         if not result.data:
             raise HTTPException(
@@ -604,7 +605,7 @@ async def create_activity(
                     'image_url': img.get("public_url"),
                     'display_order': idx
                 }
-                supabase.table('activity_images').insert(image_data).execute()
+                admin_supabase.table('activity_images').insert(image_data).execute()
         
         return ActivityResponse(
             id=activity["id"],
@@ -1001,7 +1002,8 @@ async def add_activity_image(
             'caption': caption
         }
         
-        result = supabase.table('activity_images').insert(image_data).execute()
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table('activity_images').insert(image_data).execute()
         
         if not result.data:
             raise HTTPException(
@@ -1041,9 +1043,10 @@ async def delete_activity_image(
     current_user: dict = Depends(require_admin)
 ):
     """활동 이미지 삭제 (관리자 전용)"""
+    admin_supabase = get_supabase_admin()
     try:
         # 이미지 조회
-        image_result = supabase.table('activity_images')\
+        image_result = admin_supabase.table('activity_images')\
             .select('*')\
             .eq('id', image_id)\
             .eq('activity_id', activity_id)\
@@ -1066,7 +1069,7 @@ async def delete_activity_image(
             # R2 삭제 실패해도 DB에서는 삭제
         
         # DB에서 삭제
-        supabase.table('activity_images').delete().eq('id', image_id).execute()
+        admin_supabase.table('activity_images').delete().eq('id', image_id).execute()
         
         return None
     

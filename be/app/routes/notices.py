@@ -22,7 +22,7 @@ from app.utils.r2_storage import (
     validate_file_extension,
     get_bucket_url
 )
-from app.database import supabase
+from app.database import supabase, get_supabase_admin
 import uuid
 import os
 
@@ -336,6 +336,9 @@ async def create_notice(
     - attachment_urls: 첨부파일 정보 리스트
     """
     try:
+        # 관리자 작업이므로 RLS 우회 클라이언트 사용
+        admin_supabase = get_supabase_admin()
+        
         # 게시글 생성
         post_data = {
             "board_id": body.board_id,
@@ -346,7 +349,7 @@ async def create_notice(
             "is_pinned": body.is_pinned
         }
         
-        result = supabase.table('posts').insert(post_data).execute()
+        result = admin_supabase.table('posts').insert(post_data).execute()
         
         if not result.data:
             raise HTTPException(
@@ -359,7 +362,7 @@ async def create_notice(
         # 첨부파일 정보 저장
         if body.attachment_urls:
             for att in body.attachment_urls[:5]:  # 최대 5개
-                supabase.table('attachments').insert({
+                admin_supabase.table('attachments').insert({
                     "post_id": post_id,
                     "filename": att.filename,
                     "file_url": att.public_url,
@@ -455,8 +458,11 @@ async def delete_notice(
 ):
     """공지사항 삭제 (Soft Delete)"""
     try:
+        # 관리자 작업이므로 RLS 우회 클라이언트 사용
+        admin_supabase = get_supabase_admin()
+        
         # 공지사항 존재 확인
-        existing = supabase.table('posts')\
+        existing = admin_supabase.table('posts')\
             .select('id')\
             .eq('id', notice_id)\
             .eq('is_deleted', False)\
@@ -472,7 +478,7 @@ async def delete_notice(
         # Soft Delete
         from datetime import timezone, timedelta
         kst = timezone(timedelta(hours=9))
-        result = supabase.table('posts')\
+        result = admin_supabase.table('posts')\
             .update({
                 "is_deleted": True,
                 "deleted_at": datetime.now(kst).isoformat(),

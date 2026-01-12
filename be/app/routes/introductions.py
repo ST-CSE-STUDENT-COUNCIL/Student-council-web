@@ -18,7 +18,7 @@ from app.utils.r2_storage import (
     validate_file_extension,
     get_bucket_url
 )
-from app.database import supabase
+from app.database import supabase, get_supabase_admin
 import uuid
 import os
 
@@ -112,12 +112,13 @@ async def create_introduction_image(
     current_user: dict = Depends(require_admin)
 ):
     """학생회 소개 이미지 업로드 (관리자 전용, Presigned URL 사용)"""
+    admin_supabase = get_supabase_admin()
     try:
         # 이미지 정보 저장
         image_data = body.model_dump()
         image_data['is_active'] = True
         
-        result = supabase.table('introduction_images').insert(image_data).execute()
+        result = admin_supabase.table('introduction_images').insert(image_data).execute()
         
         if not result.data:
             raise HTTPException(
@@ -154,9 +155,10 @@ async def update_introduction_image(
     current_user: dict = Depends(require_admin)
 ):
     """학생회 소개 이미지 수정 (관리자 전용)"""
+    admin_supabase = get_supabase_admin()
     try:
         # 이미지 존재 확인
-        check_result = supabase.table('introduction_images')\
+        check_result = admin_supabase.table('introduction_images')\
             .select('id')\
             .eq('id', image_id)\
             .single()\
@@ -174,7 +176,7 @@ async def update_introduction_image(
         kst = timezone(timedelta(hours=9))
         update_data['updated_at'] = datetime.now(kst).isoformat()
         
-        result = supabase.table('introduction_images')\
+        result = admin_supabase.table('introduction_images')\
             .update(update_data)\
             .eq('id', image_id)\
             .execute()
@@ -213,9 +215,10 @@ async def delete_introduction_image(
     current_user: dict = Depends(require_admin)
 ):
     """학생회 소개 이미지 삭제 (관리자 전용)"""
+    admin_supabase = get_supabase_admin()
     try:
         # 이미지 존재 확인
-        check_result = supabase.table('introduction_images')\
+        check_result = admin_supabase.table('introduction_images')\
             .select('id')\
             .eq('id', image_id)\
             .single()\
@@ -228,7 +231,7 @@ async def delete_introduction_image(
             )
         
         # 삭제
-        supabase.table('introduction_images')\
+        admin_supabase.table('introduction_images')\
             .delete()\
             .eq('id', image_id)\
             .execute()

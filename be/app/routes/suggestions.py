@@ -16,7 +16,7 @@ from app.schemas.suggestions import (
 )
 from app.utils.auth import require_verified_user, require_admin
 from app.utils.turnstile import verify_turnstile
-from app.database import supabase
+from app.database import supabase, get_supabase_admin
 
 
 router = APIRouter(tags=["건의함"])
@@ -368,7 +368,8 @@ async def update_suggestion_status(
             update_data["resolution_note"] = None
         
         # 업데이트 실행
-        result = supabase.table("suggestions")\
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table("suggestions")\
             .update(update_data)\
             .eq("id", suggestion_id)\
             .execute()

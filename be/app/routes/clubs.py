@@ -18,7 +18,7 @@ from app.utils.r2_storage import (
     validate_file_extension,
     get_bucket_url
 )
-from app.database import supabase
+from app.database import supabase, get_supabase_admin
 import uuid
 import os
 
@@ -154,6 +154,9 @@ async def create_club(
 ):
     """동아리 추가 (관리자 전용, Presigned URL 사용)"""
     try:
+        # 관리자 작업이므로 RLS 우회 클라이언트 사용
+        admin_supabase = get_supabase_admin()
+        
         # 동아리 정보 저장
         club_data = {
             'name': body.name,
@@ -162,7 +165,7 @@ async def create_club(
             'website_url': body.website_url
         }
         
-        result = supabase.table('clubs').insert(club_data).execute()
+        result = admin_supabase.table('clubs').insert(club_data).execute()
         
         if not result.data:
             raise HTTPException(
@@ -200,8 +203,11 @@ async def update_club(
 ):
     """동아리 정보 수정 (관리자 전용)"""
     try:
+        # 관리자 작업이므로 RLS 우회 클라이언트 사용
+        admin_supabase = get_supabase_admin()
+        
         # 동아리 존재 확인
-        check_result = supabase.table('clubs')\
+        check_result = admin_supabase.table('clubs')\
             .select('id')\
             .eq('id', club_id)\
             .single()\
@@ -219,7 +225,7 @@ async def update_club(
         kst = timezone(timedelta(hours=9))
         update_data['updated_at'] = datetime.now(kst).isoformat()
         
-        result = supabase.table('clubs')\
+        result = admin_supabase.table('clubs')\
             .update(update_data)\
             .eq('id', club_id)\
             .execute()
@@ -259,8 +265,11 @@ async def delete_club(
 ):
     """동아리 삭제 (관리자 전용)"""
     try:
+        # 관리자 작업이므로 RLS 우회 클라이언트 사용
+        admin_supabase = get_supabase_admin()
+        
         # 동아리 존재 확인
-        check_result = supabase.table('clubs')\
+        check_result = admin_supabase.table('clubs')\
             .select('id')\
             .eq('id', club_id)\
             .single()\
@@ -273,7 +282,7 @@ async def delete_club(
             )
         
         # 삭제
-        supabase.table('clubs')\
+        admin_supabase.table('clubs')\
             .delete()\
             .eq('id', club_id)\
             .execute()

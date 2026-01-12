@@ -731,8 +731,26 @@ CREATE POLICY "posts_insert" ON posts
     )
   );
 
-CREATE POLICY "posts_update_own" ON posts
-  FOR UPDATE USING (auth.uid() = author_id);  -- 본인 글만 수정
+CREATE POLICY "posts_update_own_or_admin" ON posts
+  FOR UPDATE 
+  USING (
+    auth.uid() = author_id  -- 본인 글
+    OR
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE id = auth.uid() 
+      AND role IN ('admin', 'council')  -- 관리자 또는 학생회
+    )
+  )
+  WITH CHECK (
+    auth.uid() = author_id  -- 본인 글
+    OR
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE id = auth.uid() 
+      AND role IN ('admin', 'council')  -- 관리자 또는 학생회
+    )
+  );
 
 -- events: 인증된 사용자만 조회 (비회원 차단, 분탕 방지)
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;

@@ -89,6 +89,7 @@ def generate_presigned_url(
             Params={
                 'Bucket': bucket_name,
                 'Key': file_key,
+                'ContentType': 'application/octet-stream'
             },
             ExpiresIn=expires_in
         )

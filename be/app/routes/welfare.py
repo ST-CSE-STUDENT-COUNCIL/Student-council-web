@@ -103,11 +103,11 @@ async def complete_locker_image_upload(
     - **관리자 전용**: admin, council 권한 필요
     - **프로세스**: Presigned URL로 업로드 완료 후 이 API 호출
     """
-    supabase = get_supabase()
+    admin_supabase = get_supabase_admin()
     
     try:
         # 기존 레코드 확인
-        existing = supabase.table('locker_info').select('*').eq('id', 1).execute()
+        existing = admin_supabase.table('locker_info').select('*').eq('id', 1).execute()
         
         # 기존 이미지가 있으면 R2에서 삭제
         if existing.data and existing.data[0].get('layout_image_url'):
@@ -117,11 +117,11 @@ async def complete_locker_image_upload(
         
         # DB 업데이트 또는 생성
         if existing.data:
-            result = supabase.table('locker_info').update({
+            result = admin_supabase.table('locker_info').update({
                 'layout_image_url': public_url
             }).eq('id', 1).execute()
         else:
-            result = supabase.table('locker_info').insert({
+            result = admin_supabase.table('locker_info').insert({
                 'id': 1,
                 'layout_image_url': public_url
             }).execute()
@@ -147,11 +147,11 @@ async def upload_locker_image(
     if not layout_image or not layout_image.filename:
         raise HTTPException(status_code=400, detail="이미지 파일이 필요합니다")
     
-    supabase = get_supabase()
+    admin_supabase = get_supabase_admin()
     
     try:
         # 기존 레코드 확인
-        existing = supabase.table('locker_info').select('*').eq('id', 1).execute()
+        existing = admin_supabase.table('locker_info').select('*').eq('id', 1).execute()
         
         # 기존 이미지가 있으면 R2에서 삭제
         if existing.data and existing.data[0].get('layout_image_url'):
@@ -169,12 +169,12 @@ async def upload_locker_image(
         # DB 업데이트 또는 생성
         if existing.data:
             # 기존 레코드 업데이트 (updated_at은 DEFAULT 트리거로 자동 설정됨)
-            result = supabase.table('locker_info').update({
+            result = admin_supabase.table('locker_info').update({
                 'layout_image_url': image_url
             }).eq('id', 1).execute()
         else:
             # 새 레코드 생성 (URL 필드는 NULL로 초기화)
-            result = supabase.table('locker_info').insert({
+            result = admin_supabase.table('locker_info').insert({
                 'id': 1,
                 'layout_image_url': image_url
             }).execute()
@@ -203,10 +203,10 @@ async def update_locker_info(
     - **한국 시간**: 모든 날짜는 KST(Asia/Seoul) 기준
     - **이미지 업로드**: 별도 POST /admin/welfare/locker_image API 사용
     """
-    supabase = get_supabase()
+    admin_supabase = get_supabase_admin()
     
     # 먼저 레코드 존재 확인
-    existing = supabase.table('locker_info').select('*').eq('id', 1).execute()
+    existing = admin_supabase.table('locker_info').select('*').eq('id', 1).execute()
     record_exists = bool(existing.data)
     
     # Pydantic 모델을 dict로 변환 (exclude_unset=True)
@@ -230,12 +230,12 @@ async def update_locker_info(
             'return_extension_end': update_data.get('return_extension_end'),
             'description': update_data.get('description')
         }
-        result = supabase.table('locker_info').insert(insert_data).execute()
+        result = admin_supabase.table('locker_info').insert(insert_data).execute()
     else:
         # updated_at은 DEFAULT 트리거로 자동 갱신됨 (한국 시간)
         
         # locker_info 업데이트 (id=1)
-        result = supabase.table('locker_info').update(update_data).eq('id', 1).execute()
+        result = admin_supabase.table('locker_info').update(update_data).eq('id', 1).execute()
     
     if not result.data:
         raise HTTPException(status_code=500, detail="사물함 정보 저장 실패")
@@ -323,12 +323,12 @@ async def create_rental_item(
     - **Presigned URL**: 이미지는 /presigned-url로 먼저 업로드 후 public_url 전달
     - **item_name**: 장우산/단우산, 2인용/4인용 돗자리 등 구체적으로 입력
     """
-    supabase = get_supabase()
+    admin_supabase = get_supabase_admin()
     
     # rental_items 테이블에 삽입
     insert_data = body.model_dump()
     
-    result = supabase.table('rental_items').insert(insert_data).execute()
+    result = admin_supabase.table('rental_items').insert(insert_data).execute()
     
     if not result.data:
         raise HTTPException(status_code=500, detail="물품 추가 실패")
@@ -350,7 +350,7 @@ async def update_rental_item(
     
     - **관리자 전용**: admin, council 권한 필요
     """
-    supabase = get_supabase()
+    admin_supabase = get_supabase_admin()
     
     # 수정할 데이터만 추출
     update_data = data.model_dump(exclude_unset=True)
@@ -361,7 +361,7 @@ async def update_rental_item(
     update_data['updated_at'] = 'NOW()'
     
     # rental_items 업데이트
-    result = supabase.table('rental_items').update(update_data).eq('id', item_id).execute()
+    result = admin_supabase.table('rental_items').update(update_data).eq('id', item_id).execute()
     
     if not result.data:
         raise HTTPException(status_code=404, detail="물품을 찾을 수 없습니다")
@@ -382,10 +382,10 @@ async def delete_rental_item(
     
     - **관리자 전용**: admin, council 권한 필요
     """
-    supabase = get_supabase()
+    admin_supabase = get_supabase_admin()
     
     # rental_items 삭제
-    result = supabase.table('rental_items').delete().eq('id', item_id).execute()
+    result = admin_supabase.table('rental_items').delete().eq('id', item_id).execute()
     
     if not result.data:
         raise HTTPException(status_code=404, detail="물품을 찾을 수 없습니다")
