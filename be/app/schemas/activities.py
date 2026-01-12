@@ -114,6 +114,7 @@ class ActivityCreateRequest(BaseModel):
     form_fields: List[FormField] = Field(default_factory=list, description="추가 정보 수집 필드")
     
     thumbnail_url: Optional[str] = Field(None, description="썸네일 URL")
+    image_urls: Optional[List[Dict[str, str]]] = Field(None, description="이미지 URL 리스트")
     is_active: bool = Field(default=True, description="활성화 여부")
 
 
@@ -197,6 +198,7 @@ class ActivityRegistrationRequest(BaseModel):
     department: Optional[str] = Field(None, max_length=100, description="학과")
     phone: Optional[str] = Field(None, pattern=r'^010-?\d{4}-?\d{4}$', description="전화번호")
     email: Optional[str] = Field(None, description="이메일")
+    verification_image_url: Optional[str] = Field(None, description="인증 이미지 URL (Presigned URL로 업로드 후 받은 public_url)")
     
     # 추가 정보 응답
     form_responses: Dict[str, Any] = Field(default_factory=dict, description="추가 정보 응답")

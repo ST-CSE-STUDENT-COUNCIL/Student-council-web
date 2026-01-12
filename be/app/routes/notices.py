@@ -321,36 +321,31 @@ async def get_notice_attachment_presigned_url(
     }
 )
 async def create_notice(
-    title: str = Form(...),
-    content: str = Form(...),
-    board_id: int = Form(...),
-    subcategory: Optional[str] = Form(None),
-    is_pinned: bool = Form(False),
-    attachment_urls: Optional[str] = Form(None, description="첨부파일 URL 리스트 (JSON 문자열)"),
+    body: NoticeCreateRequest,
     current_user: dict = Depends(require_admin)
 ):
     """
     공지사항 작성 (관리자 전용, Presigned URL 사용)
     
-    multipart/form-data로 전송:
     - title: 제목
     - content: 내용
     - board_id: 게시판 ID (1: 학생회, 2: 민주자치)
     - subcategory: 소분류 (행사, 복지 등)
     - is_pinned: 상단 고정 여부
-    - attachment_urls: 첨부파일 정보 JSON 문자열 (예: '[{"filename":"test.pdf","public_url":"https://...","file_size":1024,"mime_type":"application/pdf"}]')
+    - attachment_urls: 첨부파일 정보 리스트
     """
     try:
-        import json
-        
         # 게시글 생성
         post_data = {
-            "board_id": board_id,
+            "board_id": body.board_id,
             "author_id": str(current_user["id"]),
-            "title": title,
-            "content": content,
-            "subcategory": subcategory,
-            "is_pinned": is_pinned
+            "title": body.title,
+            "content": body.content,
+            "subcategory": body.subcategory,
+            "is_pinned": body.is_pinned
+            "content": body.content,
+            "subcategory": body.subcategory,
+            "is_pinned": body.is_pinned
         }
         
         result = supabase.table('posts').insert(post_data).execute()
@@ -364,19 +359,15 @@ async def create_notice(
         post_id = result.data[0]['id']
         
         # 첨부파일 정보 저장
-        if attachment_urls:
-            try:
-                attachments_data = json.loads(attachment_urls)
-                for att in attachments_data[:5]:  # 최대 5개
-                    supabase.table('attachments').insert({
-                        "post_id": post_id,
-                        "filename": att.get("filename"),
-                        "file_url": att.get("public_url"),
-                        "file_size": att.get("file_size"),
-                        "mime_type": att.get("mime_type")
-                    }).execute()
-            except json.JSONDecodeError:
-                pass  # 첨부파일 없음
+        if body.attachment_urls:
+            for att in body.attachment_urls[:5]:  # 최대 5개
+                supabase.table('attachments').insert({
+                    "post_id": post_id,
+                    "filename": att.filename,
+                    "file_url": att.public_url,
+                    "file_size": att.file_size,
+                    "mime_type": att.mime_type
+                }).execute()
         
         # 생성된 공지사항 조회
         return await get_notice(post_id)

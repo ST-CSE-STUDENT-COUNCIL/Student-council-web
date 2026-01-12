@@ -72,13 +72,22 @@ class NoticeDetailResponse(BaseModel):
     attachments: list[AttachmentInfo] = []
 
 
+class AttachmentFileInfo(BaseModel):
+    """첨부파일 업로드 정보 (Presigned URL 방식)"""
+    filename: str
+    public_url: str
+    file_size: Optional[int] = None
+    mime_type: Optional[str] = None
+
+
 class NoticeCreateRequest(BaseModel):
-    """공지사항 작성 요청 (Form으로 받으므로 실제 사용 안함)"""
+    """공지사항 작성 요청"""
     title: str
     content: str
     board_id: int
     subcategory: Optional[str] = None
     is_pinned: bool = False
+    attachment_urls: Optional[list[AttachmentFileInfo]] = None
 
 
 class NoticeUpdateRequest(BaseModel):

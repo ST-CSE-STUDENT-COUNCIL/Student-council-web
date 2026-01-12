@@ -149,20 +149,17 @@ async def get_club_image_presigned_url(
     }
 )
 async def create_club(
-    name: str = Form(..., max_length=100),
-    description: str = Form(...),
-    image_url: str = Form(..., description="이미지 URL (Presigned URL로 업로드 후 받은 public_url)"),
-    website_url: Optional[str] = Form(None),
+    body: ClubCreate,
     current_user: dict = Depends(require_admin)
 ):
     """동아리 추가 (관리자 전용, Presigned URL 사용)"""
     try:
         # 동아리 정보 저장
         club_data = {
-            'name': name,
-            'description': description,
-            'image_url': image_url,
-            'website_url': website_url
+            'name': body.name,
+            'description': body.description,
+            'image_url': body.image_url,
+            'website_url': body.website_url
         }
         
         result = supabase.table('clubs').insert(club_data).execute()

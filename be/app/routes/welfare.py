@@ -9,6 +9,7 @@ from app.schemas.welfare import (
     LockerInfo,
     LockerInfoUpdate,
     RentalItem,
+    RentalItemCreate,
     RentalItemUpdate
 )
 from app.database import get_supabase
@@ -185,13 +186,7 @@ async def upload_locker_image(
 
 @router.put("/admin/welfare/locker_periods", response_model=LockerInfo, summary="사물함 정보 수정/생성 (관리자)")
 async def update_locker_info(
-    application_form_url: Optional[str] = Form(None, description="구글폼 신청 URL"),
-    return_extension_form_url: Optional[str] = Form(None, description="구글폼 반납/연장 URL"),
-    application_start: Optional[str] = Form(None, description="신청 시작 날짜 (ISO 8601 형식: 2024-03-01T00:00:00+09:00)"),
-    application_end: Optional[str] = Form(None, description="신청 종료 날짜 (ISO 8601 형식: 2024-03-15T23:59:59+09:00)"),
-    return_extension_start: Optional[str] = Form(None, description="반납/연장 시작 날짜 (ISO 8601 형식: 2024-06-01T00:00:00+09:00)"),
-    return_extension_end: Optional[str] = Form(None, description="반납/연장 종료 날짜 (ISO 8601 형식: 2024-06-15T23:59:59+09:00)"),
-    description: Optional[str] = Form(None, description="설명 (예: 19, 35번 고장, 2024-1학기)"),
+    body: LockerInfoUpdate,
     current_user: dict = Depends(require_council)
 ):
     """
@@ -214,23 +209,8 @@ async def update_locker_info(
     existing = supabase.table('locker_info').select('*').eq('id', 1).execute()
     record_exists = bool(existing.data)
     
-    update_data = {}
-    
-    # 필드 업데이트
-    if application_form_url is not None:
-        update_data['application_form_url'] = application_form_url
-    if return_extension_form_url is not None:
-        update_data['return_extension_form_url'] = return_extension_form_url
-    if application_start is not None:
-        update_data['application_start'] = application_start
-    if application_end is not None:
-        update_data['application_end'] = application_end
-    if return_extension_start is not None:
-        update_data['return_extension_start'] = return_extension_start
-    if return_extension_end is not None:
-        update_data['return_extension_end'] = return_extension_end
-    if description is not None:
-        update_data['description'] = description
+    # Pydantic 모델을 dict로 변환 (exclude_unset=True)
+    update_data = body.model_dump(exclude_unset=True)
     
     # 레코드가 이미 존재하면서 수정할 데이터가 없으면 에러
     if record_exists and not update_data:
@@ -333,11 +313,7 @@ async def get_rental_item_presigned_url(
 
 @router.post("/admin/welfare/welfare_rentals", response_model=RentalItem, summary="대여 물품 추가 (관리자)", status_code=201)
 async def create_rental_item(
-    item_name: str = Form(..., description="물품명 (예: 장우산, 단우산)"),
-    application_sheet_url: str = Form(..., description="구글 시트 URL"),
-    quantity_cell_range: str = Form(..., description="재고 셀 위치 (예: C2)"),
-    category: Optional[str] = Form(None, description="분류"),
-    image_url: Optional[str] = Form(None, description="물품 이미지 URL (Presigned URL로 업로드 후 받은 public_url)"),
+    body: RentalItemCreate,
     current_user: dict = Depends(require_council)
 ):
     """
@@ -350,13 +326,7 @@ async def create_rental_item(
     supabase = get_supabase()
     
     # rental_items 테이블에 삽입
-    insert_data = {
-        "item_name": item_name,
-        "category": category,
-        "image_url": image_url,
-        "application_sheet_url": application_sheet_url,
-        "quantity_cell_range": quantity_cell_range
-    }
+    insert_data = body.model_dump()
     
     result = supabase.table('rental_items').insert(insert_data).execute()
     

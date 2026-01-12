@@ -108,20 +108,14 @@ async def get_introduction_image_presigned_url(
     }
 )
 async def create_introduction_image(
-    title: str = Form(..., max_length=100),
-    image_url: str = Form(..., description="이미지 URL (Presigned URL로 업로드 후 받은 public_url)"),
-    display_order: int = Form(default=0),
+    body: IntroductionImageCreate,
     current_user: dict = Depends(require_admin)
 ):
     """학생회 소개 이미지 업로드 (관리자 전용, Presigned URL 사용)"""
     try:
         # 이미지 정보 저장
-        image_data = {
-            'title': title,
-            'image_url': image_url,
-            'display_order': display_order,
-            'is_active': True
-        }
+        image_data = body.model_dump()
+        image_data['is_active'] = True
         
         result = supabase.table('introduction_images').insert(image_data).execute()
         

@@ -279,22 +279,11 @@ async def get_activity_verification_presigned_url(
 )
 async def register_for_activity(
     activity_id: int,
-    body: str = Form(...),  # JSON 문자열로 받음
-    verification_image_url: Optional[str] = Form(None, description="인증 이미지 URL (Presigned URL로 업로드 후 받은 public_url)"),
+    body: ActivityRegistrationRequest,
     current_user: Optional[dict] = Depends(optional_current_user)
 ):
     """활동 신청 (회원/비회원, Presigned URL 사용)"""
     try:
-        # JSON 파싱
-        try:
-            data = json.loads(body)
-            request = ActivityRegistrationRequest(**data)
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"잘못된 요청 데이터: {str(e)}"
-            )
-        
         # 활동 정보 조회
         activity_result = supabase.table("activities")\
             .select("type, require_membership, registration_start, registration_end, max_capacity, current_count")\
@@ -321,22 +310,19 @@ async def register_for_activity(
         
         # 비회원 신청 시 필수 정보 확인
         if not current_user:
-            if not all([request.name, request.student_id, request.department, request.phone, request.email]):
+            if not all([body.name, body.student_id, body.department, body.phone, body.email]):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="비회원은 이름, 학번, 학과, 전화번호, 이메일을 모두 입력해야 합니다"
                 )
         
-        # 인증 이미지 (카톡방 초대 신청)
-        verification_image_url_final = verification_image_url if verification_image_url else None
-        
         # 회원 정보 가져오기
         user_id = current_user["id"] if current_user else None
-        name = request.name or (current_user.get("name") if current_user else None)
-        student_id = request.student_id or (current_user.get("student_id") if current_user else None)
-        department = request.department or (current_user.get("department") if current_user else None)
-        phone = request.phone or (current_user.get("phone") if current_user else None)
-        email = request.email or (current_user.get("email") if current_user else None)
+        name = body.name or (current_user.get("name") if current_user else None)
+        student_id = body.student_id or (current_user.get("student_id") if current_user else None)
+        department = body.department or (current_user.get("department") if current_user else None)
+        phone = body.phone or (current_user.get("phone") if current_user else None)
+        email = body.email or (current_user.get("email") if current_user else None)
         
         # PostgreSQL 함수 호출
         rpc_result = supabase.rpc(
@@ -349,9 +335,9 @@ async def register_for_activity(
                 "p_department": department,
                 "p_phone": phone,
                 "p_email": email,
-                "p_form_responses": request.form_responses,
-                "p_verification_image_url": verification_image_url_final,
-                "p_kakao_id": request.kakao_id
+                "p_form_responses": body.form_responses,
+                "p_verification_image_url": body.verification_image_url,
+                "p_kakao_id": body.kakao_id
             }
         ).execute()
         
@@ -562,51 +548,40 @@ async def submit_survey(
     }
 )
 async def create_activity(
-    type: str = Form(..., description="활동 유형 (event, demand_survey, survey, kakao_invite, fee_payment, notice)"),
-    title: str = Form(..., max_length=200),
-    description: Optional[str] = Form(None),
-    registration_start: Optional[str] = Form(None),
-    registration_end: Optional[str] = Form(None),
-    max_capacity: Optional[int] = Form(None),
-    require_membership: bool = Form(False),
-    config: str = Form("{}", description="JSON 문자열 (location, event_date, kakao_link 등)"),
-    form_fields: str = Form("[]", description="JSON 배열 문자열"),
-    survey_config: str = Form("{}", description="JSON 문자열 (설문 문항)"),
-    is_active: bool = Form(True),
-    image_urls: Optional[str] = Form(None, description="이미지 URL 리스트 (JSON 문자열)"),
+    body: ActivityCreateRequest,
     current_user: dict = Depends(require_admin)
 ):
     """활동 생성 (관리자 전용, Presigned URL로 이미지 업로드)"""
     try:
-        # JSON 파싱
-        try:
-            config_data = json.loads(config)
-            form_fields_data = json.loads(form_fields)
-            survey_config_data = json.loads(survey_config)
-        except json.JSONDecodeError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"JSON 파싱 실패: {str(e)}"
-            )
-        
         # 활동 데이터 저장
         activity_data = {
-            "type": type,
-            "title": title,
-            "description": description,
-            "registration_start": registration_start,
-            "registration_end": registration_end,
-            "max_capacity": max_capacity,
-            "require_membership": require_membership,
-            "config": config_data,
-            "form_fields": form_fields_data,
-            "is_active": is_active,
+            "type": body.type,
+            "title": body.title,
+            "description": body.description,
+            "registration_start": body.registration_start.isoformat() if body.registration_start else None,
+            "registration_end": body.registration_end.isoformat() if body.registration_end else None,
+            "max_capacity": body.max_capacity,
+            "require_membership": body.require_membership,
+            "config": body.config,
+            "form_fields": [f.model_dump() for f in body.form_fields],
+            "thumbnail_url": body.thumbnail_url,
+            "is_active": body.is_active,
             "created_by": current_user["id"]
         }
-        
-        # survey_config 추가 (config에 넣거나 별도로 관리)
-        if survey_config_data:
-            activity_data["config"]["survey_config"] = survey_config_data
+        activity_data = {
+            "type": body.type,
+            "title": body.title,
+            "description": body.description,
+            "registration_start": body.registration_start.isoformat() if body.registration_start else None,
+            "registration_end": body.registration_end.isoformat() if body.registration_end else None,
+            "max_capacity": body.max_capacity,
+            "require_membership": body.require_membership,
+            "config": body.config,
+            "form_fields": [f.model_dump() for f in body.form_fields],
+            "thumbnail_url": body.thumbnail_url,
+            "is_active": body.is_active,
+            "created_by": current_user["id"]
+        }
         
         result = supabase.table("activities").insert(activity_data).execute()
         
@@ -620,18 +595,14 @@ async def create_activity(
         activity_id = activity["id"]
         
         # 이미지 정보 저장 (선택적)
-        if image_urls:
-            try:
-                images_data = json.loads(image_urls)
-                for idx, img in enumerate(images_data):
-                    image_data = {
-                        'activity_id': activity_id,
-                        'image_url': img.get("public_url"),
-                        'display_order': idx
-                    }
-                    supabase.table('activity_images').insert(image_data).execute()
-            except json.JSONDecodeError:
-                pass  # 이미지 없음
+        if body.image_urls:
+            for idx, img in enumerate(body.image_urls):
+                image_data = {
+                    'activity_id': activity_id,
+                    'image_url': img.get("public_url"),
+                    'display_order': idx
+                }
+                supabase.table('activity_images').insert(image_data).execute()
         
         return ActivityResponse(
             id=activity["id"],

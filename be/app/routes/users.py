@@ -7,6 +7,7 @@ from app.schemas.users import (
     UserProfileResponse,
     ChangePasswordRequest,
     ChangePasswordResponse,
+    UploadVerificationImageRequest,
     UploadVerificationImageResponse
 )
 from app.schemas.auth import ErrorResponse
@@ -141,7 +142,7 @@ async def get_verification_image_presigned_url(
     }
 )
 async def complete_verification_image_upload(
-    image_url: str = Form(..., description="이미지 URL (Presigned URL로 업로드 후 받은 public_url)"),
+    body: UploadVerificationImageRequest,
     current_user: dict = Depends(get_current_user)
 ):
     """
@@ -159,12 +160,12 @@ async def complete_verification_image_upload(
         
         # users 테이블에 이미지 URL 저장
         supabase.table('users')\
-            .update({'verification_image_url': image_url, 'verification_status': 'pending'})\
+            .update({'verification_image_url': body.image_url, 'verification_status': 'pending'})\
             .eq('id', current_user['id'])\
             .execute()
         
         return UploadVerificationImageResponse(
-            file_path=image_url
+            file_path=body.image_url
         )
     
     except HTTPException:

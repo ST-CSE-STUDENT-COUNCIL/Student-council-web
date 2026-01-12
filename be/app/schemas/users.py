@@ -39,6 +39,11 @@ class ChangePasswordResponse(BaseModel):
     message: str = Field(default="비밀번호가 성공적으로 변경되었습니다.", description="결과 메시지")
 
 
+class UploadVerificationImageRequest(BaseModel):
+    """학적 인증 이미지 업로드 요청"""
+    image_url: str = Field(..., description="이미지 URL (Presigned URL로 업로드 후 받은 public_url)")
+
+
 class UploadVerificationImageResponse(BaseModel):
     """학적 인증 이미지 업로드 응답"""
     file_path: str = Field(..., description="Storage에 저장된 파일 경로")

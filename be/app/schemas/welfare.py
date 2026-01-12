@@ -42,6 +42,15 @@ class LockerInfoUpdate(BaseModel):
 # 물품대여 (Rental Items)
 # ============================================================================
 
+class RentalItemCreate(BaseModel):
+    """물품대여 추가 (관리자용)"""
+    item_name: str = Field(..., description="물품명 (예: 장우산, 단우산)")
+    application_sheet_url: str = Field(..., description="구글 시트 URL")
+    quantity_cell_range: str = Field(..., description="재고 셀 위치 (예: C2)")
+    category: Optional[str] = Field(None, description="분류")
+    image_url: Optional[str] = Field(None, description="물품 이미지 URL (Presigned URL로 업로드 후 받은 public_url)")
+
+
 class RentalItem(BaseModel):
     """물품대여 정보"""
     id: int
