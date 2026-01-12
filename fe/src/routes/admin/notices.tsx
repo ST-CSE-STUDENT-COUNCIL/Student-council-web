@@ -43,9 +43,8 @@ function AdminNoticesPage() {
       }
       if (filterSub !== 'all') params.subCategory = filterSub
 
-      console.log('DEBUG: fetchPosts params:', params)
       const res = await postApi.getAll(params)
-      console.log('DEBUG: fetchPosts result count:', res.posts.length)
+
       setPosts(res.posts)
     } catch (e) {
       console.error(e)
