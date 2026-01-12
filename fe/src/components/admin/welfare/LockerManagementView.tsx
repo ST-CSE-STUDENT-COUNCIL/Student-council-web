@@ -159,6 +159,24 @@ export function LockerManagementView() {
 	const handleSaveSettings = async () => {
 		setIsSubmitting(true)
 		try {
+			const hasInvalidRange = (start?: string, end?: string) => {
+				if (!start || !end) return false
+				const startDate = new Date(start)
+				const endDate = new Date(end)
+				if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return false
+				return startDate > endDate
+			}
+
+			if (hasInvalidRange(formData.application_start, formData.application_end)) {
+				alert('신청 시작일은 마감일보다 늦을 수 없습니다.')
+				return
+			}
+
+			if (hasInvalidRange(formData.return_extension_start, formData.return_extension_end)) {
+				alert('반납/연장 시작일은 마감일보다 늦을 수 없습니다.')
+				return
+			}
+
 			const submitData = buildLockerPeriodPayload(formData)
 			const responseData = await welfareApi.updateLockerPeriods(submitData, accessToken)
 			setTimeline([
@@ -210,19 +228,14 @@ export function LockerManagementView() {
 
 		setIsUploading(true)
 		try {
-			const uploadFormData = new FormData()
-			uploadFormData.append('layout_image', file)
-			const response = await welfareApi.uploadLockerImage(uploadFormData, accessToken)
+			const timestamp = Date.now()
+			const filename = `locker_layout/${timestamp}_${file.name}`
 
-			if (response?.layout_image_url) {
-				setLayoutImage(response.layout_image_url)
-			} else {
-				const reader = new FileReader()
-				reader.onloadend = () => {
-					setLayoutImage(reader.result as string)
-				}
-				reader.readAsDataURL(file)
-			}
+			const { presigned_url, public_url } = await welfareApi.getLockerImagePresignedUrl(filename, accessToken)
+			await welfareApi.uploadImageToS3(presigned_url, file)
+			const response = await welfareApi.completeLockerImageUpload(public_url, accessToken)
+
+			setLayoutImage(response?.layout_image_url || public_url)
 
 			alert('사물함 배치도가 업로드되었습니다.')
 		} catch (error: any) {

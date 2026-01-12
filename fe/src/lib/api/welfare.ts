@@ -74,6 +74,28 @@ export const welfareApi = {
         }
     },
 
+    /**
+     * 사물함 배치도 업로드용 Presigned URL을 획득합니다.
+     */
+    getLockerImagePresignedUrl: async (filename: string, token?: string | null): Promise<{ presigned_url: string; public_url: string }> => {
+        const response = await axios.post(`${API_BASE_URL}/admin/welfare/locker_image/presigned-url`, {}, {
+            params: { filename },
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return response.data;
+    },
+
+    /**
+     * Presigned URL 업로드 완료 후 서버에 공개 URL을 전달합니다.
+     */
+    completeLockerImageUpload: async (publicUrl: string, token?: string | null): Promise<{ layout_image_url?: string }> => {
+        const response = await axios.post(`${API_BASE_URL}/admin/welfare/locker_image/complete`, {}, {
+            params: { public_url: publicUrl },
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return response.data;
+    },
+
     getRentals: async (): Promise<WelfareRental[]> => {
         const response = await axios.get(`${API_BASE_URL}/welfare/welfare_rentals`);
         return response.data;
@@ -152,19 +174,8 @@ export const welfareApi = {
         return_extension_end?: string | null;
         description?: string | null;
     }, token?: string | null): Promise<LockerPeriod> => {
-        // FormData로 변환
-        const formData = new FormData();
-        Object.entries(data).forEach(([key, value]) => {
-            if (value !== null && value !== undefined) {
-                formData.append(key, value);
-            }
-        });
-
-        const response = await axios.put(`${API_BASE_URL}/admin/welfare/locker_periods`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
+        const response = await axios.put(`${API_BASE_URL}/admin/welfare/locker_periods`, data, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return response.data;
     },
