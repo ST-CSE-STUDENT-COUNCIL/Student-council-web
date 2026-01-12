@@ -1,10 +1,10 @@
 import { api } from '../axios'
-import type { Notice } from '../../types/notices'
+import type { Post } from '../../types/posts'
 
 const API_BASE_URL = '/notices'
 
-type NoticeListResponse = {
-    notices: any[] // Backend raw type
+type PostListResponse = {
+    posts: any[]
     pagination: {
         total: number
         page: number
@@ -13,8 +13,8 @@ type NoticeListResponse = {
     }
 }
 
-type NoticeParams = {
-    mainCategory?: string
+type PostParams = {
+    board_id?: number
     subCategory?: string
     page?: number
     page_size?: number
@@ -22,30 +22,39 @@ type NoticeParams = {
     sort?: string
 }
 
-// Map Backend Korean Categories -> Frontend English Keys
-const categoryMap: Record<string, string> = {
-    '학생회': 'student_council',
-    '민주자치': 'democracy'
+// Helper to map backend response (Post/Notice Schema) to Frontend Notice Type
+const mapToPost = (data: any): Post => {
+    return {
+        id: data.id,
+        // Map board.category or derive from board_id if necessary
+        // Backend returns board object with category
+        board_id: data.board.id,
+        subcategory: data.subcategory || 'notice', // Default to 'notice' if empty
+        title: data.title,
+        content: data.content,
+        is_pinned: data.is_pinned === true || data.is_pinned === 'true',
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        attachments: (data.attachments || []).map((att: any) => ({
+            id: att.id || 0, // Fallback if missing
+            filename: att.name || att.filename || '',
+            file_url: att.url || att.file_url || '',
+            file_size: att.size || att.file_size,
+            mime_type: att.mime_type,
+            created_at: att.created_at || new Date().toISOString()
+        })),
+    }
 }
 
-const subCategoryMap: Record<string, string> = {
-    '행사': 'event',
-    '복지': 'welfare',
-    '공고': 'announcement',
-    '고시': 'notice',
-    '대표자회의': 'meeting',
-    '학생회칙': 'rules'
-}
-
-export const noticeApi = {
+export const postApi = {
     create: async (data: {
         title: string
         content: string
         board_id: number
         subcategory?: string
         is_pinned?: boolean
-        attachments?: File[]
-    }): Promise<Notice> => {
+        attachment_urls?: string[]
+    }): Promise<Post> => {
         const formData = new FormData()
         formData.append('title', data.title)
         formData.append('content', data.content)
@@ -53,87 +62,57 @@ export const noticeApi = {
         if (data.subcategory) formData.append('subcategory', data.subcategory)
         formData.append('is_pinned', String(data.is_pinned || false))
 
-        if (data.attachments) {
-            data.attachments.forEach((file) => {
-                formData.append('attachments', file)
-            })
-        }
-
-        const response = await api.post<Notice>(`${API_BASE_URL}`, formData)
-        return response.data
+        // Note: attachments are not sent here as we use presigned URL flow in update
+        const response = await api.post(`admin${API_BASE_URL}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+        return mapToPost(response.data)
     },
+
 
     update: async (id: number, data: {
         title?: string
         content?: string
         subcategory?: string
         is_pinned?: boolean
-    }): Promise<Notice> => {
-        const url = `${API_BASE_URL}/${id}`
-        const response = await api.patch<Notice>(url, data)
-        return response.data
+        attachment_urls?: string[]
+    }): Promise<Post> => {
+        const url = `admin${API_BASE_URL}/${id}`
+        const response = await api.patch(url, {
+            ...data,
+            subcategory: data.subcategory || null
+        })
+        return mapToPost(response.data)
     },
 
     delete: async (id: number): Promise<void> => {
-        await api.delete(`${API_BASE_URL}/${id}`)
+        await api.delete(`admin${API_BASE_URL}/${id}`)
     },
 
-    getAll: async (params?: NoticeParams): Promise<{ notices: Notice[], pagination: NoticeListResponse['pagination'] }> => {
-        const response = await api.get<NoticeListResponse>(`${API_BASE_URL}`, { params })
+    getPresignedUrl: async (filename: string, post_id: number): Promise<{ presigned_url: string, public_url: string, key: string }> => {
+        const response = await api.post(`admin${API_BASE_URL}/presigned-url`, null, {
+            params: { filename, post_id }
+        })
+        return response.data
+    },
 
-        const notices = response.data.notices.map(post => ({
-            id: post.id,
-            main_category: categoryMap[post.board?.category] || 'student_council',
-            sub_category: subCategoryMap[post.subcategory] || 'event',
-            title: post.title,
-            content: post.content,
+    getAll: async (params?: PostParams): Promise<{ posts: Post[], pagination: PostListResponse['pagination'] }> => {
+        const response = await api.get<any>(`${API_BASE_URL}`, { params })
+        // Handle potential mismatch between 'posts' and 'notices' key
+        const list = response.data.posts || response.data.notices || []
 
-            is_pinned: post.is_pinned === true || post.is_pinned === 'true',
-            is_anonymous: false, // Backend doesn't support anonymous notices yet
-            author_id: post.author?.id,
-            author_name: post.author?.name,
-            created_at: post.created_at,
-            updated_at: post.updated_at,
-            is_deleted: post.is_deleted || false,
-            attachments: (post.attachments || []).map((att: any) => ({
-                name: att.name || att.filename,
-                url: att.url || att.file_url,
-                size: att.size || (att.file_size ? `${Math.round(att.file_size / 1024)}KB` : '')
-            })),
-            images: post.images || []
-        }))
+        const posts = list.map((item: any) => mapToPost(item))
 
         return {
-            notices,
+            posts,
             pagination: response.data.pagination
         }
     },
 
-    getById: async (id: number): Promise<Notice> => {
+    getById: async (id: number): Promise<Post> => {
         const response = await api.get(`${API_BASE_URL}/${id}`)
-        const post = response.data
-        return {
-            id: post.id,
-            main_category: categoryMap[post.board?.category] || 'student_council',
-            sub_category: subCategoryMap[post.subcategory] || 'event',
-            title: post.title,
-            content: post.content,
-
-            is_pinned: post.is_pinned === true || post.is_pinned === 'true',
-            is_anonymous: false,
-            author_id: post.author?.id,
-            author_name: post.author?.name,
-            created_at: post.created_at,
-            updated_at: post.updated_at,
-            is_deleted: post.is_deleted || false,
-            attachments: (post.attachments || []).map((att: any) => ({
-                name: att.name || att.filename,
-                url: att.url || att.file_url,
-                size: att.size || (att.file_size ? `${Math.round(att.file_size / 1024)}KB` : '')
-            })),
-            images: post.images || []
-        }
+        return mapToPost(response.data)
     }
 }
-
-
