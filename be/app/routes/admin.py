@@ -99,7 +99,7 @@ async def get_all_users(
     전체 회원 목록 조회
     
     Args:
-        role: 역할 필터 (student, council, admin)
+        role: 역할 필터 (student, admin)
         verification_status: 승인 상태 필터 (pending, approved, rejected)
         membership_paid: 회비 납부 여부 필터 (true, false)
     
@@ -277,7 +277,7 @@ async def reject_user(user_id: str, request: RejectUserRequest):
     "/users/{user_id}/role",
     response_model=UpdateRoleResponse,
     summary="회원 역할 변경",
-    description="회원의 역할을 변경합니다 (student, council, admin)",
+    description="회원의 역할을 변경합니다 (student, admin)",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않음"},
         403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
@@ -290,22 +290,21 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest):
     
     회원의 role을 변경합니다.
     - student: 일반 학생 (기본)
-    - council: 일반 학생회 (게시글 삭제 가능)
     - admin: 관리자 (모든 권한)
     
     Args:
         user_id: 역할을 변경할 회원의 UUID
-        request: 새로운 역할 (student, council, admin)
+        request: 새로운 역할 (student, admin)
     
     Returns:
         변경 완료 메시지, user_id, 새로운 역할
     """
     try:
         # 1. 역할 유효성 검증
-        if request.role not in ['student', 'council', 'admin']:
+        if request.role not in ['student', 'admin']:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="역할은 student, council, admin 중 하나여야 합니다"
+                detail="역할은 student, admin 중 하나여야 합니다"
             )
         
         # 2. 사용자 존재 확인

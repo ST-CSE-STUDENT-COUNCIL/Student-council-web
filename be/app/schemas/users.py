@@ -14,7 +14,7 @@ class UserProfileResponse(BaseModel):
     student_id: str = Field(..., description="학번")
     phone: str = Field(..., description="전화번호")
     department: str = Field(..., description="학과")
-    role: str = Field(..., description="권한 (student/council/admin)")
+    role: str = Field(..., description="권한 (student/admin)")
     verification_status: str = Field(..., description="승인 상태 (pending/approved/rejected)")
     verification_image_url: Optional[str] = Field(None, description="학적 인증 이미지 경로")
     membership_paid: bool = Field(..., description="회비 납부 여부")

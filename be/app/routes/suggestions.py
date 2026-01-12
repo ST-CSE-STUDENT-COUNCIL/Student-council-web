@@ -109,7 +109,7 @@ async def create_suggestion(
     
     **권한:**
     - admin: 전체 목록 조회 가능, 작성자 실명 표시
-    - council: 전체 목록 조회 가능, 작성자 익명
+    - admin: 전체 목록 조회 가능, 작성자 익명
     - 일반 사용자: 전체 목록 조회 가능, 본인 작성 건만 실명 표시
     """,
     responses={
@@ -127,8 +127,7 @@ async def get_suggestions(
     try:
         role = current_user.get("role", "student")
         is_admin = role == "admin"
-        is_council = role == "council"
-        can_view_all = is_admin or is_council
+        can_view_all = is_admin
         
         if status_filter and status_filter not in ALLOWED_STATUSES:
             raise HTTPException(
@@ -236,7 +235,7 @@ async def get_suggestions(
     
     **권한:**
     - admin: 전체 조회 가능, 작성자 실명 표시
-    - council: 전체 조회 가능, 작성자 익명
+    - admin: 전체 조회 가능, 작성자 익명
     - 일반 사용자: 본인 작성 건만 조회 가능
     """,
     responses={
@@ -253,8 +252,7 @@ async def get_suggestion(
     try:
         role = current_user.get("role", "student")
         is_admin = role == "admin"
-        is_council = role == "council"
-        can_view_all = is_admin or is_council
+        can_view_all = is_admin
         
         result = supabase.table("suggestions")\
             .select("*")\
@@ -435,12 +433,12 @@ async def delete_suggestion(
     suggestion_id: int,
     current_user: dict = Depends(require_verified_user)
 ):
-    """건의함 삭제 (admin, council 권한 필요)"""
+    """건의함 삭제 (admin 권한 필요)"""
     try:
         role = current_user.get("role", "student")
         
-        # 권한 확인: admin 또는 council만 삭제 가능
-        if role not in ["admin", "council"]:
+        # 권한 확인: admin만 삭제 가능
+        if role != "admin":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="건의함 삭제 권한이 없습니다"
