@@ -14,18 +14,18 @@ export const STATUS_META: Record<
         label: '처리 중',
         badge: 'bg-amber-50 text-amber-700',
         dot: 'bg-amber-400',
-        description: '검토중..',
+        description: '검토중입니다.',
     },
     approved: {
         label: '반영 완료',
         badge: 'bg-emerald-50 text-emerald-700',
         dot: 'bg-emerald-400',
-        description: '반영 완료...',
+        description: '',
     },
     rejected: {
         label: '반려',
         badge: 'bg-rose-50 text-rose-700',
         dot: 'bg-rose-400',
-        description: '추가정보...',
+        description: '',
     },
 }

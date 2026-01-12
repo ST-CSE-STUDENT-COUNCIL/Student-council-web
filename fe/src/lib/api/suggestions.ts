@@ -1,11 +1,16 @@
 import { api } from '../axios'
-import type { Suggestion } from '../../types/suggestions' // 타입 파일이 없다면 추후 생성 필요
+import type { Suggestion, SuggestionListResponse } from '../../types/suggestions'
 
 const API_BASE_URL = '/suggestions'
 
 export const suggestionApi = {
     getAll: async (params?: { status_filter?: string; page?: number; page_size?: number }) => {
-        const response = await api.get<{ suggestions: Suggestion[]; pagination: any }>(API_BASE_URL, { params })
+        const response = await api.get<SuggestionListResponse>(API_BASE_URL, { params })
+        return response.data
+    },
+
+    getById: async (id: number) => {
+        const response = await api.get<Suggestion>(`${API_BASE_URL}/${id}`)
         return response.data
     },
 
