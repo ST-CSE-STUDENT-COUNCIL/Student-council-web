@@ -200,7 +200,28 @@
           }
         },
         {
-          "name": "활동 신청 (카톡방 초대 - 이미지 포함)",
+          "name": "활동 신청 인증 이미지 Presigned URL 발급",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"verification.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/activities/1/register/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "1", "register", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "활동 신청 (카톡방 초대 - Presigned URL)",
           "request": {
             "method": "POST",
             "header": [
@@ -208,20 +229,25 @@
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}",
                 "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
               }
             ],
             "body": {
-              "mode": "formdata",
-              "formdata": [
+              "mode": "urlencoded",
+              "urlencoded": [
                 {
                   "key": "body",
                   "value": "{\"kakao_id\": \"kakao123\", \"form_responses\": {}}",
                   "type": "text"
                 },
                 {
-                  "key": "verification_image",
-                  "type": "file",
-                  "src": []
+                  "key": "verification_image_url",
+                  "value": "https://pub-xxx.r2.dev/activity-2/verification/uuid.jpg",
+                  "type": "text",
+                  "description": "Presigned URL로 업로드한 이미지의 public_url"
                 }
               ]
             },
@@ -277,7 +303,7 @@
           }
         },
         {
-          "name": "[관리자] 활동 생성 (이미지 업로드)",
+          "name": "[관리자] 활동 이미지 Presigned URL 발급",
           "request": {
             "method": "POST",
             "header": [
@@ -285,81 +311,46 @@
                 "key": "Authorization",
                 "value": "Bearer {{admin_token}}",
                 "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "type",
-                  "value": "event",
-                  "type": "text",
-                  "description": "event, demand_survey, survey, kakao_invite, fee_payment, notice"
-                },
-                {
-                  "key": "title",
-                  "value": "2024 봄 MT",
-                  "type": "text"
-                },
-                {
-                  "key": "description",
-                  "value": "강원도 평창에서 진행하는 1박 2일 MT입니다",
-                  "type": "text"
-                },
-                {
-                  "key": "registration_start",
-                  "value": "2024-03-01T00:00:00Z",
-                  "type": "text"
-                },
-                {
-                  "key": "registration_end",
-                  "value": "2024-03-15T23:59:59Z",
-                  "type": "text"
-                },
-                {
-                  "key": "max_capacity",
-                  "value": "50",
-                  "type": "text"
-                },
-                {
-                  "key": "require_membership",
-                  "value": "true",
-                  "type": "text"
-                },
-                {
-                  "key": "config",
-                  "value": "{\"location\": \"강원도 평창군\", \"event_date\": \"2024-03-20T10:00:00Z\"}",
-                  "type": "text",
-                  "description": "JSON 문자열"
-                },
-                {
-                  "key": "form_fields",
-                  "value": "[{\"id\": \"meal\", \"label\": \"식사 선호도\", \"type\": \"select\", \"required\": true, \"options\": [\"한식\", \"양식\", \"채식\"]}]",
-                  "type": "text",
-                  "description": "JSON 배열"
-                },
-                {
-                  "key": "survey_config",
-                  "value": "{}",
-                  "type": "text"
-                },
-                {
-                  "key": "is_active",
-                  "value": "true",
-                  "type": "text"
-                },
-                {
-                  "key": "images",
-                  "type": "file",
-                  "src": [],
-                  "description": "활동 이미지 (여러 장 가능)"
-                }
-              ]
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"mt_poster.jpg\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/activities",
+              "raw": "{{base_url}}/admin/activities/presigned-url",
               "host": ["{{base_url}}"],
-              "path": ["activities"]
+              "path": ["admin", "activities", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 활동 생성 (Presigned URL 방식)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"event\",\n  \"title\": \"2024 봄 MT\",\n  \"description\": \"강원도 평창에서 진행하는 1박 2일 MT입니다\",\n  \"registration_start\": \"2024-03-01T00:00:00Z\",\n  \"registration_end\": \"2024-03-15T23:59:59Z\",\n  \"max_capacity\": 50,\n  \"require_membership\": true,\n  \"config\": {\"location\": \"강원도 평창군\", \"event_date\": \"2024-03-20T10:00:00Z\"},\n  \"form_fields\": [{\"id\": \"meal\", \"label\": \"식사 선호도\", \"type\": \"select\", \"required\": true, \"options\": [\"한식\", \"양식\", \"채식\"]}],\n  \"is_active\": true,\n  \"image_urls\": \"[{\\\"public_url\\\":\\\"https://pub-xxx.r2.dev/activity-1/image1.jpg\\\"}]\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/activities",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "activities"]
             }
           }
         },
@@ -741,7 +732,7 @@
           }
         },
         {
-          "name": "[관리자] 공지사항 작성",
+          "name": "[관리자] 공지사항 첨부파일 Presigned URL 발급",
           "request": {
             "method": "POST",
             "header": [
@@ -749,49 +740,46 @@
                 "key": "Authorization",
                 "value": "Bearer {{admin_token}}",
                 "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "title",
-                  "value": "2024학년도 신입생 환영회 안내",
-                  "type": "text"
-                },
-                {
-                  "key": "content",
-                  "value": "환영회가 2월 20일에 열립니다. 많은 참여 부탁드립니다.",
-                  "type": "text"
-                },
-                {
-                  "key": "board_id",
-                  "value": "1",
-                  "type": "text",
-                  "description": "1: 학생회, 2: 민주자치"
-                },
-                {
-                  "key": "subcategory",
-                  "value": "행사",
-                  "type": "text"
-                },
-                {
-                  "key": "is_pinned",
-                  "value": "true",
-                  "type": "text"
-                },
-                {
-                  "key": "attachments",
-                  "type": "file",
-                  "src": [],
-                  "description": "첨부파일 (최대 5개)"
-                }
-              ]
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"notice_attachment.pdf\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/notices",
+              "raw": "{{base_url}}/admin/notices/presigned-url",
               "host": ["{{base_url}}"],
-              "path": ["notices"]
+              "path": ["admin", "notices", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 공지사항 작성 (Presigned URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"2024학년도 신입생 환영회 안내\",\n  \"content\": \"환영회가 2월 20일에 열립니다. 많은 참여 부탁드립니다.\",\n  \"board_id\": 1,\n  \"subcategory\": \"행사\",\n  \"is_pinned\": true,\n  \"attachment_urls\": \"[{\\\"filename\\\":\\\"schedule.pdf\\\",\\\"public_url\\\":\\\"https://pub-xxx.r2.dev/post-1/uuid.pdf\\\",\\\"file_size\\\":1024,\\\"mime_type\\\":\\\"application/pdf\\\"}]\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/notices",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "notices"]
             }
           }
         },
@@ -881,7 +869,7 @@
           }
         },
         {
-          "name": "[관리자] 동아리 추가",
+          "name": "[관리자] 동아리 이미지 Presigned URL 발급",
           "request": {
             "method": "POST",
             "header": [
@@ -889,37 +877,46 @@
                 "key": "Authorization",
                 "value": "Bearer {{admin_token}}",
                 "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "name",
-                  "value": "알고리즘 동아리",
-                  "type": "text"
-                },
-                {
-                  "key": "description",
-                  "value": "알고리즘 문제 풀이 및 코딩테스트 준비 동아리입니다",
-                  "type": "text"
-                },
-                {
-                  "key": "website_url",
-                  "value": "https://github.com/algorithm-club",
-                  "type": "text"
-                },
-                {
-                  "key": "image",
-                  "type": "file",
-                  "src": []
-                }
-              ]
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"club_logo.jpg\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/clubs",
+              "raw": "{{base_url}}/admin/clubs/presigned-url",
               "host": ["{{base_url}}"],
-              "path": ["clubs"]
+              "path": ["admin", "clubs", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 동아리 추가 (Presigned URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"알고리즘 동아리\",\n  \"description\": \"알고리즘 문제 풀이 및 코딩테스트 준비 동아리입니다\",\n  \"image_url\": \"https://pub-xxx.r2.dev/clubs/uuid.jpg\",\n  \"website_url\": \"https://github.com/algorithm-club\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/clubs",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "clubs"]
             }
           }
         }
@@ -1017,7 +1014,7 @@
           }
         },
         {
-          "name": "[관리자] 대여 물품 추가",
+          "name": "[관리자] 복지물품 이미지 Presigned URL 발급",
           "request": {
             "method": "POST",
             "header": [
@@ -1025,11 +1022,41 @@
                 "key": "Authorization",
                 "value": "Bearer {{admin_token}}",
                 "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "body": {
-              "mode": "formdata",
-              "formdata": [
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"umbrella.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/welfare/welfare_rentals/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "welfare", "welfare_rentals", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 대여 물품 추가 (Presigned URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
                 {
                   "key": "item_name",
                   "value": "장우산",
@@ -1051,16 +1078,69 @@
                   "type": "text"
                 },
                 {
-                  "key": "image",
-                  "type": "file",
-                  "src": []
+                  "key": "image_url",
+                  "value": "https://pub-xxx.r2.dev/rental-items/uuid.jpg",
+                  "type": "text",
+                  "description": "Presigned URL로 업로드한 이미지의 public_url"
                 }
               ]
             },
             "url": {
-              "raw": "{{base_url}}/welfare/welfare_rentals",
+              "raw": "{{base_url}}/admin/welfare/welfare_rentals",
               "host": ["{{base_url}}"],
-              "path": ["welfare", "welfare_rentals"]
+              "path": ["admin", "welfare", "welfare_rentals"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 사물함 이미지 Presigned URL 발급",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"locker_layout.png\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/welfare/locker_image/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "welfare", "locker_image", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 사물함 이미지 업로드 완료",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"public_url\": \"https://pub-xxx.r2.dev/lockers/uuid.png\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/welfare/locker_image/complete",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "welfare", "locker_image", "complete"]
             }
           }
         },
@@ -1112,7 +1192,7 @@
           }
         },
         {
-          "name": "[관리자] 소개 이미지 업로드",
+          "name": "[관리자] 학생회 소개 이미지 Presigned URL 발급",
           "request": {
             "method": "POST",
             "header": [
@@ -1120,32 +1200,63 @@
                 "key": "Authorization",
                 "value": "Bearer {{admin_token}}",
                 "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "body": {
-              "mode": "formdata",
-              "formdata": [
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"introduction_page1.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/introductions/images/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "introductions", "images", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 소개 이미지 업로드 (Presigned URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
                 {
                   "key": "title",
                   "value": "학생회장 인사말",
                   "type": "text"
                 },
                 {
+                  "key": "image_url",
+                  "value": "https://pub-xxx.r2.dev/introductions/uuid.jpg",
+                  "type": "text",
+                  "description": "Presigned URL로 업로드한 이미지의 public_url"
+                },
+                {
                   "key": "display_order",
                   "value": "1",
                   "type": "text"
-                },
-                {
-                  "key": "image",
-                  "type": "file",
-                  "src": []
                 }
               ]
             },
             "url": {
-              "raw": "{{base_url}}/introductions/images",
+              "raw": "{{base_url}}/admin/introductions/images",
               "host": ["{{base_url}}"],
-              "path": ["introductions", "images"]
+              "path": ["admin", "introductions", "images"]
             }
           }
         }
@@ -1250,7 +1361,7 @@
           }
         },
         {
-          "name": "학적 인증 이미지 업로드",
+          "name": "학적 인증 이미지 Presigned URL 발급",
           "request": {
             "method": "POST",
             "header": [
@@ -1258,23 +1369,53 @@
                 "key": "Authorization",
                 "value": "Bearer {{access_token}}",
                 "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "body": {
-              "mode": "formdata",
-              "formdata": [
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"student_card.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/verification-image/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["verification-image", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "학적 인증 이미지 업로드 완료",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
                 {
-                  "key": "file",
-                  "type": "file",
-                  "src": [],
-                  "description": "학적 인증서 이미지 (JPG, PNG)"
+                  "key": "image_url",
+                  "value": "https://pub-xxx.r2.dev/verifications/user-xxx/uuid.jpg",
+                  "type": "text",
+                  "description": "Presigned URL로 업로드한 이미지의 public_url"
                 }
               ]
             },
             "url": {
-              "raw": "{{base_url}}/mypage/verification-image",
+              "raw": "{{base_url}}/verification-image",
               "host": ["{{base_url}}"],
-              "path": ["mypage", "verification-image"]
+              "path": ["verification-image"]
             }
           }
         },

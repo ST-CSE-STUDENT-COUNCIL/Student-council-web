@@ -11,18 +11,25 @@ from app.schemas.notices import (
     NoticeDetailResponse,
     NoticeCreateRequest,
     NoticeUpdateRequest,
-    PaginationMeta
+    PaginationMeta,
+    DraftCreateRequest
 )
 from app.schemas.auth import ErrorResponse
 from app.utils.auth import require_verified_user, require_admin
 from app.utils.r2_storage import (
     upload_post_attachment,
-    delete_post_attachments
+    delete_post_attachments,
+    generate_presigned_url,
+    generate_presigned_url_with_content_type,
+    validate_file_extension,
+    get_bucket_url
 )
-from app.database import supabase
+from app.database import supabase, get_supabase_admin
+import uuid
+import os
 
 
-router = APIRouter(prefix="/notices", tags=["공지사항"])
+router = APIRouter(tags=["공지사항"])
 
 
 # 영어-한글 매핑
@@ -34,6 +41,7 @@ CATEGORY_MAP = {
 SUBCATEGORY_MAP = {
     "event": "행사",
     "welfare": "복지",
+    "notification": "공지",
     "announcement": "공고",
     "notice": "고시",
     "meeting": "대표자회의",
@@ -42,7 +50,7 @@ SUBCATEGORY_MAP = {
 
 
 @router.get(
-    "",
+    "/notices",
     response_model=NoticeListResponse,
     status_code=status.HTTP_200_OK,
     summary="공지사항 목록 조회",
@@ -198,7 +206,7 @@ async def get_notices(
 
 
 @router.get(
-    "/{notice_id}",
+    "/notices/{notice_id}",
     response_model=NoticeDetailResponse,
     status_code=status.HTTP_200_OK,
     summary="공지사항 상세 조회",
@@ -270,48 +278,132 @@ async def get_notice(
 
 
 @router.post(
-    "",
+    "/admin/notices/presigned-url",
+    summary="공지사항 첨부파일 업로드용 Presigned URL 발급 (관리자)",
+    responses={
+        401: {"model": ErrorResponse},
+        403: {"model": ErrorResponse, "description": "권한 없음"}
+    }
+)
+async def get_notice_attachment_presigned_url(
+    filename: str,
+    post_id: int,
+    content_type: str = Query("application/octet-stream", description="파일 MIME 타입 (예: image/jpeg)"),
+    current_user: dict = Depends(require_admin)
+):
+    """공지사항 첨부파일 업로드를 위한 Presigned URL 발급"""
+    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.pdf'})
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    # 게시글별 폴더 분리
+    file_key = f"post-{post_id}/{unique_filename}"
+    
+    presigned_url = generate_presigned_url_with_content_type(
+        bucket_name="post-attachments",
+        file_key=file_key,
+        content_type=content_type,
+        expires_in=300
+    )
+    
+    base_url = get_bucket_url("post-attachments")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key,
+        "filename": filename,
+        "content_type": content_type
+    }
+
+
+@router.post(
+    "/admin/notices/draft",
+    summary="Draft 게시글 생성 (관리자)",
+    description="파일 업로드를 위한 post_id를 미리 획득"
+)
+async def create_draft_notice(
+    body: DraftCreateRequest,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    Draft 게시글 생성
+    
+    파일 업로드를 위해 post_id를 먼저 획득합니다.
+    is_draft=true 상태로 생성되며, 최종 게시 시 POST /admin/notices로 업데이트합니다.
+    """
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # Draft 게시글 생성
+        draft_data = {
+            "board_id": body.board_id,
+            "author_id": str(current_user["id"]),
+            "title": "[Draft]",
+            "content": "",
+            "is_draft": True
+        }
+        
+        result = admin_supabase.table('posts').insert(draft_data).execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Draft 생성 실패"
+            )
+        
+        return {
+            "post_id": result.data[0]['id'],
+            "message": "Draft 게시글이 생성되었습니다. 파일 업로드 후 POST /admin/notices로 최종 게시하세요."
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Draft 생성 실패: {str(e)}"
+        )
+
+
+@router.post(
+    "/admin/notices",
     response_model=NoticeDetailResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="공지사항 작성",
-    description="관리자만 공지사항을 작성할 수 있습니다",
+    summary="공지사항 작성 (관리자)",
+    description="관리자만 공지사항을 작성할 수 있습니다 (Presigned URL로 첨부파일 업로드)",
     responses={
         401: {"model": ErrorResponse},
         403: {"model": ErrorResponse, "description": "권한 없음"}
     }
 )
 async def create_notice(
-    title: str = Form(...),
-    content: str = Form(...),
-    board_id: int = Form(...),
-    subcategory: Optional[str] = Form(None),
-    is_pinned: bool = Form(False),
-    attachments: list[UploadFile] = File(None),
+    body: NoticeCreateRequest,
     current_user: dict = Depends(require_admin)
 ):
     """
-    공지사항 작성 (관리자 전용)
+    공지사항 작성 (관리자 전용, Presigned URL 사용)
     
-    multipart/form-data로 전송:
-    - title: 제목
-    - content: 내용
-    - board_id: 게시판 ID (1: 학생회, 2: 민주자치)
-    - subcategory: 소분류 (행사, 복지, 학과소식 등)
-    - is_pinned: 상단 고정 여부
-    - attachments: 첨부파일 (최대 5개)
+    플로우:
+    1. POST /admin/notices/draft 호출하여 draft 게시글 생성 및 post_id 획득
+    2. post_id로 Presigned URL 발급 및 파일 업로드
+    3. POST /admin/notices 호출하여 최종 게시 (is_draft=false)
     """
     try:
+        # 관리자 작업이므로 RLS 우회 클라이언트 사용
+        admin_supabase = get_supabase_admin()
+        
         # 게시글 생성
         post_data = {
-            "board_id": board_id,
+            "board_id": body.board_id,
             "author_id": str(current_user["id"]),
-            "title": title,
-            "content": content,
-            "subcategory": subcategory,
-            "is_pinned": is_pinned
+            "title": body.title,
+            "content": body.content,
+            "subcategory": body.subcategory,
+            "is_pinned": body.is_pinned,
+            "is_draft": False  # 최종 게시
         }
         
-        result = supabase.table('posts').insert(post_data).execute()
+        result = admin_supabase.table('posts').insert(post_data).execute()
         
         if not result.data:
             raise HTTPException(
@@ -321,19 +413,16 @@ async def create_notice(
         
         post_id = result.data[0]['id']
         
-        # 첨부파일 업로드
-        if attachments:
-            for file in attachments[:5]:  # 최대 5개
-                if file.filename:
-                    file_url = await upload_post_attachment(file, post_id)
-                    
-                    supabase.table('attachments').insert({
-                        "post_id": post_id,
-                        "filename": file.filename,
-                        "file_url": file_url,
-                        "file_size": file.size,
-                        "mime_type": file.content_type
-                    }).execute()
+        # 첨부파일 정보 저장
+        if body.attachment_urls:
+            for att in body.attachment_urls[:5]:  # 최대 5개
+                admin_supabase.table('attachments').insert({
+                    "post_id": post_id,
+                    "filename": att.filename,
+                    "file_url": att.public_url,
+                    "file_size": att.file_size,
+                    "mime_type": att.mime_type
+                }).execute()
         
         # 생성된 공지사항 조회
         return await get_notice(post_id)
@@ -348,9 +437,9 @@ async def create_notice(
 
 
 @router.patch(
-    "/{notice_id}",
+    "/admin/notices/{notice_id}",
     response_model=NoticeDetailResponse,
-    summary="공지사항 수정",
+    summary="공지사항 수정 (관리자)",
     responses={
         401: {"model": ErrorResponse},
         403: {"model": ErrorResponse},
@@ -379,10 +468,15 @@ async def update_notice(
             )
         
         # 수정 데이터
-        update_data = request.model_dump(exclude_unset=True)
-        update_data["updated_at"] = datetime.utcnow().isoformat()
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        update_data = request.model_dump(exclude_unset=True, exclude={'attachment_urls', 'delete_attachment_ids'})
+        update_data["updated_at"] = datetime.now(kst).isoformat()
         
-        result = supabase.table('posts')\
+        admin_supabase = get_supabase_admin()
+        
+        # 게시글 기본 정보 수정
+        result = admin_supabase.table('posts')\
             .update(update_data)\
             .eq('id', notice_id)\
             .execute()
@@ -392,6 +486,22 @@ async def update_notice(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="공지사항 수정 실패"
             )
+        
+        # 첨부파일 삭제
+        if request.delete_attachment_ids:
+            for att_id in request.delete_attachment_ids:
+                admin_supabase.table('attachments').delete().eq('id', att_id).eq('post_id', notice_id).execute()
+        
+        # 새 첨부파일 추가
+        if request.attachment_urls:
+            for att in request.attachment_urls[:5]:  # 최대 5개
+                admin_supabase.table('attachments').insert({
+                    "post_id": notice_id,
+                    "filename": att.filename,
+                    "file_url": att.public_url,
+                    "file_size": att.file_size,
+                    "mime_type": att.mime_type
+                }).execute()
         
         return await get_notice(notice_id)
     
@@ -405,9 +515,9 @@ async def update_notice(
 
 
 @router.delete(
-    "/{notice_id}",
+    "/admin/notices/{notice_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="공지사항 삭제",
+    summary="공지사항 삭제 (관리자)",
     description="Soft delete - 실제 삭제하지 않고 is_deleted 플래그만 변경",
     responses={
         401: {"model": ErrorResponse},
@@ -421,8 +531,11 @@ async def delete_notice(
 ):
     """공지사항 삭제 (Soft Delete)"""
     try:
+        # 관리자 작업이므로 RLS 우회 클라이언트 사용
+        admin_supabase = get_supabase_admin()
+        
         # 공지사항 존재 확인
-        existing = supabase.table('posts')\
+        existing = admin_supabase.table('posts')\
             .select('id')\
             .eq('id', notice_id)\
             .eq('is_deleted', False)\
@@ -436,14 +549,23 @@ async def delete_notice(
             )
         
         # Soft Delete
-        supabase.table('posts')\
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        result = admin_supabase.table('posts')\
             .update({
                 "is_deleted": True,
-                "deleted_at": datetime.utcnow().isoformat(),
+                "deleted_at": datetime.now(kst).isoformat(),
                 "deleted_by": str(current_user["id"])
             })\
             .eq('id', notice_id)\
+            .eq('is_deleted', False)\
             .execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="삭제 처리 실패"
+            )
         
         return None
     

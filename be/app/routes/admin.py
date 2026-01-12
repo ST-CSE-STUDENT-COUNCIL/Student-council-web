@@ -21,7 +21,7 @@ from app.schemas.admin import (
 from app.utils.auth import require_admin
 from app.utils.storage import create_signed_url
 from app.utils.login_security import unblock_user
-from app.database import supabase
+from app.database import supabase, get_supabase_admin
 from postgrest.exceptions import APIError
 
 
@@ -183,12 +183,17 @@ async def approve_user(user_id: str):
             )
         
         # 3. 승인 처리
-        result = supabase.table('users')\
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        now_kst = datetime.now(kst).isoformat()
+        
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table('users')\
             .update({
                 'verification_status': 'approved',
-                'verified_at': datetime.utcnow().isoformat(),
+                'verified_at': now_kst,
                 'rejection_reason': None,  # 거부 사유가 있었다면 초기화
-                'updated_at': datetime.utcnow().isoformat()
+                'updated_at': now_kst
             })\
             .eq('id', user_id)\
             .execute()
@@ -244,11 +249,15 @@ async def reject_user(user_id: str, request: RejectUserRequest):
             )
         
         # 2. 거부 처리
-        result = supabase.table('users')\
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table('users')\
             .update({
                 'verification_status': 'rejected',
                 'rejection_reason': request.reason,
-                'updated_at': datetime.utcnow().isoformat()
+                'updated_at': datetime.now(kst).isoformat()
             })\
             .eq('id', user_id)\
             .execute()
@@ -320,10 +329,14 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest):
             )
         
         # 4. 역할 변경
-        result = supabase.table('users')\
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table('users')\
             .update({
                 'role': request.role,
-                'updated_at': datetime.utcnow().isoformat()
+                'updated_at': datetime.now(kst).isoformat()
             })\
             .eq('id', user_id)\
             .execute()
@@ -382,16 +395,20 @@ async def update_membership_status(user_id: str, request: UpdateMembershipReques
             )
         
         # 2. 회비 납부 상태 변경
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        now_kst = datetime.now(kst).isoformat()
         update_data = {
             'membership_paid': request.paid,
-            'updated_at': datetime.utcnow().isoformat()
+            'updated_at': now_kst
         }
         
         # 납부로 변경하는 경우 납부 일시 기록
         if request.paid and not user_check.data['membership_paid']:
-            update_data['membership_paid_at'] = datetime.utcnow().isoformat()
+            update_data['membership_paid_at'] = now_kst
         
-        result = supabase.table('users')\
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table('users')\
             .update(update_data)\
             .eq('id', user_id)\
             .execute()

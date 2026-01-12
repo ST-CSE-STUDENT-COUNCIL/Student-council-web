@@ -273,6 +273,85 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 > 상세한 Request/Response 스키마는 Swagger 문서에서 확인하세요.
 
+## 파일 업로드 방식
+
+### Presigned URL 방식 (권장) 🆕
+
+모든 이미지/첨부파일 업로드는 Presigned URL 방식을 사용합니다. 서버를 거치지 않고 클라이언트에서 직접 R2로 업로드하여 대역폭과 서버 비용을 절감합니다.
+
+**업로드 플로우:**
+
+```
+1. Presigned URL 요청
+   POST /admin/{module}/presigned-url
+   Body: { filename: "image.jpg" }
+   Response: { presigned_url, public_url, file_key }
+
+2. 파일 업로드 (클라이언트 → R2 직접)
+   PUT {presigned_url}
+   Body: 파일 바이너리 (binary upload)
+   Headers: Content-Type: image/jpeg
+
+3. 업로드 완료 알림 (일부 API만 해당)
+   POST /admin/{module}/complete
+   Body: { public_url }
+```
+
+**지원 모듈:**
+
+| 모듈 | Presigned URL 발급 엔드포인트 |
+|------|----------------------------|
+| 사물함 이미지 | `POST /admin/welfare/locker_image/presigned-url` |
+| 복지 물품 이미지 | `POST /admin/welfare/welfare_rentals/presigned-url` |
+| 동아리 이미지 | `POST /admin/clubs/presigned-url` |
+| 학생회 소개 이미지 | `POST /admin/introductions/images/presigned-url` |
+| 공지사항 첨부파일 | `POST /admin/notices/presigned-url` |
+| 활동 이미지 | `POST /admin/activities/presigned-url` |
+| 활동 신청 인증 이미지 | `POST /activities/{activity_id}/register/presigned-url` |
+| 학적 인증 이미지 | `POST /verification-image/presigned-url` |
+
+**프론트엔드 구현 예시 (React + TypeScript):**
+
+```typescript
+// 1. Presigned URL 발급
+const { presigned_url, public_url } = await fetch('/admin/clubs/presigned-url', {
+  method: 'POST',
+  headers: { 
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({ filename: file.name })
+}).then(res => res.json());
+
+// 2. 파일 업로드 (R2 직접)
+await fetch(presigned_url, {
+  method: 'PUT',
+  body: file,  // File 객체 그대로
+  headers: {
+    'Content-Type': file.type
+  }
+});
+
+// 3. DB에 저장 (public_url 전달)
+await fetch('/admin/clubs', {
+  method: 'POST',
+  headers: { 
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+  body: JSON.stringify({
+    name: '동아리 이름',
+    description: '설명',
+    image_url: public_url  // Presigned URL로 업로드한 이미지 URL
+  })
+});
+```
+
+### 레거시 방식 (Deprecated)
+
+기존 `multipart/form-data` 방식은 deprecated되었지만 하위 호환을 위해 일부 유지됩니다.
+새로운 기능 개발 시에는 Presigned URL 방식을 사용하세요.
+
 ## 회원가입 및 승인 플로우
 
 ```

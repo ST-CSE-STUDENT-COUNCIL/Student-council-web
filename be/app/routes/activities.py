@@ -27,11 +27,19 @@ from app.schemas.activities import (
     ErrorResponse
 )
 from app.utils.auth import optional_current_user, require_verified_user, require_admin
-from app.utils.r2_storage import upload_file_to_r2, delete_file_from_r2
-from app.database import supabase
+from app.utils.r2_storage import (
+    upload_file_to_r2,
+    delete_file_from_r2,
+    generate_presigned_url,
+    validate_file_extension,
+    get_bucket_url
+)
+from app.database import supabase, get_supabase_admin
+import uuid
+import os
 
 
-router = APIRouter(prefix="/activities", tags=["활동"])
+router = APIRouter(tags=["활동"])
 
 
 # ============================================================================
@@ -39,7 +47,7 @@ router = APIRouter(prefix="/activities", tags=["활동"])
 # ============================================================================
 
 @router.get(
-    "",
+    "/activities",
     response_model=ActivityListResponse,
     status_code=status.HTTP_200_OK,
     summary="활동 목록 조회",
@@ -90,8 +98,10 @@ async def get_activities(
         activities_data = result.data if result.data else []
         
         # 응답 데이터 구성
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
         items = []
-        now = datetime.utcnow()
+        now = datetime.now(kst)
         
         for activity in activities_data:
             registration_start = datetime.fromisoformat(activity["registration_start"].replace('Z', '+00:00')) if activity.get("registration_start") else None
@@ -145,7 +155,7 @@ async def get_activities(
 
 
 @router.get(
-    "/{activity_id}",
+    "/activities/{activity_id}",
     response_model=ActivityResponse,
     status_code=status.HTTP_200_OK,
     summary="활동 상세 조회",
@@ -228,11 +238,41 @@ async def get_activity(
 # ============================================================================
 
 @router.post(
-    "/{activity_id}/register",
+    "/activities/{activity_id}/register/presigned-url",
+    summary="활동 신청 인증 이미지 업로드용 Presigned URL 발급",
+    description="카톡방 초대 신청 시 인증 이미지 업로드를 위한 Presigned URL 발급"
+)
+async def get_activity_verification_presigned_url(
+    activity_id: int,
+    filename: str
+):
+    """활동 신청 인증 이미지 업로드를 위한 Presigned URL 발급"""
+    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png'})
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"activity-{activity_id}/verification/{unique_filename}"
+    
+    presigned_url = generate_presigned_url(
+        bucket_name="event-images",
+        file_key=file_key,
+        expires_in=300
+    )
+    
+    base_url = get_bucket_url("event-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
+
+
+@router.post(
+    "/activities/{activity_id}/register",
     response_model=ActivityRegistrationResponse,
     status_code=status.HTTP_201_CREATED,
     summary="활동 신청",
-    description="활동에 신청합니다. 회원/비회원 모두 가능합니다. 카톡방 초대 신청 시 이미지 업로드 필요.",
+    description="활동에 신청합니다. 회원/비회원 모두 가능합니다. 카톡방 초대 신청 시 verification_image_url 전달.",
     responses={
         201: {"description": "신청 완료"},
         400: {"model": ErrorResponse, "description": "신청 실패 (정원 마감, 중복 신청 등)"},
@@ -241,22 +281,11 @@ async def get_activity(
 )
 async def register_for_activity(
     activity_id: int,
-    body: str = Form(...),  # JSON 문자열로 받음
-    verification_image: Optional[UploadFile] = File(None),
+    body: ActivityRegistrationRequest,
     current_user: Optional[dict] = Depends(optional_current_user)
 ):
-    """활동 신청 (회원/비회원)"""
+    """활동 신청 (회원/비회원, Presigned URL 사용)"""
     try:
-        # JSON 파싱
-        try:
-            data = json.loads(body)
-            request = ActivityRegistrationRequest(**data)
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"잘못된 요청 데이터: {str(e)}"
-            )
-        
         # 활동 정보 조회
         activity_result = supabase.table("activities")\
             .select("type, require_membership, registration_start, registration_end, max_capacity, current_count")\
@@ -283,34 +312,19 @@ async def register_for_activity(
         
         # 비회원 신청 시 필수 정보 확인
         if not current_user:
-            if not all([request.name, request.student_id, request.department, request.phone, request.email]):
+            if not all([body.name, body.student_id, body.department, body.phone, body.email]):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="비회원은 이름, 학번, 학과, 전화번호, 이메일을 모두 입력해야 합니다"
                 )
         
-        # 이미지 업로드 (카톡방 초대 신청)
-        verification_image_url = None
-        if verification_image and activity["type"] == "kakao_invite":
-            try:
-                verification_image_url = await upload_file_to_r2(
-                    file=verification_image,
-                    bucket_name="verification-images",
-                    folder="kakao_invites"
-                )
-            except Exception as e:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"이미지 업로드 실패: {str(e)}"
-                )
-        
         # 회원 정보 가져오기
         user_id = current_user["id"] if current_user else None
-        name = request.name or (current_user.get("name") if current_user else None)
-        student_id = request.student_id or (current_user.get("student_id") if current_user else None)
-        department = request.department or (current_user.get("department") if current_user else None)
-        phone = request.phone or (current_user.get("phone") if current_user else None)
-        email = request.email or (current_user.get("email") if current_user else None)
+        name = body.name or (current_user.get("name") if current_user else None)
+        student_id = body.student_id or (current_user.get("student_id") if current_user else None)
+        department = body.department or (current_user.get("department") if current_user else None)
+        phone = body.phone or (current_user.get("phone") if current_user else None)
+        email = body.email or (current_user.get("email") if current_user else None)
         
         # PostgreSQL 함수 호출
         rpc_result = supabase.rpc(
@@ -323,9 +337,9 @@ async def register_for_activity(
                 "p_department": department,
                 "p_phone": phone,
                 "p_email": email,
-                "p_form_responses": request.form_responses,
-                "p_verification_image_url": verification_image_url,
-                "p_kakao_id": request.kakao_id
+                "p_form_responses": body.form_responses,
+                "p_verification_image_url": body.verification_image_url,
+                "p_kakao_id": body.kakao_id
             }
         ).execute()
         
@@ -378,7 +392,7 @@ async def register_for_activity(
 
 
 @router.delete(
-    "/{activity_id}/register",
+    "/activities/{activity_id}/register",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="활동 신청 취소",
     description="활동 신청을 취소합니다. (로그인 필요)",
@@ -449,7 +463,7 @@ async def cancel_activity_registration(
 # ============================================================================
 
 @router.post(
-    "/{activity_id}/survey",
+    "/activities/{activity_id}/survey",
     status_code=status.HTTP_200_OK,
     summary="설문조사 제출",
     description="설문조사에 응답합니다. (로그인 필요)",
@@ -524,10 +538,10 @@ async def submit_survey(
 # ============================================================================
 
 @router.post(
-    "",
+    "/admin/activities",
     response_model=ActivityResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="활동 생성",
+    summary="활동 생성 (관리자)",
     description="새로운 활동을 생성합니다. 이미지 업로드 가능 (관리자 권한 필요)",
     responses={
         201: {"description": "생성 완료"},
@@ -536,53 +550,43 @@ async def submit_survey(
     }
 )
 async def create_activity(
-    type: str = Form(..., description="활동 유형 (event, demand_survey, survey, kakao_invite, fee_payment, notice)"),
-    title: str = Form(..., max_length=200),
-    description: Optional[str] = Form(None),
-    registration_start: Optional[str] = Form(None),
-    registration_end: Optional[str] = Form(None),
-    max_capacity: Optional[int] = Form(None),
-    require_membership: bool = Form(False),
-    config: str = Form("{}", description="JSON 문자열 (location, event_date, kakao_link 등)"),
-    form_fields: str = Form("[]", description="JSON 배열 문자열"),
-    survey_config: str = Form("{}", description="JSON 문자열 (설문 문항)"),
-    is_active: bool = Form(True),
-    images: Optional[list[UploadFile]] = File(None, description="활동 이미지 (여러 장 가능)"),
+    body: ActivityCreateRequest,
     current_user: dict = Depends(require_admin)
 ):
-    """활동 생성 (관리자 전용, 이미지 업로드 가능)"""
+    """활동 생성 (관리자 전용, Presigned URL로 이미지 업로드)"""
     try:
-        # JSON 파싱
-        try:
-            config_data = json.loads(config)
-            form_fields_data = json.loads(form_fields)
-            survey_config_data = json.loads(survey_config)
-        except json.JSONDecodeError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"JSON 파싱 실패: {str(e)}"
-            )
-        
         # 활동 데이터 저장
         activity_data = {
-            "type": type,
-            "title": title,
-            "description": description,
-            "registration_start": registration_start,
-            "registration_end": registration_end,
-            "max_capacity": max_capacity,
-            "require_membership": require_membership,
-            "config": config_data,
-            "form_fields": form_fields_data,
-            "is_active": is_active,
+            "type": body.type,
+            "title": body.title,
+            "description": body.description,
+            "registration_start": body.registration_start.isoformat() if body.registration_start else None,
+            "registration_end": body.registration_end.isoformat() if body.registration_end else None,
+            "max_capacity": body.max_capacity,
+            "require_membership": body.require_membership,
+            "config": body.config,
+            "form_fields": [f.model_dump() for f in body.form_fields],
+            "thumbnail_url": body.thumbnail_url,
+            "is_active": body.is_active,
+            "created_by": current_user["id"]
+        }
+        activity_data = {
+            "type": body.type,
+            "title": body.title,
+            "description": body.description,
+            "registration_start": body.registration_start.isoformat() if body.registration_start else None,
+            "registration_end": body.registration_end.isoformat() if body.registration_end else None,
+            "max_capacity": body.max_capacity,
+            "require_membership": body.require_membership,
+            "config": body.config,
+            "form_fields": [f.model_dump() for f in body.form_fields],
+            "thumbnail_url": body.thumbnail_url,
+            "is_active": body.is_active,
             "created_by": current_user["id"]
         }
         
-        # survey_config 추가 (config에 넣거나 별도로 관리)
-        if survey_config_data:
-            activity_data["config"]["survey_config"] = survey_config_data
-        
-        result = supabase.table("activities").insert(activity_data).execute()
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table("activities").insert(activity_data).execute()
         
         if not result.data:
             raise HTTPException(
@@ -593,32 +597,15 @@ async def create_activity(
         activity = result.data[0]
         activity_id = activity["id"]
         
-        # 이미지 업로드 (선택적)
-        if images:
-            for idx, image_file in enumerate(images):
-                if image_file.filename:
-                    try:
-                        # R2에 업로드
-                        image_url = await upload_file_to_r2(
-                            file=image_file,
-                            bucket_name="activity-images",
-                            folder=f"activity-{activity_id}",
-                            allowed_extensions={".jpg", ".jpeg", ".png"},
-                            max_size_mb=10
-                        )
-                        
-                        # activity_images 테이블에 저장
-                        image_data = {
-                            'activity_id': activity_id,
-                            'image_url': image_url,
-                            'display_order': idx
-                        }
-                        
-                        supabase.table('activity_images').insert(image_data).execute()
-                    
-                    except Exception as img_error:
-                        print(f"이미지 업로드 실패: {str(img_error)}")
-                        continue
+        # 이미지 정보 저장 (선택적)
+        if body.image_urls:
+            for idx, img in enumerate(body.image_urls):
+                image_data = {
+                    'activity_id': activity_id,
+                    'image_url': img.get("public_url"),
+                    'display_order': idx
+                }
+                admin_supabase.table('activity_images').insert(image_data).execute()
         
         return ActivityResponse(
             id=activity["id"],
@@ -651,10 +638,10 @@ async def create_activity(
 
 
 @router.patch(
-    "/{activity_id}",
+    "/admin/activities/{activity_id}",
     response_model=ActivityResponse,
     status_code=status.HTTP_200_OK,
-    summary="활동 수정",
+    summary="활동 수정 (관리자)",
     description="활동 정보를 수정합니다. (관리자 권한 필요)",
     responses={
         200: {"description": "수정 완료"},
@@ -745,9 +732,9 @@ async def update_activity(
 
 
 @router.delete(
-    "/{activity_id}",
+    "/admin/activities/{activity_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="활동 삭제",
+    summary="활동 삭제 (관리자)",
     description="활동을 삭제합니다. (Soft Delete, 관리자 권한 필요)",
     responses={
         204: {"description": "삭제 완료"},
@@ -762,10 +749,12 @@ async def delete_activity(
 ):
     """활동 삭제 (관리자 전용, Soft Delete)"""
     try:
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
         result = supabase.table("activities")\
             .update({
                 "is_deleted": True,
-                "deleted_at": datetime.utcnow().isoformat(),
+                "deleted_at": datetime.now(kst).isoformat(),
                 "deleted_by": current_user["id"]
             })\
             .eq("id", activity_id)\
@@ -790,10 +779,10 @@ async def delete_activity(
 
 
 @router.get(
-    "/{activity_id}/registrations",
+    "/admin/activities/{activity_id}/registrations",
     response_model=ActivityRegistrationListResponse,
     status_code=status.HTTP_200_OK,
-    summary="활동 신청자 목록 조회",
+    summary="활동 신청자 목록 조회 (관리자)",
     description="활동의 신청자 목록을 조회합니다. (관리자 권한 필요)",
     responses={
         200: {"description": "성공"},
@@ -862,7 +851,7 @@ async def get_activity_registrations(
 
 
 @router.get(
-    "/{activity_id}/survey/results",
+    "/activities/{activity_id}/survey/results",
     response_model=SurveyStatsResponse,
     status_code=status.HTTP_200_OK,
     summary="설문조사 통계 조회",
@@ -962,9 +951,9 @@ async def get_survey_stats(
 # ============================================================================
 
 @router.post(
-    "/{activity_id}/images",
+    "/admin/activities/{activity_id}/images",
     status_code=status.HTTP_201_CREATED,
-    summary="활동 이미지 추가",
+    summary="활동 이미지 추가 (관리자)",
     description="활동에 이미지를 추가합니다 (관리자 권한 필요)",
     responses={
         201: {"description": "이미지 추가 완료"},
@@ -1013,7 +1002,8 @@ async def add_activity_image(
             'caption': caption
         }
         
-        result = supabase.table('activity_images').insert(image_data).execute()
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table('activity_images').insert(image_data).execute()
         
         if not result.data:
             raise HTTPException(
@@ -1036,9 +1026,9 @@ async def add_activity_image(
 
 
 @router.delete(
-    "/{activity_id}/images/{image_id}",
+    "/admin/activities/{activity_id}/images/{image_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="활동 이미지 삭제",
+    summary="활동 이미지 삭제 (관리자)",
     description="활동의 특정 이미지를 삭제합니다 (관리자 권한 필요)",
     responses={
         204: {"description": "삭제 완료"},
@@ -1053,9 +1043,10 @@ async def delete_activity_image(
     current_user: dict = Depends(require_admin)
 ):
     """활동 이미지 삭제 (관리자 전용)"""
+    admin_supabase = get_supabase_admin()
     try:
         # 이미지 조회
-        image_result = supabase.table('activity_images')\
+        image_result = admin_supabase.table('activity_images')\
             .select('*')\
             .eq('id', image_id)\
             .eq('activity_id', activity_id)\
@@ -1078,7 +1069,7 @@ async def delete_activity_image(
             # R2 삭제 실패해도 DB에서는 삭제
         
         # DB에서 삭제
-        supabase.table('activity_images').delete().eq('id', image_id).execute()
+        admin_supabase.table('activity_images').delete().eq('id', image_id).execute()
         
         return None
     
