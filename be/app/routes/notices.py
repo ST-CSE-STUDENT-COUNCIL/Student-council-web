@@ -291,6 +291,7 @@ async def get_notice_attachment_presigned_url(
     """공지사항 첨부파일 업로드를 위한 Presigned URL 발급"""
     file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.pdf'})
     unique_filename = f"{uuid.uuid4()}{file_ext}"
+    # 게시글별 폴더 분리
     file_key = f"post-{post_id}/{unique_filename}"
     
     presigned_url = generate_presigned_url(
@@ -311,6 +312,55 @@ async def get_notice_attachment_presigned_url(
 
 
 @router.post(
+    "/admin/notices/draft",
+    summary="Draft 게시글 생성 (관리자)",
+    description="파일 업로드를 위한 post_id를 미리 획득"
+)
+async def create_draft_notice(
+    board_id: int,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    Draft 게시글 생성
+    
+    파일 업로드를 위해 post_id를 먼저 획득합니다.
+    is_draft=true 상태로 생성되며, 최종 게시 시 POST /admin/notices로 업데이트합니다.
+    """
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # Draft 게시글 생성
+        draft_data = {
+            "board_id": board_id,
+            "author_id": str(current_user["id"]),
+            "title": "[Draft]",
+            "content": "",
+            "is_draft": True
+        }
+        
+        result = admin_supabase.table('posts').insert(draft_data).execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Draft 생성 실패"
+            )
+        
+        return {
+            "post_id": result.data[0]['id'],
+            "message": "Draft 게시글이 생성되었습니다. 파일 업로드 후 POST /admin/notices로 최종 게시하세요."
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Draft 생성 실패: {str(e)}"
+        )
+
+
+@router.post(
     "/admin/notices",
     response_model=NoticeDetailResponse,
     status_code=status.HTTP_201_CREATED,
@@ -328,12 +378,10 @@ async def create_notice(
     """
     공지사항 작성 (관리자 전용, Presigned URL 사용)
     
-    - title: 제목
-    - content: 내용
-    - board_id: 게시판 ID (1: 학생회, 2: 민주자치)
-    - subcategory: 소분류 (행사, 복지 등)
-    - is_pinned: 상단 고정 여부
-    - attachment_urls: 첨부파일 정보 리스트
+    플로우:
+    1. POST /admin/notices/draft 호출하여 draft 게시글 생성 및 post_id 획득
+    2. post_id로 Presigned URL 발급 및 파일 업로드
+    3. POST /admin/notices 호출하여 최종 게시 (is_draft=false)
     """
     try:
         # 관리자 작업이므로 RLS 우회 클라이언트 사용
@@ -346,7 +394,8 @@ async def create_notice(
             "title": body.title,
             "content": body.content,
             "subcategory": body.subcategory,
-            "is_pinned": body.is_pinned
+            "is_pinned": body.is_pinned,
+            "is_draft": False  # 최종 게시
         }
         
         result = admin_supabase.table('posts').insert(post_data).execute()
