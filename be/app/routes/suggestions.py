@@ -158,6 +158,20 @@ async def get_suggestions(
         result = query.execute()
         suggestions_data = result.data if result.data else []
         
+        # N+1 방지: admin일 경우 모든 author_id를 한 번에 조회
+        author_map = {}
+        if is_admin and suggestions_data:
+            author_ids = list(set(
+                s['author_id'] for s in suggestions_data 
+                if s.get('author_id')
+            ))
+            if author_ids:
+                authors_result = supabase.table("users")\
+                    .select("id, name")\
+                    .in_("id", author_ids)\
+                    .execute()
+                author_map = {a['id']: a['name'] for a in (authors_result.data or [])}
+        
         # 응답 데이터 구성
         items = []
         for suggestion in suggestions_data:
@@ -167,7 +181,8 @@ async def get_suggestions(
             author_name = "익명"
             author_id = None
             if is_admin and suggestion.get("author_id"):
-                author_name = _get_author_name(suggestion["author_id"])
+                # 미리 조회한 author_map 사용 (N+1 해결)
+                author_name = author_map.get(suggestion["author_id"], "익명")
                 author_id = suggestion["author_id"]
             elif is_author:
                 author_name = current_user.get("name", "익명")

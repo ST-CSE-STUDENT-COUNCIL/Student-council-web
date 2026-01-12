@@ -107,9 +107,10 @@ async def get_notices(
                     )
                 )
         
-        # 쿼리 시작 - boards와 posts 조인
+        # 쿼리 시작 - boards와 users를 함께 조회 (N+1 문제 해결)
+        # Supabase 관계형 쿼리: board_id -> boards, author_id -> users
         query = supabase.table('posts')\
-            .select('*')\
+            .select('*, boards:board_id(id, name, category), author:author_id(id, name)')\
             .eq('is_deleted', False)
         
         # board_id 필터링
@@ -139,27 +140,17 @@ async def get_notices(
         
         posts_data = result.data if result.data else []
         
-        # board와 author 정보 추가
+        # 응답 데이터 구성 (이미 board, author 정보가 포함되어 있음)
         notices = []
         for post in posts_data:
-            # board 정보 조회
-            board_result = supabase.table('boards')\
-                .select('id, name, category')\
-                .eq('id', post['board_id'])\
-                .single()\
-                .execute()
-            
-            # author 정보 조회
-            author_result = supabase.table('users')\
-                .select('id, name')\
-                .eq('id', post['author_id'])\
-                .single()\
-                .execute()
+            # 관계형 쿼리 결과에서 board, author 추출
+            board_data = post.pop('boards', None)
+            author_data = post.pop('author', None)
             
             notices.append({
                 **post,
-                'board': board_result.data if board_result.data else {'id': post['board_id'], 'name': '', 'category': ''},
-                'author': author_result.data if author_result.data else {'id': post['author_id'], 'name': '알 수 없음'}
+                'board': board_data if board_data else {'id': post.get('board_id'), 'name': '', 'category': ''},
+                'author': author_data if author_data else {'id': post.get('author_id'), 'name': '알 수 없음'}
             })
         
         # 전체 개수 조회 (필터 적용)

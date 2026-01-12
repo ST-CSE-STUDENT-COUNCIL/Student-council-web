@@ -455,28 +455,37 @@ async def get_blocked_users():
                 'total': 0
             }
         
+        # N+1 방지: 모든 student_id를 수집하여 한 번에 조회
+        student_ids = [block['student_id'] for block in blocks_result.data]
+        
+        # 사용자 정보 한 번에 조회
+        users_result = supabase.table('users')\
+            .select('student_id, name, email, department')\
+            .in_('student_id', student_ids)\
+            .execute()
+        user_map = {u['student_id']: u for u in (users_result.data or [])}
+        
+        # 로그인 시도 기록 한 번에 조회 (각 student_id별 최근 20개는 클라이언트에서 필터링)
+        attempts_result = supabase.table('login_attempts')\
+            .select('*')\
+            .in_('student_id', student_ids)\
+            .order('attempt_time', desc=True)\
+            .execute()
+        
+        # student_id별로 로그인 시도 그룹화
+        attempts_map: dict[str, list] = {}
+        for attempt in (attempts_result.data or []):
+            sid = attempt['student_id']
+            if sid not in attempts_map:
+                attempts_map[sid] = []
+            if len(attempts_map[sid]) < 20:  # 최대 20개
+                attempts_map[sid].append(attempt)
+        
         blocked_users = []
         for block in blocks_result.data:
             student_id = block['student_id']
-            
-            # 사용자 정보 조회
-            user_result = supabase.table('users')\
-                .select('name, email, department')\
-                .eq('student_id', student_id)\
-                .single()\
-                .execute()
-            
-            user_info = user_result.data if user_result.data else {}
-            
-            # 최근 로그인 시도 이력 조회 (최근 20개)
-            attempts_result = supabase.table('login_attempts')\
-                .select('*')\
-                .eq('student_id', student_id)\
-                .order('attempt_time', desc=True)\
-                .limit(20)\
-                .execute()
-            
-            attempts = attempts_result.data if attempts_result.data else []
+            user_info = user_map.get(student_id, {})
+            attempts = attempts_map.get(student_id, [])
             
             blocked_users.append({
                 'student_id': student_id,
