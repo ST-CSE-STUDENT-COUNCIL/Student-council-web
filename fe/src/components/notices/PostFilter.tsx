@@ -1,8 +1,8 @@
 import type { ChangeEvent } from 'react';
 
-type NoticeFiltersProps = {
-    mainCategory: string;
-    onMainCategoryChange: (category: string) => void;
+type PostFilterProps = {
+    board_id: number;
+    onBoardIdChange: (board_id: number) => void;
     subCategory: string;
     onSubCategoryChange: (category: string) => void;
     search: string;
@@ -11,34 +11,35 @@ type NoticeFiltersProps = {
     onSortChange: (e: ChangeEvent<HTMLSelectElement>) => void;
 }
 
-export const NoticeFilters = ({
-    mainCategory,
-    onMainCategoryChange,
+export const PostFilter = ({
+    board_id,
+    onBoardIdChange,
     subCategory,
     onSubCategoryChange,
     search,
     onSearchChange,
     sort,
     onSortChange
-}: NoticeFiltersProps) => {
+}: PostFilterProps) => {
 
     // Main Categories
     const mainCategories = [
-        { value: 'student_council', label: '학생회' },
-        { value: 'democracy', label: '민주자치' }
+        { value: 1, label: '학생회' },
+        { value: 2, label: '민주자치' }
     ];
 
     // Sub Categories based on Main Category selection
-    const subCategories = mainCategory === 'student_council'
+    const subCategories = board_id === 1
         ? [
             { value: 'all', label: '전체보기' },
+            { value: 'notice', label: '공지' },
             { value: 'event', label: '행사' },
             { value: 'welfare', label: '복지' }
         ]
         : [
             { value: 'all', label: '전체보기' },
             { value: 'announcement', label: '공고' },
-            { value: 'notice', label: '고시' },
+            { value: 'notification', label: '고시' },
             { value: 'meeting', label: '대표자회의' },
             { value: 'rules', label: '학생회칙' }
         ];
@@ -51,10 +52,10 @@ export const NoticeFilters = ({
                     <button
                         key={cat.value}
                         onClick={() => {
-                            onMainCategoryChange(cat.value);
+                            onBoardIdChange(cat.value);
                             onSubCategoryChange('all'); // Reset sub category when main changes
                         }}
-                        className={`px-8 py-3 rounded-xl font-bold transition-all duration-200 text-lg ${mainCategory === cat.value
+                        className={`px-8 py-3 rounded-xl font-bold transition-all duration-200 text-lg ${board_id === cat.value
                             ? 'bg-blue-600 text-white shadow-lg scale-105'
                             : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-100'
                             }`}
