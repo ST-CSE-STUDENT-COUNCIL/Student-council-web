@@ -472,14 +472,21 @@ async def delete_notice(
         # Soft Delete
         from datetime import timezone, timedelta
         kst = timezone(timedelta(hours=9))
-        supabase.table('posts')\
+        result = supabase.table('posts')\
             .update({
                 "is_deleted": True,
                 "deleted_at": datetime.now(kst).isoformat(),
                 "deleted_by": str(current_user["id"])
             })\
             .eq('id', notice_id)\
+            .eq('is_deleted', False)\
             .execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="삭제 처리 실패"
+            )
         
         return None
     
