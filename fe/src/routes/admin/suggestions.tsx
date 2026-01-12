@@ -9,7 +9,6 @@ import {
   MessageSquare,
   Search,
   UserRound,
-  FileText,
   Clock,
 } from 'lucide-react'
 import type { Suggestion } from '../../types/suggestions'
@@ -410,7 +409,7 @@ function AdminSuggestionsPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1 block">현재 상태</label>
+                    <label className="text-xs font-semibold text-gray-500 mb-1 block">건의 상태</label>
                     <select
                       className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-gray-200"
                       value={actionDraft.status}
@@ -481,14 +480,6 @@ function AdminSuggestionsPage() {
                     className="w-full bg-gray-900 text-white rounded-xl py-3 text-sm font-semibold hover:bg-black transition-colors"
                   >
                     상태 업데이트 저장
-                  </button>
-                  <button
-                    className="w-full border border-gray-200 rounded-xl py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50"
-                    onClick={() => alert('PDF 내보내기 기능은 추후 연동 예정입니다.')}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <FileText size={16} /> 처리 리포트 다운로드
-                    </span>
                   </button>
                 </div>
               </div>
