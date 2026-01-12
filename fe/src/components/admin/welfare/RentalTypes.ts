@@ -6,4 +6,5 @@ export type RentalFormState = {
     category: string
     application_sheet_url: string
     quantity_cell_range: string
+    image_url?: string
 }

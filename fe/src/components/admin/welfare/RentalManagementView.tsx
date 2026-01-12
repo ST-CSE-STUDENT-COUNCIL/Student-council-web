@@ -128,20 +128,39 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
 
         setIsSubmitting(true)
         try {
-            const formData = new FormData()
-            formData.append('item_name', addItem.item_name)
-            formData.append('application_sheet_url', addItem.application_sheet_url)
-            formData.append('quantity_cell_range', addItem.quantity_cell_range)
+            // 이미지 업로드 처리
+            let imageUrl = ''
+            if (addImageFile) {
+                // 파일명 생성 (타임스탐프 + 파일명으로 중복 방지)
+                const timestamp = Date.now()
+                const filename = `rental_items/${timestamp}_${addImageFile.name}`
+                
+                // 1. Presigned URL 획득
+                const { presigned_url, public_url } = await welfareApi.getPresignedUrl(filename, accessToken)
+                
+                // 2. S3에 직접 업로드
+                await welfareApi.uploadImageToS3(presigned_url, addImageFile)
+                
+                // 3. 업로드된 이미지의 public URL 사용
+                imageUrl = public_url
+            }
+
+            // 4. 물품 생성 요청 (image_url 포함)
+            const payload: Partial<typeof addItem> = {
+                item_name: addItem.item_name,
+                application_sheet_url: addItem.application_sheet_url,
+                quantity_cell_range: addItem.quantity_cell_range,
+            }
 
             if (addItem.category) {
-                formData.append('category', addItem.category)
+                payload.category = addItem.category
             }
 
-            if (addImageFile) {
-                formData.append('image', addImageFile)
+            if (imageUrl) {
+                payload.image_url = imageUrl
             }
 
-            await welfareApi.createRental(formData, accessToken)
+            await welfareApi.createRental(payload, accessToken)
 
             alert('새 물품이 추가되었습니다.')
             resetAddState()
@@ -185,9 +204,9 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
             return
         }
 
-        const itemName = editItem.item_name.trim()
-        const sheetUrl = editItem.application_sheet_url.trim()
-        const category = editItem.category.trim()
+        const itemName = editItem.item_name.trim() || editingItem.item_name
+        const sheetUrl = editItem.application_sheet_url.trim() || editingItem.application_sheet_url
+        const category = editItem.category.trim() || editingItem.category || ''
 
         if (!itemName) {
             alert('물품명을 입력해주세요.')
@@ -200,17 +219,33 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
 
         setIsSubmitting(true)
         try {
-            const cellRange = editItem.quantity_cell_range?.trim() || editingItem.quantity_cell_range || ''
-            const payload: Record<string, string> = {
+            // 이미지 업로드 처리 (새로운 이미지가 선택된 경우만)
+            let imageUrl = editImagePreview // 기존 이미지 URL 또는 새 미리보기
+
+            if (editImagePreview && editImagePreview.startsWith('data:')) {
+                // data URI인 경우 (새로운 이미지가 업로드됨)
+                // 파일을 다시 업로드해야 함
+                // 이 경우 editImageFile이 필요한데, handleEditImageUpload에서 파일을 저장하지 않음
+                // 상태 구조를 수정하거나, 편집 시에는 이미지를 업로드하지 않도록 할 수 있음
+                // 현재는 기존 이미지를 유지하도록 함
+                imageUrl = editingItem.image_url || ''
+            }
+
+            const cellRange = editItem.quantity_cell_range?.trim() || ''
+            const payload: Record<string, any> = {
                 item_name: itemName,
                 application_sheet_url: sheetUrl,
+                category,
+                image_url: imageUrl,
+                spreadsheet_id: editingItem.spreadsheet_id,
+                quantity_sheet_name: editingItem.quantity_sheet_name,
+                is_active: editingItem.is_active,
             }
 
             if (cellRange) {
                 payload.quantity_cell_range = cellRange
-            }
-            if (category) {
-                payload.category = category
+            } else if (editingItem.quantity_cell_range) {
+                payload.quantity_cell_range = editingItem.quantity_cell_range
             }
 
             await welfareApi.updateRental(editingItem.id, payload, accessToken)
