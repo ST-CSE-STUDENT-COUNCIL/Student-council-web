@@ -12,7 +12,7 @@ from app.schemas.welfare import (
     RentalItemCreate,
     RentalItemUpdate
 )
-from app.database import get_supabase
+from app.database import get_supabase, get_supabase_admin
 from app.utils.auth import get_current_user, require_council
 from app.utils.sheets import get_sheet_value
 from app.utils.r2_storage import (
