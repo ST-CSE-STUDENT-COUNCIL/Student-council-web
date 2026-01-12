@@ -142,9 +142,9 @@ export const postApi = {
         return response.data
     },
 
-    getPresignedUrl: async (filename: string, post_id: number): Promise<{ presigned_url: string, public_url: string, key: string }> => {
+    getPresignedUrl: async (filename: string, post_id: number, content_type: string): Promise<{ presigned_url: string, public_url: string, key: string }> => {
         const response = await api.post(`admin${API_BASE_URL}/presigned-url`, null, {
-            params: { filename, post_id }
+            params: { filename, post_id, content_type }
         })
         return response.data
     },

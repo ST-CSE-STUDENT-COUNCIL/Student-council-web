@@ -78,7 +78,7 @@ class RejectUserResponse(BaseModel):
 
 class UpdateRoleRequest(BaseModel):
     """역할 변경 요청"""
-    role: str = Field(..., description="변경할 역할 (student, council, admin)")
+    role: str = Field(..., description="변경할 역할 (student, admin)")
     
     @classmethod
     def __get_validators__(cls):
@@ -86,8 +86,8 @@ class UpdateRoleRequest(BaseModel):
     
     @classmethod
     def validate_role(cls, v):
-        if v not in ['student', 'council', 'admin']:
-            raise ValueError('역할은 student, council, admin 중 하나여야 합니다')
+        if v not in ['student', 'admin']:
+            raise ValueError('역할은 student, admin 중 하나여야 합니다')
         return v
 
 

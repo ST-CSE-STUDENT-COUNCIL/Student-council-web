@@ -142,7 +142,7 @@ function AdminNoticesPage() {
         if (fileArray.length > 0) {
           for (const file of fileArray) {
             try {
-              const { presigned_url, public_url } = await postApi.getPresignedUrl(file.name, currentId)
+              const { presigned_url, public_url } = await postApi.getPresignedUrl(file.name, currentId, file.type || 'application/octet-stream')
 
               await fetch(presigned_url, {
                 method: 'PUT',
@@ -185,7 +185,7 @@ function AdminNoticesPage() {
         const uploadedAttachments = []
 
         for (const file of fileArray) {
-          const { presigned_url, public_url } = await postApi.getPresignedUrl(file.name, post_id) // post_id 전달
+          const { presigned_url, public_url } = await postApi.getPresignedUrl(file.name, post_id, file.type || 'application/octet-stream') // post_id 전달
 
           await fetch(presigned_url, {
             method: 'PUT',

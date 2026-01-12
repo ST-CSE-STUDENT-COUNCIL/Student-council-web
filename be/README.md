@@ -411,12 +411,10 @@ await fetch('/admin/clubs', {
 
 1. **get_current_user** - JWT 토큰 검증 및 사용자 정보 조회
 2. **require_verified_user** - 관리자 승인 완료 사용자만 허용
-3. **require_council** - 학생회 이상 권한 요구 (council, admin)
-4. **require_admin** - 관리자 권한만 허용
+3. **require_admin** - 관리자 권한만 허용
 
 **역할 (Role):**
 - `student` - 일반 학생 (기본값)
-- `council` - 일반 학생회 (게시글 삭제 등)
 - `admin` - 관리자 (모든 권한)
 
 **승인 상태 (Verification Status):**
@@ -494,7 +492,6 @@ Authorization: Bearer <admin_access_token>
 - **작성**: 승인된 사용자만 가능
 - **익명 처리**: 
   - 일반 사용자: 본인 작성글만 실명 표시
-  - council: 전체 목록 조회 가능, 작성자 익명
   - admin: 전체 목록 조회 가능, 작성자 실명 표시
 - **제목 보호**: 본인 또는 관리자/학생회만 제목 조회 가능
 - **상태 관리**: received(접수) → in_progress(처리중) → rejected(반려) / approved(승인)

@@ -87,6 +87,7 @@ class DraftCreateRequest(BaseModel):
 
 class NoticeCreateRequest(BaseModel):
     """공지사항 작성 요청"""
+    post_id: Optional[int] = Field(None, description="기존 draft 게시글 ID (있으면 업데이트, 없으면 새로 생성)")
     title: str
     content: str
     board_id: int

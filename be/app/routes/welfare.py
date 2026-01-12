@@ -13,7 +13,7 @@ from app.schemas.welfare import (
     RentalItemUpdate
 )
 from app.database import get_supabase, get_supabase_admin
-from app.utils.auth import get_current_user, require_council
+from app.utils.auth import get_current_user, require_admin
 from app.utils.sheets import get_sheet_value
 from app.utils.r2_storage import (
     upload_file_to_r2 as upload_file_to_supabase,
@@ -55,12 +55,12 @@ async def get_locker_info():
 @router.post("/admin/welfare/locker_image/presigned-url", summary="사물함 이미지 업로드용 Presigned URL 발급 (관리자)")
 async def get_locker_image_presigned_url(
     filename: str,
-    current_user: dict = Depends(require_council)
+    current_user: dict = Depends(require_admin)
 ):
     """
     사물함 배치도 이미지 업로드를 위한 Presigned URL을 발급합니다.
     
-    - **관리자 전용**: admin, council 권한 필요
+    - **관리자 전용**: admin 권한 필요
     - **프로세스**:
       1. 이 API로 Presigned URL 받기
       2. 프론트에서 해당 URL로 직접 PUT 요청으로 이미지 업로드
@@ -94,13 +94,13 @@ async def get_locker_image_presigned_url(
 @router.post("/admin/welfare/locker_image/complete", summary="사물함 이미지 업로드 완료 처리 (관리자)")
 async def complete_locker_image_upload(
     public_url: str,
-    current_user: dict = Depends(require_council)
+    current_user: dict = Depends(require_admin)
 ):
     """
     사물함 배치도 이미지 업로드 완료 후 DB에 저장합니다.
     기존 이미지가 있으면 R2에서 삭제합니다.
     
-    - **관리자 전용**: admin, council 권한 필요
+    - **관리자 전용**: admin 권한 필요
     - **프로세스**: Presigned URL로 업로드 완료 후 이 API 호출
     """
     admin_supabase = get_supabase_admin()
@@ -134,13 +134,13 @@ async def complete_locker_image_upload(
 @router.post("/admin/welfare/locker_image", summary="[Deprecated] 사물함 배치도 이미지 업로드 (관리자)")
 async def upload_locker_image(
     layout_image: UploadFile = File(..., description="사물함 배치도 이미지"),
-    current_user: dict = Depends(require_council)
+    current_user: dict = Depends(require_admin)
 ):
     """
     사물함 배치도 이미지를 R2 스토리지에 업로드합니다.
     기존 이미지가 있으면 삭제하고 새 이미지로 교체합니다.
     
-    - **관리자 전용**: admin, council 권한 필요
+    - **관리자 전용**: admin 권한 필요
     - **multipart/form-data**: 이미지 업로드 시 사용
     - **자동 교체**: 기존 이미지 삭제 후 새 이미지 업로드 및 DB 업데이트
     """
@@ -187,13 +187,13 @@ async def upload_locker_image(
 @router.put("/admin/welfare/locker_periods", response_model=LockerInfo, summary="사물함 정보 수정/생성 (관리자)")
 async def update_locker_info(
     body: LockerInfoUpdate,
-    current_user: dict = Depends(require_council)
+    current_user: dict = Depends(require_admin)
 ):
     """
     사물함 구글폼 URL(신청/반납), 신청 기간, 반납/연장 기간, 설명을 수정하거나 생성합니다.
     레코드가 없으면 자동으로 생성합니다 (UPSERT).
     
-    - **관리자 전용**: admin, council 권한 필요
+    - **관리자 전용**: admin 권한 필요
     - **신청 기간**: application_start, application_end로 신청 시작/종료 날짜 설정
     - **반납/연장 기간**: return_extension_start, return_extension_end로 반납/연장 시작/종료 날짜 설정
     - **구글폼 URL 2개**: 
@@ -290,12 +290,12 @@ async def get_rental_items():
 @router.post("/admin/welfare/welfare_rentals/presigned-url", summary="대여 물품 이미지 업로드용 Presigned URL 발급 (관리자)")
 async def get_rental_item_presigned_url(
     filename: str,
-    current_user: dict = Depends(require_council)
+    current_user: dict = Depends(require_admin)
 ):
     """
     대여 물품 이미지 업로드를 위한 Presigned URL을 발급합니다.
     
-    - **관리자 전용**: admin, council 권한 필요
+    - **관리자 전용**: admin 권한 필요
     """
     file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png'})
     unique_filename = f"{uuid.uuid4()}{file_ext}"
@@ -320,12 +320,12 @@ async def get_rental_item_presigned_url(
 @router.post("/admin/welfare/welfare_rentals", response_model=RentalItem, summary="대여 물품 추가 (관리자)", status_code=201)
 async def create_rental_item(
     body: RentalItemCreate,
-    current_user: dict = Depends(require_council)
+    current_user: dict = Depends(require_admin)
 ):
     """
     새로운 대여 물품을 추가합니다.
     
-    - **관리자 전용**: admin, council 권한 필요
+    - **관리자 전용**: admin 권한 필요
     - **Presigned URL**: 이미지는 /presigned-url로 먼저 업로드 후 public_url 전달
     - **item_name**: 장우산/단우산, 2인용/4인용 돗자리 등 구체적으로 입력
     """
@@ -349,12 +349,12 @@ async def create_rental_item(
 async def update_rental_item(
     item_id: int,
     data: RentalItemUpdate,
-    current_user: dict = Depends(require_council)
+    current_user: dict = Depends(require_admin)
 ):
     """
     대여 물품 정보를 수정합니다.
     
-    - **관리자 전용**: admin, council 권한 필요
+    - **관리자 전용**: admin 권한 필요
     """
     admin_supabase = get_supabase_admin()
     
@@ -381,12 +381,12 @@ async def update_rental_item(
 @router.delete("/admin/welfare/welfare_rentals/{item_id}", status_code=204, summary="대여 물품 삭제 (관리자)")
 async def delete_rental_item(
     item_id: int,
-    current_user: dict = Depends(require_council)
+    current_user: dict = Depends(require_admin)
 ):
     """
     대여 물품을 삭제합니다.
     
-    - **관리자 전용**: admin, council 권한 필요
+    - **관리자 전용**: admin 권한 필요
     """
     admin_supabase = get_supabase_admin()
     

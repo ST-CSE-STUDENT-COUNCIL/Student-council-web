@@ -81,9 +81,10 @@ async def get_notices(
     subCategory='all'이면 해당 mainCategory의 모든 글 조회
     """
     try:
-        # 영어 -> 한글 변환
+        # 영어 -> 한글 변환 (mainCategory만)
         main_category_kr = CATEGORY_MAP.get(mainCategory) if mainCategory else None
-        sub_category_kr = SUBCATEGORY_MAP.get(subCategory) if subCategory and subCategory != "all" else None
+        # subcategory는 DB에 영어로 저장되어 있으므로 변환 없이 그대로 사용
+        sub_category_filter = subCategory if subCategory and subCategory != "all" else None
         
         # 대분류 필터가 있으면 먼저 board_id 찾기
         board_ids = None
@@ -107,9 +108,10 @@ async def get_notices(
                     )
                 )
         
-        # 쿼리 시작 - boards와 posts 조인
+        # 쿼리 시작 - boards와 users를 함께 조회 (N+1 문제 해결)
+        # Supabase 관계형 쿼리: board_id -> boards, author_id -> users
         query = supabase.table('posts')\
-            .select('*')\
+            .select('*, boards:board_id(id, name, category), author:author_id(id, name)')\
             .eq('is_deleted', False)
         
         # board_id 필터링
@@ -118,8 +120,8 @@ async def get_notices(
         
         # 소분류 필터링 (게시글 서브카테고리)
         # subCategory='all'이면 필터링 안함
-        if sub_category_kr:
-            query = query.eq('subcategory', sub_category_kr)
+        if sub_category_filter:
+            query = query.eq('subcategory', sub_category_filter)
         
         # 검색
         if search:
@@ -139,27 +141,17 @@ async def get_notices(
         
         posts_data = result.data if result.data else []
         
-        # board와 author 정보 추가
+        # 응답 데이터 구성 (이미 board, author 정보가 포함되어 있음)
         notices = []
         for post in posts_data:
-            # board 정보 조회
-            board_result = supabase.table('boards')\
-                .select('id, name, category')\
-                .eq('id', post['board_id'])\
-                .single()\
-                .execute()
-            
-            # author 정보 조회
-            author_result = supabase.table('users')\
-                .select('id, name')\
-                .eq('id', post['author_id'])\
-                .single()\
-                .execute()
+            # 관계형 쿼리 결과에서 board, author 추출
+            board_data = post.pop('boards', None)
+            author_data = post.pop('author', None)
             
             notices.append({
                 **post,
-                'board': board_result.data if board_result.data else {'id': post['board_id'], 'name': '', 'category': ''},
-                'author': author_result.data if author_result.data else {'id': post['author_id'], 'name': '알 수 없음'}
+                'board': board_data if board_data else {'id': post.get('board_id'), 'name': '', 'category': ''},
+                'author': author_data if author_data else {'id': post.get('author_id'), 'name': '알 수 없음'}
             })
         
         # 전체 개수 조회 (필터 적용)
@@ -177,8 +169,8 @@ async def get_notices(
             if board_ids:
                 count_query = count_query.in_('board_id', board_ids)
         
-        if sub_category_kr:
-            count_query = count_query.eq('subcategory', sub_category_kr)
+        if sub_category_filter:
+            count_query = count_query.eq('subcategory', sub_category_filter)
         
         count_result = count_query.execute()
         total = len(count_result.data) if count_result.data else 0
@@ -387,31 +379,60 @@ async def create_notice(
     1. POST /admin/notices/draft 호출하여 draft 게시글 생성 및 post_id 획득
     2. post_id로 Presigned URL 발급 및 파일 업로드
     3. POST /admin/notices 호출하여 최종 게시 (is_draft=false)
+    
+    post_id가 제공되면 기존 draft를 업데이트하고, 없으면 새 게시글을 생성합니다.
     """
     try:
         # 관리자 작업이므로 RLS 우회 클라이언트 사용
         admin_supabase = get_supabase_admin()
         
-        # 게시글 생성
-        post_data = {
-            "board_id": body.board_id,
-            "author_id": str(current_user["id"]),
-            "title": body.title,
-            "content": body.content,
-            "subcategory": body.subcategory,
-            "is_pinned": body.is_pinned,
-            "is_draft": False  # 최종 게시
-        }
+        post_id = None
         
-        result = admin_supabase.table('posts').insert(post_data).execute()
-        
-        if not result.data:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="공지사항 생성 실패"
-            )
-        
-        post_id = result.data[0]['id']
+        # post_id가 있으면 기존 draft 업데이트, 없으면 새로 생성
+        if body.post_id:
+            # 기존 draft 업데이트
+            update_data = {
+                "title": body.title,
+                "content": body.content,
+                "subcategory": body.subcategory,
+                "is_pinned": body.is_pinned,
+                "is_draft": False  # 최종 게시
+            }
+            
+            result = admin_supabase.table('posts')\
+                .update(update_data)\
+                .eq('id', body.post_id)\
+                .eq('is_draft', True)\
+                .execute()
+            
+            if not result.data:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Draft 게시글을 찾을 수 없습니다"
+                )
+            
+            post_id = body.post_id
+        else:
+            # 새 게시글 생성
+            post_data = {
+                "board_id": body.board_id,
+                "author_id": str(current_user["id"]),
+                "title": body.title,
+                "content": body.content,
+                "subcategory": body.subcategory,
+                "is_pinned": body.is_pinned,
+                "is_draft": False  # 최종 게시
+            }
+            
+            result = admin_supabase.table('posts').insert(post_data).execute()
+            
+            if not result.data:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="공지사항 생성 실패"
+                )
+            
+            post_id = result.data[0]['id']
         
         # 첨부파일 정보 저장
         if body.attachment_urls:
