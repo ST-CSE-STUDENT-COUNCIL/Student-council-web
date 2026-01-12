@@ -24,7 +24,7 @@ export type SuggestionListItem = {
     author_id?: string | null;
     author_name: string;
     title: string;
-    status: string;
+    status: Suggestion['status'];
     rejection_reason?: string | null;
     resolution_note?: string | null;
     created_at: string;
