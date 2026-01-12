@@ -212,6 +212,12 @@ async def update_locker_info(
     # Pydantic 모델을 dict로 변환 (exclude_unset=True)
     update_data = body.model_dump(exclude_unset=True)
     
+    # datetime 객체를 ISO 문자열로 변환
+    from datetime import datetime
+    for key, value in update_data.items():
+        if isinstance(value, datetime):
+            update_data[key] = value.isoformat()
+    
     # 레코드가 이미 존재하면서 수정할 데이터가 없으면 에러
     if record_exists and not update_data:
         raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
