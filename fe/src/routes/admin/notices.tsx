@@ -6,7 +6,7 @@ import { Plus } from 'lucide-react'
 import { NoticeList } from '../../components/admin/notice/NoticeList'
 import { NoticeFilter } from '../../components/admin/notice/NoticeFilter'
 import { NoticeForm } from '../../components/admin/notice/NoticeForm'
-import { CATEGORIES, BOARD_SUB_CATEGORIES, subMapReverse } from '../../components/admin/notice/constants'
+import { CATEGORIES, BOARD_SUB_CATEGORIES } from '../../components/admin/notice/constants'
 
 export const Route = createFileRoute('/admin/notices')({
   component: AdminNoticesPage,
@@ -29,7 +29,7 @@ function AdminNoticesPage() {
     title: '',
     content: '',
     board_id: 1,
-    subCategory: '공지',
+    subCategory: 'notice',
     isPinned: false,
   })
   const [files, setFiles] = useState<FileList | null>(null)
@@ -74,7 +74,7 @@ function AdminNoticesPage() {
       title: '',
       content: '',
       board_id: 1,
-      subCategory: '공지',
+      subCategory: 'notice',
       isPinned: false,
     })
     setFiles(null)
@@ -94,7 +94,7 @@ function AdminNoticesPage() {
       title: post.title,
       content: post.content,
       board_id: post.board_id,
-      subCategory: subMapReverse[post.subcategory || ''] || '공지',
+      subCategory: post.subcategory || 'notice',
       isPinned: post.is_pinned || false,
     })
     setCurrentId(post.id)
@@ -121,7 +121,7 @@ function AdminNoticesPage() {
     setFormData(prev => ({
       ...prev,
       board_id: category.boardId,
-      subCategory: validSubs[0]?.value || '공지'
+      subCategory: validSubs[0]?.value || 'notice'
     }))
   }
 

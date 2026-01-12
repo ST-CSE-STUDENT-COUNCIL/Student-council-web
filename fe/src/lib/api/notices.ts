@@ -15,7 +15,7 @@ type PostListResponse = {
 
 type PostParams = {
     board_id?: number
-    subCategory?: string
+    subcategory?: string
     page?: number
     page_size?: number
     search?: string

@@ -41,7 +41,7 @@ function Notices() {
       const { postApi } = await import('../../lib/api/notices')
       const { posts: data, pagination } = await postApi.getAll({
         board_id,
-        subCategory,
+        subcategory: subCategory === 'all' ? undefined : subCategory,
         search,
         sort,
         page,

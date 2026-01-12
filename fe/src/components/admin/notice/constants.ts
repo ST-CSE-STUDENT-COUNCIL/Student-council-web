@@ -1,34 +1,35 @@
 export const CATEGORIES = [
-    { label: '학생회', value: 'student_council', boardId: 1 },
-    { label: '민주자치', value: 'democracy', boardId: 2 },
+    { label: '학생회', value: '1', boardId: 1 },
+    { label: '민주자치', value: '2', boardId: 2 },
 ]
 
 // Sub-categories per board
 export const BOARD_SUB_CATEGORIES: Record<string, { label: string, value: string }[]> = {
-    student_council: [
-        { label: '공지', value: '공지' },
-        { label: '행사', value: '행사' },
-        { label: '복지', value: '복지' },
+    '1': [
+        { label: '공지', value: 'notice' },
+        { label: '행사', value: 'event' },
+        { label: '복지', value: 'welfare' },
     ],
-    democracy: [
-        { label: '공고', value: '공고' },
-        { label: '고시', value: '고시' },
-        { label: '대표자회의', value: '대표자회의' },
-        { label: '학생회칙', value: '학생회칙' },
+    '2': [
+        { label: '공고', value: 'announcement' },
+        { label: '고시', value: 'notification' },
+        { label: '대표자회의', value: 'meeting' },
+        { label: '학생회칙', value: 'rules' },
     ]
 }
 
 export const ALL_SUB_CATEGORIES = [
-    ...BOARD_SUB_CATEGORIES.student_council,
-    ...BOARD_SUB_CATEGORIES.democracy
+    ...BOARD_SUB_CATEGORIES['1'],
+    ...BOARD_SUB_CATEGORIES['2']
 ]
 
 
 export const subMapReverse: Record<string, string> = {
+    'notice': '공지',
     'event': '행사',
     'welfare': '복지',
     'announcement': '공고',
-    'notice': '고시',
+    'notification': '고시',
     'meeting': '대표자회의',
     'rules': '학생회칙'
 }

@@ -32,13 +32,14 @@ export const PostFilter = ({
     const subCategories = board_id === 1
         ? [
             { value: 'all', label: '전체보기' },
+            { value: 'notice', label: '공지' },
             { value: 'event', label: '행사' },
             { value: 'welfare', label: '복지' }
         ]
         : [
             { value: 'all', label: '전체보기' },
             { value: 'announcement', label: '공고' },
-            { value: 'notice', label: '고시' },
+            { value: 'notification', label: '고시' },
             { value: 'meeting', label: '대표자회의' },
             { value: 'rules', label: '학생회칙' }
         ];
