@@ -216,14 +216,14 @@ function AdminNoticesPage() {
           })
         }
 
-        // 3. 최종 게시 (is_draft=false로 업데이트)
+        // 3. 최종 게시
         await postApi.create({
           title: formData.title,
           content: formData.content,
           board_id: formData.board_id,
           subcategory: formData.subCategory,
           is_pinned: formData.isPinned,
-          attachment_urls: uploadedAttachments
+          attachment_urls: uploadedAttachments.length > 0 ? uploadedAttachments : undefined
         })
 
         alert('작성되었습니다.')
@@ -237,80 +237,6 @@ function AdminNoticesPage() {
     }
   }
 
-  // ------------------------------------------------------------
-
-
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault()
-
-  //   try {
-  //     if (isEditing && currentId) {
-  //       // 수정 모드
-  //       await postApi.update(currentId, {
-  //         title: formData.title,
-  //         content: formData.content,
-  //         subcategory: formData.subCategory,
-  //         is_pinned: formData.isPinned,
-  //       })
-  //       alert('수정되었습니다.')
-  //     } else {
-  //       // 1. 게시글 생성 (첨부파일 URL 빈 배열로 시작)
-  //       const newPost = await postApi.create({
-  //         title: formData.title,
-  //         content: formData.content,
-  //         board_id: formData.board_id,
-  //         subcategory: formData.subCategory,
-  //         is_pinned: formData.isPinned,
-  //         attachment_urls: []
-  //       })
-
-  //       // 2. 파일 업로드 및 URL 수집
-  //       const fileArray = files ? Array.from(files) : []
-  //       const uploadedAttachments: { file_url: string, filename: string, file_size: number, mime_type: string }[] = []
-
-  //       if (fileArray.length > 0) {
-  //         for (const file of fileArray) {
-  //           try {
-  //             // Presigned URL 요청
-  //             const { presigned_url, public_url } = await postApi.getPresignedUrl(file.name, newPost.id)
-
-  //             // R2로 업로드 (PUT)
-  //             await fetch(presigned_url, {
-  //               method: 'PUT',
-  //               body: file,
-  //               headers: {
-  //                 'Content-Type': file.type
-  //               }
-  //             })
-
-  //             uploadedAttachments.push({
-  //               file_url: public_url,
-  //               filename: file.name,
-  //               file_size: file.size,
-  //               mime_type: file.type
-  //             })
-  //           } catch (err) {
-  //             console.error(`Failed to upload ${file.name}`, err)
-  //           }
-  //         }
-
-  //         // 3. 업로드된 파일이 있다면 게시글 업데이트
-  //         if (uploadedAttachments.length > 0) {
-  //           await postApi.update(newPost.id, {
-  //             attachments: uploadedAttachments
-  //           })
-  //         }
-  //       }
-
-  //       alert('작성되었습니다.')
-  //     }
-  //     resetForm()
-  //     fetchPosts()
-  //   } catch (e) {
-  //     console.error(e)
-  //     alert(`저장에 실패했습니다: ${e}`)
-  //   }
-  // }
 
   return (
     <div className="p-6 max-w-7xl mx-auto text-gray-900 font-sans">

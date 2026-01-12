@@ -59,6 +59,7 @@ export const postApi = {
         attachment_urls?: AttachmentFileInfo[]
     }): Promise<NoticeDetailResponse> => {
         let attachmentUrls: AttachmentFileInfo[] = []
+        let postId: number | undefined = undefined
 
         // 이미 업로드된 첨부파일 정보가 있으면 그대로 사용
         if (data.attachment_urls && data.attachment_urls.length > 0) {
@@ -70,7 +71,7 @@ export const postApi = {
             const draftRes = await api.post<{ post_id: number }>('/admin/notices/draft', {
                 board_id: data.board_id
             })
-            const postId = draftRes.data.post_id
+            postId = draftRes.data.post_id
 
             // 2. 각 파일에 대해 Presigned URL 발급 및 업로드
             for (const file of data.attachments) {
@@ -99,11 +100,12 @@ export const postApi = {
         }
 
         // 최종 공지사항 등록
-        const response = await api.post('/admin/notices', {
+        const response = await api.post<NoticeDetailResponse>('/admin/notices', {
+            ...(postId !== undefined && { post_id: postId }),  // Draft가 있을 때만 post_id 포함
             title: data.title,
             content: data.content,
             board_id: data.board_id,
-            subcategory: data.subcategory || null,
+            subcategory: data.subcategory,
             is_pinned: data.is_pinned || false,
             attachment_urls: attachmentUrls.length > 0 ? attachmentUrls : null
         })
