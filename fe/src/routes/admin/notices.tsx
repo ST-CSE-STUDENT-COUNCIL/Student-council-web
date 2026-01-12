@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { postApi } from '../../lib/api/notices'
-import type { Post } from '../../types/posts'
+import type { NoticeListItem } from '../../types/posts'
 import { Plus } from 'lucide-react'
 import { NoticeList } from '../../components/admin/notice/NoticeList'
 import { NoticeFilter } from '../../components/admin/notice/NoticeFilter'
@@ -13,7 +13,7 @@ export const Route = createFileRoute('/admin/notices')({
 })
 
 function AdminNoticesPage() {
-  const [posts, setPosts] = useState<Post[]>([])
+  const [posts, setPosts] = useState<NoticeListItem[]>([])
   const [loading, setLoading] = useState(false)
 
   // Filter State
@@ -92,11 +92,11 @@ function AdminNoticesPage() {
     setIsEditing(false)
   }
 
-  const handleOpenEdit = (post: Post) => {
+  const handleOpenEdit = (post: NoticeListItem) => {
     setFormData({
       title: post.title,
       content: post.content,
-      board_id: post.board_id,
+      board_id: post.board.id,
       subCategory: post.subcategory || 'notice',
       isPinned: post.is_pinned || false,
     })
@@ -175,7 +175,12 @@ function AdminNoticesPage() {
           content: formData.content,
           subcategory: formData.subCategory,
           is_pinned: formData.isPinned,
-          attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
+          attachment_urls: uploadedAttachments.length > 0 ? uploadedAttachments.map(a => ({
+            filename: a.filename,
+            public_url: a.file_url,
+            file_size: a.file_size,
+            mime_type: a.mime_type
+          })) : undefined,
         })
 
         alert('수정되었습니다.')

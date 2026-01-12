@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState, useEffect, useRef } from 'react'
-import type { Post } from '../../types/posts'
+import type { NoticeDetailResponse } from '../../types/posts'
 
 export const Route = createFileRoute('/notices/$noticeId')({
     component: PostDetail,
@@ -8,7 +8,7 @@ export const Route = createFileRoute('/notices/$noticeId')({
 
 function PostDetail() {
     const { noticeId: id } = Route.useParams()
-    const [post, setPost] = useState<Post | null>(null)
+    const [post, setPost] = useState<NoticeDetailResponse | null>(null)
     const [loading, setLoading] = useState(true)
 
     const processedPostId = useRef<string | null>(null)
@@ -26,7 +26,7 @@ function PostDetail() {
 
                 // Type assertion/casting might be needed if api returns Post not Notice yet
                 // But we will fix api next.
-                setPost(data as unknown as Post)
+                setPost(data)
             } catch (error) {
                 console.error('Failed to fetch post', error)
             } finally {
@@ -60,8 +60,8 @@ function PostDetail() {
         )
     }
 
-    const getCategoryLabel = (main: number, sub?: string | null) => {
-        const mainLabel = main === 1 ? '학생회' : '민주자치';
+    const getCategoryLabel = (board: { id: number; category: string }, sub?: string | null) => {
+        const mainLabel = board.category || (board.id === 1 ? '학생회' : '민주자치');
         if (!sub) return mainLabel;
 
         const subLabels: Record<string, string> = {
@@ -102,7 +102,7 @@ function PostDetail() {
                 <div className="bg-gray-50 px-8 py-6 border-b border-gray-100">
                     <div className="flex flex-wrap gap-2 mb-3">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {getCategoryLabel(post.board_id, post.subcategory)}
+                            {getCategoryLabel(post.board, post.subcategory)}
                         </span>
                         {post.is_pinned && (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -120,15 +120,6 @@ function PostDetail() {
 
                 {/* Content */}
                 <div className="px-8 py-8 min-h-[300px]">
-                    {/* Images */}
-                    {post.attachments && post.attachments.length > 0 && (
-                        <div className="mb-8 space-y-4">
-                            {post.attachments.map((img, idx) => (
-                                <img key={idx} src={img.file_url} alt={`Notice Image ${idx + 1}`} className="max-w-full h-auto rounded-lg shadow-sm" />
-                            ))}
-                        </div>
-                    )}
-
                     <div className="prose prose-blue max-w-none text-gray-800 whitespace-pre-wrap leading-relaxed">
                         {post.content}
                     </div>

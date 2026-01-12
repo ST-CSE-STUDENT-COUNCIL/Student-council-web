@@ -1,18 +1,25 @@
 import { Link } from '@tanstack/react-router';
-import type { Post } from '../../types/posts';
+import type { NoticeListItem } from '../../types/posts';
 
 type PostListProps = {
-    posts: Post[];
+    posts: NoticeListItem[];
 }
 
 export const PostList = ({ posts }: PostListProps) => {
     const getSubCategoryLabel = (sub?: string | null) => {
-        if (!sub) return '';
-        const labels: Record<string, string> = {
+        if (!sub) return '미분류';
+
+        // 영어 → 한글 매핑
+        const engToKor: Record<string, string> = {
             'event': '행사', 'welfare': '복지', 'notification': '공지',
             'announcement': '공고', 'notice': '고시', 'meeting': '대표자회의', 'rules': '학생회칙'
         };
-        return labels[sub] || sub;
+
+        // 한글 값 목록 (이미 한글이면 그대로 반환)
+        const korValues = ['행사', '복지', '공지', '공고', '고시', '대표자회의', '학생회칙'];
+
+        if (korValues.includes(sub)) return sub;
+        return engToKor[sub] || sub;
     };
 
     return (
@@ -49,7 +56,7 @@ export const PostList = ({ posts }: PostListProps) => {
                         </div>
                         <div className="hidden md:block w-24 text-center shrink-0">
                             <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold
-                                ${post.board_id === 1
+                                ${post.board.id === 1
                                     ? 'bg-blue-50 text-blue-700'
                                     : 'bg-green-50 text-green-700'}`}>
                                 {getSubCategoryLabel(post.subcategory)}
@@ -60,9 +67,6 @@ export const PostList = ({ posts }: PostListProps) => {
                         <div className="flex-1 w-full md:w-auto text-left md:px-4 mb-1 md:mb-0">
                             <span className="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
                                 {post.title}
-                                {post.attachments && post.attachments.length > 0 && (
-                                    <span className="ml-2 inline-block text-gray-400">📎</span>
-                                )}
                             </span>
                         </div>
 
