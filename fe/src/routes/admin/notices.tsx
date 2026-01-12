@@ -195,12 +195,13 @@ function AdminNoticesPage() {
         const uploadedAttachments = []
 
         for (const file of fileArray) {
-          const { presigned_url, public_url } = await postApi.getPresignedUrl(file.name, post_id) // post_id 전달
+          const contentType = file.type || 'application/octet-stream'
+          const { presigned_url, public_url } = await postApi.getPresignedUrl(file.name, post_id, contentType)
 
           await fetch(presigned_url, {
             method: 'PUT',
             body: file,
-            headers: { 'Content-Type': contentType }  // 동일한 content_type 사용
+            headers: { 'Content-Type': contentType }
           })
 
           uploadedAttachments.push({
@@ -211,8 +212,9 @@ function AdminNoticesPage() {
           })
         }
 
-        // 3. 최종 게시
+        // 3. 최종 게시 - post_id를 전달하여 기존 draft를 업데이트
         await postApi.create({
+          post_id,  // ⭐ draft ID 전달하여 새 게시글 대신 기존 draft 업데이트
           title: formData.title,
           content: formData.content,
           board_id: formData.board_id,

@@ -48,8 +48,10 @@ export const postApi = {
      * 플로우:
      * 1. attachment_urls가 있으면 바로 최종 게시
      * 2. attachments (File[])가 있으면 Draft → Presigned URL 업로드 → 최종 게시
+     * 3. post_id가 외부에서 전달되면 기존 draft를 업데이트
      */
     create: async (data: {
+        post_id?: number  // 외부에서 생성된 draft ID (있으면 업데이트)
         title: string
         content: string
         board_id: number
@@ -59,7 +61,7 @@ export const postApi = {
         attachment_urls?: AttachmentFileInfo[]
     }): Promise<NoticeDetailResponse> => {
         let attachmentUrls: AttachmentFileInfo[] = []
-        let postId: number | undefined = undefined
+        let postId: number | undefined = data.post_id  // 외부에서 전달된 post_id가 있으면 사용
 
         // 이미 업로드된 첨부파일 정보가 있으면 그대로 사용
         if (data.attachment_urls && data.attachment_urls.length > 0) {
@@ -67,13 +69,15 @@ export const postApi = {
         }
         // File 객체가 있으면 Presigned URL 플로우 사용
         else if (data.attachments && data.attachments.length > 0) {
-            // 1. Draft 생성하여 post_id 획득
-            const draftRes = await api.post<{ post_id: number }>('/admin/notices/draft', {
-                board_id: data.board_id
-            })
-            postId = draftRes.data.post_id
+            // post_id가 없으면 Draft 생성
+            if (!postId) {
+                const draftRes = await api.post<{ post_id: number }>('/admin/notices/draft', {
+                    board_id: data.board_id
+                })
+                postId = draftRes.data.post_id
+            }
 
-            // 2. 각 파일에 대해 Presigned URL 발급 및 업로드
+            // 각 파일에 대해 Presigned URL 발급 및 업로드
             for (const file of data.attachments) {
                 const contentType = file.type || 'application/octet-stream'
 
@@ -99,9 +103,9 @@ export const postApi = {
             }
         }
 
-        // 최종 공지사항 등록
+        // 최종 공지사항 등록 (post_id가 있으면 기존 draft 업데이트)
         const response = await api.post<NoticeDetailResponse>('/admin/notices', {
-            ...(postId !== undefined && { post_id: postId }),  // Draft가 있을 때만 post_id 포함
+            ...(postId !== undefined && { post_id: postId }),
             title: data.title,
             content: data.content,
             board_id: data.board_id,
