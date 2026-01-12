@@ -18,7 +18,10 @@ export function NoticeFilter({ filterMain, setFilterMain, filterSub, setFilterSu
 
             <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
                 <button
-                    onClick={() => setFilterMain('all')}
+                    onClick={() => {
+                        setFilterMain('all')
+                        setFilterSub('all')
+                    }}
                     className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${filterMain === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     전체
@@ -26,7 +29,10 @@ export function NoticeFilter({ filterMain, setFilterMain, filterSub, setFilterSu
                 {CATEGORIES.map(c => (
                     <button
                         key={c.value}
-                        onClick={() => setFilterMain(c.value)}
+                        onClick={() => {
+                            setFilterMain(c.value)
+                            setFilterSub('all')
+                        }}
                         className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${filterMain === c.value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                     >
                         {c.label}

@@ -38,10 +38,13 @@ function Notices() {
   const fetchNotices = async () => {
     try {
       setLoading(true)
+      // Map board_id to mainCategory for backend
+      const mainCategory = board_id === 1 ? 'student_council' : board_id === 2 ? 'democracy' : undefined
       const { postApi } = await import('../../lib/api/notices')
       const { posts: data, pagination } = await postApi.getAll({
-        board_id,
-        subcategory: subCategory === 'all' ? undefined : subCategory,
+        // @ts-ignore - Backend expects mainCategory string
+        mainCategory,
+        subCategory: subCategory === 'all' ? undefined : subCategory,
         search,
         sort,
         page,

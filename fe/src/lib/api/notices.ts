@@ -15,7 +15,7 @@ type PostListResponse = {
 
 type PostParams = {
     board_id?: number
-    subcategory?: string
+    subCategory?: string
     page?: number
     page_size?: number
     search?: string
@@ -100,7 +100,6 @@ export const postApi = {
 
     getAll: async (params?: PostParams): Promise<{ posts: Post[], pagination: PostListResponse['pagination'] }> => {
         const response = await api.get<any>(`${API_BASE_URL}`, { params })
-        // Handle potential mismatch between 'posts' and 'notices' key
         const list = response.data.posts || response.data.notices || []
 
         const posts = list.map((item: any) => mapToPost(item))

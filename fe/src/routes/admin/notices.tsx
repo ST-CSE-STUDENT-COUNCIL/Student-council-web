@@ -37,11 +37,15 @@ function AdminNoticesPage() {
   const fetchPosts = async () => {
     setLoading(true)
     try {
-      const params: any = { page: 1, page_size: 100 }
-      if (filterMain !== 'all') params.mainCategory = filterMain
+      const params: any = { page: 1, page_size: 20 }
+      if (filterMain !== 'all') {
+        params.mainCategory = filterMain === "1" ? 'student_council' : filterMain === "2" ? 'democracy' : undefined
+      }
       if (filterSub !== 'all') params.subCategory = filterSub
 
+      console.log('DEBUG: fetchPosts params:', params)
       const res = await postApi.getAll(params)
+      console.log('DEBUG: fetchPosts result count:', res.posts.length)
       setPosts(res.posts)
     } catch (e) {
       console.error(e)
@@ -106,7 +110,8 @@ function AdminNoticesPage() {
     if (!confirm('정말 삭제하시겠습니까?')) return
     try {
       await postApi.delete(id)
-      fetchPosts()
+      await fetchPosts()
+      alert('삭제되었습니다.')
     } catch (e) {
       console.error(e)
       alert('삭제에 실패했습니다.')
