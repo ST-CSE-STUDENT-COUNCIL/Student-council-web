@@ -101,6 +101,43 @@ def generate_presigned_url(
         )
 
 
+def generate_presigned_url_with_content_type(
+    bucket_name: BucketType,
+    file_key: str,
+    content_type: str,
+    expires_in: int = 300
+) -> str:
+    """
+    Presigned URL 생성 (업로드용, Content-Type 지정)
+    
+    Args:
+        bucket_name: R2 버킷 이름
+        file_key: 파일 경로 (예: 'folder/filename.jpg')
+        content_type: 파일의 MIME 타입 (예: 'image/jpeg')
+        expires_in: URL 유효 시간 (초, 기본 5분)
+    
+    Returns:
+        str: Presigned URL
+    """
+    try:
+        r2_client = get_r2_client()
+        presigned_url = r2_client.generate_presigned_url(
+            'put_object',
+            Params={
+                'Bucket': bucket_name,
+                'Key': file_key,
+                'ContentType': content_type
+            },
+            ExpiresIn=expires_in
+        )
+        return presigned_url
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Presigned URL 생성 실패: {str(e)}"
+        )
+
+
 async def upload_file_to_r2(
     file: UploadFile,
     bucket_name: str,

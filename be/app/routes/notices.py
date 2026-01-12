@@ -20,6 +20,7 @@ from app.utils.r2_storage import (
     upload_post_attachment,
     delete_post_attachments,
     generate_presigned_url,
+    generate_presigned_url_with_content_type,
     validate_file_extension,
     get_bucket_url
 )
@@ -287,6 +288,7 @@ async def get_notice(
 async def get_notice_attachment_presigned_url(
     filename: str,
     post_id: int,
+    content_type: str = Query("application/octet-stream", description="파일 MIME 타입 (예: image/jpeg)"),
     current_user: dict = Depends(require_admin)
 ):
     """공지사항 첨부파일 업로드를 위한 Presigned URL 발급"""
@@ -295,9 +297,10 @@ async def get_notice_attachment_presigned_url(
     # 게시글별 폴더 분리
     file_key = f"post-{post_id}/{unique_filename}"
     
-    presigned_url = generate_presigned_url(
+    presigned_url = generate_presigned_url_with_content_type(
         bucket_name="post-attachments",
         file_key=file_key,
+        content_type=content_type,
         expires_in=300
     )
     
@@ -308,7 +311,8 @@ async def get_notice_attachment_presigned_url(
         "presigned_url": presigned_url,
         "public_url": public_url,
         "file_key": file_key,
-        "filename": filename
+        "filename": filename,
+        "content_type": content_type
     }
 
 
