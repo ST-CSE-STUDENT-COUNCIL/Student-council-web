@@ -9,7 +9,7 @@ export const PostList = ({ posts }: PostListProps) => {
     const getSubCategoryLabel = (sub?: string | null) => {
         if (!sub) return '';
         const labels: Record<string, string> = {
-            'event': '행사', 'welfare': '복지',
+            'event': '행사', 'welfare': '복지', 'notification': '공지',
             'announcement': '공고', 'notice': '고시', 'meeting': '대표자회의', 'rules': '학생회칙'
         };
         return labels[sub] || sub;
