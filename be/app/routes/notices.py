@@ -39,6 +39,7 @@ CATEGORY_MAP = {
 SUBCATEGORY_MAP = {
     "event": "행사",
     "welfare": "복지",
+    "notification": "공지",
     "announcement": "공고",
     "notice": "고시",
     "meeting": "대표자회의",
