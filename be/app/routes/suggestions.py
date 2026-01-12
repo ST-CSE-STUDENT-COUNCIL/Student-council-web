@@ -348,9 +348,11 @@ async def update_suggestion_status(
             )
         
         # 업데이트 데이터 구성
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
         update_data: dict[str, str | None] = {
             "status": body.status,
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.now(kst).isoformat()
         }
         
         # 상태별 처리

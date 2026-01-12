@@ -98,8 +98,10 @@ async def get_activities(
         activities_data = result.data if result.data else []
         
         # 응답 데이터 구성
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
         items = []
-        now = datetime.utcnow()
+        now = datetime.now(kst)
         
         for activity in activities_data:
             registration_start = datetime.fromisoformat(activity["registration_start"].replace('Z', '+00:00')) if activity.get("registration_start") else None
@@ -746,10 +748,12 @@ async def delete_activity(
 ):
     """활동 삭제 (관리자 전용, Soft Delete)"""
     try:
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
         result = supabase.table("activities")\
             .update({
                 "is_deleted": True,
-                "deleted_at": datetime.utcnow().isoformat(),
+                "deleted_at": datetime.now(kst).isoformat(),
                 "deleted_by": current_user["id"]
             })\
             .eq("id", activity_id)\

@@ -215,7 +215,9 @@ async def update_club(
         
         # 수정할 데이터 구성
         update_data = body.model_dump(exclude_unset=True)
-        update_data['updated_at'] = datetime.utcnow().isoformat()
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        update_data['updated_at'] = datetime.now(kst).isoformat()
         
         result = supabase.table('clubs')\
             .update(update_data)\

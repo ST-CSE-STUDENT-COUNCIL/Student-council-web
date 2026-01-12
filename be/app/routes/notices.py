@@ -413,8 +413,10 @@ async def update_notice(
             )
         
         # 수정 데이터
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
         update_data = request.model_dump(exclude_unset=True)
-        update_data["updated_at"] = datetime.utcnow().isoformat()
+        update_data["updated_at"] = datetime.now(kst).isoformat()
         
         result = supabase.table('posts')\
             .update(update_data)\
@@ -470,10 +472,12 @@ async def delete_notice(
             )
         
         # Soft Delete
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
         supabase.table('posts')\
             .update({
                 "is_deleted": True,
-                "deleted_at": datetime.utcnow().isoformat(),
+                "deleted_at": datetime.now(kst).isoformat(),
                 "deleted_by": str(current_user["id"])
             })\
             .eq('id', notice_id)\
