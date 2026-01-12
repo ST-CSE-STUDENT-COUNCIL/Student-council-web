@@ -54,11 +54,16 @@ export const postApi = {
         subcategory?: string
         is_pinned?: boolean
         attachments?: File[]
+        attachment_urls?: { filename: string; public_url: string; file_size: number; mime_type: string }[]
     }): Promise<Post> => {
-        const attachmentUrls: { filename: string; public_url: string; file_size: number; mime_type: string }[] = []
+        let attachmentUrls: { filename: string; public_url: string; file_size: number; mime_type: string }[] = []
 
-        // 첨부파일이 있으면 Presigned URL 플로우 사용
-        if (data.attachments && data.attachments.length > 0) {
+        // 이미 업로드된 첨부파일 정보가 있으면 그대로 사용
+        if (data.attachment_urls && data.attachment_urls.length > 0) {
+            attachmentUrls = data.attachment_urls
+        }
+        // File 객체가 있으면 Presigned URL 플로우 사용
+        else if (data.attachments && data.attachments.length > 0) {
             // 1. Draft 생성하여 post_id 획득
             const draftRes = await api.post<{ post_id: number }>('/admin/notices/draft', {
                 board_id: data.board_id
@@ -67,35 +72,30 @@ export const postApi = {
 
             // 2. 각 파일에 대해 Presigned URL 발급 및 업로드
             for (const file of data.attachments) {
+                const contentType = file.type || 'application/octet-stream'
+
                 // 2-1. Presigned URL 발급 (content_type 포함)
-                const presignedRes = await api.post<{
-                    presigned_url: string
-                    public_url: string
-                    filename: string
-                    content_type: string
-                }>('/admin/notices/presigned-url', null, {
-                    params: {
-                        filename: file.name,
-                        post_id: postId,
-                        content_type: file.type || 'application/octet-stream'
-                    }
-                })
+                const { presigned_url, public_url } = await postApi.getPresignedUrl(
+                    file.name,
+                    postId,
+                    contentType
+                )
 
                 // 2-2. R2로 직접 파일 업로드 (Presigned URL 사용)
-                await fetch(presignedRes.data.presigned_url, {
+                await fetch(presigned_url, {
                     method: 'PUT',
                     body: file,
                     headers: {
-                        'Content-Type': file.type || 'application/octet-stream'
+                        'Content-Type': contentType
                     }
                 })
 
                 // 2-3. 업로드된 파일 정보 저장
                 attachmentUrls.push({
                     filename: file.name,
-                    public_url: presignedRes.data.public_url,
+                    public_url: public_url,
                     file_size: file.size,
-                    mime_type: file.type || 'application/octet-stream'
+                    mime_type: contentType
                 })
             }
         }
@@ -126,7 +126,7 @@ export const postApi = {
             mime_type: string
         }[]
     }): Promise<Post> => {
-        const url = `admin${API_BASE_URL}/${id}`
+        const url = `/admin${API_BASE_URL}/${id}`
         const response = await api.patch(url, {
             ...data,
             subcategory: data.subcategory || null
@@ -135,20 +135,19 @@ export const postApi = {
     },
 
     delete: async (id: number): Promise<void> => {
-        await api.delete(`admin${API_BASE_URL}/${id}`)
+        await api.delete(`/admin${API_BASE_URL}/${id}`)
     },
     createDraft: async (board_id: number): Promise<{ post_id: number }> => {
-        const response = await api.post(`admin${API_BASE_URL}/draft`, { board_id })
+        const response = await api.post(`/admin${API_BASE_URL}/draft`, { board_id })
         return response.data
     },
 
-    getPresignedUrl: async (filename: string, post_id: number): Promise<{ presigned_url: string, public_url: string, key: string }> => {
-        const response = await api.post(`admin${API_BASE_URL}/presigned-url`, null, {
-            params: { filename, post_id }
+    getPresignedUrl: async (filename: string, post_id: number, content_type: string): Promise<{ presigned_url: string, public_url: string, key: string }> => {
+        const response = await api.post(`/admin${API_BASE_URL}/presigned-url`, null, {
+            params: { filename, post_id, content_type }  // content_type 추가
         })
         return response.data
     },
-
     getAll: async (params?: PostParams): Promise<{ posts: Post[], pagination: PostListResponse['pagination'] }> => {
         const response = await api.get<any>(`${API_BASE_URL}`, { params })
         const list = response.data.posts || response.data.notices || []

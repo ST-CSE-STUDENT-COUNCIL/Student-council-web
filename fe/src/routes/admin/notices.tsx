@@ -142,13 +142,18 @@ function AdminNoticesPage() {
         if (fileArray.length > 0) {
           for (const file of fileArray) {
             try {
-              const { presigned_url, public_url } = await postApi.getPresignedUrl(file.name, currentId)
+              const contentType = file.type || 'application/octet-stream'
+              const { presigned_url, public_url } = await postApi.getPresignedUrl(
+                file.name,
+                currentId,
+                contentType  // content_type 전달!
+              )
 
               await fetch(presigned_url, {
                 method: 'PUT',
                 body: file,
                 headers: {
-                  'Content-Type': file.type
+                  'Content-Type': contentType  // 동일한 content_type 사용
                 }
               })
 
@@ -156,7 +161,7 @@ function AdminNoticesPage() {
                 file_url: public_url,
                 filename: file.name,
                 file_size: file.size,
-                mime_type: file.type
+                mime_type: contentType
               })
             } catch (err) {
               console.error(`Failed to upload ${file.name}`, err)
@@ -185,19 +190,24 @@ function AdminNoticesPage() {
         const uploadedAttachments = []
 
         for (const file of fileArray) {
-          const { presigned_url, public_url } = await postApi.getPresignedUrl(file.name, post_id) // post_id 전달
+          const contentType = file.type || 'application/octet-stream'
+          const { presigned_url, public_url } = await postApi.getPresignedUrl(
+            file.name,
+            post_id,
+            contentType  // content_type 전달!
+          )
 
           await fetch(presigned_url, {
             method: 'PUT',
             body: file,
-            headers: { 'Content-Type': file.type }
+            headers: { 'Content-Type': contentType }  // 동일한 content_type 사용
           })
 
           uploadedAttachments.push({
             filename: file.name,
             public_url,
             file_size: file.size,
-            mime_type: file.type
+            mime_type: contentType
           })
         }
 
