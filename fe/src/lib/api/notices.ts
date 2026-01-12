@@ -55,17 +55,17 @@ export const postApi = {
         is_pinned?: boolean
         attachment_urls?: string[]
     }): Promise<Post> => {
-        const formData = new FormData()
-        formData.append('title', data.title)
-        formData.append('content', data.content)
-        formData.append('board_id', data.board_id.toString())
-        if (data.subcategory) formData.append('subcategory', data.subcategory)
-        formData.append('is_pinned', String(data.is_pinned || false))
-
-        // Note: attachments are not sent here as we use presigned URL flow in update
-        const response = await api.post(`admin${API_BASE_URL}`, formData, {
+        // Send JSON as the backend expects a Pydantic model body
+        const response = await api.post(`admin${API_BASE_URL}`, {
+            title: data.title,
+            content: data.content,
+            board_id: Number(data.board_id),
+            subcategory: data.subcategory || null,
+            is_pinned: Boolean(data.is_pinned),
+            attachment_urls: []
+        }, {
             headers: {
-                'Content-Type': 'multipart/form-data'
+                'Content-Type': 'application/json'
             }
         })
         return mapToPost(response.data)

@@ -6,13 +6,13 @@ export const CATEGORIES = [
 // Sub-categories per board
 export const BOARD_SUB_CATEGORIES: Record<string, { label: string, value: string }[]> = {
     '1': [
-        { label: '공지', value: 'notice' },
+        { label: '공지', value: 'notification' },
         { label: '행사', value: 'event' },
         { label: '복지', value: 'welfare' },
     ],
     '2': [
         { label: '공고', value: 'announcement' },
-        { label: '고시', value: 'notification' },
+        { label: '고시', value: 'notice' },
         { label: '대표자회의', value: 'meeting' },
         { label: '학생회칙', value: 'rules' },
     ]
@@ -25,11 +25,11 @@ export const ALL_SUB_CATEGORIES = [
 
 
 export const subMapReverse: Record<string, string> = {
-    'notice': '공지',
+    'notification': '공지',
     'event': '행사',
     'welfare': '복지',
     'announcement': '공고',
-    'notification': '고시',
+    'notice': '고시',
     'meeting': '대표자회의',
     'rules': '학생회칙'
 }
