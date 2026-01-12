@@ -343,9 +343,6 @@ async def create_notice(
             "content": body.content,
             "subcategory": body.subcategory,
             "is_pinned": body.is_pinned
-            "content": body.content,
-            "subcategory": body.subcategory,
-            "is_pinned": body.is_pinned
         }
         
         result = supabase.table('posts').insert(post_data).execute()
