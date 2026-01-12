@@ -46,6 +46,34 @@ export type LockerPeriod = {
 };
 
 export const welfareApi = {
+    /**
+     * Presigned URL을 획득합니다.
+     * S3에 이미지를 직접 업로드할 때 필요합니다.
+     */
+    getPresignedUrl: async (filename: string, token?: string | null): Promise<{ presigned_url: string; public_url: string }> => {
+        const response = await axios.post(`${API_BASE_URL}/admin/welfare/welfare_rentals/presigned-url`, {}, {
+            params: { filename },
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return response.data;
+    },
+
+    /**
+     * Presigned URL을 사용하여 S3에 이미지를 직접 업로드합니다.
+     * CORS preflight를 방지하기 위해 커스텀 헤더를 사용하지 않습니다.
+     * R2는 파일 확장자로 Content-Type을 자동 추론합니다.
+     */
+    uploadImageToS3: async (presignedUrl: string, file: File): Promise<void> => {
+        const response = await fetch(presignedUrl, {
+            method: 'PUT',
+            body: file,
+        });
+
+        if (!response.ok) {
+            throw new Error(`이미지 업로드 실패: ${response.status}`);
+        }
+    },
+
     getRentals: async (): Promise<WelfareRental[]> => {
         const response = await axios.get(`${API_BASE_URL}/welfare/welfare_rentals`);
         return response.data;
@@ -61,12 +89,13 @@ export const welfareApi = {
         return response.data;
     },
 
-    createRental: async (formData: FormData, token?: string | null) => {
-        const response = await axios.post(`${API_BASE_URL}/admin/welfare/welfare_rentals`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
+    createRental: async (payload: Partial<WelfareRental>, token?: string | null) => {
+        const response = await axios.post(`${API_BASE_URL}/admin/welfare/welfare_rentals`, payload, {
+            headers: token
+                ? {
+                    Authorization: `Bearer ${token}`,
+                }
+                : undefined,
         });
         return response.data;
     },
