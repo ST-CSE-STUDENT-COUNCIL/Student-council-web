@@ -31,7 +31,10 @@
     "AllowedOrigins": [
       "http://localhost:5173",
       "http://localhost:3000",
-      "https://seoultech.vercel.com"
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:3000",
+      "https://seoultechcom.vercel.app",
+      "https://www.seoultechcom.com"
     ],
     "AllowedMethods": [
       "GET",
@@ -44,7 +47,9 @@
       "*"
     ],
     "ExposeHeaders": [
-      "ETag"
+      "ETag",
+      "Content-Length",
+      "Content-Type"
     ],
     "MaxAgeSeconds": 3600
   }

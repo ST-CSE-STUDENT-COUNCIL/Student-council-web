@@ -96,3 +96,5 @@ class NoticeUpdateRequest(BaseModel):
     content: Optional[str] = None
     subcategory: Optional[str] = None
     is_pinned: Optional[bool] = None
+    attachment_urls: Optional[list[AttachmentFileInfo]] = None  # 첨부파일 추가용
+    delete_attachment_ids: Optional[list[int]] = None  # 첨부파일 삭제용

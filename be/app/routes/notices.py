@@ -416,10 +416,13 @@ async def update_notice(
         # 수정 데이터
         from datetime import timezone, timedelta
         kst = timezone(timedelta(hours=9))
-        update_data = request.model_dump(exclude_unset=True)
+        update_data = request.model_dump(exclude_unset=True, exclude={'attachment_urls', 'delete_attachment_ids'})
         update_data["updated_at"] = datetime.now(kst).isoformat()
         
-        result = supabase.table('posts')\
+        admin_supabase = get_supabase_admin()
+        
+        # 게시글 기본 정보 수정
+        result = admin_supabase.table('posts')\
             .update(update_data)\
             .eq('id', notice_id)\
             .execute()
@@ -429,6 +432,22 @@ async def update_notice(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="공지사항 수정 실패"
             )
+        
+        # 첨부파일 삭제
+        if request.delete_attachment_ids:
+            for att_id in request.delete_attachment_ids:
+                admin_supabase.table('attachments').delete().eq('id', att_id).eq('post_id', notice_id).execute()
+        
+        # 새 첨부파일 추가
+        if request.attachment_urls:
+            for att in request.attachment_urls[:5]:  # 최대 5개
+                admin_supabase.table('attachments').insert({
+                    "post_id": notice_id,
+                    "filename": att.filename,
+                    "file_url": att.public_url,
+                    "file_size": att.file_size,
+                    "mime_type": att.mime_type
+                }).execute()
         
         return await get_notice(notice_id)
     
