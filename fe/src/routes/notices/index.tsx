@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { PostFilter } from '../../components/notices/PostFilter'
 import { PostList } from '../../components/notices/PostList'
-import type { Post } from '../../types/posts'
+import type { NoticeListItem } from '../../types/posts'
 
 type PostSearch = {
   board_id: number
@@ -29,7 +29,7 @@ function Notices() {
   const { board_id, subCategory, search, sort, page } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
 
-  const [posts, setPosts] = useState<Post[]>([])
+  const [posts, setPosts] = useState<NoticeListItem[]>([])
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
 

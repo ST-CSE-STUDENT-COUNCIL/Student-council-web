@@ -1,11 +1,11 @@
 import { Search } from 'lucide-react'
-import type { Post } from '../../../types/posts'
+import type { NoticeListItem } from '../../../types/posts'
 import { subMapReverse } from './constants'
 
 type NoticeListProps = {
     loading: boolean
-    posts: Post[]
-    handleOpenEdit: (post: Post) => void
+    posts: NoticeListItem[]
+    handleOpenEdit: (post: NoticeListItem) => void
     handleDelete: (id: number) => void
 }
 
@@ -43,13 +43,13 @@ export function NoticeList({ loading, posts, handleOpenEdit, handleDelete }: Not
                                 <tr key={post.id} className="hover:bg-gray-50/80 transition-colors group">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex flex-col gap-1">
-                                            <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full w-fit ${Number(post.board_id) === 1
+                                            <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full w-fit ${post.board.id === 1
                                                 ? 'bg-indigo-50 text-indigo-600'
-                                                : Number(post.board_id) === 2
+                                                : post.board.id === 2
                                                     ? 'bg-emerald-50 text-emerald-600'
                                                     : 'bg-gray-50 text-gray-600'
                                                 }`}>
-                                                {Number(post.board_id) === 1 ? '학생회' : Number(post.board_id) === 2 ? '민주자치' : '미분류'}
+                                                {post.board.id === 1 ? '학생회' : post.board.id === 2 ? '민주자치' : '미분류'}
                                             </span>
                                         </div>
                                     </td>
