@@ -1,12 +1,9 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/useAuthStore'
 
-const DEFAULT_API_BASE_URL =
-    import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://seoultechcom-api.onrender.com')
-
 // 커스텀 Axios 인스턴스 생성
 export const api = axios.create({
-    baseURL: DEFAULT_API_BASE_URL,
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
     headers: {
         'Content-Type': 'application/json',
     },
