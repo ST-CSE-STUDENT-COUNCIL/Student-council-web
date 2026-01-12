@@ -11,7 +11,8 @@ from app.schemas.notices import (
     NoticeDetailResponse,
     NoticeCreateRequest,
     NoticeUpdateRequest,
-    PaginationMeta
+    PaginationMeta,
+    DraftCreateRequest
 )
 from app.schemas.auth import ErrorResponse
 from app.utils.auth import require_verified_user, require_admin
@@ -317,7 +318,7 @@ async def get_notice_attachment_presigned_url(
     description="파일 업로드를 위한 post_id를 미리 획득"
 )
 async def create_draft_notice(
-    board_id: int,
+    body: DraftCreateRequest,
     current_user: dict = Depends(require_admin)
 ):
     """
@@ -331,7 +332,7 @@ async def create_draft_notice(
         
         # Draft 게시글 생성
         draft_data = {
-            "board_id": board_id,
+            "board_id": body.board_id,
             "author_id": str(current_user["id"]),
             "title": "[Draft]",
             "content": "",

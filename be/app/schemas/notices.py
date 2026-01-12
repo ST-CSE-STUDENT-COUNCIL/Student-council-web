@@ -80,6 +80,11 @@ class AttachmentFileInfo(BaseModel):
     mime_type: Optional[str] = None
 
 
+class DraftCreateRequest(BaseModel):
+    """Draft 게시글 생성 요청"""
+    board_id: int = Field(..., description="게시판 ID")
+
+
 class NoticeCreateRequest(BaseModel):
     """공지사항 작성 요청"""
     title: str
