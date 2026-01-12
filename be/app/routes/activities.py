@@ -27,8 +27,16 @@ from app.schemas.activities import (
     ErrorResponse
 )
 from app.utils.auth import optional_current_user, require_verified_user, require_admin
-from app.utils.r2_storage import upload_file_to_r2, delete_file_from_r2
+from app.utils.r2_storage import (
+    upload_file_to_r2,
+    delete_file_from_r2,
+    generate_presigned_url,
+    validate_file_extension,
+    get_bucket_url
+)
 from app.database import supabase
+import uuid
+import os
 
 
 router = APIRouter(tags=["활동"])
@@ -228,11 +236,41 @@ async def get_activity(
 # ============================================================================
 
 @router.post(
+    "/activities/{activity_id}/register/presigned-url",
+    summary="활동 신청 인증 이미지 업로드용 Presigned URL 발급",
+    description="카톡방 초대 신청 시 인증 이미지 업로드를 위한 Presigned URL 발급"
+)
+async def get_activity_verification_presigned_url(
+    activity_id: int,
+    filename: str
+):
+    """활동 신청 인증 이미지 업로드를 위한 Presigned URL 발급"""
+    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png'})
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"activity-{activity_id}/verification/{unique_filename}"
+    
+    presigned_url = generate_presigned_url(
+        bucket_name="event-images",
+        file_key=file_key,
+        expires_in=300
+    )
+    
+    base_url = get_bucket_url("event-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
+
+
+@router.post(
     "/activities/{activity_id}/register",
     response_model=ActivityRegistrationResponse,
     status_code=status.HTTP_201_CREATED,
     summary="활동 신청",
-    description="활동에 신청합니다. 회원/비회원 모두 가능합니다. 카톡방 초대 신청 시 이미지 업로드 필요.",
+    description="활동에 신청합니다. 회원/비회원 모두 가능합니다. 카톡방 초대 신청 시 verification_image_url 전달.",
     responses={
         201: {"description": "신청 완료"},
         400: {"model": ErrorResponse, "description": "신청 실패 (정원 마감, 중복 신청 등)"},
@@ -242,10 +280,10 @@ async def get_activity(
 async def register_for_activity(
     activity_id: int,
     body: str = Form(...),  # JSON 문자열로 받음
-    verification_image: Optional[UploadFile] = File(None),
+    verification_image_url: Optional[str] = Form(None, description="인증 이미지 URL (Presigned URL로 업로드 후 받은 public_url)"),
     current_user: Optional[dict] = Depends(optional_current_user)
 ):
-    """활동 신청 (회원/비회원)"""
+    """활동 신청 (회원/비회원, Presigned URL 사용)"""
     try:
         # JSON 파싱
         try:
@@ -289,20 +327,8 @@ async def register_for_activity(
                     detail="비회원은 이름, 학번, 학과, 전화번호, 이메일을 모두 입력해야 합니다"
                 )
         
-        # 이미지 업로드 (카톡방 초대 신청)
-        verification_image_url = None
-        if verification_image and activity["type"] == "kakao_invite":
-            try:
-                verification_image_url = await upload_file_to_r2(
-                    file=verification_image,
-                    bucket_name="verification-images",
-                    folder="kakao_invites"
-                )
-            except Exception as e:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"이미지 업로드 실패: {str(e)}"
-                )
+        # 인증 이미지 (카톡방 초대 신청)
+        verification_image_url_final = verification_image_url if verification_image_url else None
         
         # 회원 정보 가져오기
         user_id = current_user["id"] if current_user else None
@@ -324,7 +350,7 @@ async def register_for_activity(
                 "p_phone": phone,
                 "p_email": email,
                 "p_form_responses": request.form_responses,
-                "p_verification_image_url": verification_image_url,
+                "p_verification_image_url": verification_image_url_final,
                 "p_kakao_id": request.kakao_id
             }
         ).execute()
@@ -547,10 +573,10 @@ async def create_activity(
     form_fields: str = Form("[]", description="JSON 배열 문자열"),
     survey_config: str = Form("{}", description="JSON 문자열 (설문 문항)"),
     is_active: bool = Form(True),
-    images: Optional[list[UploadFile]] = File(None, description="활동 이미지 (여러 장 가능)"),
+    image_urls: Optional[str] = Form(None, description="이미지 URL 리스트 (JSON 문자열)"),
     current_user: dict = Depends(require_admin)
 ):
-    """활동 생성 (관리자 전용, 이미지 업로드 가능)"""
+    """활동 생성 (관리자 전용, Presigned URL로 이미지 업로드)"""
     try:
         # JSON 파싱
         try:
@@ -593,32 +619,19 @@ async def create_activity(
         activity = result.data[0]
         activity_id = activity["id"]
         
-        # 이미지 업로드 (선택적)
-        if images:
-            for idx, image_file in enumerate(images):
-                if image_file.filename:
-                    try:
-                        # R2에 업로드
-                        image_url = await upload_file_to_r2(
-                            file=image_file,
-                            bucket_name="activity-images",
-                            folder=f"activity-{activity_id}",
-                            allowed_extensions={".jpg", ".jpeg", ".png"},
-                            max_size_mb=10
-                        )
-                        
-                        # activity_images 테이블에 저장
-                        image_data = {
-                            'activity_id': activity_id,
-                            'image_url': image_url,
-                            'display_order': idx
-                        }
-                        
-                        supabase.table('activity_images').insert(image_data).execute()
-                    
-                    except Exception as img_error:
-                        print(f"이미지 업로드 실패: {str(img_error)}")
-                        continue
+        # 이미지 정보 저장 (선택적)
+        if image_urls:
+            try:
+                images_data = json.loads(image_urls)
+                for idx, img in enumerate(images_data):
+                    image_data = {
+                        'activity_id': activity_id,
+                        'image_url': img.get("public_url"),
+                        'display_order': idx
+                    }
+                    supabase.table('activity_images').insert(image_data).execute()
+            except json.JSONDecodeError:
+                pass  # 이미지 없음
         
         return ActivityResponse(
             id=activity["id"],

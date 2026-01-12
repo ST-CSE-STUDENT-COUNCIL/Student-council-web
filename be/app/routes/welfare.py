@@ -14,7 +14,15 @@ from app.schemas.welfare import (
 from app.database import get_supabase
 from app.utils.auth import get_current_user, require_council
 from app.utils.sheets import get_sheet_value
-from app.utils.r2_storage import upload_file_to_r2 as upload_file_to_supabase, delete_file_from_r2
+from app.utils.r2_storage import (
+    upload_file_to_r2 as upload_file_to_supabase,
+    delete_file_from_r2,
+    generate_presigned_url,
+    validate_file_extension,
+    get_bucket_url
+)
+import uuid
+import os
 
 router = APIRouter(tags=["복지사업"])
 
@@ -43,7 +51,86 @@ async def get_locker_info():
     return result.data
 
 
-@router.post("/admin/welfare/locker_image", summary="사물함 배치도 이미지 업로드 (관리자)")
+@router.post("/admin/welfare/locker_image/presigned-url", summary="사물함 이미지 업로드용 Presigned URL 발급 (관리자)")
+async def get_locker_image_presigned_url(
+    filename: str,
+    current_user: dict = Depends(require_council)
+):
+    """
+    사물함 배치도 이미지 업로드를 위한 Presigned URL을 발급합니다.
+    
+    - **관리자 전용**: admin, council 권한 필요
+    - **프로세스**:
+      1. 이 API로 Presigned URL 받기
+      2. 프론트에서 해당 URL로 직접 PUT 요청으로 이미지 업로드
+      3. /admin/welfare/locker_image/complete API로 업로드 완료 알림
+    """
+    # 파일 확장자 검증
+    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.svg'})
+    
+    # 고유한 파일명 생성
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"lockers/{unique_filename}"
+    
+    # Presigned URL 생성 (5분 유효)
+    presigned_url = generate_presigned_url(
+        bucket_name="welfare-images",
+        file_key=file_key,
+        expires_in=300
+    )
+    
+    # Public URL 생성
+    base_url = get_bucket_url("welfare-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
+
+
+@router.post("/admin/welfare/locker_image/complete", summary="사물함 이미지 업로드 완료 처리 (관리자)")
+async def complete_locker_image_upload(
+    public_url: str,
+    current_user: dict = Depends(require_council)
+):
+    """
+    사물함 배치도 이미지 업로드 완료 후 DB에 저장합니다.
+    기존 이미지가 있으면 R2에서 삭제합니다.
+    
+    - **관리자 전용**: admin, council 권한 필요
+    - **프로세스**: Presigned URL로 업로드 완료 후 이 API 호출
+    """
+    supabase = get_supabase()
+    
+    try:
+        # 기존 레코드 확인
+        existing = supabase.table('locker_info').select('*').eq('id', 1).execute()
+        
+        # 기존 이미지가 있으면 R2에서 삭제
+        if existing.data and existing.data[0].get('layout_image_url'):
+            old_image_url = existing.data[0]['layout_image_url']
+            if old_image_url and old_image_url != public_url:
+                await delete_file_from_r2(old_image_url, "welfare-images")
+        
+        # DB 업데이트 또는 생성
+        if existing.data:
+            result = supabase.table('locker_info').update({
+                'layout_image_url': public_url
+            }).eq('id', 1).execute()
+        else:
+            result = supabase.table('locker_info').insert({
+                'id': 1,
+                'layout_image_url': public_url
+            }).execute()
+        
+        return {"image_url": public_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"이미지 정보 저장 실패: {str(e)}")
+
+
+@router.post("/admin/welfare/locker_image", summary="[Deprecated] 사물함 배치도 이미지 업로드 (관리자)")
 async def upload_locker_image(
     layout_image: UploadFile = File(..., description="사물함 배치도 이미지"),
     current_user: dict = Depends(require_council)
@@ -214,35 +301,53 @@ async def get_rental_items():
     return items
 
 
+@router.post("/admin/welfare/welfare_rentals/presigned-url", summary="대여 물품 이미지 업로드용 Presigned URL 발급 (관리자)")
+async def get_rental_item_presigned_url(
+    filename: str,
+    current_user: dict = Depends(require_council)
+):
+    """
+    대여 물품 이미지 업로드를 위한 Presigned URL을 발급합니다.
+    
+    - **관리자 전용**: admin, council 권한 필요
+    """
+    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png'})
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"rental-items/{unique_filename}"
+    
+    presigned_url = generate_presigned_url(
+        bucket_name="welfare-images",
+        file_key=file_key,
+        expires_in=300
+    )
+    
+    base_url = get_bucket_url("welfare-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
+
+
 @router.post("/admin/welfare/welfare_rentals", response_model=RentalItem, summary="대여 물품 추가 (관리자)", status_code=201)
 async def create_rental_item(
     item_name: str = Form(..., description="물품명 (예: 장우산, 단우산)"),
     application_sheet_url: str = Form(..., description="구글 시트 URL"),
     quantity_cell_range: str = Form(..., description="재고 셀 위치 (예: C2)"),
     category: Optional[str] = Form(None, description="분류"),
-    image: Optional[UploadFile] = File(None, description="물품 이미지"),
+    image_url: Optional[str] = Form(None, description="물품 이미지 URL (Presigned URL로 업로드 후 받은 public_url)"),
     current_user: dict = Depends(require_council)
 ):
     """
     새로운 대여 물품을 추가합니다.
     
     - **관리자 전용**: admin, council 권한 필요
-    - **multipart/form-data**: 이미지 파일 포함 가능
+    - **Presigned URL**: 이미지는 /presigned-url로 먼저 업로드 후 public_url 전달
     - **item_name**: 장우산/단우산, 2인용/4인용 돗자리 등 구체적으로 입력
     """
     supabase = get_supabase()
-    
-    # 이미지 업로드 (있는 경우)
-    image_url = None
-    if image and image.filename:
-        try:
-            image_url = await upload_file_to_supabase(
-                file=image,
-                bucket_name="welfare-images",
-                folder="items"
-            )
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"이미지 업로드 실패: {str(e)}")
     
     # rental_items 테이블에 삽입
     insert_data = {

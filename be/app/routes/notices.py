@@ -17,9 +17,14 @@ from app.schemas.auth import ErrorResponse
 from app.utils.auth import require_verified_user, require_admin
 from app.utils.r2_storage import (
     upload_post_attachment,
-    delete_post_attachments
+    delete_post_attachments,
+    generate_presigned_url,
+    validate_file_extension,
+    get_bucket_url
 )
 from app.database import supabase
+import uuid
+import os
 
 
 router = APIRouter(tags=["공지사항"])
@@ -270,11 +275,46 @@ async def get_notice(
 
 
 @router.post(
+    "/admin/notices/presigned-url",
+    summary="공지사항 첨부파일 업로드용 Presigned URL 발급 (관리자)",
+    responses={
+        401: {"model": ErrorResponse},
+        403: {"model": ErrorResponse, "description": "권한 없음"}
+    }
+)
+async def get_notice_attachment_presigned_url(
+    filename: str,
+    post_id: int,
+    current_user: dict = Depends(require_admin)
+):
+    """공지사항 첨부파일 업로드를 위한 Presigned URL 발급"""
+    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.pdf'})
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"post-{post_id}/{unique_filename}"
+    
+    presigned_url = generate_presigned_url(
+        bucket_name="post-attachments",
+        file_key=file_key,
+        expires_in=300
+    )
+    
+    base_url = get_bucket_url("post-attachments")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key,
+        "filename": filename
+    }
+
+
+@router.post(
     "/admin/notices",
     response_model=NoticeDetailResponse,
     status_code=status.HTTP_201_CREATED,
     summary="공지사항 작성 (관리자)",
-    description="관리자만 공지사항을 작성할 수 있습니다",
+    description="관리자만 공지사항을 작성할 수 있습니다 (Presigned URL로 첨부파일 업로드)",
     responses={
         401: {"model": ErrorResponse},
         403: {"model": ErrorResponse, "description": "권한 없음"}
@@ -286,11 +326,11 @@ async def create_notice(
     board_id: int = Form(...),
     subcategory: Optional[str] = Form(None),
     is_pinned: bool = Form(False),
-    attachments: list[UploadFile] = File(None),
+    attachment_urls: Optional[str] = Form(None, description="첨부파일 URL 리스트 (JSON 문자열)"),
     current_user: dict = Depends(require_admin)
 ):
     """
-    공지사항 작성 (관리자 전용)
+    공지사항 작성 (관리자 전용, Presigned URL 사용)
     
     multipart/form-data로 전송:
     - title: 제목
@@ -298,9 +338,11 @@ async def create_notice(
     - board_id: 게시판 ID (1: 학생회, 2: 민주자치)
     - subcategory: 소분류 (행사, 복지 등)
     - is_pinned: 상단 고정 여부
-    - attachments: 첨부파일 (최대 5개)
+    - attachment_urls: 첨부파일 정보 JSON 문자열 (예: '[{"filename":"test.pdf","public_url":"https://...","file_size":1024,"mime_type":"application/pdf"}]')
     """
     try:
+        import json
+        
         # 게시글 생성
         post_data = {
             "board_id": board_id,
@@ -321,19 +363,20 @@ async def create_notice(
         
         post_id = result.data[0]['id']
         
-        # 첨부파일 업로드
-        if attachments:
-            for file in attachments[:5]:  # 최대 5개
-                if file.filename:
-                    file_url = await upload_post_attachment(file, post_id)
-                    
+        # 첨부파일 정보 저장
+        if attachment_urls:
+            try:
+                attachments_data = json.loads(attachment_urls)
+                for att in attachments_data[:5]:  # 최대 5개
                     supabase.table('attachments').insert({
                         "post_id": post_id,
-                        "filename": file.filename,
-                        "file_url": file_url,
-                        "file_size": file.size,
-                        "mime_type": file.content_type
+                        "filename": att.get("filename"),
+                        "file_url": att.get("public_url"),
+                        "file_size": att.get("file_size"),
+                        "mime_type": att.get("mime_type")
                     }).execute()
+            except json.JSONDecodeError:
+                pass  # 첨부파일 없음
         
         # 생성된 공지사항 조회
         return await get_notice(post_id)

@@ -5,10 +5,30 @@ import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 from fastapi import UploadFile, HTTPException, status
-from typing import Optional
+from typing import Optional, Literal
 import uuid
 import os
+from datetime import timedelta
 from app.config import settings
+
+
+# 버킷 타입 정의
+BucketType = Literal[
+    "club-images",
+    "event-images",
+    "introduction-images",
+    "post-attachments",
+    "welfare-images"
+]
+
+# 버킷별 URL 매핑
+BUCKET_URL_MAP = {
+    "club-images": settings.R2_CLUB_IMAGES_URL,
+    "event-images": settings.R2_EVENT_IMAGES_URL,
+    "introduction-images": settings.R2_INTRODUCTION_IMAGES_URL,
+    "post-attachments": settings.R2_POST_ATTACHMENTS_URL,
+    "welfare-images": settings.R2_WELFARE_IMAGES_URL
+}
 
 
 # R2 클라이언트 초기화
@@ -22,6 +42,62 @@ def get_r2_client():
         region_name='auto',  # R2는 auto 사용
         config=Config(signature_version='s3v4')
     )
+
+
+def validate_file_extension(filename: str, allowed_extensions: set) -> str:
+    """파일 확장자 검증"""
+    file_ext = os.path.splitext(filename)[1].lower()
+    if file_ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"허용되지 않은 파일 형식입니다. 허용: {', '.join(allowed_extensions)}"
+        )
+    return file_ext
+
+
+def get_bucket_url(bucket_name: str) -> str:
+    """버킷 이름으로 Public URL 가져오기"""
+    base_url = BUCKET_URL_MAP.get(bucket_name)
+    if not base_url:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"알 수 없는 버킷: {bucket_name}"
+        )
+    return base_url
+
+
+def generate_presigned_url(
+    bucket_name: BucketType,
+    file_key: str,
+    expires_in: int = 300
+) -> str:
+    """
+    Presigned URL 생성 (업로드용)
+    
+    Args:
+        bucket_name: R2 버킷 이름
+        file_key: 파일 경로 (예: 'folder/filename.jpg')
+        expires_in: URL 유효 시간 (초, 기본 5분)
+    
+    Returns:
+        str: Presigned URL
+    """
+    try:
+        r2_client = get_r2_client()
+        presigned_url = r2_client.generate_presigned_url(
+            'put_object',
+            Params={
+                'Bucket': bucket_name,
+                'Key': file_key,
+            },
+            ExpiresIn=expires_in
+        )
+        return presigned_url
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Presigned URL 생성 실패: {str(e)}"
+        )
 
 
 async def upload_file_to_r2(
@@ -87,21 +163,7 @@ async def upload_file_to_r2(
         )
         
         # Public URL 생성 (버킷별 매핑)
-        bucket_url_map = {
-            "club-images": settings.R2_CLUB_IMAGES_URL,
-            "event-images": settings.R2_EVENT_IMAGES_URL,
-            "introduction-images": settings.R2_INTRODUCTION_IMAGES_URL,
-            "post-attachments": settings.R2_POST_ATTACHMENTS_URL,
-            "welfare-images": settings.R2_WELFARE_IMAGES_URL
-        }
-        
-        base_url = bucket_url_map.get(bucket_name)
-        if not base_url:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"알 수 없는 버킷: {bucket_name}"
-            )
-        
+        base_url = get_bucket_url(bucket_name)
         public_url = f"{base_url}/{file_key}"
         
         return public_url
@@ -133,18 +195,7 @@ async def delete_file_from_r2(file_url: str, bucket_name: str) -> bool:
     """
     try:
         # 버킷별 URL 매핑
-        bucket_url_map = {
-            "club-images": settings.R2_CLUB_IMAGES_URL,
-            "event-images": settings.R2_EVENT_IMAGES_URL,
-            "introduction-images": settings.R2_INTRODUCTION_IMAGES_URL,
-            "post-attachments": settings.R2_POST_ATTACHMENTS_URL,
-            "welfare-images": settings.R2_WELFARE_IMAGES_URL
-        }
-        
-        base_url = bucket_url_map.get(bucket_name)
-        if not base_url:
-            print(f"알 수 없는 버킷: {bucket_name}")
-            return False
+        base_url = get_bucket_url(bucket_name)
         
         # URL에서 파일 키 추출
         # 예: https://pub-xxx.r2.dev/folder/file.jpg -> folder/file.jpg

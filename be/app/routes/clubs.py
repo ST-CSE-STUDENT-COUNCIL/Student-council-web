@@ -12,8 +12,15 @@ from app.schemas.clubs import (
     ErrorResponse
 )
 from app.utils.auth import require_admin
-from app.utils.r2_storage import upload_file_to_r2 as upload_file_to_supabase
+from app.utils.r2_storage import (
+    upload_file_to_r2 as upload_file_to_supabase,
+    generate_presigned_url,
+    validate_file_extension,
+    get_bucket_url
+)
 from app.database import supabase
+import uuid
+import os
 
 
 router = APIRouter(tags=["동아리"])
@@ -97,40 +104,64 @@ async def get_club(club_id: int):
 
 
 @router.post(
+    "/admin/clubs/presigned-url",
+    summary="동아리 이미지 업로드용 Presigned URL 발급 (관리자)",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"}
+    }
+)
+async def get_club_image_presigned_url(
+    filename: str,
+    current_user: dict = Depends(require_admin)
+):
+    """동아리 이미지 업로드를 위한 Presigned URL 발급"""
+    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png'})
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"clubs/{unique_filename}"
+    
+    presigned_url = generate_presigned_url(
+        bucket_name="club-images",
+        file_key=file_key,
+        expires_in=300
+    )
+    
+    base_url = get_bucket_url("club-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
+
+
+@router.post(
     "/admin/clubs",
     response_model=ClubDetail,
     status_code=status.HTTP_201_CREATED,
     summary="동아리 추가 (관리자)",
-    description="새로운 동아리를 추가합니다 (관리자 전용, multipart/form-data)",
+    description="새로운 동아리를 추가합니다 (관리자 전용)",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않음"},
         403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
-        413: {"model": ErrorResponse, "description": "파일 크기 초과"},
         500: {"model": ErrorResponse, "description": "추가 실패"}
     }
 )
 async def create_club(
     name: str = Form(..., max_length=100),
     description: str = Form(...),
+    image_url: str = Form(..., description="이미지 URL (Presigned URL로 업로드 후 받은 public_url)"),
     website_url: Optional[str] = Form(None),
-    image: UploadFile = File(...),
     current_user: dict = Depends(require_admin)
 ):
-    """동아리 추가 (관리자 전용)"""
+    """동아리 추가 (관리자 전용, Presigned URL 사용)"""
     try:
-        # 이미지 업로드
-        file_path = await upload_file_to_supabase(
-            file=image,
-            bucket_name="club-images",
-            allowed_extensions={".jpg", ".jpeg", ".png"},
-            max_size_mb=5
-        )
-        
         # 동아리 정보 저장
         club_data = {
             'name': name,
             'description': description,
-            'image_url': file_path,
+            'image_url': image_url,
             'website_url': website_url
         }
         
