@@ -67,7 +67,9 @@ function Welfare() {
       ])
 
       if (rentalsResult.status === 'fulfilled') {
-        setRentalItems(rentalsResult.value)
+        const rentals = Array.isArray(rentalsResult.value) ? rentalsResult.value : []
+        const activeRentals = rentals.filter((item) => item.is_active)
+        setRentalItems(activeRentals)
       } else {
         console.error('복지사업 데이터 로드 실패:', rentalsResult.reason)
         setError('데이터를 불러올 수 없습니다.')
