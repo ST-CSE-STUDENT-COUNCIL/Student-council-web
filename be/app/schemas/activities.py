@@ -287,6 +287,15 @@ class SurveyStatsResponse(BaseModel):
 
 
 # ============================================================================
+# 신청 상태 변경 스키마 (관리자용)
+# ============================================================================
+class RegistrationStatusUpdateRequest(BaseModel):
+    """신청 상태 변경 요청 (관리자용)"""
+    status: Literal["approved", "rejected", "pending"] = Field(..., description="변경할 상태")
+    admin_note: Optional[str] = Field(None, max_length=500, description="관리자 메모 (승인/거절 사유)")
+
+
+# ============================================================================
 # 에러 응답
 # ============================================================================
 class ErrorResponse(BaseModel):
