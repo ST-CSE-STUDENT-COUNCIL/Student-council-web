@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Modal } from '../../common/Modal'
 import type { Activity, ActivityListItem, ActivityRegistrationRequest } from '../../../types/activities'
 import { activityApi } from '../../../lib/api/activities'
+import { useAuthStore } from '../../../store/useAuthStore'
 
 type ActivityRegistrationModalProps = {
     isOpen: boolean
@@ -12,6 +13,7 @@ type ActivityRegistrationModalProps = {
 }
 
 export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit }: ActivityRegistrationModalProps) => {
+    const { user } = useAuthStore()
     const [step, setStep] = useState(1)
     const [detailActivity, setDetailActivity] = useState<Activity | null>(null)
     const [fetching, setFetching] = useState(false)
@@ -31,13 +33,13 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     // 모달이 열릴 때마다 초기화 및 상세 정보 가져오기
     useEffect(() => {
         if (isOpen) {
-            // 1. 상태 초기화
+            // 1. 상태 초기화 (로그인된 사용자 정보로 자동 채우기)
             setStep(1)
             setFormData({
-                name: '',
-                student_id: '',
-                department: '컴퓨터공학과',
-                phone: '',
+                name: user?.name || '',
+                student_id: user?.student_id || '',
+                department: user?.department || '컴퓨터공학과',
+                phone: user?.phone || '',
                 kakao_id: '',
                 verification_image_url: '',
                 form_responses: {}
@@ -75,7 +77,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             }
             fetchDetail()
         }
-    }, [isOpen, activity.id])
+    }, [isOpen, activity.id, user])
 
     // 추가 질문 여부 확인 (detailActivity 기준)
     const hasAdditionalFields = detailActivity?.form_fields && detailActivity.form_fields.length > 0
