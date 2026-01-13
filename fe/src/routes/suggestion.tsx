@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 
-import type { Suggestion } from '../types/suggestions'
+import type { Suggestion, SuggestionListItem } from '../types/suggestions'
 import { suggestionApi } from '../lib/api/suggestions'
+import { useAuthStore } from '../store/useAuthStore'
 import {
     SuggestionCreateModal,
     SuggestionDetailModal,
@@ -18,51 +19,76 @@ export const Route = createFileRoute('/suggestion')({
 })
 
 function SuggestionPage() {
+    const user = useAuthStore((state) => state.user)
     const [statusFilter, setStatusFilter] = useState<
         'all' | Suggestion['status']
     >('all')
     const [search, setSearch] = useState('')
-    const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+    const [suggestions, setSuggestions] = useState<SuggestionListItem[]>([])
     const [selected, setSelected] = useState<Suggestion | null>(null)
     const [isOpen, setIsOpen] = useState(false)
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [pageSize, setPageSize] = useState(10)
     const [page, setPage] = useState(1)
+    const [totalAll, setTotalAll] = useState(0)
 
-    useEffect(() => {
-        const fetchSuggestions = async () => {
+    const fetchSuggestions = useCallback(
+        async (params?: { status?: 'all' | Suggestion['status'] }) => {
+            const nextStatus = params?.status ?? statusFilter
+
             try {
-                const data = await suggestionApi.getAll()
-                setSuggestions(data.suggestions)
+                const pageSizeAll = 100
+                let pageIndex = 1
+                let totalPagesAll = 1
+                const allItems: SuggestionListItem[] = []
+
+                do {
+                    const data = await suggestionApi.getAll({
+                        status_filter: nextStatus === 'all' ? undefined : nextStatus,
+                        page: pageIndex,
+                        page_size: pageSizeAll,
+                    })
+                    allItems.push(...data.suggestions)
+                    totalPagesAll = Math.max(1, data.pagination.total_pages || 1)
+                    if (nextStatus === 'all' && pageIndex === 1) {
+                        setTotalAll(data.pagination.total)
+                    }
+                    pageIndex += 1
+                } while (pageIndex <= totalPagesAll)
+
+                setSuggestions(allItems)
             } catch (error) {
                 console.error('failed to fetch suggestions', error)
+                setSuggestions([])
             }
-        }
+        },
+        [statusFilter],
+    )
 
+    useEffect(() => {
         fetchSuggestions()
-    }, [])
+    }, [fetchSuggestions])
 
     const stats = useMemo(() => {
-        const base = { all: suggestions.length, received: 0, in_progress: 0, approved: 0, rejected: 0 }
-        suggestions.forEach((item) => {
-            base[item.status] += 1
-        })
-        return base
-    }, [suggestions])
+        return { all: totalAll, received: 0, in_progress: 0, approved: 0, rejected: 0 }
+    }, [totalAll])
 
     const filteredSuggestions = useMemo(() => {
         return suggestions.filter((item) => {
-            const matchesStatus =
-                statusFilter === 'all' ? true : item.status === statusFilter
+            if (!user) {
+                return false
+            }
+            if (user.role !== 'admin' && item.author_id !== user.id) {
+                return false
+            }
             const q = search.trim().toLowerCase()
             const matchesSearch =
                 q.length === 0 ||
-                item.title.toLowerCase().includes(q) ||
-                item.content.toLowerCase().includes(q)
-            return matchesStatus && matchesSearch
+                item.title.toLowerCase().includes(q)
+            return matchesSearch
         })
-    }, [statusFilter, search, suggestions])
+    }, [search, suggestions, user])
 
     const totalPages = useMemo(() => {
         return Math.max(1, Math.ceil(filteredSuggestions.length / pageSize) || 1)
@@ -119,9 +145,15 @@ function SuggestionPage() {
                     <div className="space-y-4">
                         <SuggestionList
                             items={visibleSuggestions}
-                            onSelect={(item) => {
-                                setSelected(item)
-                                setIsOpen(true)
+                            onSelect={async (item) => {
+                                try {
+                                    const detail = await suggestionApi.getById(item.id)
+                                    setSelected(detail)
+                                    setIsOpen(true)
+                                } catch (error) {
+                                    console.error('failed to fetch suggestion detail', error)
+                                    alert('건의 상세를 불러오지 못했습니다. 다시 시도해주세요.')
+                                }
                             }}
                         />
                         <SuggestionPagination
@@ -147,8 +179,12 @@ function SuggestionPage() {
                     onSubmit={async ({ title, content }) => {
                         try {
                             setSubmitting(true)
-                            const created = await suggestionApi.create({ title, content })
-                            setSuggestions((prev) => [created, ...prev])
+                            await suggestionApi.create({ title, content })
+                            setTotalAll((prev) => prev + 1)
+                            if (statusFilter === 'all' || statusFilter === 'received') {
+                                setPage(1)
+                                await fetchSuggestions({ status: statusFilter })
+                            }
                             setIsCreateOpen(false)
                         } catch (err) {
                             console.error('failed to create suggestion', err)
