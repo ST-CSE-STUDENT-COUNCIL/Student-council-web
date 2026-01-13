@@ -3,8 +3,7 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import { Pagination, Navigation } from 'swiper/modules'
 import type { Activity, ActivityListItem, ActivityStatus } from '../../types/activities'
 import { getActivityStatus, activityTypeLabels } from '../../types/activities'
-import { ActivityRegistrationModal } from './modals/ActivityRegistrationModal'
-import { ActivitySurveyModal } from './modals/ActivitySurveyModal'
+import { ActivityRegistrationModal, ActivitySurveyModal } from './modals'
 
 // Swiper styles
 import 'swiper/css'
