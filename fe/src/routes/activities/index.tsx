@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState, useMemo } from 'react'
-import { ActivityFilter, type SortOption, type StatusOption, type TypeOption } from '../../components/activities/ActivityFilter'
+import { ActivityFilter, type SortOption, type StatusOption } from '../../components/activities/ActivityFilter'
 import { ActivityList } from '../../components/activities/ActivityList'
 import { ActivityCard } from '../../components/activities/ActivityCard'
 import { activityApi } from '../../lib/api/activities'
@@ -29,7 +29,6 @@ function ActivitiesPage() {
         try {
             setLoading(true)
             const response = await activityApi.getAll({
-                type_filter: typeFilter !== 'all' ? typeFilter : undefined,
                 is_active_only: false,
                 page: 1,
                 page_size: 100
@@ -58,7 +57,7 @@ function ActivitiesPage() {
 
     useEffect(() => {
         fetchActivities()
-    }, [typeFilter])
+    }, [])
 
     useEffect(() => {
         setCurrentPage(1)
