@@ -118,6 +118,11 @@ export const welfareApi = {
         return response.data;
     },
 
+    getLockerInfo: async (): Promise<LockerInfo> => {
+        const response = await axios.get(`${API_BASE_URL}/welfare/locker_periods`);
+        return response.data;
+    },
+
     getRentalById: async (id: number): Promise<WelfareRental> => {
         const response = await axios.get(`${API_BASE_URL}/welfare/welfare_rentals/${id}`);
         return response.data;
