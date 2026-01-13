@@ -127,8 +127,9 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
             case 'kakao_invite':
                 return '카톡방 초대 신청'
             case 'survey':
-            case 'demand_survey':
                 return '설문 참여하기'
+            case 'demand_survey':
+                return '수요조사 참여하기'
             case 'event':
             default:
                 return isFull ? '마감되었습니다' : '참여 신청하기'
@@ -149,12 +150,12 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
         }
 
         // 설문조사 타입: 설문 모달 열기
-        if (activity.type === 'survey' || activity.type === 'demand_survey') {
+        if (activity.type === 'survey') {
             setIsSurveyModalOpen(true)
             return
         }
 
-        // 나머지 타입: 신청 모달 열기
+        // 나머지 타입(event, demand_survey, kakao_invite): 신청 모달 열기
         setIsRegistrationModalOpen(true)
     }
 

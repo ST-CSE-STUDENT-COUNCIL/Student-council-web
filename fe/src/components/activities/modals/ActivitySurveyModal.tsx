@@ -27,16 +27,34 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
         setError(null)
 
         try {
-            const data: SurveySubmitRequest = {
-                survey_responses: surveyResponses
+            if (activity.type === 'demand_survey') {
+                // 수요조사는 '신청(register)' API 사용 -> form_responses로 전송
+                // 완전 익명: 모든 개인정보 필드를 더미 데이터로 채움
+                const data = {
+                    name: '익명',
+                    phone: '010-0000-0000',
+                    student_id: '00000000',
+                    department: '익명',
+                    email: 'anonymous@example.com',
+                    form_responses: surveyResponses,
+                }
+                await activityApi.register(activity.id, data)
+                // 상위 컴포넌트에는 통일된 형태로 전달
+                await onSubmit({ survey_responses: surveyResponses })
+            } else {
+                // 설문조사는 '설문(submitSurvey)' API 사용 -> survey_responses로 전송
+                const data: SurveySubmitRequest = {
+                    survey_responses: surveyResponses
+                }
+                await activityApi.submitSurvey(activity.id, data)
+                await onSubmit(data)
             }
-            await activityApi.submitSurvey(activity.id, data)
-            await onSubmit(data)
+
             onClose()
-            alert('설문 제출이 완료되었습니다.\n참여해주셔서 감사합니다.')
+            alert('제출이 완료되었습니다.\n참여해주셔서 감사합니다.')
             setSurveyResponses({})
         } catch (err: any) {
-            const errorMessage = err.response?.data?.detail || '설문 제출 중 오류가 발생했습니다.'
+            const errorMessage = err.response?.data?.detail || '제출 중 오류가 발생했습니다.'
             setError(errorMessage)
         } finally {
             setLoading(false)
@@ -65,7 +83,7 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-800 mb-2">
                     <p className="font-bold mb-1">{activity.title}</p>
-                    <p>여러분의 소중한 의견을 들려주세요.</p>
+                    <p>여러분의 소중한 의견을 들려주세요. (철저한 익명 보장)</p>
                 </div>
 
                 {error && (

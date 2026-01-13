@@ -65,6 +65,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
     // 추가 질문 여부 확인 (detailActivity 기준)
     const hasAdditionalFields = detailActivity?.form_fields && detailActivity.form_fields.length > 0
+    const isDemandSurvey = activity.type === 'demand_survey'
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -81,8 +82,18 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         setError(null)
 
         try {
-            await activityApi.register(activity.id, formData)
-            await onSubmit(formData)
+            // 수요조사일 경우 익명성을 위해 더미 데이터 사용
+            const submissionData = isDemandSurvey ? {
+                ...formData,
+                name: '익명',
+                phone: '010-0000-0000',
+                student_id: '00000000',
+                department: '익명',
+                email: 'anonymous@example.com', // API 필수값 충족용
+            } : formData
+
+            await activityApi.register(activity.id, submissionData)
+            await onSubmit(submissionData)
             onClose()
             alert('신청이 완료되었습니다!')
             // Reset form
@@ -112,6 +123,8 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         switch (activity.type) {
             case 'kakao_invite':
                 return '카톡방 초대 신청'
+            case 'demand_survey':
+                return '수요조사 참여'
             case 'event':
             default:
                 return '행사 참여 신청'
@@ -126,10 +139,15 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             e.stopPropagation()
         }
 
-        if (!formData.name) return alert('이름을 입력해주세요.')
-        if (!formData.student_id) return alert('학번을 입력해주세요.')
-        if (!formData.phone) return alert('연락처를 입력해주세요.')
-        if (activity.type === 'kakao_invite' && !formData.kakao_id) return alert('카카오톡 ID를 입력해주세요.')
+        if (isDemandSurvey) {
+            // 수요조사: 입력받는게 없으므로 유효성 검사 패스
+        } else {
+            // 일반 행사 유효성 검사
+            if (!formData.name) return alert('이름을 입력해주세요.')
+            if (!formData.student_id) return alert('학번을 입력해주세요.')
+            if (!formData.phone) return alert('연락처를 입력해주세요.')
+            if (activity.type === 'kakao_invite' && !formData.kakao_id) return alert('카카오톡 ID를 입력해주세요.')
+        }
 
         console.log('Moving to step 2')
         setStep(2)
@@ -188,71 +206,77 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                             >
                                 <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-800">
                                     <p className="font-bold mb-1">{activity.title}</p>
-                                    <p>기본 정보를 입력해주세요.</p>
+                                    <p>{isDemandSurvey
+                                        ? '철저한 익명성이 보장됩니다. 다음 단계로 이동해주세요.'
+                                        : '기본 정보를 입력해주세요.'}</p>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="이름을 입력하세요"
-                                        autoFocus
-                                    />
-                                </div>
+                                {!isDemandSurvey && (
+                                    <>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
+                                            <input
+                                                type="text"
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="이름을 입력하세요"
+                                                autoFocus
+                                            />
+                                        </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">학번</label>
-                                        <input
-                                            type="text"
-                                            name="student_id"
-                                            value={formData.student_id}
-                                            onChange={handleChange}
-                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="예: 25101234"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">학과</label>
-                                        <input
-                                            type="text"
-                                            name="department"
-                                            value={formData.department}
-                                            onChange={handleChange}
-                                            readOnly
-                                            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 cursor-not-allowed"
-                                        />
-                                    </div>
-                                </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">학번</label>
+                                                <input
+                                                    type="text"
+                                                    name="student_id"
+                                                    value={formData.student_id}
+                                                    onChange={handleChange}
+                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    placeholder="예: 25101234"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">학과</label>
+                                                <input
+                                                    type="text"
+                                                    name="department"
+                                                    value={formData.department}
+                                                    onChange={handleChange}
+                                                    readOnly
+                                                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 cursor-not-allowed"
+                                                />
+                                            </div>
+                                        </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">연락처</label>
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="010-0000-0000"
-                                    />
-                                </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">연락처</label>
+                                            <input
+                                                type="tel"
+                                                name="phone"
+                                                value={formData.phone}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="010-0000-0000"
+                                            />
+                                        </div>
 
-                                {activity.type === 'kakao_invite' && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">카카오톡 ID</label>
-                                        <input
-                                            type="text"
-                                            name="kakao_id"
-                                            value={formData.kakao_id}
-                                            onChange={handleChange}
-                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="카카오톡 ID를 입력하세요"
-                                        />
-                                    </div>
+                                        {activity.type === 'kakao_invite' && (
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">카카오톡 ID</label>
+                                                <input
+                                                    type="text"
+                                                    name="kakao_id"
+                                                    value={formData.kakao_id}
+                                                    onChange={handleChange}
+                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    placeholder="카카오톡 ID를 입력하세요"
+                                                />
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </motion.div>
                         )}
