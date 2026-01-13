@@ -9,6 +9,10 @@ from app.schemas.clubs import (
     ClubDetail,
     ClubCreate,
     ClubUpdate,
+    ClubIntroImageCreate,
+    ClubIntroImageUpdate,
+    ClubIntroImageResponse,
+    ClubIntroImageListResponse,
     ErrorResponse
 )
 from app.utils.auth import require_admin
@@ -296,3 +300,171 @@ async def delete_club(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"동아리 삭제 실패: {str(e)}"
         )
+
+
+# ============================================================================
+# 동아리 소개 이미지 API
+# ============================================================================
+
+@router.get(
+    "/clubs/{club_id}/images",
+    response_model=ClubIntroImageListResponse,
+    summary="동아리 소개 이미지 목록 조회"
+)
+async def get_club_intro_images(club_id: int):
+    """동아리 소개 이미지 목록 조회 (공개)"""
+    try:
+        result = supabase.table('club_introduction_images')\
+            .select('*')\
+            .eq('club_id', club_id)\
+            .order('display_order')\
+            .execute()
+        
+        images = result.data if result.data else []
+        
+        return ClubIntroImageListResponse(
+            images=images,
+            total=len(images)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"이미지 목록 조회 실패: {str(e)}"
+        )
+
+
+@router.post(
+    "/admin/clubs/{club_id}/images/presigned-url",
+    summary="동아리 소개 이미지 업로드용 Presigned URL 발급 (관리자)"
+)
+async def get_club_intro_image_presigned_url(
+    club_id: int,
+    filename: str,
+    current_user: dict = Depends(require_admin)
+):
+    """동아리 소개 이미지 Presigned URL 발급"""
+    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.gif', '.webp'})
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"clubs/{club_id}/intro/{unique_filename}"
+    
+    presigned_url = generate_presigned_url(
+        bucket_name="club-images",
+        file_key=file_key,
+        expires_in=300
+    )
+    
+    base_url = get_bucket_url("club-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
+
+
+@router.post(
+    "/admin/clubs/{club_id}/images",
+    response_model=ClubIntroImageResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="동아리 소개 이미지 추가 (관리자)"
+)
+async def create_club_intro_image(
+    club_id: int,
+    body: ClubIntroImageCreate,
+    current_user: dict = Depends(require_admin)
+):
+    """동아리 소개 이미지 추가"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # 동아리 존재 확인
+        check = admin_supabase.table('clubs').select('id').eq('id', club_id).execute()
+        if not check.data:
+            raise HTTPException(status_code=404, detail="동아리를 찾을 수 없습니다")
+        
+        image_data = {
+            'club_id': club_id,
+            'image_url': body.image_url,
+            'caption': body.caption,
+            'display_order': body.display_order
+        }
+        
+        result = admin_supabase.table('club_introduction_images').insert(image_data).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=500, detail="이미지 추가 실패")
+        
+        return ClubIntroImageResponse(**result.data[0])
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"이미지 추가 실패: {str(e)}")
+
+
+@router.patch(
+    "/admin/clubs/{club_id}/images/{image_id}",
+    response_model=ClubIntroImageResponse,
+    summary="동아리 소개 이미지 수정 (관리자)"
+)
+async def update_club_intro_image(
+    club_id: int,
+    image_id: int,
+    body: ClubIntroImageUpdate,
+    current_user: dict = Depends(require_admin)
+):
+    """동아리 소개 이미지 수정"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        update_data = body.model_dump(exclude_unset=True)
+        if not update_data:
+            raise HTTPException(status_code=400, detail="수정할 항목이 없습니다")
+        
+        result = admin_supabase.table('club_introduction_images')\
+            .update(update_data)\
+            .eq('id', image_id)\
+            .eq('club_id', club_id)\
+            .execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다")
+        
+        return ClubIntroImageResponse(**result.data[0])
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"이미지 수정 실패: {str(e)}")
+
+
+@router.delete(
+    "/admin/clubs/{club_id}/images/{image_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="동아리 소개 이미지 삭제 (관리자)"
+)
+async def delete_club_intro_image(
+    club_id: int,
+    image_id: int,
+    current_user: dict = Depends(require_admin)
+):
+    """동아리 소개 이미지 삭제"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        result = admin_supabase.table('club_introduction_images')\
+            .delete()\
+            .eq('id', image_id)\
+            .eq('club_id', club_id)\
+            .execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="이미지를 찾을 수 없습니다")
+        
+        return None
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"이미지 삭제 실패: {str(e)}")
