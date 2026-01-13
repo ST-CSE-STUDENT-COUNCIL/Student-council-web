@@ -462,8 +462,8 @@ function AdminActivitiesPage() {
         type: detail.type,
         title: detail.title,
         description: detail.description || '',
-        registration_start: detail.registration_start?.slice(0, 16) || '',
-        registration_end: detail.registration_end?.slice(0, 16) || '',
+        registration_start: toLocalISOString(detail.registration_start),
+        registration_end: toLocalISOString(detail.registration_end),
         max_capacity: detail.max_capacity || undefined,
         require_membership: detail.require_membership,
         is_active: detail.is_active,
@@ -516,8 +516,8 @@ function AdminActivitiesPage() {
         await activityAdminApi.update(editingActivity.id, {
           title: formData.title,
           description: formData.description,
-          registration_start: formData.registration_start || undefined,
-          registration_end: formData.registration_end || undefined,
+          registration_start: formData.registration_start ? new Date(formData.registration_start).toISOString() : undefined,
+          registration_end: formData.registration_end ? new Date(formData.registration_end).toISOString() : undefined,
           max_capacity: formData.max_capacity,
           require_membership: formData.require_membership,
           is_active: formData.is_active,
@@ -530,6 +530,8 @@ function AdminActivitiesPage() {
       } else {
         await activityAdminApi.create({
           ...formData,
+          registration_start: formData.registration_start ? new Date(formData.registration_start).toISOString() : undefined,
+          registration_end: formData.registration_end ? new Date(formData.registration_end).toISOString() : undefined,
           thumbnail_url: thumbnailUrl,
           image_urls: imageUrls, // 다중 이미지 URL 전송
         })
@@ -542,6 +544,14 @@ function AdminActivitiesPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // datetime-local input 용으로 날짜 포맷 변환 (UTC -> Local YYYY-MM-DDTHH:mm)
+  const toLocalISOString = (dateStr?: string) => {
+    if (!dateStr) return ''
+    const date = new Date(dateStr)
+    const offset = date.getTimezoneOffset() * 60000
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16)
   }
 
   const getStatusBadge = (activity: ActivityListItem) => {
@@ -625,13 +635,13 @@ function AdminActivitiesPage() {
                       {activity.registration_start && (
                         <div className="text-xs">
                           <span className="text-gray-400 mr-2">시작</span>
-                          {new Date(activity.registration_start.replace('Z', '')).toLocaleString()}
+                          {new Date(activity.registration_start).toLocaleString()}
                         </div>
                       )}
                       {activity.registration_end && (
                         <div className="text-xs">
                           <span className="text-gray-400 mr-2">종료</span>
-                          {new Date(activity.registration_end.replace('Z', '')).toLocaleString()}
+                          {new Date(activity.registration_end).toLocaleString()}
                         </div>
                       )}
                     </div>
