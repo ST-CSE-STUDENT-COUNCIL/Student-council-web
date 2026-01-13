@@ -522,10 +522,8 @@ function AdminActivitiesPage() {
           require_membership: formData.require_membership,
           is_active: formData.is_active,
           thumbnail_url: thumbnailUrl || undefined,
-          form_fields: formData.form_fields
-          // 업데이트 API에는 image_urls 필드가 스키마에 없을 수 있으니 확인 필요하나, 
-          // 현재는 생성시에만 확실히 지원됨. 업데이트는 별도의 이미지 관리 API를 사용할 수도 있음.
-          // 일단은 여기서는 생성 로직 위주로 수정.
+          form_fields: formData.form_fields,
+          image_urls: imageUrls.length > 0 ? imageUrls : undefined // 다중 이미지도 업데이트 지원
         })
       } else {
         await activityAdminApi.create({

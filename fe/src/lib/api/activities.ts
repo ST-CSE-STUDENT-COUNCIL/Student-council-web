@@ -93,13 +93,18 @@ export const activityAdminApi = {
 
     /**
      * Presigned URL로 이미지 업로드
+     * 
+     * 주의: Content-Type을 백엔드가 presigned URL 서명 시 사용한 값과 동일하게 설정해야 함
+     * 백엔드의 generate_presigned_url은 'application/octet-stream'으로 서명하므로
+     * 프론트엔드도 동일한 Content-Type을 사용해야 403 에러가 발생하지 않음
      */
     uploadImage: async (presignedUrl: string, file: File): Promise<void> => {
         await fetch(presignedUrl, {
             method: 'PUT',
             body: file,
             headers: {
-                'Content-Type': file.type
+                // 백엔드의 presigned URL 서명과 일치시키기 위해 application/octet-stream 사용
+                'Content-Type': 'application/octet-stream'
             }
         })
     },

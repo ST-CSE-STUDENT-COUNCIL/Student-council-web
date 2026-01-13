@@ -95,8 +95,10 @@ export type ActivityUpdateRequest = {
     config?: Record<string, any>
     form_fields?: FormField[]
     thumbnail_url?: string
+    image_urls?: { public_url: string }[]
     is_active?: boolean
 }
+
 
 // 활동 신청 요청
 export type ActivityRegistrationRequest = {
