@@ -146,15 +146,17 @@ async def create_email_verification(email: str) -> str:
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
     
     # DB에 인증번호 저장
-    result = supabase.table('email_verifications').insert({
-        'email': email,
-        'code': code,
-        'expires_at': expires_at.isoformat()
-    }).execute()
-
-    # Supabase 에러 체크
-    if getattr(result, 'error', None):
-        logger.error('Supabase insert error: %s', result.error)
+    try:
+        result = supabase.table('email_verifications').insert({
+            'email': email,
+            'code': code,
+            'expires_at': expires_at.isoformat()
+        }).execute()
+        
+        if not result.data:
+            raise Exception('DB 저장 실패')
+    except Exception as e:
+        logger.error(f'Supabase insert error: {str(e)}')
         raise Exception('DB 저장 실패')
 
     return code
@@ -283,7 +285,7 @@ async def send_password_reset_email(email: str, code: str) -> None:
     message["To"] = email
     message["Subject"] = "[서울과기대 컴공학생회] 비밀번호 재설정 인증번호"
     
-    # HTML 본문
+    # HTML 본문 (회원가입 인증 디자인과 동일)
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -293,27 +295,26 @@ async def send_password_reset_email(email: str, code: str) -> None:
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #0066cc;">비밀번호 재설정</h2>
-            <p>비밀번호 재설정을 위한 인증번호입니다.</p>
-            <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <p style="margin: 0; font-size: 14px; color: #666;">인증번호</p>
-                <p style="margin: 10px 0 0 0; font-size: 32px; font-weight: bold; color: #0066cc; letter-spacing: 5px;">
-                    {code}
-                </p>
+            <p>안녕하세요,</p>
+            <p>아래의 인증번호를 입력하여 비밀번호를 재설정해주세요.</p>
+            <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0; border-radius: 5px;">
+                <h1 style="color: #0066cc; letter-spacing: 5px; margin: 0;">{code}</h1>
             </div>
             <p style="color: #666; font-size: 14px;">
-                ⏰ 이 인증번호는 <strong>5분간</strong> 유효합니다.<br>
-                ⚠️ 본인이 요청하지 않았다면 이 메일을 무시하세요.
+                ※ 이 인증번호는 <strong>5분간 유효</strong>합니다.<br>
+                ※ 본인이 요청하지 않았다면 이 메일을 무시하세요.
             </p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
             <p style="color: #999; font-size: 12px;">
                 서울과학기술대학교 컴퓨터공학과 학생회<br>
-                이 메일은 발신 전용입니다.
+                이 메일은 자동 발송되었습니다.
             </p>
         </div>
     </body>
     </html>
     """
     
+    message.set_content("인증번호: " + code)
     message.add_alternative(html_content, subtype="html")
     
     try:

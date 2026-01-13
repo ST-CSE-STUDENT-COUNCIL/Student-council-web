@@ -1,0 +1,1463 @@
+{
+  "info": {
+    "name": "서울과기대 컴공학생회 API",
+    "description": "서울과학기술대학교 컴퓨터공학과 학생회 홈페이지 백엔드 API 테스트 컬렉션",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "인증 (Auth)",
+      "item": [
+        {
+          "name": "회원가입",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@seoultech.ac.kr\",\n  \"password\": \"Password123!\",\n  \"name\": \"홍길동\",\n  \"student_id\": \"2024000001\",\n  \"department\": \"컴퓨터공학과\",\n  \"phone\": \"01012345678\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/signup",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "로그인",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"access_token\", jsonData.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"2024000001\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "관리자 로그인",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"admin_token\", jsonData.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"admin\",\n  \"password\": \"AdminPass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "활동 관리 (Activities)",
+      "item": [
+        {
+          "name": "활동 목록 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/activities?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["activities"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "event",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                },
+                {
+                  "key": "is_active_only",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "활동 상세 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/activities/1",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "1"]
+            }
+          }
+        },
+        {
+          "name": "활동 신청 (일반)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "body",
+                  "value": "{\"form_responses\": {\"meal_preference\": \"한식\"}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/activities/1/register",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "1", "register"]
+            }
+          }
+        },
+        {
+          "name": "활동 신청 인증 이미지 Presigned URL 발급",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"verification.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/activities/1/register/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "1", "register", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "활동 신청 (카톡방 초대 - Presigned URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "body",
+                  "value": "{\"kakao_id\": \"kakao123\", \"form_responses\": {}}",
+                  "type": "text"
+                },
+                {
+                  "key": "verification_image_url",
+                  "value": "https://pub-xxx.r2.dev/activity-2/verification/uuid.jpg",
+                  "type": "text",
+                  "description": "Presigned URL로 업로드한 이미지의 public_url"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/activities/2/register",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "2", "register"]
+            }
+          }
+        },
+        {
+          "name": "신청 취소",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/activities/1/register",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "1", "register"]
+            }
+          }
+        },
+        {
+          "name": "설문조사 제출",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"survey_responses\": {\n    \"q1\": \"매우 만족\",\n    \"q2\": \"음식이 좋았습니다\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/activities/3/survey",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "3", "survey"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 활동 이미지 Presigned URL 발급",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"mt_poster.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/activities/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "activities", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 활동 생성 (Presigned URL 방식)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"event\",\n  \"title\": \"2024 봄 MT\",\n  \"description\": \"강원도 평창에서 진행하는 1박 2일 MT입니다\",\n  \"registration_start\": \"2024-03-01T00:00:00Z\",\n  \"registration_end\": \"2024-03-15T23:59:59Z\",\n  \"max_capacity\": 50,\n  \"require_membership\": true,\n  \"config\": {\"location\": \"강원도 평창군\", \"event_date\": \"2024-03-20T10:00:00Z\"},\n  \"form_fields\": [{\"id\": \"meal\", \"label\": \"식사 선호도\", \"type\": \"select\", \"required\": true, \"options\": [\"한식\", \"양식\", \"채식\"]}],\n  \"is_active\": true,\n  \"image_urls\": \"[{\\\"public_url\\\":\\\"https://pub-xxx.r2.dev/activity-1/image1.jpg\\\"}]\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/activities",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "activities"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 활동 이미지 추가",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "caption",
+                  "value": "MT 단체 사진",
+                  "type": "text"
+                },
+                {
+                  "key": "display_order",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/activities/1/images",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "1", "images"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 활동 이미지 삭제",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/activities/1/images/1",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "1", "images", "1"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 활동 수정",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"신입생 환영회 (수정)\",\n  \"is_active\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/activities/1",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "1"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 활동 삭제",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/activities/1",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "1"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 신청자 목록 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/activities/1/registrations?page=1&page_size=50",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "1", "registrations"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 설문조사 통계",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/activities/3/survey/results",
+              "host": ["{{base_url}}"],
+              "path": ["activities", "3", "survey", "results"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "관리자 (Admin)",
+      "item": [
+        {
+          "name": "승인 대기 회원 목록",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/users/pending?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "pending"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "모든 회원 목록",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/users?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "approved",
+                  "disabled": true
+                },
+                {
+                  "key": "role",
+                  "value": "member",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "회원 승인",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"uuid-here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/users/approve",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "approve"]
+            }
+          }
+        },
+        {
+          "name": "회원 거절",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"uuid-here\",\n  \"rejection_reason\": \"학적 인증 불가\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/users/reject",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "reject"]
+            }
+          }
+        },
+        {
+          "name": "회원 역할 변경",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"uuid-here\",\n  \"role\": \"council\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/users/role",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "role"]
+            }
+          }
+        },
+        {
+          "name": "회비 납부 상태 변경",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"uuid-here\",\n  \"membership_paid\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/users/membership",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "membership"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "공지사항 (Notices)",
+      "item": [
+        {
+          "name": "공지사항 목록",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notices?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["notices"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                },
+                {
+                  "key": "type",
+                  "value": "council",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "공지사항 상세",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notices/1",
+              "host": ["{{base_url}}"],
+              "path": ["notices", "1"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 공지사항 첨부파일 Presigned URL 발급",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"notice_attachment.pdf\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/notices/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "notices", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 공지사항 작성 (Presigned URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"2024학년도 신입생 환영회 안내\",\n  \"content\": \"환영회가 2월 20일에 열립니다. 많은 참여 부탁드립니다.\",\n  \"board_id\": 1,\n  \"subcategory\": \"행사\",\n  \"is_pinned\": true,\n  \"attachment_urls\": \"[{\\\"filename\\\":\\\"schedule.pdf\\\",\\\"public_url\\\":\\\"https://pub-xxx.r2.dev/post-1/uuid.pdf\\\",\\\"file_size\\\":1024,\\\"mime_type\\\":\\\"application/pdf\\\"}]\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/notices",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "notices"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 공지사항 수정",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"수정된 제목\",\n  \"content\": \"수정된 내용\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/notices/1",
+              "host": ["{{base_url}}"],
+              "path": ["notices", "1"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 공지사항 삭제",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notices/1",
+              "host": ["{{base_url}}"],
+              "path": ["notices", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "동아리 (Clubs)",
+      "item": [
+        {
+          "name": "동아리 목록",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clubs",
+              "host": ["{{base_url}}"],
+              "path": ["clubs"]
+            }
+          }
+        },
+        {
+          "name": "동아리 상세",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/clubs/1",
+              "host": ["{{base_url}}"],
+              "path": ["clubs", "1"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 동아리 이미지 Presigned URL 발급",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"club_logo.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/clubs/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "clubs", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 동아리 추가 (Presigned URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"알고리즘 동아리\",\n  \"description\": \"알고리즘 문제 풀이 및 코딩테스트 준비 동아리입니다\",\n  \"image_url\": \"https://pub-xxx.r2.dev/clubs/uuid.jpg\",\n  \"website_url\": \"https://github.com/algorithm-club\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/clubs",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "clubs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "복지사업 (Welfare)",
+      "item": [
+        {
+          "name": "대여 물품 목록",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/welfare/rentals",
+              "host": ["{{base_url}}"],
+              "path": ["welfare", "rentals"]
+            }
+          }
+        },
+        {
+          "name": "물품 대여 신청",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item_id\": 1,\n  \"rental_start\": \"2024-02-01T09:00:00Z\",\n  \"rental_end\": \"2024-02-01T18:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/welfare/rentals",
+              "host": ["{{base_url}}"],
+              "path": ["welfare", "rentals"]
+            }
+          }
+        },
+        {
+          "name": "사물함 신청 기간 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/welfare/lockers/periods/current",
+              "host": ["{{base_url}}"],
+              "path": ["welfare", "lockers", "periods", "current"]
+            }
+          }
+        },
+        {
+          "name": "사물함 신청",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"period_id\": 1,\n  \"preferred_location\": \"학생회관\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/welfare/lockers/apply",
+              "host": ["{{base_url}}"],
+              "path": ["welfare", "lockers", "apply"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 복지물품 이미지 Presigned URL 발급",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"umbrella.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/welfare/welfare_rentals/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "welfare", "welfare_rentals", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 대여 물품 추가 (Presigned URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "item_name",
+                  "value": "장우산",
+                  "type": "text"
+                },
+                {
+                  "key": "application_sheet_url",
+                  "value": "https://docs.google.com/spreadsheets/d/...",
+                  "type": "text"
+                },
+                {
+                  "key": "quantity_cell_range",
+                  "value": "C2",
+                  "type": "text"
+                },
+                {
+                  "key": "category",
+                  "value": "우산",
+                  "type": "text"
+                },
+                {
+                  "key": "image_url",
+                  "value": "https://pub-xxx.r2.dev/rental-items/uuid.jpg",
+                  "type": "text",
+                  "description": "Presigned URL로 업로드한 이미지의 public_url"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/welfare/welfare_rentals",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "welfare", "welfare_rentals"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 사물함 이미지 Presigned URL 발급",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"locker_layout.png\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/welfare/locker_image/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "welfare", "locker_image", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 사물함 이미지 업로드 완료",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"public_url\": \"https://pub-xxx.r2.dev/lockers/uuid.png\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/welfare/locker_image/complete",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "welfare", "locker_image", "complete"]
+            }
+          }
+        },
+        {
+          "name": "사물함 정보 조회",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/welfare/locker_periods",
+              "host": ["{{base_url}}"],
+              "path": ["welfare", "locker_periods"]
+            }
+          }
+        },
+        {
+          "name": "물품대여 목록 조회 (Google Sheets)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/welfare/welfare_rentals",
+              "host": ["{{base_url}}"],
+              "path": ["welfare", "welfare_rentals"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "학생회 소개 (Introductions)",
+      "item": [
+        {
+          "name": "학생회 소개 이미지 목록",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/introductions/images?active_only=true",
+              "host": ["{{base_url}}"],
+              "path": ["introductions", "images"],
+              "query": [
+                {
+                  "key": "active_only",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 학생회 소개 이미지 Presigned URL 발급",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"introduction_page1.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/introductions/images/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "introductions", "images", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 소개 이미지 업로드 (Presigned URL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "title",
+                  "value": "학생회장 인사말",
+                  "type": "text"
+                },
+                {
+                  "key": "image_url",
+                  "value": "https://pub-xxx.r2.dev/introductions/uuid.jpg",
+                  "type": "text",
+                  "description": "Presigned URL로 업로드한 이미지의 public_url"
+                },
+                {
+                  "key": "display_order",
+                  "value": "1",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/introductions/images",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "introductions", "images"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "건의함 (Suggestions)",
+      "item": [
+        {
+          "name": "건의함 목록 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/suggestions?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["suggestions"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "건의함 작성",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"학생회실 냉방 개선 건의\",\n  \"content\": \"여름철 학생회실이 너무 더워요\",\n  \"is_anonymous\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/suggestions",
+              "host": ["{{base_url}}"],
+              "path": ["suggestions"]
+            }
+          }
+        },
+        {
+          "name": "[관리자] 건의함 삭제",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/suggestions/1",
+              "host": ["{{base_url}}"],
+              "path": ["suggestions", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "사용자 관리 (Users)",
+      "item": [
+        {
+          "name": "내 프로필 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/mypage",
+              "host": ["{{base_url}}"],
+              "path": ["mypage"]
+            }
+          }
+        },
+        {
+          "name": "학적 인증 이미지 Presigned URL 발급",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"student_card.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/verification-image/presigned-url",
+              "host": ["{{base_url}}"],
+              "path": ["verification-image", "presigned-url"]
+            }
+          }
+        },
+        {
+          "name": "학적 인증 이미지 업로드 완료",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "image_url",
+                  "value": "https://pub-xxx.r2.dev/verifications/user-xxx/uuid.jpg",
+                  "type": "text",
+                  "description": "Presigned URL로 업로드한 이미지의 public_url"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/verification-image",
+              "host": ["{{base_url}}"],
+              "path": ["verification-image"]
+            }
+          }
+        },
+        {
+          "name": "비밀번호 변경",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"OldPassword123!\",\n  \"new_password\": \"NewPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/mypage/password",
+              "host": ["{{base_url}}"],
+              "path": ["mypage", "password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "헬스체크",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/",
+          "host": ["{{base_url}}"],
+          "path": [""]
+        }
+      }
+    }
+  ]
+}

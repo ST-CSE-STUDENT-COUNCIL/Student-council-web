@@ -21,7 +21,7 @@ from app.schemas.admin import (
 from app.utils.auth import require_admin
 from app.utils.storage import create_signed_url
 from app.utils.login_security import unblock_user
-from app.database import supabase
+from app.database import supabase, get_supabase_admin
 from postgrest.exceptions import APIError
 
 
@@ -99,7 +99,7 @@ async def get_all_users(
     전체 회원 목록 조회
     
     Args:
-        role: 역할 필터 (student, council, admin)
+        role: 역할 필터 (student, admin)
         verification_status: 승인 상태 필터 (pending, approved, rejected)
         membership_paid: 회비 납부 여부 필터 (true, false)
     
@@ -183,12 +183,17 @@ async def approve_user(user_id: str):
             )
         
         # 3. 승인 처리
-        result = supabase.table('users')\
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        now_kst = datetime.now(kst).isoformat()
+        
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table('users')\
             .update({
                 'verification_status': 'approved',
-                'verified_at': datetime.utcnow().isoformat(),
+                'verified_at': now_kst,
                 'rejection_reason': None,  # 거부 사유가 있었다면 초기화
-                'updated_at': datetime.utcnow().isoformat()
+                'updated_at': now_kst
             })\
             .eq('id', user_id)\
             .execute()
@@ -244,11 +249,15 @@ async def reject_user(user_id: str, request: RejectUserRequest):
             )
         
         # 2. 거부 처리
-        result = supabase.table('users')\
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table('users')\
             .update({
                 'verification_status': 'rejected',
                 'rejection_reason': request.reason,
-                'updated_at': datetime.utcnow().isoformat()
+                'updated_at': datetime.now(kst).isoformat()
             })\
             .eq('id', user_id)\
             .execute()
@@ -268,7 +277,7 @@ async def reject_user(user_id: str, request: RejectUserRequest):
     "/users/{user_id}/role",
     response_model=UpdateRoleResponse,
     summary="회원 역할 변경",
-    description="회원의 역할을 변경합니다 (student, council, admin)",
+    description="회원의 역할을 변경합니다 (student, admin)",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않음"},
         403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
@@ -281,22 +290,21 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest):
     
     회원의 role을 변경합니다.
     - student: 일반 학생 (기본)
-    - council: 일반 학생회 (게시글 삭제 가능)
     - admin: 관리자 (모든 권한)
     
     Args:
         user_id: 역할을 변경할 회원의 UUID
-        request: 새로운 역할 (student, council, admin)
+        request: 새로운 역할 (student, admin)
     
     Returns:
         변경 완료 메시지, user_id, 새로운 역할
     """
     try:
         # 1. 역할 유효성 검증
-        if request.role not in ['student', 'council', 'admin']:
+        if request.role not in ['student', 'admin']:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="역할은 student, council, admin 중 하나여야 합니다"
+                detail="역할은 student, admin 중 하나여야 합니다"
             )
         
         # 2. 사용자 존재 확인
@@ -320,10 +328,14 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest):
             )
         
         # 4. 역할 변경
-        result = supabase.table('users')\
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table('users')\
             .update({
                 'role': request.role,
-                'updated_at': datetime.utcnow().isoformat()
+                'updated_at': datetime.now(kst).isoformat()
             })\
             .eq('id', user_id)\
             .execute()
@@ -382,16 +394,20 @@ async def update_membership_status(user_id: str, request: UpdateMembershipReques
             )
         
         # 2. 회비 납부 상태 변경
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        now_kst = datetime.now(kst).isoformat()
         update_data = {
             'membership_paid': request.paid,
-            'updated_at': datetime.utcnow().isoformat()
+            'updated_at': now_kst
         }
         
         # 납부로 변경하는 경우 납부 일시 기록
         if request.paid and not user_check.data['membership_paid']:
-            update_data['membership_paid_at'] = datetime.utcnow().isoformat()
+            update_data['membership_paid_at'] = now_kst
         
-        result = supabase.table('users')\
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table('users')\
             .update(update_data)\
             .eq('id', user_id)\
             .execute()
@@ -438,28 +454,37 @@ async def get_blocked_users():
                 'total': 0
             }
         
+        # N+1 방지: 모든 student_id를 수집하여 한 번에 조회
+        student_ids = [block['student_id'] for block in blocks_result.data]
+        
+        # 사용자 정보 한 번에 조회
+        users_result = supabase.table('users')\
+            .select('student_id, name, email, department')\
+            .in_('student_id', student_ids)\
+            .execute()
+        user_map = {u['student_id']: u for u in (users_result.data or [])}
+        
+        # 로그인 시도 기록 한 번에 조회 (각 student_id별 최근 20개는 클라이언트에서 필터링)
+        attempts_result = supabase.table('login_attempts')\
+            .select('*')\
+            .in_('student_id', student_ids)\
+            .order('attempt_time', desc=True)\
+            .execute()
+        
+        # student_id별로 로그인 시도 그룹화
+        attempts_map: dict[str, list] = {}
+        for attempt in (attempts_result.data or []):
+            sid = attempt['student_id']
+            if sid not in attempts_map:
+                attempts_map[sid] = []
+            if len(attempts_map[sid]) < 20:  # 최대 20개
+                attempts_map[sid].append(attempt)
+        
         blocked_users = []
         for block in blocks_result.data:
             student_id = block['student_id']
-            
-            # 사용자 정보 조회
-            user_result = supabase.table('users')\
-                .select('name, email, department')\
-                .eq('student_id', student_id)\
-                .single()\
-                .execute()
-            
-            user_info = user_result.data if user_result.data else {}
-            
-            # 최근 로그인 시도 이력 조회 (최근 20개)
-            attempts_result = supabase.table('login_attempts')\
-                .select('*')\
-                .eq('student_id', student_id)\
-                .order('attempt_time', desc=True)\
-                .limit(20)\
-                .execute()
-            
-            attempts = attempts_result.data if attempts_result.data else []
+            user_info = user_map.get(student_id, {})
+            attempts = attempts_map.get(student_id, [])
             
             blocked_users.append({
                 'student_id': student_id,

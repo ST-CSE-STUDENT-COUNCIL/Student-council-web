@@ -14,7 +14,7 @@ class UserProfileResponse(BaseModel):
     student_id: str = Field(..., description="학번")
     phone: str = Field(..., description="전화번호")
     department: str = Field(..., description="학과")
-    role: str = Field(..., description="권한 (student/council/admin)")
+    role: str = Field(..., description="권한 (student/admin)")
     verification_status: str = Field(..., description="승인 상태 (pending/approved/rejected)")
     verification_image_url: Optional[str] = Field(None, description="학적 인증 이미지 경로")
     membership_paid: bool = Field(..., description="회비 납부 여부")
@@ -37,6 +37,11 @@ class ChangePasswordRequest(BaseModel):
 class ChangePasswordResponse(BaseModel):
     """비밀번호 변경 응답"""
     message: str = Field(default="비밀번호가 성공적으로 변경되었습니다.", description="결과 메시지")
+
+
+class UploadVerificationImageRequest(BaseModel):
+    """학적 인증 이미지 업로드 요청"""
+    image_url: str = Field(..., description="이미지 URL (Presigned URL로 업로드 후 받은 public_url)")
 
 
 class UploadVerificationImageResponse(BaseModel):

@@ -9,13 +9,25 @@ export const suggestionApi = {
         return response.data
     },
 
-    getById: async (id: number) => {
-        const response = await api.get<Suggestion>(`${API_BASE_URL}/${id}`)
+    getById: async (suggestionId: number) => {
+        const response = await api.get<Suggestion>(`${API_BASE_URL}/${suggestionId}`)
         return response.data
     },
 
     create: async (data: { title: string; content: string }) => {
         const response = await api.post<Suggestion>(API_BASE_URL, data)
         return response.data
+    },
+
+    updateStatus: async (
+        suggestionId: number,
+        data: { status: Suggestion['status']; rejection_reason?: string; resolution_note?: string }
+    ) => {
+        const response = await api.patch<Suggestion>(`/admin/suggestions/${suggestionId}/status`, data)
+        return response.data
+    },
+
+    delete: async (suggestionId: number) => {
+        await api.delete(`${API_BASE_URL}/${suggestionId}`)
     }
 }

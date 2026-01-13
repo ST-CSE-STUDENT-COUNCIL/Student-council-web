@@ -18,6 +18,7 @@ class ClubCreate(BaseModel):
     """동아리 생성 요청"""
     name: str = Field(..., max_length=100, description="동아리명")
     description: str = Field(..., min_length=1, description="동아리 설명")
+    image_url: str = Field(..., description="이미지 URL (Presigned URL로 업로드 후 받은 public_url)")
     website_url: Optional[str] = Field(None, description="동아리 웹사이트 또는 SNS URL")
 
 
@@ -25,6 +26,7 @@ class ClubUpdate(BaseModel):
     """동아리 수정 요청"""
     name: Optional[str] = Field(None, max_length=100, description="동아리명")
     description: Optional[str] = Field(None, min_length=1, description="동아리 설명")
+    image_url: Optional[str] = Field(None, description="이미지 URL (Presigned URL로 업로드 후 받은 public_url)")
     website_url: Optional[str] = Field(None, description="동아리 웹사이트 또는 SNS URL")
 
 
