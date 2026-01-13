@@ -617,6 +617,335 @@ server.patch('/admin/users/:id/membership', (req, res) => {
     res.json({ user_id: id, paid })
 })
 
+// ----------------------------------------------------------------------
+// Clubs Routes
+// ----------------------------------------------------------------------
+
+// 동아리 목록 조회 (공개 API)
+server.get('/clubs', (req, res) => {
+    const db = router.db
+    let clubs = db.get('clubs').value() || []
+    
+    // 백엔드 스키마에 맞게 변환
+    const formattedClubs = clubs.map(club => {
+        // 이미지 URL이 localhost:4000으로 시작하면 상대 경로로 변환
+        let imageUrl = club.image_url || 'https://via.placeholder.com/400x200'
+        if (imageUrl && imageUrl.startsWith('http://localhost:4000/mock-images/')) {
+            imageUrl = imageUrl.replace('http://localhost:4000', '')
+        }
+        
+        return {
+            id: club.id,
+            name: club.name,
+            image_url: imageUrl,
+            description: club.description || club.short_desc || '',
+            website_url: club.website_url || null,
+            created_at: club.created_at || new Date().toISOString(),
+            updated_at: club.updated_at || club.created_at || new Date().toISOString()
+        }
+    })
+    
+    res.json({
+        clubs: formattedClubs,
+        total: formattedClubs.length
+    })
+})
+
+// 동아리 상세 조회 (공개 API)
+server.get('/clubs/:id', (req, res) => {
+    const { id } = req.params
+    const db = router.db
+    const club = db.get('clubs').find({ id: Number(id) }).value()
+    
+    if (!club) {
+        return res.status(404).json({ detail: "동아리를 찾을 수 없습니다" })
+    }
+    
+    // 이미지 URL 변환
+    let imageUrl = club.image_url || 'https://via.placeholder.com/400x200'
+    if (imageUrl && imageUrl.startsWith('http://localhost:4000/mock-images/')) {
+        imageUrl = imageUrl.replace('http://localhost:4000', '')
+    }
+    
+    // 백엔드 스키마에 맞게 변환
+    const formattedClub = {
+        id: club.id,
+        name: club.name,
+        image_url: imageUrl,
+        description: club.description || club.short_desc || '',
+        website_url: club.website_url || null,
+        created_at: club.created_at || new Date().toISOString(),
+        updated_at: club.updated_at || club.created_at || new Date().toISOString()
+    }
+    
+    res.json(formattedClub)
+})
+
+// 동아리 이미지 업로드용 Presigned URL 발급 (관리자 전용, Mock)
+server.post('/admin/clubs/presigned-url', (req, res) => {
+    const { filename } = req.query
+    const db = router.db
+    
+    // Mock: 실제 업로드를 받을 수 있는 로컬 엔드포인트 URL 생성
+    const timestamp = Date.now()
+    const mockFileKey = `clubs/${timestamp}_${filename || 'image.jpg'}`
+    // 백엔드와 유사하게 동작: 로컬에서 받을 수 있는 Presigned URL 반환
+    const mockPresignedUrl = `http://localhost:4000/mock-upload/${mockFileKey}`
+    // 상대 경로로 반환하여 Vite 프록시를 통해 접근
+    const mockPublicUrl = `/mock-images/${mockFileKey}`
+    
+    res.json({
+        presigned_url: mockPresignedUrl,
+        public_url: mockPublicUrl,
+        file_key: mockFileKey
+    })
+})
+
+// Mock 업로드 엔드포인트 (동아리) - 백엔드 R2 업로드와 유사하게 동작
+server.put('/mock-upload/clubs/:filename(*)', (req, res) => {
+    // 백엔드와 유사하게: PUT 요청으로 파일을 받아서 처리
+    // 목 서버에서는 실제 파일 저장 없이 성공 응답만 반환
+    // public_url은 이미 Presigned URL 응답에서 제공됨
+    res.status(200).send()
+})
+
+// 업로드된 이미지를 서빙하는 엔드포인트 (동아리)
+server.get('/mock-images/clubs/:filename(*)', (req, res) => {
+    // placeholder 이미지를 직접 반환 (SVG로 생성)
+    const { filename } = req.params
+    const timestamp = filename.split('_')[0] || Date.now()
+    const svg = `<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+        <rect width="800" height="600" fill="#e5e7eb"/>
+        <text x="400" y="300" font-family="Arial" font-size="24" fill="#6b7280" text-anchor="middle">Club Image ${timestamp}</text>
+    </svg>`
+    res.setHeader('Content-Type', 'image/svg+xml')
+    res.send(svg)
+})
+
+// 동아리 추가 (관리자 전용)
+server.post('/admin/clubs', (req, res) => {
+    const db = router.db
+    const { name, description, image_url, website_url } = req.body
+
+    if (!name || !description || !image_url) {
+        return res.status(400).json({ detail: "필수 필드가 누락되었습니다" })
+    }
+
+    const clubs = db.get('clubs').value() || []
+    const nextId = clubs.length > 0 ? Math.max(...clubs.map(c => Number(c.id))) + 1 : 1
+    const now = new Date().toISOString()
+
+    const newClub = {
+        id: nextId,
+        name,
+        description,
+        image_url,
+        website_url: website_url || null,
+        created_at: now,
+        updated_at: now
+    }
+
+    db.get('clubs').push(newClub).write()
+
+    res.status(201).json(newClub)
+})
+
+// 동아리 수정 (관리자 전용)
+server.patch('/admin/clubs/:id', (req, res) => {
+    const { id } = req.params
+    const db = router.db
+    const club = db.get('clubs').find({ id: Number(id) }).value()
+
+    if (!club) {
+        return res.status(404).json({ detail: "동아리를 찾을 수 없습니다" })
+    }
+
+    const updates = {
+        ...req.body,
+        updated_at: new Date().toISOString()
+    }
+
+    db.get('clubs')
+        .find({ id: Number(id) })
+        .assign(updates)
+        .write()
+
+    const updated = db.get('clubs').find({ id: Number(id) }).value()
+
+    // 백엔드 스키마에 맞게 변환
+    const formattedClub = {
+        id: updated.id,
+        name: updated.name,
+        image_url: updated.image_url,
+        description: updated.description,
+        website_url: updated.website_url || null,
+        created_at: updated.created_at,
+        updated_at: updated.updated_at
+    }
+
+    res.json(formattedClub)
+})
+
+// 동아리 삭제 (관리자 전용)
+server.delete('/admin/clubs/:id', (req, res) => {
+    const { id } = req.params
+    const db = router.db
+
+    const club = db.get('clubs').find({ id: Number(id) }).value()
+    if (!club) {
+        return res.status(404).json({ detail: "동아리를 찾을 수 없습니다" })
+    }
+
+    db.get('clubs').remove({ id: Number(id) }).write()
+
+    res.status(204).send()
+})
+
+// ----------------------------------------------------------------------
+// Introduction Images Routes
+// ----------------------------------------------------------------------
+
+// 학생회 소개 이미지 목록 조회 (공개 API)
+server.get('/introductions/images', (req, res) => {
+    const { active_only = 'true' } = req.query
+    const db = router.db
+    let images = db.get('introduction_images').value() || []
+    
+    // active_only 필터
+    if (active_only === 'true') {
+        images = images.filter(img => img.is_active !== false)
+    }
+    
+    // 이미지 URL 변환
+    images = images.map(img => {
+        let imageUrl = img.image_url
+        if (imageUrl && imageUrl.startsWith('http://localhost:4000/mock-images/')) {
+            imageUrl = imageUrl.replace('http://localhost:4000', '')
+        }
+        return { ...img, image_url: imageUrl }
+    })
+    
+    // display_order로 정렬
+    images.sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+    
+    res.json({
+        images,
+        total: images.length
+    })
+})
+
+// 학생회 소개 이미지 업로드용 Presigned URL 발급 (관리자 전용, Mock)
+server.post('/admin/introductions/images/presigned-url', (req, res) => {
+    const { filename } = req.query
+    const db = router.db
+    
+    // Mock: 실제 업로드를 받을 수 있는 로컬 엔드포인트 URL 생성
+    const timestamp = Date.now()
+    const mockFileKey = `introductions/${timestamp}_${filename || 'image.jpg'}`
+    // 백엔드와 유사하게 동작: 로컬에서 받을 수 있는 Presigned URL 반환
+    const mockPresignedUrl = `http://localhost:4000/mock-upload/${mockFileKey}`
+    // 상대 경로로 반환하여 Vite 프록시를 통해 접근
+    const mockPublicUrl = `/mock-images/${mockFileKey}`
+    
+    res.json({
+        presigned_url: mockPresignedUrl,
+        public_url: mockPublicUrl,
+        file_key: mockFileKey
+    })
+})
+
+// Mock 업로드 엔드포인트 (학생회 소개) - 백엔드 R2 업로드와 유사하게 동작
+server.put('/mock-upload/introductions/:filename(*)', (req, res) => {
+    // 백엔드와 유사하게: PUT 요청으로 파일을 받아서 처리
+    // 목 서버에서는 실제 파일 저장 없이 성공 응답만 반환
+    // public_url은 이미 Presigned URL 응답에서 제공됨
+    res.status(200).send()
+})
+
+// 업로드된 이미지를 서빙하는 엔드포인트 (학생회 소개)
+server.get('/mock-images/introductions/:filename(*)', (req, res) => {
+    // placeholder 이미지를 직접 반환 (SVG로 생성)
+    const { filename } = req.params
+    const timestamp = filename.split('_')[0] || Date.now()
+    const svg = `<svg width="1200" height="600" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1200" height="600" fill="#e5e7eb"/>
+        <text x="600" y="300" font-family="Arial" font-size="24" fill="#6b7280" text-anchor="middle">Intro Image ${timestamp}</text>
+    </svg>`
+    res.setHeader('Content-Type', 'image/svg+xml')
+    res.send(svg)
+})
+
+// 학생회 소개 이미지 추가 (관리자 전용)
+server.post('/admin/introductions/images', (req, res) => {
+    const db = router.db
+    const { title, image_url, display_order = 0 } = req.body
+
+    if (!title || !image_url) {
+        return res.status(400).json({ detail: "필수 필드가 누락되었습니다" })
+    }
+
+    const images = db.get('introduction_images').value() || []
+    const nextId = images.length > 0 ? Math.max(...images.map(img => Number(img.id))) + 1 : 1
+    const now = new Date().toISOString()
+
+    const newImage = {
+        id: nextId,
+        title,
+        image_url,
+        display_order: Number(display_order) || 0,
+        is_active: true,
+        created_at: now,
+        updated_at: now
+    }
+
+    db.get('introduction_images').push(newImage).write()
+
+    res.status(201).json(newImage)
+})
+
+// 학생회 소개 이미지 수정 (관리자 전용)
+server.patch('/admin/introductions/images/:id', (req, res) => {
+    const { id } = req.params
+    const db = router.db
+    const image = db.get('introduction_images').find({ id: Number(id) }).value()
+
+    if (!image) {
+        return res.status(404).json({ detail: "이미지를 찾을 수 없습니다" })
+    }
+
+    const updates = {
+        ...req.body,
+        updated_at: new Date().toISOString()
+    }
+
+    // display_order가 있으면 숫자로 변환
+    if (updates.display_order !== undefined) {
+        updates.display_order = Number(updates.display_order)
+    }
+
+    db.get('introduction_images')
+        .find({ id: Number(id) })
+        .assign(updates)
+        .write()
+
+    const updated = db.get('introduction_images').find({ id: Number(id) }).value()
+    res.json(updated)
+})
+
+// 학생회 소개 이미지 삭제 (관리자 전용)
+server.delete('/admin/introductions/images/:id', (req, res) => {
+    const { id } = req.params
+    const db = router.db
+
+    const image = db.get('introduction_images').find({ id: Number(id) }).value()
+    if (!image) {
+        return res.status(404).json({ detail: "이미지를 찾을 수 없습니다" })
+    }
+
+    db.get('introduction_images').remove({ id: Number(id) }).write()
+
+    res.status(204).send()
+})
 
 // Default router for other resources (if any)
 server.use(router)
