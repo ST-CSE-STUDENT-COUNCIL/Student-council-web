@@ -204,6 +204,15 @@ async def get_activity(
                 is_registered = True
                 my_registration_id = reg_result.data[0]["id"]
         
+        # 활동 이미지 조회
+        images_result = supabase.table("activity_images")\
+            .select("id, image_url, caption, display_order")\
+            .eq("activity_id", activity_id)\
+            .order("display_order")\
+            .execute()
+        
+        images = images_result.data if images_result.data else []
+        
         return ActivityResponse(
             id=activity["id"],
             type=activity["type"],
@@ -217,6 +226,7 @@ async def get_activity(
             config=activity.get("config", {}),
             form_fields=activity.get("form_fields", []),
             thumbnail_url=activity.get("thumbnail_url"),
+            images=images,
             is_active=activity["is_active"],
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),

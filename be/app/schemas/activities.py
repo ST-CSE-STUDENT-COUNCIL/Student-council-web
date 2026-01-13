@@ -150,6 +150,7 @@ class ActivityResponse(BaseModel):
     config: Dict[str, Any]
     form_fields: List[Dict[str, Any]]
     thumbnail_url: Optional[str]
+    images: List[Dict[str, Any]] = Field(default_factory=list, description="활동 이미지 목록")
     is_active: bool
     created_by: Optional[str]
     created_at: datetime
