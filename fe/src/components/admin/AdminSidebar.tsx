@@ -4,7 +4,7 @@ import { LayoutDashboard, Megaphone, Calendar, Gift, Users, FileText, MessageSqu
 const MENU_ITEMS = [
     { label: '대시보드', href: '/admin', icon: LayoutDashboard },
     { label: '공지사항 관리', href: '/admin/notices', icon: Megaphone },
-    { label: '행사 관리', href: '/admin/events', icon: Calendar },
+    { label: '신청 관리', href: '/admin/activities', icon: Calendar },
     { label: '복지 사업 관리', href: '/admin/welfare', icon: Gift },
     { label: '동아리 관리', href: '/admin/clubs', icon: Users },
     { label: '학생회 소개', href: '/admin/intro', icon: FileText },

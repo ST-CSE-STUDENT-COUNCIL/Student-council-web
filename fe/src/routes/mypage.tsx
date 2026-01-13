@@ -236,7 +236,7 @@ function MyPage() {
                   <h2 className="text-xl font-bold text-gray-900">
                     신청한 행사
                   </h2>
-                  <Link to="/events" className="text-sm text-blue-600 hover:underline">
+                  <Link to="/activities" className="text-sm text-blue-600 hover:underline">
                     행사 보기
                   </Link>
                 </div>
@@ -270,7 +270,7 @@ function MyPage() {
                   <h2 className="text-xl font-bold text-gray-900">
                     참여 완료 행사
                   </h2>
-                  <Link to="/events" className="text-sm text-blue-600 hover:underline">
+                  <Link to="/activities" className="text-sm text-blue-600 hover:underline">
                     지난 행사 보기
                   </Link>
                 </div>
