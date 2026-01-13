@@ -1,5 +1,5 @@
 import type { ActivityListItem } from '../../types/activities'
-import { getActivityStatus } from '../../types/activities'
+import { getActivityStatus, activityTypeLabels } from '../../types/activities'
 
 type ActivityListProps = {
     activities: ActivityListItem[]
@@ -36,6 +36,22 @@ export const ActivityList = ({ activities, onActivitySelect, selectedActivityId,
         )
     }
 
+    const getCategoryBadge = (activity: ActivityListItem) => {
+        const typeStyles: Record<string, string> = {
+            event: 'bg-purple-100 text-purple-800',
+            demand_survey: 'bg-orange-100 text-orange-800',
+            survey: 'bg-yellow-100 text-yellow-800',
+            kakao_invite: 'bg-amber-100 text-amber-800',
+            notice: 'bg-sky-100 text-sky-800'
+        }
+        const style = typeStyles[activity.type] || 'bg-gray-100 text-gray-800'
+        return (
+            <span className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${style}`}>
+                {activityTypeLabels[activity.type] || activity.type}
+            </span>
+        )
+    }
+
 
     return (
         <div className={className || "flex flex-col gap-4 mt-6"}>
@@ -51,7 +67,12 @@ export const ActivityList = ({ activities, onActivitySelect, selectedActivityId,
                             : 'hover:-translate-y-0.5'}
                     `}
                 >
-                    <div className="flex items-center gap-2 flex-wrap">
+                    {/* 카테고리 배지 - 오른쪽 상단 고정 */}
+                    <div className="absolute top-3 right-3">
+                        {getCategoryBadge(activity)}
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap pr-20">
                         {getStatusBadge(activity)}
                         <h4 className="flex-1 text-base font-semibold text-gray-900 truncate">
                             {activity.title}
