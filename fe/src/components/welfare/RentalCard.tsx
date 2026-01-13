@@ -3,10 +3,13 @@ import type { WelfareRental } from '../../lib/api/welfare'
 
 type RentalCardProps = {
     item: WelfareRental
-    onApply: () => void
+    onApply: (url: string) => void
 }
 
 export function RentalCard({ item, onApply }: RentalCardProps) {
+    const applicationUrl = item.application_sheet_url?.trim() || ''
+    const isDisabled = !applicationUrl
+
     return (
         <div className="border border-gray-200 rounded-lg p-4 bg-white">
             <div className="text-center mb-3">
@@ -36,8 +39,10 @@ export function RentalCard({ item, onApply }: RentalCardProps) {
                 <p className="text-xs text-gray-500">대여 기간: {item.rental_period_days}일</p>
                 <button
                     type="button"
-                    onClick={onApply}
-                    className="mt-3 w-full rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    onClick={() => onApply(applicationUrl)}
+                    disabled={isDisabled}
+                    aria-disabled={isDisabled}
+                    className={`mt-3 w-full rounded-md px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isDisabled ? 'cursor-not-allowed bg-gray-300 text-gray-500' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
                 >
                     대여신청
                 </button>

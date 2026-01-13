@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:4000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 export type WelfareRental = {
     id: number;
@@ -10,6 +10,7 @@ export type WelfareRental = {
     quantity: number;
     available_quantity: number;
     image_url: string;
+    application_sheet_url?: string;
     rental_period_days: number;
     is_active: boolean;
     created_at: string;
@@ -45,6 +46,19 @@ export type LockerPeriod = {
     updated_at: string;
 };
 
+export type LockerInfo = {
+    id: number;
+    layout_image_url: string;
+    application_form_url: string;
+    return_extension_form_url?: string;
+    application_start?: string;
+    application_end?: string;
+    return_extension_start?: string;
+    return_extension_end?: string;
+    description?: string | null;
+    updated_at: string;
+};
+
 export const welfareApi = {
     getRentals: async (): Promise<WelfareRental[]> => {
         const response = await axios.get(`${API_BASE_URL}/welfare_rentals`);
@@ -53,6 +67,11 @@ export const welfareApi = {
 
     getLockerPeriods: async (): Promise<LockerPeriod[]> => {
         const response = await axios.get(`${API_BASE_URL}/locker_periods`);
+        return response.data;
+    },
+
+    getLockerInfo: async (): Promise<LockerInfo> => {
+        const response = await axios.get(`${API_BASE_URL}/welfare/locker_periods`);
         return response.data;
     },
 
