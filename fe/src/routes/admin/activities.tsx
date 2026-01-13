@@ -722,149 +722,148 @@ function AdminActivitiesPage() {
                       className="hidden"
                     />
 
-                    {images.length === 0 ? (
-                      <div className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                        <div className="text-gray-400 mb-2">
-                          <svg className="mx-auto h-8 w-8" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
+                    <div className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                      <div className="text-gray-400 mb-2">
+                        <svg className="mx-auto h-8 w-8" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {images.length > 0 ? '이미지 추가하기' : '클릭하여 이미지를 선택하거나 드래그하세요'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        (최대 10MB, {images.length}개 선택됨)
+                      </p>
+                    </div>
+                  </div>
+
+                  {images.length > 0 && (
+                    <div className="flex flex-wrap gap-4 justify-center">
+                      {images.map((img) => (
+                        <div key={img.id} className="relative group w-full max-w-[200px]">
+                          <img
+                            src={img.preview}
+                            alt="Preview"
+                            className={`
+                              w-full h-32 object-cover rounded-lg border
+                              ${img.error ? 'border-red-500' : 'border-gray-200'}
+                            `}
+                          />
+                          {img.uploading && (
+                            <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeImage(img.id)}
+                            className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full shadow-md w-6 h-6 flex items-center justify-center hover:bg-red-50 border border-red-100"
+                          >
+                            ✕
+                          </button>
                         </div>
-                        <p className="text-sm text-gray-600">
-                          클릭하여 이미지를 선택하거나 드래그하세요
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          (최대 10MB)
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-4 justify-center">
-                        {images.map((img) => (
-                          <div key={img.id} className="relative group w-full max-w-[200px]">
-                            <img
-                              src={img.preview}
-                              alt="Preview"
-                              className={`
-                                w-full h-32 object-cover rounded-lg border
-                                ${img.error ? 'border-red-500' : 'border-gray-200'}
-                              `}
-                            />
-                            {img.uploading && (
-                              <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
-                                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              </div>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => removeImage(img.id)}
-                              className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full shadow-md w-6 h-6 flex items-center justify-center hover:bg-red-50 border border-red-100"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* 기본 정보 */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">신청 타입</label>
-                    <select
-                      value={formData.type}
-                      onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as ActivityType }))}
-                      disabled={!!editingActivity}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-                    >
-                      {Object.entries(activityTypeLabels).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
                       ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">최대 정원</label>
-                    <input
-                      type="number"
-                      value={formData.max_capacity || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, max_capacity: e.target.value ? parseInt(e.target.value) : undefined }))}
-                      min={1}
-                      placeholder="무제한"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">설명</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                  />
-                </div>
-
-                <FormFieldsManager
-                  fields={formData.form_fields || []}
-                  onChange={(fields) => setFormData(prev => ({ ...prev, form_fields: fields }))}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">신청 시작</label>
-                    <input
-                      type="datetime-local"
-                      value={formData.registration_start}
-                      onChange={(e) => setFormData(prev => ({ ...prev, registration_start: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">신청 종료</label>
-                    <input
-                      type="datetime-local"
-                      value={formData.registration_end}
-                      onChange={(e) => setFormData(prev => ({ ...prev, registration_end: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.require_membership}
-                      onChange={(e) => setFormData(prev => ({ ...prev, require_membership: e.target.checked }))}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">회비 납부자만</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.is_active}
-                      onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">활성화</span>
-                  </label>
+                    </div>
+                  )}
                 </div>
               </div>
 
+              {/* 기본 정보 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">신청 타입</label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as ActivityType }))}
+                    disabled={!!editingActivity}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  >
+                    {Object.entries(activityTypeLabels).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">최대 정원</label>
+                  <input
+                    type="number"
+                    value={formData.max_capacity || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, max_capacity: e.target.value ? parseInt(e.target.value) : undefined }))}
+                    min={1}
+                    placeholder="무제한"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">설명</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                />
+              </div>
+
+              <FormFieldsManager
+                fields={formData.form_fields || []}
+                onChange={(fields) => setFormData(prev => ({ ...prev, form_fields: fields }))}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">신청 시작</label>
+                  <input
+                    type="datetime-local"
+                    value={formData.registration_start}
+                    onChange={(e) => setFormData(prev => ({ ...prev, registration_start: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">신청 종료</label>
+                  <input
+                    type="datetime-local"
+                    value={formData.registration_end}
+                    onChange={(e) => setFormData(prev => ({ ...prev, registration_end: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.require_membership}
+                    onChange={(e) => setFormData(prev => ({ ...prev, require_membership: e.target.checked }))}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">회비 납부자만</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">활성화</span>
+                </label>
+              </div>
               <div className="flex gap-3 pt-6 mt-6 border-t border-gray-200">
                 <button
                   type="button"
@@ -882,17 +881,20 @@ function AdminActivitiesPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </div >
+        </div >
+      )
+      }
 
       {/* 신청자 목록 모달 */}
-      {viewingRegistrationsActivity && (
-        <RegistrationsModal
-          activity={viewingRegistrationsActivity}
-          onClose={() => setViewingRegistrationsActivity(null)}
-        />
-      )}
-    </div>
+      {
+        viewingRegistrationsActivity && (
+          <RegistrationsModal
+            activity={viewingRegistrationsActivity}
+            onClose={() => setViewingRegistrationsActivity(null)}
+          />
+        )
+      }
+    </div >
   )
 }
