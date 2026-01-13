@@ -72,8 +72,18 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
         ? activity.current_count >= activity.max_capacity
         : false
 
-    // 썸네일 이미지 처리
-    const displayImages: string[] = activity.thumbnail_url ? [activity.thumbnail_url] : []
+    // 이미지 처리: image_urls가 있으면 사용, 없으면 thumbnail_url 사용
+    const displayImages: string[] = (() => {
+        // Activity 타입인 경우 image_urls 확인
+        if ('images' in activity && activity.images && activity.images.length > 0) {
+            return activity.images.map(image => image.image_url)
+        }
+        // 썸네일이 있으면 사용
+        if (activity.thumbnail_url) {
+            return [activity.thumbnail_url]
+        }
+        return []
+    })()
 
     const handleRegistrationSubmit = async (data: any) => {
         console.log('Registration Submitted:', data)
