@@ -76,6 +76,29 @@ export const activityApi = {
      */
     submitSurvey: async (activityId: number, data: SurveySubmitRequest): Promise<void> => {
         await api.post(`/activities/${activityId}/survey`, data)
+    },
+
+    /**
+     * 파일 업로드용 Presigned URL 발급
+     */
+    getPresignedUrl: async (activityId: number, filename: string): Promise<{ presigned_url: string; public_url: string; file_key: string }> => {
+        const response = await api.post(`/activities/${activityId}/register/presigned-url`, null, {
+            params: { filename }
+        })
+        return response.data
+    },
+
+    /**
+     * 파일 업로드
+     */
+    uploadFile: async (presignedUrl: string, file: File): Promise<void> => {
+        await fetch(presignedUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+                'Content-Type': 'application/octet-stream'
+            }
+        })
     }
 }
 

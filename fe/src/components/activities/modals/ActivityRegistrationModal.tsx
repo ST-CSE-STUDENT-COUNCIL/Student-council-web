@@ -39,6 +39,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                 department: '컴퓨터공학과',
                 phone: '',
                 kakao_id: '',
+                verification_image_url: '',
                 form_responses: {}
             })
             setDetailActivity(null) // 로딩 상태 유도
@@ -160,7 +161,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             if (!formData.name) return alert('이름을 입력해주세요.')
             if (!formData.student_id) return alert('학번을 입력해주세요.')
             if (!formData.phone) return alert('연락처를 입력해주세요.')
-            if (activity.type === 'kakao_invite' && !formData.kakao_id) return alert('카카오톡 ID를 입력해주세요.')
+            if (activity.type === 'kakao_invite' && !formData.verification_image_url) return alert('학적 인증자료를 제출해주세요.')
         }
 
         console.log('Moving to step 2')
@@ -242,7 +243,9 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">학번</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    {activity.type === 'kakao_invite' ? '학번 (없다면 생년월일)' : '학번'}
+                                                </label>
                                                 <input
                                                     type="text"
                                                     name="student_id"
@@ -278,17 +281,45 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                         </div>
 
                                         {activity.type === 'kakao_invite' && (
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">카카오톡 ID</label>
-                                                <input
-                                                    type="text"
-                                                    name="kakao_id"
-                                                    value={formData.kakao_id}
-                                                    onChange={handleChange}
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    placeholder="카카오톡 ID를 입력하세요"
-                                                />
-                                            </div>
+                                            <>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">카카오톡 ID (선택사항)</label>
+                                                    <input
+                                                        type="text"
+                                                        name="kakao_id"
+                                                        value={formData.kakao_id}
+                                                        onChange={handleChange}
+                                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="카카오톡 ID를 입력하세요"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        학적 인증자료 제출 <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*,.pdf"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0]
+                                                            if (!file) return
+                                                            try {
+                                                                const { presigned_url, public_url } = await activityApi.getPresignedUrl(activity.id, file.name)
+                                                                await activityApi.uploadFile(presigned_url, file)
+                                                                setFormData(prev => ({ ...prev, verification_image_url: public_url }))
+                                                            } catch (err) {
+                                                                console.error(err)
+                                                                alert('파일 업로드에 실패했습니다.')
+                                                            }
+                                                        }}
+                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                    />
+                                                    {formData.verification_image_url && (
+                                                        <p className="text-xs text-green-600 mt-1 font-medium">✓ 인증 자료가 업로드되었습니다.</p>
+                                                    )}
+                                                    <p className="text-xs text-gray-400 mt-1">학생증, 합격증 등 학적을 증명할 수 있는 자료를 첨부해주세요.</p>
+                                                </div>
+                                            </>
                                         )}
                                     </>
                                 )}
@@ -388,6 +419,37 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                             <span className="text-sm text-gray-700">{opt}</span>
                                                         </label>
                                                     ))}
+                                                </div>
+                                            ) : field.type === 'file' ? (
+                                                <div className="space-y-2">
+                                                    <input
+                                                        type="file"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0]
+                                                            if (!file) return
+
+                                                            try {
+                                                                // 간단한 로딩 표시를 위해 alert 사용 대신 UI 개선 가능하나 우선 기능 구현
+                                                                const { presigned_url, public_url } = await activityApi.getPresignedUrl(activity.id, file.name)
+                                                                await activityApi.uploadFile(presigned_url, file)
+
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    form_responses: { ...prev.form_responses, [field.name]: public_url }
+                                                                }))
+                                                            } catch (err) {
+                                                                console.error(err)
+                                                                alert('파일 업로드에 실패했습니다.')
+                                                            }
+                                                        }}
+                                                        required={field.required && !formData.form_responses?.[field.name]}
+                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                    />
+                                                    {formData.form_responses?.[field.name] && (
+                                                        <p className="text-xs text-green-600 font-medium">
+                                                            ✓ 파일이 첨부되었습니다
+                                                        </p>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <input
