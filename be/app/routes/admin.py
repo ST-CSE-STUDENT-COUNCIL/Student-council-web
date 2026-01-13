@@ -224,8 +224,9 @@ async def reject_user(user_id: str, request: RejectUserRequest):
     """
     회원 거부
     
-    해당 회원의 verification_status를 'rejected'로 변경하고,
-    거부 사유를 기록합니다. 거부된 회원은 로그인할 수 없습니다.
+    해당 회원을 rejected_users 테이블로 이동하고,
+    users 및 auth.users에서 삭제합니다.
+    거부된 회원은 재가입이 가능합니다.
     
     Args:
         user_id: 거부할 회원의 UUID
@@ -235,9 +236,11 @@ async def reject_user(user_id: str, request: RejectUserRequest):
         거부 완료 메시지와 user_id
     """
     try:
-        # 1. 사용자 존재 확인
-        user_check = supabase.table('users')\
-            .select('id, verification_status')\
+        admin_supabase = get_supabase_admin()
+        
+        # 1. 사용자 정보 조회
+        user_check = admin_supabase.table('users')\
+            .select('*')\
             .eq('id', user_id)\
             .single()\
             .execute()
@@ -248,19 +251,30 @@ async def reject_user(user_id: str, request: RejectUserRequest):
                 detail="사용자를 찾을 수 없습니다"
             )
         
-        # 2. 거부 처리
-        from datetime import timezone, timedelta
-        kst = timezone(timedelta(hours=9))
+        user_data = user_check.data
         
-        admin_supabase = get_supabase_admin()
-        result = admin_supabase.table('users')\
-            .update({
-                'verification_status': 'rejected',
-                'rejection_reason': request.reason,
-                'updated_at': datetime.now(kst).isoformat()
-            })\
-            .eq('id', user_id)\
-            .execute()
+        # 2. rejected_users 테이블에 아카이브
+        archive_data = {
+            'original_user_id': user_id,
+            'email': user_data.get('email'),
+            'name': user_data.get('name'),
+            'student_id': user_data.get('student_id'),
+            'department': user_data.get('department'),
+            'phone': user_data.get('phone'),
+            'rejection_reason': request.reason
+        }
+        
+        admin_supabase.table('rejected_users').insert(archive_data).execute()
+        
+        # 3. users 테이블에서 삭제
+        admin_supabase.table('users').delete().eq('id', user_id).execute()
+        
+        # 4. Supabase Auth에서 삭제
+        try:
+            supabase.auth.admin.delete_user(user_id)
+        except Exception as auth_error:
+            # Auth 삭제 실패해도 진행 (이미 없을 수 있음)
+            pass
         
         return RejectUserResponse(user_id=user_id)
     

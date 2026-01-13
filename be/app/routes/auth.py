@@ -328,6 +328,21 @@ async def login(body: LoginRequest, request: Request):
             .execute()
         
         if not user_result.data:
+            # users에 없으면 rejected_users 확인
+            rejected_result = supabase.table('rejected_users')\
+                .select('rejection_reason, rejected_at')\
+                .eq('student_id', body.student_id)\
+                .order('rejected_at', desc=True)\
+                .limit(1)\
+                .execute()
+            
+            if rejected_result.data:
+                rejection_reason = rejected_result.data[0].get('rejection_reason', '사유 없음')
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"가입이 거절되었습니다. 사유: {rejection_reason}. 재가입을 원하시면 다시 회원가입해주세요."
+                )
+            
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="등록되지 않은 학번입니다"
