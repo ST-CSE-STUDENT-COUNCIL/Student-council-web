@@ -129,6 +129,7 @@ class ActivityUpdateRequest(BaseModel):
     config: Optional[Dict[str, Any]] = None
     form_fields: Optional[List[FormField]] = None
     thumbnail_url: Optional[str] = None
+    image_urls: Optional[List[Dict[str, str]]] = Field(None, description="이미지 URL 리스트")
     is_active: Optional[bool] = None
 
 
@@ -149,6 +150,7 @@ class ActivityResponse(BaseModel):
     config: Dict[str, Any]
     form_fields: List[Dict[str, Any]]
     thumbnail_url: Optional[str]
+    images: List[Dict[str, Any]] = Field(default_factory=list, description="활동 이미지 목록")
     is_active: bool
     created_by: Optional[str]
     created_at: datetime
@@ -284,6 +286,15 @@ class SurveyStatsResponse(BaseModel):
                 ]
             }
         }
+
+
+# ============================================================================
+# 신청 상태 변경 스키마 (관리자용)
+# ============================================================================
+class RegistrationStatusUpdateRequest(BaseModel):
+    """신청 상태 변경 요청 (관리자용)"""
+    status: Literal["approved", "rejected", "pending"] = Field(..., description="변경할 상태")
+    admin_note: Optional[str] = Field(None, max_length=500, description="관리자 메모 (승인/거절 사유)")
 
 
 # ============================================================================
