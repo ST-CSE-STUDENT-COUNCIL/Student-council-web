@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 import { CategoryFilter, LockerActions, RentalCard } from '../components/welfare'
-import { welfareApi, type WelfareRental, type LockerPeriod } from '../lib/api/welfare'
+import { welfareApi, type WelfareRental, type LockerInfo } from '../lib/api/welfare'
 
 export const Route = createFileRoute('/welfare')({
   component: Welfare,
@@ -12,11 +12,9 @@ function Welfare() {
   const [rentalItems, setRentalItems] = React.useState<WelfareRental[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-  const [lockerPeriod, setLockerPeriod] = React.useState<LockerPeriod | null>(null)
-  const rentalRedirectUrl = 'https://www.google.com/?hl=ko'//이곳에 링크를 넣으면 됩니다
-  const lockerRentalUrl = 'https://example.com/locker/rental' // 사물함 대여 신청 링크
-  const lockerExtendUrl = 'https://example.com/locker/extend' // 사물함 연장 신청 링크
-  const lockerReturnUrl = 'https://example.com/locker/return' // 사물함 반납 신청 링크
+  const [lockerLoading, setLockerLoading] = React.useState(true)
+  const [lockerError, setLockerError] = React.useState<string | null>(null)
+  const [lockerInfo, setLockerInfo] = React.useState<LockerInfo | null>(null)
   const today = React.useMemo(() => new Date().toISOString().slice(0, 10), [])
   const lockerDeadline = React.useMemo(() => {
     const d = new Date()
@@ -29,54 +27,66 @@ function Welfare() {
   const disabledClass = 'border-gray-200 opacity-60 cursor-not-allowed hover:-translate-y-0 hover:shadow-none'
 
   const { lockerStart, lockerEnd, lockerReturnStart, lockerReturnEnd } = React.useMemo(() => {
-    const start = lockerPeriod?.rental_start || lockerPeriod?.application_start || lockerPeriod?.usage_start || null
-    const end = lockerPeriod?.rental_end || lockerPeriod?.application_end || lockerPeriod?.usage_end || null
-    const returnStart = lockerPeriod?.return_start || start
-    const returnEnd = lockerPeriod?.return_end || end
+    const start = lockerInfo?.application_start || null
+    const end = lockerInfo?.application_end || null
+    const returnStart = lockerInfo?.return_extension_start || null
+    const returnEnd = lockerInfo?.return_extension_end || null
     return { lockerStart: start, lockerEnd: end, lockerReturnStart: returnStart, lockerReturnEnd: returnEnd }
-  }, [lockerPeriod])
+  }, [lockerInfo])
 
   const isWithinRange = (date: string, start?: string | null, end?: string | null) => {
     if (!start || !end) return false
     return date >= start.slice(0, 10) && date <= end.slice(0, 10)
   }
 
+  const lockerRentalUrl = lockerInfo?.application_form_url?.trim() || ''
+  const lockerExtendUrl = lockerInfo?.return_extension_form_url?.trim() || ''
+  const lockerReturnUrl = lockerExtendUrl
   const isLockerPeriodActive = isWithinRange(today, lockerStart, lockerEnd)
   const isReturnWindow = isWithinRange(today, lockerReturnStart, lockerReturnEnd)
-  const isRentalActive = isLockerPeriodActive
-  const isExtendActive = isReturnWindow
-  const isReturnActive = isReturnWindow
+  const isRentalActive = isLockerPeriodActive && !!lockerRentalUrl
+  const isExtendActive = isReturnWindow && !!lockerExtendUrl
+  const isReturnActive = isReturnWindow && !!lockerReturnUrl
 
   const rentalPeriodLabel = lockerStart && lockerEnd
-    ? `${lockerStart.slice(5)} ~ ${lockerEnd.slice(5)}`
+    ? `${lockerStart.slice(0, 10)} ~ ${lockerEnd.slice(0, 10)}`
     : periodLabel
   const returnPeriodLabel = lockerReturnStart && lockerReturnEnd
-    ? `${lockerReturnStart.slice(5)} ~ ${lockerReturnEnd.slice(5)}`
+    ? `${lockerReturnStart.slice(0, 10)} ~ ${lockerReturnEnd.slice(0, 10)}`
     : periodLabel
 
   const fetchRentals = React.useCallback(async () => {
     try {
       setLoading(true)
-      const [rentals, lockerPeriods] = await Promise.all([
+      setLockerLoading(true)
+      setError(null)
+      setLockerError(null)
+      const [rentalsResult, lockerResult] = await Promise.allSettled([
         welfareApi.getRentals(),
-        welfareApi.getLockerPeriods()
+        welfareApi.getLockerInfo()
       ])
 
-      const current = today
-      const currentPeriod = lockerPeriods.find(period => {
-        const start = (period.rental_start || period.application_start || period.usage_start || '').slice(0, 10)
-        const end = (period.rental_end || period.application_end || period.usage_end || '').slice(0, 10)
-        if (!start || !end) return false
-        return current >= start && current <= end
-      }) || null
+      if (rentalsResult.status === 'fulfilled') {
+        const rentals = Array.isArray(rentalsResult.value) ? rentalsResult.value : []
+        const activeRentals = rentals.filter((item) => item.is_active)
+        setRentalItems(activeRentals)
+      } else {
+        console.error('복지사업 데이터 로드 실패:', rentalsResult.reason)
+        setError('데이터를 불러올 수 없습니다.')
+      }
 
-      setRentalItems(rentals)
-      setLockerPeriod(currentPeriod)
+      if (lockerResult.status === 'fulfilled') {
+        setLockerInfo(lockerResult.value)
+      } else {
+        console.error('사물함 정보 로드 실패:', lockerResult.reason)
+        setLockerError('사물함 정보를 불러올 수 없습니다.')
+      }
     } catch (err) {
       console.error('복지사업 데이터 로드 실패:', err)
       setError('데이터를 불러올 수 없습니다.')
     } finally {
       setLoading(false)
+      setLockerLoading(false)
     }
   }, [today])
 
@@ -85,12 +95,13 @@ function Welfare() {
   }, [fetchRentals])
 
   const navigateIfActive = React.useCallback((active: boolean, url: string) => {
-    if (!active) return
+    if (!active || !url) return
     window.location.href = url
   }, [])
 
-  const handleRentalRedirect = React.useCallback(() => {
-    window.location.href = rentalRedirectUrl
+  const handleRentalRedirect = React.useCallback((url: string) => {
+    if (!url) return
+    window.location.href = url
   }, [])
 
   const handleLockerRentalRedirect = React.useCallback(() => {
@@ -162,9 +173,27 @@ function Welfare() {
 
             <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">사물함 배치도</h3>
-              <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 bg-white flex items-center justify-center text-gray-400 text-sm">
-                배치도 이미지를 여기 넣어주세요
-              </div>
+              {lockerLoading ? (
+                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 bg-white flex items-center justify-center text-gray-400 text-sm">
+                  배치도 불러오는 중...
+                </div>
+              ) : lockerError ? (
+                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 bg-white flex items-center justify-center text-red-500 text-sm">
+                  {lockerError}
+                </div>
+              ) : lockerInfo?.layout_image_url ? (
+                <div className="space-y-3">
+                  <img
+                    src={lockerInfo.layout_image_url}
+                    alt="사물함 배치도"
+                    className="w-full rounded-md border border-gray-200"
+                  />
+                </div>
+              ) : (
+                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 bg-white flex items-center justify-center text-gray-400 text-sm">
+                  배치도 정보가 없습니다.
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -173,4 +202,3 @@ function Welfare() {
     </div>
   )
 }
- 

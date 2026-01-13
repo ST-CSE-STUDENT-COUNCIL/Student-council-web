@@ -15,7 +15,6 @@ export type WelfareRental = {
     quantity_cell_range: string;
     available_quantity: number | null;
     is_active: boolean;
-    created_at: string;
     updated_at: string;
 };
 
@@ -42,6 +41,19 @@ export type LockerPeriod = {
     return_extension_end?: string;
     description?: string;
     created_at: string;
+    updated_at: string;
+};
+
+export type LockerInfo = {
+    id: number;
+    layout_image_url: string;
+    application_form_url: string;
+    return_extension_form_url?: string;
+    application_start?: string;
+    application_end?: string;
+    return_extension_start?: string;
+    return_extension_end?: string;
+    description?: string | null;
     updated_at: string;
 };
 
