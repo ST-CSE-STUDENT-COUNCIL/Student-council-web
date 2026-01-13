@@ -20,11 +20,11 @@ import {
     Laptop,
     Instagram
 } from 'lucide-react'
-import { eventApi } from '../lib/api/events'
+import { activityApi } from '../lib/api/activities'
 import { postApi } from '../lib/api/notices'
-import type { Event } from '../types/events'
+import type { ActivityListItem, Activity } from '../types/activities'
 import type { Post } from '../types/posts'
-import { EventCard } from '../components/events/EventCard'
+import { ActivityCard } from '../components/activities/ActivityCard'
 
 export const Route = createFileRoute('/')({
     component: Index,
@@ -52,24 +52,24 @@ const getSubCategoryLabel = (sub: string) => {
 };
 
 function Index() {
-    const [events, setEvents] = useState<Event[]>([])
+    const [_activities, setActivities] = useState<ActivityListItem[]>([])
+    const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
     const [posts, setPosts] = useState<Post[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [eventsData, postsResponse] = await Promise.all([
-                    eventApi.getAll(),
+                const [activitiesResponse, postsResponse] = await Promise.all([
+                    activityApi.getAll({ is_active_only: false, page: 1, page_size: 5 }),
                     postApi.getAll({ page: 1, page_size: 5, sort: 'newest' })
                 ])
 
-                const activeEvents = eventsData
-                    .filter(e => e.status === 'active' || e.status === 'scheduled')
-                    .sort((a, b) => b.id - a.id)
-                    .slice(0, 5)
-
-                setEvents(activeEvents)
+                setActivities(activitiesResponse.activities)
+                if (activitiesResponse.activities.length > 0) {
+                    const detail = await activityApi.getById(activitiesResponse.activities[0].id)
+                    setSelectedActivity(detail)
+                }
                 setPosts(postsResponse.posts)
             } catch (error) {
                 console.error('Failed to fetch data', error)
@@ -139,7 +139,7 @@ function Index() {
                                 </h2>
                                 <p className="text-sm text-gray-500 mt-1">놓치지 말아야 할 주요 행사들을 확인하세요.</p>
                             </div>
-                            <Link to="/events" className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1">
+                            <Link to="/activities" className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1">
                                 더보기 <ChevronRight size={16} />
                             </Link>
                         </div>
@@ -157,19 +157,19 @@ function Index() {
                                     slidesPerView={1}
                                     className="h-auto min-h-[500px]"
                                 >
-                                    {events.map((event) => (
-                                        <SwiperSlide key={event.id} className="p-4 sm:p-6 box-border">
+                                    {selectedActivity && (
+                                        <SwiperSlide className="p-4 sm:p-6 box-border">
                                             <div className="w-full h-full relative">
-                                                <EventCard event={event} />
+                                                <ActivityCard activity={selectedActivity} />
                                             </div>
                                         </SwiperSlide>
-                                    ))}
-                                    {events.length === 0 && (
+                                    )}
+                                    {!selectedActivity && (
                                         <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-gray-400 gap-4">
                                             <div className="p-4 bg-white rounded-full shadow-sm">
                                                 <Megaphone size={32} className="text-gray-300" />
                                             </div>
-                                            <span>현재 진행 중인 행사가 없습니다.</span>
+                                            <span>현재 진행 중인 신청이 없습니다.</span>
                                         </div>
                                     )}
                                 </Swiper>
