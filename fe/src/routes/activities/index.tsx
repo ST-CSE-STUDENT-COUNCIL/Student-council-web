@@ -23,7 +23,7 @@ function ActivitiesPage() {
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1)
-    const ITEMS_PER_PAGE = 5
+    const ITEMS_PER_PAGE = 6
 
     const fetchActivities = async () => {
         try {
