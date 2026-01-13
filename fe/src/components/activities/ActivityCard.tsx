@@ -22,10 +22,9 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
 
     // 신청 시작/종료 시간에 맞춰 상태 자동 업데이트
     useEffect(() => {
-        // 시간 문자열을 로컬 시간으로 해석 (타임존 정보 제거)
+        // 시간 문자열을 Date 객체로 변환
         const parseAsLocalTime = (dateString: string): Date => {
-            const localString = dateString.replace(/Z$/, '').replace(/[+-]\d{2}:\d{2}$/, '')
-            return new Date(localString)
+            return new Date(dateString)
         }
 
         const updateStatus = () => {

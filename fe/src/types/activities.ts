@@ -146,11 +146,9 @@ export type SurveySubmitRequest = {
 // 활동 상태 (UI용)
 export type ActivityStatus = 'active' | 'scheduled' | 'closed'
 
-// 시간 문자열을 로컬 시간으로 해석 (타임존 정보 제거)
+// 시간 문자열을 Date 객체로 변환 (Timezone 처리 포함)
 const parseAsLocalTime = (dateString: string): Date => {
-    // Z나 타임존 오프셋을 제거하여 로컬 시간으로 해석
-    const localString = dateString.replace(/Z$/, '').replace(/[+-]\d{2}:\d{2}$/, '')
-    return new Date(localString)
+    return new Date(dateString)
 }
 
 // 활동 상태 계산 함수
