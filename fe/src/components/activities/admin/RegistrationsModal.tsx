@@ -29,6 +29,9 @@ export const RegistrationsModal = ({ activity, onClose }: RegistrationsModalProp
     const [surveyStats, setSurveyStats] = useState<any>(null)
     const [loadingSurveyStats, setLoadingSurveyStats] = useState(false)
 
+    // 이미지 미리보기 모달
+    const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
+
     const fetchActivityDetail = useCallback(async () => {
         try {
             const detail = await activityApi.getById(activity.id)
@@ -131,6 +134,14 @@ export const RegistrationsModal = ({ activity, onClose }: RegistrationsModalProp
                                         <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">학번/학과</th>
                                         <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">연락처</th>
 
+                                        {/* 카톡방 초대 전용 컬럼 */}
+                                        {activity.type === 'kakao_invite' && (
+                                            <>
+                                                <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">카카오톡 ID</th>
+                                                <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">인증자료</th>
+                                            </>
+                                        )}
+
                                         {/* 동적 질문 컬럼 헤더 */}
                                         {activityDetail?.form_fields?.map((field) => (
                                             <th key={field.name} className="px-4 py-3 text-left font-medium text-gray-900 uppercase tracking-wider bg-blue-50/50 min-w-[150px] border-l border-blue-100">
@@ -157,6 +168,27 @@ export const RegistrationsModal = ({ activity, onClose }: RegistrationsModalProp
                                             <td className="px-4 py-3 text-gray-600">
                                                 <div>{reg.phone || '-'}</div>
                                             </td>
+
+                                            {/* 카톡방 초대 전용 데이터 */}
+                                            {activity.type === 'kakao_invite' && (
+                                                <>
+                                                    <td className="px-4 py-3 text-gray-600">
+                                                        {reg.kakao_id || '-'}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-gray-600">
+                                                        {reg.verification_image_url ? (
+                                                            <button
+                                                                onClick={() => setPreviewImageUrl(reg.verification_image_url!)}
+                                                                className="text-blue-600 hover:underline hover:text-blue-800 transition-colors"
+                                                            >
+                                                                보기
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-gray-300">-</span>
+                                                        )}
+                                                    </td>
+                                                </>
+                                            )}
 
                                             {/* 동적 질문 응답 데이터 */}
                                             {activityDetail?.form_fields?.map((field) => {
@@ -449,6 +481,49 @@ export const RegistrationsModal = ({ activity, onClose }: RegistrationsModalProp
                                 ) : (
                                     <div className="text-center py-10 text-gray-500">통계 데이터가 없습니다.</div>
                                 )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* 이미지 미리보기 모달 */}
+            <AnimatePresence>
+                {previewImageUrl && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70]"
+                        onClick={() => setPreviewImageUrl(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            className="relative max-w-4xl max-h-[90vh] p-2"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <button
+                                onClick={() => setPreviewImageUrl(null)}
+                                className="absolute -top-2 -right-2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors z-10"
+                            >
+                                ✕
+                            </button>
+                            <img
+                                src={previewImageUrl}
+                                alt="학적 인증자료"
+                                className="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain bg-white"
+                            />
+                            <div className="text-center mt-3">
+                                <a
+                                    href={previewImageUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-white/80 hover:text-white text-sm underline"
+                                >
+                                    새 탭에서 열기
+                                </a>
                             </div>
                         </motion.div>
                     </motion.div>
