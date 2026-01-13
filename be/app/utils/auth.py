@@ -119,29 +119,16 @@ async def require_verified_user(user: dict = Depends(get_current_user)) -> dict:
 
 async def require_council(user: dict = Depends(require_verified_user)) -> dict:
     """
-    학생회 권한 이상 요구 (council, admin)
+    [DEPRECATED] 관리자 권한 요구 (admin만)
     
-    일반 학생회 또는 관리자만 접근할 수 있는 기능에 사용합니다.
-    예: 게시글 삭제, 신고 게시글 관리 등
-    
-    Args:
-        authorization: HTTP Authorization 헤더 (Bearer 토큰)
-    
-    Returns:
-        dict: 학생회 이상 권한을 가진 사용자 정보
-    
-    Raises:
-        HTTPException 403: 권한 부족
+    기존 council 역할이 제거되어 require_admin과 동일하게 동작합니다.
+    하위 호환성을 위해 유지하지만, 새로운 코드에서는 require_admin을 사용하세요.
     """
-    # 1. 승인된 사용자인지 확인
-    # `user`는 Depends로 주입됩니다
-    
-    # 2. 역할 확인 (council 또는 admin)
     role = user.get('role')
-    if role not in ['council', 'admin']:
+    if role != 'admin':
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="학생회 권한이 필요합니다"
+            detail="관리자 권한이 필요합니다"
         )
     
     return user

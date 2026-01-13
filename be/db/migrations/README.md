@@ -67,7 +67,7 @@
 -- - Supabase Storage → Cloudflare R2 (introduction-images bucket)
 -- - RLS 정책 대신 R2 Public Access 사용
 
--- 7단계: 비회원 행사 신청 지원 ✅ 🆕
+-- 7단계: 비회원 행사 신청 지원 ✅
 -- 파일: 007_add_guest_registration_support.sql
 -- 
 -- 실행 방법:
@@ -80,6 +80,95 @@
 -- - CHECK constraint: 회원 OR 비회원 중 하나 필수
 -- - 부분 UNIQUE 인덱스: 회원/비회원 각각 중복 방지
 -- - register_for_event_guest() 함수: 회원/비회원 모두 처리
+
+-- 8단계: 통합 활동 시스템 ✅ 🆕
+-- 파일: 008_add_activities_system.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 008_add_activities_system.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 추가 내용:
+-- - activities 테이블: 6가지 활동 유형 통합 관리 (event, demand_survey, survey, kakao_invite, fee_payment, notice)
+-- - activity_registrations 테이블: 신청/참여 기록
+--   - form_data: 신청 시 추가 정보 입력 (예: 식사 선호도, 알레르기)
+--   - survey_responses: 설문 응답 (예: {"q1": "매우 만족", "q2": "text response"})
+-- - activity_images 테이블: 활동당 여러 이미지 관리
+-- - register_for_activity(): 활동 신청/참여 (트랜잭션 처리)
+-- - cancel_activity_registration(): 활동 신청 취소
+-- 
+-- survey_config 설계:
+-- {
+--   "questions": [
+--     {
+--       "id": "q1",
+--       "type": "multiple_choice",
+--       "question": "행사 만족도를 평가해주세요",
+--       "options": ["매우 만족", "만족", "보통", "불만족", "매우 불만족"]
+--     },
+--     {
+--       "id": "q2",
+--       "type": "text",
+--       "question": "개선이 필요한 점이 있다면 작성해주세요"
+--     }
+--   ]
+-- }
+
+-- 9단계: 사물함 신청/반납 기간 관리 ✅
+-- 파일: 009_add_locker_application_period.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 009_add_locker_application_period.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 추가 내용:
+-- - return_extension_form_url 필드 추가 (반납/연장용 구글폼 URL)
+-- - application_start/end 필드 추가 (신청 기간)
+-- - return_extension_start/end 필드 추가 (반납/연장 기간)
+-- - created_at, updated_at을 한국 시간(KST) 기준으로 변경
+
+-- 10단계: locker_info updated_at 자동 갱신 트리거 ✅
+-- 파일: 010_add_locker_info_updated_at_trigger.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 010_add_locker_info_updated_at_trigger.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 추가 내용:
+-- - update_locker_info_updated_at() 트리거 함수 생성
+-- - trigger_locker_info_updated_at 트리거 생성
+-- - UPDATE 시 updated_at이 자동으로 한국 시간(KST)으로 갱신
+
+-- 11단계: 모든 테이블에 updated_at 자동 갱신 트리거 추가 ✅
+-- 파일: 011_add_updated_at_triggers_for_all_tables.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 011_add_updated_at_triggers_for_all_tables.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 추가 내용:
+-- - update_updated_at_column() 범용 트리거 함수 생성
+-- - 7개 테이블에 updated_at 자동 갱신 트리거 추가:
+--   - login_blocks
+--   - users
+--   - introduction_images
+--   - posts
+--   - suggestions
+--   - clubs
+--   - rental_items
+
+-- 12단계: locker_info URL 필드 NULL 허용 ✅
+-- 파일: 012_make_locker_urls_nullable.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 012_make_locker_urls_nullable.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 변경 내용:
+-- - application_form_url NOT NULL 제약조건 제거
+-- - return_extension_form_url NOT NULL 제약조건 제거
+-- - 의미: NULL = 설정 안 됨, 빈 문자열 = 마감, URL = 진행 중
+-- - 신청 기간과 반납 기간을 독립적으로 설정 가능
 
 -- ============================================================================
 -- 마이그레이션 확인

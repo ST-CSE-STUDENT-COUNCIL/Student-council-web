@@ -16,10 +16,10 @@ from app.schemas.suggestions import (
 )
 from app.utils.auth import require_verified_user, require_admin
 from app.utils.turnstile import verify_turnstile
-from app.database import supabase
+from app.database import supabase, get_supabase_admin
 
 
-router = APIRouter(prefix="/suggestions", tags=["건의함"])
+router = APIRouter(tags=["건의함"])
 
 ALLOWED_STATUSES = {"received", "in_progress", "rejected", "approved"}
 
@@ -38,7 +38,7 @@ def _get_author_name(author_id: str) -> str:
 
 
 @router.post(
-    "",
+    "/suggestions",
     response_model=SuggestionResponse,
     status_code=status.HTTP_201_CREATED,
     summary="건의함 작성",
@@ -100,7 +100,7 @@ async def create_suggestion(
 
 
 @router.get(
-    "",
+    "/suggestions",
     response_model=SuggestionListResponse,
     status_code=status.HTTP_200_OK,
     summary="건의함 목록 조회",
@@ -109,7 +109,7 @@ async def create_suggestion(
     
     **권한:**
     - admin: 전체 목록 조회 가능, 작성자 실명 표시
-    - council: 전체 목록 조회 가능, 작성자 익명
+    - admin: 전체 목록 조회 가능, 작성자 익명
     - 일반 사용자: 전체 목록 조회 가능, 본인 작성 건만 실명 표시
     """,
     responses={
@@ -127,8 +127,7 @@ async def get_suggestions(
     try:
         role = current_user.get("role", "student")
         is_admin = role == "admin"
-        is_council = role == "council"
-        can_view_all = is_admin or is_council
+        can_view_all = is_admin
         
         if status_filter and status_filter not in ALLOWED_STATUSES:
             raise HTTPException(
@@ -158,6 +157,20 @@ async def get_suggestions(
         result = query.execute()
         suggestions_data = result.data if result.data else []
         
+        # N+1 방지: admin일 경우 모든 author_id를 한 번에 조회
+        author_map = {}
+        if is_admin and suggestions_data:
+            author_ids = list(set(
+                s['author_id'] for s in suggestions_data 
+                if s.get('author_id')
+            ))
+            if author_ids:
+                authors_result = supabase.table("users")\
+                    .select("id, name")\
+                    .in_("id", author_ids)\
+                    .execute()
+                author_map = {a['id']: a['name'] for a in (authors_result.data or [])}
+        
         # 응답 데이터 구성
         items = []
         for suggestion in suggestions_data:
@@ -167,7 +180,8 @@ async def get_suggestions(
             author_name = "익명"
             author_id = None
             if is_admin and suggestion.get("author_id"):
-                author_name = _get_author_name(suggestion["author_id"])
+                # 미리 조회한 author_map 사용 (N+1 해결)
+                author_name = author_map.get(suggestion["author_id"], "익명")
                 author_id = suggestion["author_id"]
             elif is_author:
                 author_name = current_user.get("name", "익명")
@@ -212,7 +226,7 @@ async def get_suggestions(
 
 
 @router.get(
-    "/{suggestion_id}",
+    "/suggestions/{suggestion_id}",
     response_model=SuggestionResponse,
     status_code=status.HTTP_200_OK,
     summary="건의함 상세 조회",
@@ -221,7 +235,7 @@ async def get_suggestions(
     
     **권한:**
     - admin: 전체 조회 가능, 작성자 실명 표시
-    - council: 전체 조회 가능, 작성자 익명
+    - admin: 전체 조회 가능, 작성자 익명
     - 일반 사용자: 본인 작성 건만 조회 가능
     """,
     responses={
@@ -238,8 +252,7 @@ async def get_suggestion(
     try:
         role = current_user.get("role", "student")
         is_admin = role == "admin"
-        is_council = role == "council"
-        can_view_all = is_admin or is_council
+        can_view_all = is_admin
         
         result = supabase.table("suggestions")\
             .select("*")\
@@ -302,10 +315,10 @@ async def get_suggestion(
 
 
 @router.patch(
-    "/{suggestion_id}/status",
+    "/admin/suggestions/{suggestion_id}/status",
     response_model=SuggestionResponse,
     status_code=status.HTTP_200_OK,
-    summary="건의함 상태 변경 (관리자 전용)",
+    summary="건의함 상태 변경 (관리자)",
     description="""
     건의함 상태를 변경합니다.
     
@@ -348,9 +361,11 @@ async def update_suggestion_status(
             )
         
         # 업데이트 데이터 구성
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
         update_data: dict[str, str | None] = {
             "status": body.status,
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.now(kst).isoformat()
         }
         
         # 상태별 처리
@@ -366,7 +381,8 @@ async def update_suggestion_status(
             update_data["resolution_note"] = None
         
         # 업데이트 실행
-        result = supabase.table("suggestions")\
+        admin_supabase = get_supabase_admin()
+        result = admin_supabase.table("suggestions")\
             .update(update_data)\
             .eq("id", suggestion_id)\
             .execute()
@@ -399,4 +415,59 @@ async def update_suggestion_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"건의함 상태 변경 실패: {str(e)}"
+        )
+
+
+@router.delete(
+    "/suggestions/{suggestion_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="건의함 삭제",
+    description="건의함을 삭제합니다. (관리자 및 학생회 권한 필요)",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "권한 없음"},
+        404: {"model": ErrorResponse, "description": "건의함 없음"}
+    }
+)
+async def delete_suggestion(
+    suggestion_id: int,
+    current_user: dict = Depends(require_verified_user)
+):
+    """건의함 삭제 (admin 권한 필요)"""
+    try:
+        role = current_user.get("role", "student")
+        
+        # 권한 확인: admin만 삭제 가능
+        if role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="건의함 삭제 권한이 없습니다"
+            )
+        
+        # 건의함 존재 여부 확인
+        check_result = supabase.table("suggestions")\
+            .select("id")\
+            .eq("id", suggestion_id)\
+            .execute()
+        
+        if not check_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="건의함을 찾을 수 없습니다"
+            )
+        
+        # 삭제 실행
+        supabase.table("suggestions")\
+            .delete()\
+            .eq("id", suggestion_id)\
+            .execute()
+        
+        return None
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"건의함 삭제 실패: {str(e)}"
         )

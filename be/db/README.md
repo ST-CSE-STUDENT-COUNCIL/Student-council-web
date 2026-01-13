@@ -6,9 +6,9 @@
 
 - **DBMS**: PostgreSQL 15+ (Supabase 호스팅)
 - **인증**: Supabase Auth (회원가입/로그인 위임)
-- **테이블**: 19개 🆕
+- **테이블**: 22개 🆕
 - **보안**: Row Level Security (RLS) + JWT 인증
-- **특징**: 선착순 신청 트랜잭션, Soft Delete, 익명 게시, 복지사업 관리, 회원/비회원 행사 신청 🆕
+- **특징**: 선착순 신청 트랜잭션, Soft Delete, 익명 게시, 복지사업 관리, 회원/비회원 행사 신청, 통합 활동 관리 🆕
 
 ## 🔐 Supabase Auth 통합
 
@@ -129,6 +129,41 @@ posts, events, registrations 등
 - 상태 변경 추적
 - council/admin만 작성자 확인 가능
 
+### 18. activities (통합 활동 관리) 🆕
+- 6가지 활동 유형: 행사/수요조사/설문/카톡초대/회비/공지
+- form_fields: 신청 시 추가 정보 (예: 식사 선호도, 알레르기)
+- survey_config: 설문 문항 (객관식/주관식 구분)
+  ```json
+  {
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple_choice",
+        "question": "행사 만족도를 평가해주세요",
+        "options": ["매우 만족", "만족", "보통", "불만족", "매우 불만족"]
+      },
+      {
+        "id": "q2",
+        "type": "text",
+        "question": "개선이 필요한 점이 있다면 작성해주세요"
+      }
+    ]
+  }
+  ```
+- Soft Delete 지원
+- 선착순 신청 시스템
+
+### 19. activity_registrations (활동 신청/참여) 🆕
+- 중복 신청 방지 (UNIQUE 제약)
+- form_data: 사용자가 입력한 추가 정보
+- survey_responses: 설문 응답 (예: {"q1": "매우 만족", "q2": "text response"})
+- 선착순 번호 자동 부여
+
+### 20. activity_images (활동 이미지) 🆕
+- 활동당 여러 장 등록
+- Cloudflare R2 저장
+- 순서 지정 가능
+
 ## 🔐 보안 정책
 
 ### 접근 제어
@@ -165,7 +200,45 @@ posts, events, registrations 등
 
 ## 🚀 주요 기능
 
-### 선착순 신청 시스템 (회원/비회원 통합) 🆕
+### 통합 활동 신청 시스템 🆕
+```sql
+-- 활동 신청/참여
+SELECT register_for_activity(
+  p_activity_id := 1,
+  p_user_id := 'uuid-here',
+  p_form_data := '{"meal_preference": "채식", "allergies": "땅콩"}'::jsonb,
+  p_survey_responses := '{"q1": "매우 만족", "q2": "음식이 좋았습니다"}'::jsonb
+);
+
+-- 활동 신청 취소
+SELECT cancel_activity_registration(
+  p_activity_id := 1,
+  p_user_id := 'uuid-here'
+);
+```
+
+**동시성 제어**:
+- `FOR UPDATE` Pessimistic Lock
+- 트랜잭션으로 경쟁 조건 방지
+
+**검증 순서**:
+1. 활동 존재 및 활성화 확인
+2. 회비 납부 여부 확인 (require_membership=true인 경우)
+3. 신청 기간 확인 (활동 유형별 선택적)
+4. 정원 확인
+5. 중복 신청 확인
+
+**활동 유형별 특징**:
+- **event**: 신청 기간, 정원 관리, form_fields 필수
+- **demand_survey**: 신청 기간, 정원 미사용, form_fields 선택
+- **survey**: 신청 기간, 정원 미사용, survey_responses 필수
+- **kakao_invite**: 신청 불필요, 링크만 제공
+- **fee_payment**: 신청 불필요, 회비 정보만 제공
+- **notice**: 신청 불필요, 공지만 표시
+
+---
+
+### 선착순 신청 시스템 (회원/비회원 통합) - 레거시
 ```sql
 -- 회원 신청
 SELECT register_for_event_guest(
@@ -391,7 +464,14 @@ ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 
 ## 📝 변경 이력
 
-- **2026-01-09**: 행사 시스템 확장 🆕
+- **2026-01-09**: 통합 활동 시스템 추가 🆕
+  - 6가지 활동 유형 통합 (Migration 008)
+  - form_fields/survey_config 설계 변경
+    - 설문 문항 ID: "q1", "q2" 형식
+    - 설문 문항 type: "multiple_choice", "text" 명시
+  - activities, activity_registrations, activity_images 테이블 추가
+  - register_for_activity(), cancel_activity_registration() 함수 추가
+- **2026-01-09**: 행사 시스템 확장
   - 비회원 행사 신청 지원 (Migration 007)
   - registrations 테이블: user_id nullable, guest_* 필드 추가
   - register_for_event_guest() 함수: 회원/비회원 통합 처리

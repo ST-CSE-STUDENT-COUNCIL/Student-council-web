@@ -35,9 +35,11 @@ export function SuggestionDetailModal({
                         {suggestion.content}
                     </p>
 
-                    <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-                        <p className="text-xs text-slate-500">{STATUS_META[suggestion.status].description}</p>
-                    </div>
+                    {STATUS_META[suggestion.status].description.trim().length > 0 && (
+                        <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
+                            <p className="text-xs text-slate-500">{STATUS_META[suggestion.status].description}</p>
+                        </div>
+                    )}
 
                     {suggestion.status === 'rejected' && suggestion.rejection_reason && (
                         <div className="rounded-xl bg-rose-50 border border-rose-200 p-4">

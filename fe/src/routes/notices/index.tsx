@@ -1,11 +1,11 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { NoticeFilters } from '../../components/notices/NoticeFilters'
-import { NoticeList } from '../../components/notices/NoticeList'
-import type { Notice } from '../../types/notices'
+import { PostFilter } from '../../components/notices/PostFilter'
+import { PostList } from '../../components/notices/PostList'
+import type { NoticeListItem } from '../../types/posts'
 
-type NoticeSearch = {
-  mainCategory: string
+type PostSearch = {
+  board_id: number
   subCategory: string
   search: string
   sort: string
@@ -14,9 +14,9 @@ type NoticeSearch = {
 
 export const Route = createFileRoute('/notices/')({
   component: Notices,
-  validateSearch: (search: Record<string, unknown>): NoticeSearch => {
+  validateSearch: (search: Record<string, unknown>): PostSearch => {
     return {
-      mainCategory: (search.mainCategory as string) || 'student_council',
+      board_id: (search.board_id as number) || 1,
       subCategory: (search.subCategory as string) || 'all',
       search: (search.search as string) || '',
       sort: (search.sort as string) || 'newest',
@@ -26,10 +26,10 @@ export const Route = createFileRoute('/notices/')({
 })
 
 function Notices() {
-  const { mainCategory, subCategory, search, sort, page } = Route.useSearch()
+  const { board_id, subCategory, search, sort, page } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
 
-  const [notices, setNotices] = useState<Notice[]>([])
+  const [posts, setPosts] = useState<NoticeListItem[]>([])
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
 
@@ -38,20 +38,23 @@ function Notices() {
   const fetchNotices = async () => {
     try {
       setLoading(true)
-      const { noticeApi } = await import('../../lib/api/notices')
-      const { notices: data, pagination } = await noticeApi.getAll({
+      // Map board_id to mainCategory for backend
+      const mainCategory = board_id === 1 ? 'student_council' : board_id === 2 ? 'democracy' : undefined
+      const { postApi } = await import('../../lib/api/notices')
+      const { posts: data, pagination } = await postApi.getAll({
+        // @ts-ignore - Backend expects mainCategory string
         mainCategory,
-        subCategory,
+        subCategory: subCategory === 'all' ? undefined : subCategory,
         search,
         sort,
         page,
         page_size: itemsPerPage
       })
-      setNotices(data)
+      setPosts(data)
       setTotalPages(pagination.total_pages)
     } catch (error) {
       console.error('Failed to fetch notices', error)
-      setNotices([]) // Clear notices on error
+      setPosts([]) // Clear notices on error
     } finally {
       setLoading(false)
     }
@@ -59,21 +62,21 @@ function Notices() {
 
   useEffect(() => {
     fetchNotices()
-  }, [mainCategory, subCategory, search, sort, page])
+  }, [board_id, subCategory, search, sort, page])
 
   // Pagination Logic handled by server
-  const paginatedNotices = notices
+  const paginatedPosts = posts
 
   // Navigation Handlers
-  const updateSearch = (updates: Partial<NoticeSearch>) => {
+  const updateSearch = (updates: Partial<PostSearch>) => {
     navigate({
       search: (prev) => ({ ...prev, ...updates }),
     })
   }
 
-  const handleMainCategoryChange = (category: string) => {
+  const handleBoardIdChange = (board_id: number) => {
     navigate({
-      search: (prev) => ({ ...prev, mainCategory: category, subCategory: 'all', page: 1 }),
+      search: (prev) => ({ ...prev, board_id, subCategory: 'all', page: 1 }),
     })
   }
 
@@ -101,9 +104,9 @@ function Notices() {
         <p className="text-gray-500">학생회의 주요 소식과 공고를 확인하세요.</p>
       </div>
 
-      <NoticeFilters
-        mainCategory={mainCategory}
-        onMainCategoryChange={handleMainCategoryChange}
+      <PostFilter
+        board_id={board_id}
+        onBoardIdChange={handleBoardIdChange}
         subCategory={subCategory}
         onSubCategoryChange={handleSubCategoryChange}
         search={search}
@@ -117,7 +120,7 @@ function Notices() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       ) : (
-        <NoticeList notices={paginatedNotices} />
+        <PostList posts={paginatedPosts} />
       )}
 
       {/* Pagination Controls */}

@@ -11,12 +11,17 @@ from typing import Optional
 # ============================================================================
 
 class LockerInfo(BaseModel):
-    """사물함 배치도 및 신청 정보"""
+    """사물함 배치도 및 신청/반납 정보"""
     id: int
     layout_image_url: str = Field(..., description="피그마 배치도 이미지 URL")
-    application_form_url: str = Field(..., description="구글폼 신청 URL (신청 마감 시 빈 문자열)")
-    description: Optional[str] = Field(None, description="설명 (예: 19, 35번 고장)")
-    updated_at: datetime = Field(..., description="마지막 수정 시각")
+    application_form_url: Optional[str] = Field(None, description="구글폼 신청 URL (NULL: 설정 안 됨, 빈 문자열: 마감, URL: 진행 중)")
+    return_extension_form_url: Optional[str] = Field(None, description="구글폼 반납/연장 URL (NULL: 설정 안 됨, 빈 문자열: 마감, URL: 진행 중)")
+    application_start: Optional[datetime] = Field(None, description="신청 시작 날짜 (KST)")
+    application_end: Optional[datetime] = Field(None, description="신청 종료 날짜 (KST)")
+    return_extension_start: Optional[datetime] = Field(None, description="반납/연장 시작 날짜 (KST)")
+    return_extension_end: Optional[datetime] = Field(None, description="반납/연장 종료 날짜 (KST)")
+    description: Optional[str] = Field(None, description="설명 (예: 19, 35번 고장, 2024-1학기)")
+    updated_at: datetime = Field(..., description="마지막 수정 시각 (KST)")
 
     class Config:
         from_attributes = True
@@ -24,14 +29,27 @@ class LockerInfo(BaseModel):
 
 class LockerInfoUpdate(BaseModel):
     """사물함 정보 수정 (관리자용)"""
-    layout_image_url: Optional[str] = Field(None, description="피그마 배치도 이미지 URL")
     application_form_url: Optional[str] = Field(None, description="구글폼 신청 URL")
+    return_extension_form_url: Optional[str] = Field(None, description="구글폼 반납/연장 URL")
+    application_start: Optional[datetime] = Field(None, description="신청 시작 날짜 (KST)")
+    application_end: Optional[datetime] = Field(None, description="신청 종료 날짜 (KST)")
+    return_extension_start: Optional[datetime] = Field(None, description="반납/연장 시작 날짜 (KST)")
+    return_extension_end: Optional[datetime] = Field(None, description="반납/연장 종료 날짜 (KST)")
     description: Optional[str] = Field(None, description="설명")
 
 
 # ============================================================================
 # 물품대여 (Rental Items)
 # ============================================================================
+
+class RentalItemCreate(BaseModel):
+    """물품대여 추가 (관리자용)"""
+    item_name: str = Field(..., description="물품명 (예: 장우산, 단우산)")
+    application_sheet_url: str = Field(..., description="구글 시트 URL")
+    quantity_cell_range: str = Field(..., description="재고 셀 위치 (예: C2)")
+    category: Optional[str] = Field(None, description="분류")
+    image_url: Optional[str] = Field(None, description="물품 이미지 URL (Presigned URL로 업로드 후 받은 public_url)")
+
 
 class RentalItem(BaseModel):
     """물품대여 정보"""
