@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Modal } from '../../common/Modal'
 import type { Activity, ActivityListItem, SurveySubmitRequest } from '../../../types/activities'
@@ -16,10 +16,26 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    // 설문 질문 가져오기 - form_fields 사용 (관리자 페이지와 일관성)
-    const formFields = 'form_fields' in activity && activity.form_fields
-        ? activity.form_fields
-        : []
+    // 설문 질문 데이터 정규화 (form_fields 또는 config.questions 지원)
+    const formFields = useMemo(() => {
+        if ('form_fields' in activity && activity.form_fields && activity.form_fields.length > 0) {
+            return activity.form_fields
+        }
+
+        // Survey 타입의 config.questions 구조 지원
+        if ('config' in activity && activity.config?.questions) {
+            return activity.config.questions.map((q: any) => ({
+                name: String(q.id),
+                label: q.question,
+                type: q.type === 'multiple_choice' ? 'radio' : 'textarea',
+                options: q.options,
+                required: q.required,
+                placeholder: q.type === 'text' ? '답변을 입력해주세요' : undefined
+            }))
+        }
+
+        return []
+    }, [activity])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -43,7 +59,13 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
                 await onSubmit({ survey_responses: surveyResponses })
             } else {
                 // 설문조사는 '설문(submitSurvey)' API 사용 -> survey_responses로 전송
+                // 익명성 보장: 프론트엔드에서 더미 데이터 전송
                 const data: SurveySubmitRequest = {
+                    name: '익명',
+                    student_id: '00000000',
+                    department: '익명',
+                    phone: '010-0000-0000',
+                    email: 'anonymous@example.com',
                     survey_responses: surveyResponses
                 }
                 await activityApi.submitSurvey(activity.id, data)

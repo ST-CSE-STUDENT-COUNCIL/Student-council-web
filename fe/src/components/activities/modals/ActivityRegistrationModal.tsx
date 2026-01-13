@@ -51,6 +51,19 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                     console.log('Fetching activity detail for:', activity.id)
                     const detail = await activityApi.getById(activity.id)
                     console.log('Fetched detail:', detail)
+
+                    // Survey 타입의 경우 config.questions를 form_fields로 변환
+                    if (activity.type === 'survey' && (!detail.form_fields || detail.form_fields.length === 0) && detail.config?.questions) {
+                        detail.form_fields = detail.config.questions.map((q: any) => ({
+                            name: String(q.id),
+                            label: q.question,
+                            type: q.type === 'multiple_choice' ? 'radio' : 'textarea',
+                            options: q.options,
+                            required: q.required,
+                            placeholder: q.type === 'text' ? '답변을 입력해주세요' : undefined
+                        }))
+                    }
+
                     setDetailActivity(detail)
                 } catch (err) {
                     console.error('Failed to fetch activity detail', err)
@@ -65,7 +78,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
     // 추가 질문 여부 확인 (detailActivity 기준)
     const hasAdditionalFields = detailActivity?.form_fields && detailActivity.form_fields.length > 0
-    const isDemandSurvey = activity.type === 'demand_survey'
+    const isAnonymousType = activity.type === 'demand_survey' || activity.type === 'survey'
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -83,7 +96,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
         try {
             // 수요조사일 경우 익명성을 위해 더미 데이터 사용
-            const submissionData = isDemandSurvey ? {
+            const submissionData = isAnonymousType ? {
                 ...formData,
                 name: '익명',
                 phone: '010-0000-0000',
@@ -124,7 +137,8 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             case 'kakao_invite':
                 return '카톡방 초대 신청'
             case 'demand_survey':
-                return '수요조사 참여'
+            case 'survey':
+                return '설문/수요조사 참여'
             case 'event':
             default:
                 return '행사 참여 신청'
@@ -139,8 +153,8 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             e.stopPropagation()
         }
 
-        if (isDemandSurvey) {
-            // 수요조사: 입력받는게 없으므로 유효성 검사 패스
+        if (isAnonymousType) {
+            // 익명 조사: 입력받는게 없으므로 유효성 검사 패스
         } else {
             // 일반 행사 유효성 검사
             if (!formData.name) return alert('이름을 입력해주세요.')
@@ -206,12 +220,12 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                             >
                                 <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-800">
                                     <p className="font-bold mb-1">{activity.title}</p>
-                                    <p>{isDemandSurvey
+                                    <p>{isAnonymousType
                                         ? '철저한 익명성이 보장됩니다. 다음 단계로 이동해주세요.'
                                         : '기본 정보를 입력해주세요.'}</p>
                                 </div>
 
-                                {!isDemandSurvey && (
+                                {!isAnonymousType && (
                                     <>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>

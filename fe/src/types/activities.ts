@@ -142,6 +142,11 @@ export type ActivityRegistrationListResponse = {
 
 // 설문조사 제출 요청
 export type SurveySubmitRequest = {
+    name?: string
+    student_id?: string
+    department?: string
+    phone?: string
+    email?: string
     survey_responses: Record<string, any>
 }
 

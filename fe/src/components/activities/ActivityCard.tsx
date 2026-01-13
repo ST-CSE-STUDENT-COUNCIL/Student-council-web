@@ -149,11 +149,7 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
             return
         }
 
-        // 설문조사 타입: 설문 모달 열기
-        if (activity.type === 'survey') {
-            setIsSurveyModalOpen(true)
-            return
-        }
+
 
         // 나머지 타입(event, demand_survey, kakao_invite): 신청 모달 열기
         setIsRegistrationModalOpen(true)
@@ -260,12 +256,7 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
                 onSubmit={handleRegistrationSubmit}
             />
 
-            <ActivitySurveyModal
-                isOpen={isSurveyModalOpen}
-                onClose={() => setIsSurveyModalOpen(false)}
-                activity={activity}
-                onSubmit={handleSurveySubmit}
-            />
+
         </>
     )
 }
