@@ -120,15 +120,15 @@ function AdminActivitiesPage() {
       })
       // 기존 이미지 로드: image_urls가 있으면 사용, 없으면 thumbnail_url 사용
       const existingImages: UploadImage[] = []
-      if (detail.image_urls && detail.image_urls.length > 0) {
-        detail.image_urls.forEach((img, idx) => {
+      if (detail.images && detail.images.length > 0) {
+        detail.images.forEach((img, idx) => {
           existingImages.push({
             id: `existing-${idx}`,
             file: new File([], 'existing'),
-            preview: img.public_url,
+            preview: img.image_url,
             uploading: false,
             uploaded: true,
-            url: img.public_url
+            url: img.image_url
           })
         })
       } else if (detail.thumbnail_url) {

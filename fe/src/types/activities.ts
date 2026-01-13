@@ -48,7 +48,7 @@ export type Activity = {
     config: Record<string, any>
     form_fields: FormField[]
     thumbnail_url?: string
-    image_urls?: { public_url: string }[]
+    images?: { image_url: string }[]
     is_active: boolean
     created_by?: string
     created_at: string

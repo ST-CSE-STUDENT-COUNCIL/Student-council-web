@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Pagination, Navigation } from 'swiper/modules'
 import type { Activity, ActivityListItem, ActivityStatus } from '../../types/activities'
-import { getActivityStatus, activityTypeLabels } from '../../types/activities'
+import { getActivityStatus } from '../../types/activities'
 import { ActivityRegistrationModal, ActivitySurveyModal } from './modals'
 
 // Swiper styles
@@ -204,9 +204,6 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
                             }`}>
                             {status === 'active' ? '진행중' :
                                 status === 'scheduled' ? '예정' : '마감'}
-                        </span>
-                        <span className="px-3 py-1.5 text-sm font-bold rounded-full shadow-sm backdrop-blur-md bg-white/90 text-gray-800">
-                            {activityTypeLabels[activity.type]}
                         </span>
                     </div>
                 </div>

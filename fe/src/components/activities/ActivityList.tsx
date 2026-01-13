@@ -1,5 +1,5 @@
 import type { ActivityListItem } from '../../types/activities'
-import { getActivityStatus, activityTypeLabels } from '../../types/activities'
+import { getActivityStatus } from '../../types/activities'
 
 type ActivityListProps = {
     activities: ActivityListItem[]
@@ -36,20 +36,6 @@ export const ActivityList = ({ activities, onActivitySelect, selectedActivityId,
         )
     }
 
-    const getTypeBadge = (type: ActivityListItem['type']) => {
-        const styles: Record<string, string> = {
-            event: 'bg-purple-100 text-purple-800',
-            demand_survey: 'bg-orange-100 text-orange-800',
-            survey: 'bg-indigo-100 text-indigo-800',
-            kakao_invite: 'bg-yellow-100 text-yellow-800',
-            notice: 'bg-gray-100 text-gray-800'
-        }
-        return (
-            <span className={`px-2 py-0.5 text-xs font-semibold rounded-full whitespace-nowrap ${styles[type] || 'bg-gray-100 text-gray-800'}`}>
-                {activityTypeLabels[type] || type}
-            </span>
-        )
-    }
 
     return (
         <div className={className || "flex flex-col gap-4 mt-6"}>
@@ -67,7 +53,6 @@ export const ActivityList = ({ activities, onActivitySelect, selectedActivityId,
                 >
                     <div className="flex items-center gap-2 flex-wrap">
                         {getStatusBadge(activity)}
-                        {getTypeBadge(activity.type)}
                         <h4 className="flex-1 text-base font-semibold text-gray-900 truncate">
                             {activity.title}
                         </h4>
