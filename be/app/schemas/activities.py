@@ -129,6 +129,7 @@ class ActivityUpdateRequest(BaseModel):
     config: Optional[Dict[str, Any]] = None
     form_fields: Optional[List[FormField]] = None
     thumbnail_url: Optional[str] = None
+    image_urls: Optional[List[Dict[str, str]]] = Field(None, description="이미지 URL 리스트")
     is_active: Optional[bool] = None
 
 

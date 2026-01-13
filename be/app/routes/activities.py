@@ -682,17 +682,49 @@ async def update_activity(
         if body.is_active is not None:
             update_data["is_active"] = body.is_active
         
-        if not update_data:
+        # image_urls가 있으면 check 플래그만 세팅 (아래에서 처리)
+        has_image_updates = body.image_urls is not None
+        
+        if not update_data and not has_image_updates:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="수정할 항목이 없습니다"
             )
         
-        result = supabase.table("activities")\
-            .update(update_data)\
-            .eq("id", activity_id)\
-            .eq("is_deleted", False)\
-            .execute()
+        admin_supabase = get_supabase_admin()
+        
+        # 활동 정보 업데이트 (update_data가 있는 경우)
+        if update_data:
+            result = admin_supabase.table("activities")\
+                .update(update_data)\
+                .eq("id", activity_id)\
+                .eq("is_deleted", False)\
+                .execute()
+        else:
+            # 이미지만 업데이트하는 경우 기존 데이터 조회
+            result = admin_supabase.table("activities")\
+                .select("*")\
+                .eq("id", activity_id)\
+                .eq("is_deleted", False)\
+                .execute()
+        
+        # 이미지 URL 업데이트 (기존 삭제 후 새로 추가)
+        if has_image_updates:
+            # 기존 이미지 삭제
+            admin_supabase.table("activity_images")\
+                .delete()\
+                .eq("activity_id", activity_id)\
+                .execute()
+            
+            # 새 이미지 추가
+            for idx, img in enumerate(body.image_urls):
+                image_data = {
+                    'activity_id': activity_id,
+                    'image_url': img.get("public_url") or img.get("image_url"),
+                    'caption': img.get("caption"),
+                    'display_order': idx
+                }
+                admin_supabase.table("activity_images").insert(image_data).execute()
         
         if not result.data:
             raise HTTPException(
