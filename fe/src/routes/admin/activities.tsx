@@ -32,7 +32,8 @@ function AdminActivitiesPage() {
     require_membership: false,
     is_active: true,
     thumbnail_url: '',
-    form_fields: []
+    form_fields: [],
+    config: {}
   })
 
   const fetchActivities = async () => {
@@ -96,7 +97,8 @@ function AdminActivitiesPage() {
       max_capacity: undefined,
       require_membership: false,
       is_active: true,
-      thumbnail_url: ''
+      thumbnail_url: '',
+      config: {}
     })
     setImages([])
     setIsModalOpen(true)
@@ -116,7 +118,8 @@ function AdminActivitiesPage() {
         require_membership: detail.require_membership,
         is_active: detail.is_active,
         thumbnail_url: detail.thumbnail_url || '',
-        form_fields: detail.form_fields || []
+        form_fields: detail.form_fields || [],
+        config: detail.config || {}
       })
       // 기존 이미지 로드: image_urls가 있으면 사용, 없으면 thumbnail_url 사용
       const existingImages: UploadImage[] = []
@@ -413,6 +416,23 @@ function AdminActivitiesPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
                 />
               </div>
+
+              {formData.type === 'notice' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">외부 링크</label>
+                  <input
+                    type="text"
+                    value={formData.config?.external_link || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      config: { ...prev.config, external_link: e.target.value }
+                    }))}
+                    placeholder="https://example.com"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">배너 클릭 시 이동할 외부 링크를 입력하세요.</p>
+                </div>
+              )}
 
               <FormFieldsManager
                 fields={formData.form_fields || []}
