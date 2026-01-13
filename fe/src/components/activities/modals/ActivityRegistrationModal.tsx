@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Modal } from '../../common/Modal'
+import { PhoneInput } from '../../common/PhoneInput'
 import type { Activity, ActivityListItem, ActivityRegistrationRequest } from '../../../types/activities'
 import { activityApi } from '../../../lib/api/activities'
 import { useAuthStore } from '../../../store/useAuthStore'
@@ -272,14 +273,13 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">연락처</label>
-                                            <input
-                                                type="tel"
-                                                name="phone"
-                                                value={formData.phone}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                placeholder="010-0000-0000"
-                                            />
+                                            <div className="pb-6">
+                                                <PhoneInput
+                                                    value={formData.phone || ''}
+                                                    onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
+                                                    showValidation={true}
+                                                />
+                                            </div>
                                         </div>
 
                                         {activity.type === 'kakao_invite' && (
