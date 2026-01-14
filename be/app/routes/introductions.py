@@ -12,15 +12,22 @@ from app.schemas.introductions import (
     ErrorResponse
 )
 from app.utils.auth import require_admin
-from app.utils.r2_storage import upload_file_to_r2 as upload_file_to_supabase
-from app.database import supabase
+from app.utils.r2_storage import (
+    upload_file_to_r2 as upload_file_to_supabase,
+    generate_presigned_url,
+    validate_file_extension,
+    get_bucket_url
+)
+from app.database import supabase, get_supabase_admin
+import uuid
+import os
 
 
-router = APIRouter(prefix="/introductions", tags=["학생회 소개"])
+router = APIRouter(tags=["학생회 소개"])
 
 
 @router.get(
-    "/images",
+    "/introductions/images",
     response_model=IntroductionImageListResponse,
     status_code=status.HTTP_200_OK,
     summary="학생회 소개 이미지 목록 조회",
@@ -56,43 +63,62 @@ async def get_introduction_images(
 
 
 @router.post(
-    "/images",
+    "/admin/introductions/images/presigned-url",
+    summary="학생회 소개 이미지 업로드용 Presigned URL 발급 (관리자)",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"}
+    }
+)
+async def get_introduction_image_presigned_url(
+    filename: str,
+    current_user: dict = Depends(require_admin)
+):
+    """학생회 소개 이미지 업로드를 위한 Presigned URL 발급"""
+    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png'})
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"introductions/{unique_filename}"
+    
+    presigned_url = generate_presigned_url(
+        bucket_name="introduction-images",
+        file_key=file_key,
+        expires_in=300
+    )
+    
+    base_url = get_bucket_url("introduction-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
+
+
+@router.post(
+    "/admin/introductions/images",
     response_model=IntroductionImageResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="학생회 소개 이미지 업로드",
-    description="학생회 소개 이미지를 업로드합니다 (관리자 전용, multipart/form-data)",
+    summary="학생회 소개 이미지 업로드 (관리자)",
+    description="학생회 소개 이미지를 업로드합니다 (관리자 전용)",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않음"},
         403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
-        413: {"model": ErrorResponse, "description": "파일 크기 초과"},
         500: {"model": ErrorResponse, "description": "업로드 실패"}
     }
 )
 async def create_introduction_image(
-    title: str = Form(..., max_length=100),
-    display_order: int = Form(default=0),
-    image: UploadFile = File(...),
+    body: IntroductionImageCreate,
     current_user: dict = Depends(require_admin)
 ):
-    """학생회 소개 이미지 업로드 (관리자 전용)"""
+    """학생회 소개 이미지 업로드 (관리자 전용, Presigned URL 사용)"""
+    admin_supabase = get_supabase_admin()
     try:
-        # 파일 업로드
-        file_path = await upload_file_to_supabase(
-            file=image,
-            bucket_name="introduction-images",
-            allowed_extensions={".jpg", ".jpeg", ".png"},
-            max_size_mb=10
-        )
-        
         # 이미지 정보 저장
-        image_data = {
-            'title': title,
-            'image_url': file_path,
-            'display_order': display_order,
-            'is_active': True
-        }
+        image_data = body.model_dump()
+        image_data['is_active'] = True
         
-        result = supabase.table('introduction_images').insert(image_data).execute()
+        result = admin_supabase.table('introduction_images').insert(image_data).execute()
         
         if not result.data:
             raise HTTPException(
@@ -112,9 +138,9 @@ async def create_introduction_image(
 
 
 @router.patch(
-    "/images/{image_id}",
+    "/admin/introductions/images/{image_id}",
     response_model=IntroductionImageResponse,
-    summary="학생회 소개 이미지 수정",
+    summary="학생회 소개 이미지 수정 (관리자)",
     description="학생회 소개 이미지 정보를 수정합니다 (관리자 전용)",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않음"},
@@ -129,9 +155,10 @@ async def update_introduction_image(
     current_user: dict = Depends(require_admin)
 ):
     """학생회 소개 이미지 수정 (관리자 전용)"""
+    admin_supabase = get_supabase_admin()
     try:
         # 이미지 존재 확인
-        check_result = supabase.table('introduction_images')\
+        check_result = admin_supabase.table('introduction_images')\
             .select('id')\
             .eq('id', image_id)\
             .single()\
@@ -145,9 +172,11 @@ async def update_introduction_image(
         
         # 수정할 데이터 구성
         update_data = body.model_dump(exclude_unset=True)
-        update_data['updated_at'] = datetime.utcnow().isoformat()
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        update_data['updated_at'] = datetime.now(kst).isoformat()
         
-        result = supabase.table('introduction_images')\
+        result = admin_supabase.table('introduction_images')\
             .update(update_data)\
             .eq('id', image_id)\
             .execute()
@@ -170,9 +199,9 @@ async def update_introduction_image(
 
 
 @router.delete(
-    "/images/{image_id}",
+    "/admin/introductions/images/{image_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="학생회 소개 이미지 삭제",
+    summary="학생회 소개 이미지 삭제 (관리자)",
     description="학생회 소개 이미지를 삭제합니다 (관리자 전용)",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않음"},
@@ -186,9 +215,10 @@ async def delete_introduction_image(
     current_user: dict = Depends(require_admin)
 ):
     """학생회 소개 이미지 삭제 (관리자 전용)"""
+    admin_supabase = get_supabase_admin()
     try:
         # 이미지 존재 확인
-        check_result = supabase.table('introduction_images')\
+        check_result = admin_supabase.table('introduction_images')\
             .select('id')\
             .eq('id', image_id)\
             .single()\
@@ -201,7 +231,7 @@ async def delete_introduction_image(
             )
         
         # 삭제
-        supabase.table('introduction_images')\
+        admin_supabase.table('introduction_images')\
             .delete()\
             .eq('id', image_id)\
             .execute()

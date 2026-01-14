@@ -8,6 +8,7 @@ from typing import Optional
 class IntroductionImageCreate(BaseModel):
     """학생회 소개 이미지 생성 요청"""
     title: str = Field(..., max_length=100, description="섹션 제목 (예: 현행 학생회, 조직도)")
+    image_url: str = Field(..., description="이미지 URL (Presigned URL로 업로드 후 받은 public_url)")
     display_order: int = Field(default=0, description="표시 순서 (낮을수록 먼저)")
 
 

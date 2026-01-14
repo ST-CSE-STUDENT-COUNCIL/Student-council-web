@@ -1,8 +1,9 @@
+import type { ActivityListItem, ActivityStatus } from '../../types/activities'
 
 export type SortOption = 'newest' | 'oldest'
-export type StatusOption = 'all' | 'active' | 'scheduled' | 'closed'
+export type StatusOption = 'all' | ActivityStatus
 
-type EventFilterProps = {
+type ActivityFilterProps = {
     search: string
     onSearchChange: (value: string) => void
     sort: SortOption
@@ -11,21 +12,21 @@ type EventFilterProps = {
     onStatusChange: (value: StatusOption) => void
 }
 
-export const EventFilter = ({
+export const ActivityFilter = ({
     search,
     onSearchChange,
     sort,
     onSortChange,
     status,
     onStatusChange
-}: EventFilterProps) => {
+}: ActivityFilterProps) => {
     return (
         <div className="flex flex-col gap-3">
             {/* Search */}
             <div className="relative">
                 <input
                     type="text"
-                    placeholder="이벤트 검색..."
+                    placeholder="신청 검색..."
                     value={search}
                     onChange={(e) => onSearchChange(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all"
@@ -64,6 +65,7 @@ export const EventFilter = ({
                     <option value="oldest">오래된순</option>
                 </select>
             </div>
+
         </div>
     )
 }

@@ -114,6 +114,62 @@
 --   ]
 -- }
 
+-- 9단계: 사물함 신청/반납 기간 관리 ✅
+-- 파일: 009_add_locker_application_period.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 009_add_locker_application_period.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 추가 내용:
+-- - return_extension_form_url 필드 추가 (반납/연장용 구글폼 URL)
+-- - application_start/end 필드 추가 (신청 기간)
+-- - return_extension_start/end 필드 추가 (반납/연장 기간)
+-- - created_at, updated_at을 한국 시간(KST) 기준으로 변경
+
+-- 10단계: locker_info updated_at 자동 갱신 트리거 ✅
+-- 파일: 010_add_locker_info_updated_at_trigger.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 010_add_locker_info_updated_at_trigger.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 추가 내용:
+-- - update_locker_info_updated_at() 트리거 함수 생성
+-- - trigger_locker_info_updated_at 트리거 생성
+-- - UPDATE 시 updated_at이 자동으로 한국 시간(KST)으로 갱신
+
+-- 11단계: 모든 테이블에 updated_at 자동 갱신 트리거 추가 ✅
+-- 파일: 011_add_updated_at_triggers_for_all_tables.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 011_add_updated_at_triggers_for_all_tables.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 추가 내용:
+-- - update_updated_at_column() 범용 트리거 함수 생성
+-- - 7개 테이블에 updated_at 자동 갱신 트리거 추가:
+--   - login_blocks
+--   - users
+--   - introduction_images
+--   - posts
+--   - suggestions
+--   - clubs
+--   - rental_items
+
+-- 12단계: locker_info URL 필드 NULL 허용 ✅
+-- 파일: 012_make_locker_urls_nullable.sql
+-- 
+-- 실행 방법:
+-- 1. SQL Editor에서 012_make_locker_urls_nullable.sql 내용 복사/붙여넣기
+-- 2. Run 클릭
+-- 
+-- 변경 내용:
+-- - application_form_url NOT NULL 제약조건 제거
+-- - return_extension_form_url NOT NULL 제약조건 제거
+-- - 의미: NULL = 설정 안 됨, 빈 문자열 = 마감, URL = 진행 중
+-- - 신청 기간과 반납 기간을 독립적으로 설정 가능
+
 -- ============================================================================
 -- 마이그레이션 확인
 -- ============================================================================

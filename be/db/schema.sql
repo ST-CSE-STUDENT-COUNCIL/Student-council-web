@@ -210,11 +210,11 @@ COMMENT ON COLUMN boards.allow_anonymous IS '익명 허용 여부 (건의함: tr
 COMMENT ON COLUMN boards.require_admin IS 'admin 권한 필요 여부 (공지사항: true)';
 
 -- 기본 게시판 생성
--- 학생회: 소카테고리 (행사, 복지, 학과소식)
+-- 학생회: 소카테고리 (행사, 복지)
 -- 민주자치: 소카테고리 (고시, 공고, 대표자회의, 학생회칙)
 -- 건의함: 익명 가능
 INSERT INTO boards (name, slug, description, category, require_admin, allow_anonymous) VALUES
-('학생회 공지', 'student-council', '학생회 공지사항 (소카테고리: 행사, 복지, 학과소식)', '학생회', true, false),
+('학생회 공지', 'student-council', '학생회 공지사항 (소카테고리: 행사, 복지)', '학생회', true, false),
 ('민주자치 공지', 'democracy', '민주자치 공지사항 (소카테고리: 고시, 공고, 대표자회의, 학생회칙)', '민주자치', true, false),
 ('건의함', 'suggestion', '익명으로 건의할 수 있습니다', '건의함', false, true);
 
@@ -258,7 +258,7 @@ CREATE TABLE posts (
 );
 
 COMMENT ON TABLE posts IS '[인증 필요] 게시글 (공지사항, 건의함)';
-COMMENT ON COLUMN posts.subcategory IS '소카테고리: 학생회(행사/복지/학과소식), 민주자치(고시/공고/대표자회의/학생회칙)';
+COMMENT ON COLUMN posts.subcategory IS '소카테고리: 학생회(행사/복지), 민주자치(고시/공고/대표자회의/학생회칙)';
 COMMENT ON COLUMN posts.is_anonymous IS '익명 여부 (true: 익명, 관리자만 실명 확인 가능)';
 COMMENT ON COLUMN posts.is_deleted IS 'Soft delete (true: 삭제됨, 복구 가능)';
 COMMENT ON COLUMN posts.deleted_by IS '삭제 처리한 사람 (본인 or 관리자)';
@@ -341,7 +341,7 @@ COMMENT ON COLUMN clubs.description IS '동아리 세부 설명 (필수)';
 COMMENT ON COLUMN clubs.website_url IS '동아리 웹사이트 또는 SNS URL (선택)';
 
 -- ============================================================================
--- 10. 복지사업 - 대여
+-- 6. 복지사업 - 대여
 -- ============================================================================
 -- 물품 대여 (보드게임, 노트북 등)
 -- 선착순 또는 예약 방식
@@ -376,27 +376,53 @@ CREATE INDEX idx_rental_items_category ON rental_items(category);
 CREATE INDEX idx_rental_items_is_active ON rental_items(is_active);
 
 -- ============================================================================
--- 11. 복지사업 - 사물함 정보 (배치도 + 구글폼)
+-- 7. 복지사업 - 사물함 정보 (배치도 + 구글폼 + 신청/반납 기간)
 -- ============================================================================
--- 구글폼으로 신청을 받으므로 복잡한 기간 관리 테이블 불필요
--- 신청 기간이 아닐 때는 관리자가 application_form_url을 빈 문자열로 설정
+-- 관리자가 신청 기간, 반납/연장 기간과 각각의 구글폼 URL을 함께 관리
+-- 1학기, 방학 등 주기적으로 날짜와 URL 업데이트
+-- 모든 시간은 한국 시간(KST, Asia/Seoul) 기준
 -- ============================================================================
 CREATE TABLE locker_info (
   id SERIAL PRIMARY KEY,
-  layout_image_url TEXT NOT NULL,  -- 사물함 배치도 이미지 URL (피그마)
-  application_form_url TEXT NOT NULL,  -- 구글폼 신청 URL (신청 마감 시 빈 문자열)
-  description TEXT,  -- 설명 (예: 19, 35번 고장)
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  layout_image_url TEXT NOT NULL,  -- 사물함 배치도 이미지 URL
+  application_form_url TEXT,  -- 구글폼 신청 URL (NULL: 설정 안 됨, 빈 문자열: 마감, URL: 진행 중)
+  return_extension_form_url TEXT,  -- 구글폼 반납/연장 URL (NULL: 설정 안 됨, 빈 문자열: 마감, URL: 진행 중)
+  application_start TIMESTAMPTZ,  -- 신청 시작 날짜 (KST)
+  application_end TIMESTAMPTZ,  -- 신청 종료 날짜 (KST)
+  return_extension_start TIMESTAMPTZ,  -- 반납/연장 시작 날짜 (KST)
+  return_extension_end TIMESTAMPTZ,  -- 반납/연장 종료 날짜 (KST)
+  description TEXT,  -- 설명 (예: 19, 35번 고장, 2024-1학기)
+  created_at TIMESTAMPTZ DEFAULT (NOW() AT TIME ZONE 'Asia/Seoul'),
+  updated_at TIMESTAMPTZ DEFAULT (NOW() AT TIME ZONE 'Asia/Seoul')
 );
 
-COMMENT ON TABLE locker_info IS '[공개] 사물함 배치도 및 신청 정보 (미래관 3층 사물함)';
+COMMENT ON TABLE locker_info IS '[공개] 사물함 배치도 및 신청/반납 정보 (미래관 3층 사물함)';
 COMMENT ON COLUMN locker_info.layout_image_url IS '피그마에서 생성된 배치도 이미지 URL';
-COMMENT ON COLUMN locker_info.application_form_url IS '구글폼 신청 URL (신청 마감 시 빈 문자열로 설정)';
-COMMENT ON COLUMN locker_info.updated_at IS '마지막 수정 시각 (관리자가 이미지/URL 업데이트한 시각)';
+COMMENT ON COLUMN locker_info.application_form_url IS '구글폼 신청 URL (NULL: 설정 안 됨, 빈 문자열: 마감, URL: 진행 중)';
+COMMENT ON COLUMN locker_info.return_extension_form_url IS '구글폼 반납/연장 URL (NULL: 설정 안 됨, 빈 문자열: 마감, URL: 진행 중)';
+COMMENT ON COLUMN locker_info.application_start IS '신청 시작 날짜 (한국 시간 KST)';
+COMMENT ON COLUMN locker_info.application_end IS '신청 종료 날짜 (한국 시간 KST)';
+COMMENT ON COLUMN locker_info.return_extension_start IS '반납/연장 시작 날짜 (한국 시간 KST)';
+COMMENT ON COLUMN locker_info.return_extension_end IS '반납/연장 종료 날짜 (한국 시간 KST)';
+COMMENT ON COLUMN locker_info.description IS '설명 (예: 19, 35번 고장, 2024-1학기)';
+COMMENT ON COLUMN locker_info.updated_at IS '마지막 수정 시각 (한국 시간 KST)';
+
+-- 7-1. 트리거: locker_info updated_at 자동 갱신 (한국 시간)
+CREATE OR REPLACE FUNCTION update_locker_info_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW() AT TIME ZONE 'Asia/Seoul';
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_locker_info_updated_at
+  BEFORE UPDATE ON locker_info
+  FOR EACH ROW
+  EXECUTE FUNCTION update_locker_info_updated_at();
 
 -- ============================================================================
--- 6. Activities 시스템 (통합 활동 관리)
+-- 8. Activities 시스템 (통합 활동 관리)
 -- ============================================================================
 -- 마이그레이션 008에서 추가됨
 -- 행사/수요조사/설문조사/카톡방 초대/공지를 통합 관리
@@ -598,6 +624,16 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 8-6. 트리거: updated_at 자동 갱신
+-- 범용 트리거 함수
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Activities용 트리거 함수 (기존 호환성 유지)
 CREATE OR REPLACE FUNCTION update_activities_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -605,6 +641,42 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 각 테이블별 트리거 생성
+CREATE TRIGGER trigger_login_blocks_updated_at
+  BEFORE UPDATE ON login_blocks
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trigger_users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trigger_introduction_images_updated_at
+  BEFORE UPDATE ON introduction_images
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trigger_posts_updated_at
+  BEFORE UPDATE ON posts
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trigger_suggestions_updated_at
+  BEFORE UPDATE ON suggestions
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trigger_clubs_updated_at
+  BEFORE UPDATE ON clubs
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER trigger_rental_items_updated_at
+  BEFORE UPDATE ON rental_items
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER trigger_activities_updated_at
   BEFORE UPDATE ON activities
@@ -659,8 +731,26 @@ CREATE POLICY "posts_insert" ON posts
     )
   );
 
-CREATE POLICY "posts_update_own" ON posts
-  FOR UPDATE USING (auth.uid() = author_id);  -- 본인 글만 수정
+CREATE POLICY "posts_update_own_or_admin" ON posts
+  FOR UPDATE 
+  USING (
+    auth.uid() = author_id  -- 본인 글
+    OR
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE id = auth.uid() 
+      AND role IN ('admin', 'council')  -- 관리자 또는 학생회
+    )
+  )
+  WITH CHECK (
+    auth.uid() = author_id  -- 본인 글
+    OR
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE id = auth.uid() 
+      AND role IN ('admin', 'council')  -- 관리자 또는 학생회
+    )
+  );
 
 -- events: 인증된 사용자만 조회 (비회원 차단, 분탕 방지)
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;

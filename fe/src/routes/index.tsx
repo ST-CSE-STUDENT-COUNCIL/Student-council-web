@@ -20,11 +20,11 @@ import {
     Laptop,
     Instagram
 } from 'lucide-react'
-import { eventApi } from '../lib/api/events'
-import { noticeApi } from '../lib/api/notices'
-import type { Event } from '../types/events'
-import type { Notice } from '../types/notices'
-import { EventCard } from '../components/events/EventCard'
+import { activityApi } from '../lib/api/activities'
+import { postApi } from '../lib/api/notices'
+import type { ActivityListItem, Activity } from '../types/activities'
+import type { Post } from '../types/posts'
+import { ActivityCard } from '../components/activities/ActivityCard'
 
 export const Route = createFileRoute('/')({
     component: Index,
@@ -43,34 +43,34 @@ const PORTALS = [
     { name: '인스타그램', icon: Instagram, url: 'https://www.instagram.com/seoultech_com/', color: 'text-pink-600', bg: 'bg-pink-50' },
 ]
 
-const getSubCategoryLabel = (_main: string, sub: string) => {
+const getSubCategoryLabel = (sub: string) => {
     const labels: Record<string, string> = {
-        'event': '행사', 'welfare': '복지', 'news': '학과소식',
+        'event': '행사', 'welfare': '복지', 'notification': '공지',
         'announcement': '공고', 'notice': '고시', 'meeting': '대표자회의', 'rules': '학생회칙'
     };
     return labels[sub] || sub;
 };
 
 function Index() {
-    const [events, setEvents] = useState<Event[]>([])
-    const [notices, setNotices] = useState<Notice[]>([])
+    const [_activities, setActivities] = useState<ActivityListItem[]>([])
+    const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
+    const [posts, setPosts] = useState<Post[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [eventsData, noticesResponse] = await Promise.all([
-                    eventApi.getAll(),
-                    noticeApi.getAll({ page: 1, page_size: 5, sort: 'newest' })
+                const [activitiesResponse, postsResponse] = await Promise.all([
+                    activityApi.getAll({ is_active_only: false, page: 1, page_size: 5 }),
+                    postApi.getAll({ page: 1, page_size: 5, sort: 'newest' })
                 ])
 
-                const activeEvents = eventsData
-                    .filter(e => e.status === 'active' || e.status === 'scheduled')
-                    .sort((a, b) => b.id - a.id)
-                    .slice(0, 5)
-
-                setEvents(activeEvents)
-                setNotices(noticesResponse.notices)
+                setActivities(activitiesResponse.activities)
+                if (activitiesResponse.activities.length > 0) {
+                    const detail = await activityApi.getById(activitiesResponse.activities[0].id)
+                    setSelectedActivity(detail)
+                }
+                setPosts(postsResponse.posts)
             } catch (error) {
                 console.error('Failed to fetch data', error)
             } finally {
@@ -139,7 +139,7 @@ function Index() {
                                 </h2>
                                 <p className="text-sm text-gray-500 mt-1">놓치지 말아야 할 주요 행사들을 확인하세요.</p>
                             </div>
-                            <Link to="/events" className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1">
+                            <Link to="/activities" className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1">
                                 더보기 <ChevronRight size={16} />
                             </Link>
                         </div>
@@ -157,19 +157,19 @@ function Index() {
                                     slidesPerView={1}
                                     className="h-auto min-h-[500px]"
                                 >
-                                    {events.map((event) => (
-                                        <SwiperSlide key={event.id} className="p-4 sm:p-6 box-border">
+                                    {selectedActivity && (
+                                        <SwiperSlide className="p-4 sm:p-6 box-border">
                                             <div className="w-full h-full relative">
-                                                <EventCard event={event} />
+                                                <ActivityCard activity={selectedActivity} />
                                             </div>
                                         </SwiperSlide>
-                                    ))}
-                                    {events.length === 0 && (
+                                    )}
+                                    {!selectedActivity && (
                                         <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-gray-400 gap-4">
                                             <div className="p-4 bg-white rounded-full shadow-sm">
                                                 <Megaphone size={32} className="text-gray-300" />
                                             </div>
-                                            <span>현재 진행 중인 행사가 없습니다.</span>
+                                            <span>현재 진행 중인 신청이 없습니다.</span>
                                         </div>
                                     )}
                                 </Swiper>
@@ -196,7 +196,7 @@ function Index() {
                             </div>
                             <Link
                                 to="/notices"
-                                search={{ page: 1, sort: 'newest', search: '', mainCategory: 'student_council', subCategory: 'all' }}
+                                search={{ page: 1, sort: 'newest', search: '', board_id: 1, subCategory: 'all' }}
                                 className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
                             >
                                 더보기 <ChevronRight size={16} />
@@ -204,38 +204,38 @@ function Index() {
                         </div>
 
                         <div className="space-y-4">
-                            {notices.map((notice) => (
+                            {posts.map((post) => (
                                 <Link
-                                    key={notice.id}
+                                    key={post.id}
                                     to="/notices/$noticeId"
-                                    params={{ noticeId: notice.id.toString() }}
+                                    params={{ noticeId: post.id.toString() }}
                                     className="block group"
                                 >
                                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all duration-200">
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-tight ${notice.main_category === 'student_council'
+                                            <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-tight ${post.board_id === 1
                                                 ? 'bg-blue-50 text-blue-700'
                                                 : 'bg-green-50 text-green-700'
                                                 }`}>
-                                                {getSubCategoryLabel(notice.main_category, notice.sub_category)}
+                                                {getSubCategoryLabel(post.subcategory || '')}
                                             </span>
                                             <span className="text-xs text-gray-400 font-medium font-mono">
-                                                {notice.created_at.split('T')[0]}
+                                                {post.created_at.split('T')[0]}
                                             </span>
                                         </div>
                                         <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
-                                            {notice.is_pinned && <span className="mr-1.5 text-rose-500">📌</span>}
-                                            {notice.title}
+                                            {post.is_pinned && <span className="mr-1.5 text-rose-500">📌</span>}
+                                            {post.title}
                                         </h3>
                                         <p className="text-sm text-gray-500 line-clamp-1 opacity-80">
-                                            {notice.content}
+                                            {post.content}
                                         </p>
                                     </div>
                                 </Link>
                             ))}
-                            {notices.length === 0 && (
+                            {posts.length === 0 && (
                                 <div className="h-64 flex flex-col items-center justify-center bg-white rounded-2xl border border-dashed border-gray-200 text-gray-400">
-                                    <p>등록된 공지사항이 없습니다.</p>
+                                    <p>등록된 게시글이 없습니다.</p>
                                 </div>
                             )}
                         </div>

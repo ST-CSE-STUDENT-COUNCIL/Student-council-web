@@ -114,6 +114,7 @@ class ActivityCreateRequest(BaseModel):
     form_fields: List[FormField] = Field(default_factory=list, description="추가 정보 수집 필드")
     
     thumbnail_url: Optional[str] = Field(None, description="썸네일 URL")
+    image_urls: Optional[List[Dict[str, str]]] = Field(None, description="이미지 URL 리스트")
     is_active: bool = Field(default=True, description="활성화 여부")
 
 
@@ -128,6 +129,7 @@ class ActivityUpdateRequest(BaseModel):
     config: Optional[Dict[str, Any]] = None
     form_fields: Optional[List[FormField]] = None
     thumbnail_url: Optional[str] = None
+    image_urls: Optional[List[Dict[str, str]]] = Field(None, description="이미지 URL 리스트")
     is_active: Optional[bool] = None
 
 
@@ -148,6 +150,7 @@ class ActivityResponse(BaseModel):
     config: Dict[str, Any]
     form_fields: List[Dict[str, Any]]
     thumbnail_url: Optional[str]
+    images: List[Dict[str, Any]] = Field(default_factory=list, description="활동 이미지 목록")
     is_active: bool
     created_by: Optional[str]
     created_at: datetime
@@ -197,6 +200,7 @@ class ActivityRegistrationRequest(BaseModel):
     department: Optional[str] = Field(None, max_length=100, description="학과")
     phone: Optional[str] = Field(None, pattern=r'^010-?\d{4}-?\d{4}$', description="전화번호")
     email: Optional[str] = Field(None, description="이메일")
+    verification_image_url: Optional[str] = Field(None, description="인증 이미지 URL (Presigned URL로 업로드 후 받은 public_url)")
     
     # 추가 정보 응답
     form_responses: Dict[str, Any] = Field(default_factory=dict, description="추가 정보 응답")
@@ -282,6 +286,15 @@ class SurveyStatsResponse(BaseModel):
                 ]
             }
         }
+
+
+# ============================================================================
+# 신청 상태 변경 스키마 (관리자용)
+# ============================================================================
+class RegistrationStatusUpdateRequest(BaseModel):
+    """신청 상태 변경 요청 (관리자용)"""
+    status: Literal["approved", "rejected", "pending"] = Field(..., description="변경할 상태")
+    admin_note: Optional[str] = Field(None, max_length=500, description="관리자 메모 (승인/거절 사유)")
 
 
 # ============================================================================

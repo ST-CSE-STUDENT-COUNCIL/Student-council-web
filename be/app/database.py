@@ -26,8 +26,9 @@ def get_supabase_admin() -> Client:
     관리자 권한 Supabase 클라이언트 반환 (Service Role Key)
     
     RLS를 우회하여 Storage 업로드 등에 사용됩니다.
+    일반 쿼리에서도 관리자 권한이 필요한 경우 사용하세요.
     """
     return create_client(
         supabase_url=settings.SUPABASE_URL,
-        supabase_key=settings.SUPABASE_KEY
+        supabase_key=settings.SUPABASE_KEY  # Service role key 사용
     )

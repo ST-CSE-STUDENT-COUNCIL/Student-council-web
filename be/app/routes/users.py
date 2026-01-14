@@ -1,16 +1,25 @@
 """
 사용자 프로필 관련 라우트
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Form
+from typing import Optional
 from app.schemas.users import (
     UserProfileResponse,
     ChangePasswordRequest,
     ChangePasswordResponse,
+    UploadVerificationImageRequest,
     UploadVerificationImageResponse
 )
 from app.schemas.auth import ErrorResponse
 from app.utils.auth import get_current_user
 from app.utils.storage import upload_verification_image
+from app.utils.r2_storage import (
+    generate_presigned_url,
+    validate_file_extension,
+    get_bucket_url
+)
+import uuid
+import os
 from app.database import supabase
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -87,30 +96,59 @@ async def change_password(
 
 
 @router.post(
+    "/verification-image/presigned-url",
+    summary="학적 인증 이미지 업로드용 Presigned URL 발급",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"}
+    }
+)
+async def get_verification_image_presigned_url(
+    filename: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """학적 인증 이미지 업로드를 위한 Presigned URL 발급"""
+    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png'})
+    user_id = current_user["id"]
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"verifications/user-{user_id}/{unique_filename}"
+    
+    # event-images 버킷 사용 (또는 별도 버킷)
+    presigned_url = generate_presigned_url(
+        bucket_name="event-images",
+        file_key=file_key,
+        expires_in=300
+    )
+    
+    base_url = get_bucket_url("event-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
+
+
+@router.post(
     "/verification-image",
     response_model=UploadVerificationImageResponse,
     status_code=status.HTTP_200_OK,
-    summary="학적 인증 이미지 업로드",
-    description="마이페이지에서 학적 인증 이미지를 업로드합니다 (JPG, PNG만 허용, 최대 5MB, 1시간에 3회 제한)",
+    summary="학적 인증 이미지 업로드 완료",
+    description="Presigned URL로 업로드한 학적 인증 이미지를 DB에 저장합니다",
     responses={
         401: {"model": ErrorResponse, "description": "인증 필요"},
-        400: {"model": ErrorResponse, "description": "파일 형식 또는 크기 오류"},
-        429: {"model": ErrorResponse, "description": "요청 횟수 초과"},
-        500: {"model": ErrorResponse, "description": "업로드 실패"}
+        400: {"model": ErrorResponse, "description": "잘못된 요청"},
+        500: {"model": ErrorResponse, "description": "저장 실패"}
     }
 )
-@limiter.limit("3/hour")  # 1시간에 3회만 허용 (스팸 방지)
-async def upload_my_verification_image(
-    request: Request,
-    file: UploadFile = File(..., description="학적 인증 이미지 파일"),
+async def complete_verification_image_upload(
+    body: UploadVerificationImageRequest,
     current_user: dict = Depends(get_current_user)
 ):
     """
-    학적 인증 이미지 업로드 (로그인 필수)
+    학적 인증 이미지 업로드 완료 (Presigned URL 사용)
     
-    통합정보시스템 학적 정보 캡처 이미지를 업로드합니다.
-    업로드된 이미지는 Private Storage에 저장되며, 관리자만 확인 가능합니다.
-    업로드 후 자동으로 users 테이블의 verification_image_url에 저장됩니다.
+    Presigned URL로 업로드 완료 후 이 API를 호출하여 DB에 저장합니다.
     """
     try:
         # 이미 승인된 사용자는 업로드 불가
@@ -120,17 +158,14 @@ async def upload_my_verification_image(
                 detail="이미 승인된 사용자는 학적 인증 이미지를 재업로드할 수 없습니다"
             )
         
-        # 이미지 업로드 및 검증
-        file_path = await upload_verification_image(file)
-        
-        # users 테이블에 이미지 경로 저장
+        # users 테이블에 이미지 URL 저장
         supabase.table('users')\
-            .update({'verification_image_url': file_path})\
+            .update({'verification_image_url': body.image_url, 'verification_status': 'pending'})\
             .eq('id', current_user['id'])\
             .execute()
         
         return UploadVerificationImageResponse(
-            file_path=file_path
+            file_path=body.image_url
         )
     
     except HTTPException:
@@ -138,5 +173,5 @@ async def upload_my_verification_image(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 업로드 실패: {str(e)}"
+            detail=f"이미지 정보 저장 실패: {str(e)}"
         )

@@ -8,7 +8,12 @@ import { routeTree } from './routeTree.gen'
 import 'pretendard/dist/web/static/pretendard.css'
 import './styles/index.css'
 
-const router = createRouter({ routeTree })
+const router = createRouter({
+  routeTree,
+  defaultPreloadStaleTime: 0,
+  scrollRestoration: true,
+  defaultScrollRestorationBehavior: 'top',
+})
 
 // 타입스크립트를 위한 등록
 declare module '@tanstack/react-router' {

@@ -1,9 +1,9 @@
-import type { Suggestion } from '../../types/suggestions'
+import type { SuggestionListItem } from '../../types/suggestions'
 import { STATUS_META } from './constants'
 
 export function SuggestionList({ items, onSelect }: {
-    items: Suggestion[]
-    onSelect?: (item: Suggestion) => void
+    items: SuggestionListItem[]
+    onSelect?: (item: SuggestionListItem) => void
 }) {
     return (
         <section className="space-y-4">
