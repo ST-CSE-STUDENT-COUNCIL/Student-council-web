@@ -23,7 +23,7 @@ import {
 import { activityApi } from '../lib/api/activities'
 import { postApi } from '../lib/api/notices'
 import type { ActivityListItem, Activity } from '../types/activities'
-import type { Post } from '../types/posts'
+import type { NoticeListItem } from '../types/posts'
 import { ActivityCard } from '../components/activities/ActivityCard'
 
 export const Route = createFileRoute('/')({
@@ -54,7 +54,7 @@ const getSubCategoryLabel = (sub: string) => {
 function Index() {
     const [_activities, setActivities] = useState<ActivityListItem[]>([])
     const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
-    const [posts, setPosts] = useState<Post[]>([])
+    const [posts, setPosts] = useState<NoticeListItem[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -213,7 +213,7 @@ function Index() {
                                 >
                                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all duration-200">
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-tight ${post.board_id === 1
+                                            <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-tight ${post.board.id === 1
                                                 ? 'bg-blue-50 text-blue-700'
                                                 : 'bg-green-50 text-green-700'
                                                 }`}>
