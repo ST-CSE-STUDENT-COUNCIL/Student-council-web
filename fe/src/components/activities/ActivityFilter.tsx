@@ -1,4 +1,4 @@
-import type { ActivityListItem, ActivityStatus } from '../../types/activities'
+import type { ActivityStatus } from '../../types/activities'
 
 export type SortOption = 'newest' | 'oldest'
 export type StatusOption = 'all' | ActivityStatus
