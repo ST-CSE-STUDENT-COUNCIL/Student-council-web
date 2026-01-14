@@ -311,24 +311,6 @@ function RouteComponent() {
                     <h1 className="text-2xl md:text-3xl font-bold text-slate-900">회원 승인 · 역할 · 회비 관리</h1>
                     <p className="text-sm text-gray-500 mt-1">승인 대기, 거절, 차단 상태를 한 화면에서 확인하고 조치할 수 있습니다.</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                        onClick={() => setSearch('')}
-                    >
-                        <RefreshCw size={16} />
-                        새로고침
-                    </button>
-                    <button
-                        type="button"
-                        className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-                        onClick={() => setView('pending')}
-                    >
-                        <BadgeCheck size={16} />
-                        승인 관리 바로가기
-                    </button>
-                </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
