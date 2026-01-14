@@ -15,26 +15,26 @@ export function ClubDetailModal({ club, onClose }: Props) {
     useEffect(() => {
         if (!club) return
 
-        // 동아리 상세 정보 다시 가져오기 (소개 이미지 포함)
+        // 동아리 상세 정보와 소개 이미지 가져오기
         async function loadClubDetail() {
             setLoading(true)
             try {
                 const detail = await clubApi.getById(club.id)
                 setClubDetail(detail)
                 
-                // 소개 이미지가 있으면 사용, 없으면 빈 배열
-                if (detail.intro_images && detail.intro_images.length > 0) {
-                    setIntroImages(detail.intro_images.sort((a, b) => a.display_order - b.display_order))
-                } else {
+                // 소개 이미지 별도 조회
+                try {
+                    const images = await clubApi.getIntroImages(club.id)
+                    setIntroImages(images.sort((a, b) => a.display_order - b.display_order))
+                } catch (imgErr) {
+                    console.error('소개 이미지를 불러오는데 실패했습니다.', imgErr)
                     setIntroImages([])
                 }
             } catch (err) {
                 console.error('동아리 상세 정보를 불러오는데 실패했습니다.', err)
                 // 실패 시 전달받은 club 정보 사용
                 setClubDetail(club)
-                if (club.intro_images && club.intro_images.length > 0) {
-                    setIntroImages(club.intro_images.sort((a, b) => a.display_order - b.display_order))
-                }
+                setIntroImages([])
             } finally {
                 setLoading(false)
             }
