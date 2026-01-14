@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react'
 import { postApi } from '../../lib/api/notices'
 import type { NoticeListItem } from '../../types/posts'
 import { Plus } from 'lucide-react'
-import { NoticeList } from '../../components/admin/notice/NoticeList'
-import { NoticeFilter } from '../../components/admin/notice/NoticeFilter'
-import { NoticeForm } from '../../components/admin/notice/NoticeForm'
-import { CATEGORIES, BOARD_SUB_CATEGORIES } from '../../components/admin/notice/constants'
+import { NoticeList } from '../../components/notices/admin/NoticeList'
+import { NoticeFilter } from '../../components/notices/admin/NoticeFilter'
+import { NoticeForm } from '../../components/notices/admin/NoticeForm'
+import { CATEGORIES, BOARD_SUB_CATEGORIES } from '../../components/notices/admin/constants'
 
 export const Route = createFileRoute('/admin/notices')({
   component: AdminNoticesPage,

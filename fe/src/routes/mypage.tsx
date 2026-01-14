@@ -23,7 +23,7 @@ function MyPage() {
 
     async function loadWelfare() {
       try {
-        const [requests, rentals, lockers, periods] = await Promise.all([
+        const [requests, rentals, lockers, periodData] = await Promise.all([
           welfareApi.getRentalRequests(userId),
           welfareApi.getRentalItems(),
           welfareApi.getLockerRentals(userId),
@@ -31,9 +31,9 @@ function MyPage() {
         ])
 
         const rentalsMap = new Map<number, { item_name?: string }>()
-        rentals.forEach((r) => rentalsMap.set(r.id, r))
+        rentals.forEach((r: { id: number; item_name?: string }) => rentalsMap.set(r.id, r))
 
-        const borrowed = requests.map((req) => {
+        const borrowed = requests.map((req: { rental_id: number; rental_end_date: string }) => {
           const rental = rentalsMap.get(req.rental_id)
           return {
             name: rental?.item_name || '알 수 없는 물품',
@@ -47,8 +47,10 @@ function MyPage() {
         if (locker) {
           setLockerLocation(`미래관 3층 ${locker.locker_number}번`)
 
-          const period = periods.find((p) => p.id === locker.period_id)
-          if (period) {
+          // periodData는 단일 객체 또는 배열일 수 있음
+          const periods = Array.isArray(periodData) ? periodData : [periodData]
+          const period = periods.find((p: { id: number; usage_start?: string; usage_end?: string }) => p.id === locker.period_id)
+          if (period && period.usage_start && period.usage_end) {
             setLockerPeriod(`${formatDate(period.usage_start)} ~ ${formatDate(period.usage_end)}`)
           }
         } else {

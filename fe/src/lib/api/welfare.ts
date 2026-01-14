@@ -113,6 +113,34 @@ export const welfareApi = {
         return response.data;
     },
 
+    /**
+     * 복지 물품 목록을 가져옵니다 (getRentals의 별칭)
+     */
+    getRentalItems: async (): Promise<WelfareRental[]> => {
+        const response = await axios.get(`${API_BASE_URL}/welfare/welfare_rentals`);
+        return response.data;
+    },
+
+    /**
+     * 특정 사용자의 복지 물품 대여 요청 목록을 가져옵니다.
+     */
+    getRentalRequests: async (userId: string): Promise<RentalRequestPayload[]> => {
+        const response = await axios.get(`${API_BASE_URL}/welfare/welfare_rental_requests`, {
+            params: { user_id: userId },
+        });
+        return response.data;
+    },
+
+    /**
+     * 특정 사용자의 사물함 대여 정보를 가져옵니다.
+     */
+    getLockerRentals: async (userId: string): Promise<{ id: number; locker_number: string; period_id: number }[]> => {
+        const response = await axios.get(`${API_BASE_URL}/welfare/locker_rentals`, {
+            params: { user_id: userId },
+        });
+        return response.data;
+    },
+
     getLockerPeriods: async (): Promise<LockerPeriod> => {
         const response = await axios.get(`${API_BASE_URL}/welfare/locker_periods`);
         return response.data;

@@ -342,7 +342,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                 </div>
 
                                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                                    {detailActivity?.form_fields?.map((field, index) => (
+                                    {detailActivity?.form_fields?.map((field) => (
                                         <div key={field.name}>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 {field.label}

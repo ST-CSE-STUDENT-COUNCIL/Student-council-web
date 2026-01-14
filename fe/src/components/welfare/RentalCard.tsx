@@ -1,4 +1,4 @@
-import React from 'react'
+
 import type { WelfareRental } from '../../lib/api/welfare'
 
 type RentalCardProps = {
