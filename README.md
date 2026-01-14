@@ -17,7 +17,7 @@
 
 **서울과학기술대학교 컴퓨터공학과 학생들을 위한 통합 정보 및 편의 서비스**
 
-[데모 보기](#) • [API 문서](#) • [팀원 소개](#-프로젝트-구성원-team-members)
+[데모 보기](https://seoultech.vercel.app/) • [API 문서](https://seoultechcom-api.onrender.com/docs#/) • [팀원 소개](#-프로젝트-구성원-team-members)
 
 </div>
 
@@ -140,13 +140,12 @@ uvicorn app.main:app --reload
 | Name | Role | GitHub |
 |------|------|--------|
 | **이재호** | PM / Frontend | [@jaehoya](https://github.com/jaehoya) |
-| **이준석** | Frontend | [@biabio503](https://github.com/biabio503) |
+| **이준석** | Frontend | [@biabio503](https://github.com/biabio0503) |
 | **최도현** | Backend | [@casing1](https://github.com/casing1) |
-
+| **황정민** | Frontend | [@surphur](https://github.com/surphur) |
 ---
 
 ## 🔗 관련 링크 (Links)
 
-- **Figma Design**: [Link](https://figma.com/design/wQi9vCJzLnIQQHEsV7Npi7)
-- **Notion**: [Link](https://notion.so/...)
-- **API Swagger**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Figma Design**: [Link](https://www.figma.com/design/wQi9vCJzLnIQQHEsV7Npi7/%EC%BB%B4%ED%93%A8%ED%84%B0%EA%B3%B5%ED%95%99%EA%B3%BC-%ED%95%99%EC%83%9D%ED%9A%8C-%ED%99%88%ED%8E%98%EC%9D%B4%EC%A7%80?node-id=0-1&p=f)
+- **API Swagger**: [https://seoultechcom-api.onrender.com/docs#/](https://seoultechcom-api.onrender.com/docs#/)
