@@ -12,7 +12,6 @@ const router = createRouter({
   routeTree,
   defaultPreloadStaleTime: 0,
   scrollRestoration: true,
-  defaultScrollRestorationBehavior: 'top',
 })
 
 // 타입스크립트를 위한 등록

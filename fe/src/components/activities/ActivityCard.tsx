@@ -3,7 +3,7 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import { Pagination, Navigation } from 'swiper/modules'
 import type { Activity, ActivityListItem, ActivityStatus } from '../../types/activities'
 import { getActivityStatus } from '../../types/activities'
-import { ActivityRegistrationModal, ActivitySurveyModal } from './modals'
+import { ActivityRegistrationModal } from './modals'
 
 // Swiper styles
 import 'swiper/css'
@@ -17,7 +17,7 @@ type ActivityCardProps = {
 
 export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
     const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false)
-    const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false)
+
     const [status, setStatus] = useState<ActivityStatus>(() => getActivityStatus(activity))
 
     // 신청 시작/종료 시간에 맞춰 상태 자동 업데이트
@@ -90,10 +90,7 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
         // API 호출은 모달 내부에서 처리
     }
 
-    const handleSurveySubmit = async (data: any) => {
-        console.log('Survey Submitted:', data)
-        // API 호출은 모달 내부에서 처리
-    }
+
 
     const getButtonStyle = () => {
         if (status !== 'active') {

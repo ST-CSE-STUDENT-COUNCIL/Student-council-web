@@ -11,7 +11,7 @@ import {
   type ActionDraft,
   type SuggestionStatus,
   type SummaryCounts,
-} from '../../components/admin/suggestion'
+} from '../../components/suggestions/admin'
 
 export const Route = createFileRoute('/admin/suggestions')({
   component: AdminSuggestionsPage,
