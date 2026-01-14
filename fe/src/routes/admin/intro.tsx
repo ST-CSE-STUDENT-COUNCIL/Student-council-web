@@ -22,7 +22,7 @@ function AdminIntroPage() {
   const [formData, setFormData] = useState<IntroductionImageCreate>({
     title: '',
     image_url: '',
-    display_order: 0,
+    display_order: undefined,
   })
 
   // 이미지 업로드 상태
@@ -68,7 +68,7 @@ function AdminIntroPage() {
     setFormData({
       title: '',
       image_url: '',
-      display_order: 0,
+      display_order: undefined,
     })
     setImageFile(null)
     setImagePreview('')
@@ -78,9 +78,6 @@ function AdminIntroPage() {
   // 추가 모달 열기
   const handleOpenAdd = () => {
     resetForm()
-    // 다음 순번 자동 설정
-    const nextOrder = images.length > 0 ? Math.max(...images.map((img) => img.display_order)) + 1 : 0
-    setFormData((prev) => ({ ...prev, display_order: nextOrder }))
     setShowAddModal(true)
   }
 
@@ -137,6 +134,11 @@ function AdminIntroPage() {
       alert('이미지를 업로드해주세요.')
       return
     }
+    // display_order가 빈칸인지 검사
+    if (formData.display_order === undefined || formData.display_order === null) {
+      alert('표시 순서를 입력해주세요.')
+      return
+    }
 
     setIsSubmitting(true)
     try {
@@ -170,6 +172,11 @@ function AdminIntroPage() {
     if (!editingImage) return
     if (!formData.title.trim()) {
       alert('제목을 입력해주세요.')
+      return
+    }
+    // display_order가 빈칸인지 검사
+    if (formData.display_order === undefined || formData.display_order === null) {
+      alert('표시 순서를 입력해주세요.')
       return
     }
 
@@ -376,7 +383,7 @@ function AdminIntroPage() {
           onChange={(field, value) =>
             setFormData((prev) => ({
               ...prev,
-              [field]: typeof value === 'number' ? value : value,
+              [field]: value,
             }))
           }
           onImageChange={handleImageChange}
@@ -400,7 +407,7 @@ function AdminIntroPage() {
           onChange={(field, value) =>
             setFormData((prev) => ({
               ...prev,
-              [field]: typeof value === 'number' ? value : value,
+              [field]: value,
             }))
           }
           onImageChange={handleImageChange}
@@ -498,9 +505,19 @@ function IntroModal({
             <label className="block text-sm font-semibold text-gray-900 mb-2">표시 순서 *</label>
             <input
               type="number"
-              value={formData.display_order}
-              onChange={(e) => onChange('display_order', parseInt(e.target.value) || 0)}
-              placeholder="0"
+              value={formData.display_order ?? ''}
+              onChange={(e) => {
+                const value = e.target.value
+                if (value === '') {
+                  onChange('display_order', undefined as any)
+                } else {
+                  const numValue = parseInt(value)
+                  if (!isNaN(numValue)) {
+                    onChange('display_order', numValue)
+                  }
+                }
+              }}
+              placeholder="숫자를 입력하세요"
               min="0"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={isSubmitting}
