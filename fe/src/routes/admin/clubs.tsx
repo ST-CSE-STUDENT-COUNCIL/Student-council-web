@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { clubApi } from '../../lib/api/clubs'
-import type { Club, ClubCreate, ClubUpdate, ClubImage } from '../../types/clubs'
+import type { Club, ClubCreate, ClubUpdate, ClubImage, IntroImageState } from '../../types/clubs'
 import { Plus, Trash2, Edit2, ChevronUp, ChevronDown, X } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/clubs')({
@@ -30,10 +30,8 @@ function AdminClubsPage() {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [thumbnailPreview, setThumbnailPreview] = useState('')
   
-  // 소개 이미지 상태
-  const [introImages, setIntroImages] = useState<ClubImage[]>([])
-  const [introImageFiles, setIntroImageFiles] = useState<Map<number, File>>(new Map())
-  const [introImagePreviews, setIntroImagePreviews] = useState<Map<number, string>>(new Map())
+  // 소개 이미지 상태 (image, file, preview를 함께 관리)
+  const [introImages, setIntroImages] = useState<IntroImageState[]>([])
   
   const [isUploading, setIsUploading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -79,20 +77,22 @@ function AdminClubsPage() {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file) return
 
-      const tempId = Date.now()
       const reader = new FileReader()
       reader.onloadend = () => {
         const preview = reader.result as string
-        setIntroImageFiles(prev => new Map(prev).set(tempId, file))
-        setIntroImagePreviews(prev => new Map(prev).set(tempId, preview))
-        
+        const tempId = Date.now()
         const nextOrder = introImages.length > 0 
-          ? Math.max(...introImages.map(img => img.display_order)) + 1 
+          ? Math.max(...introImages.map(item => item.image.display_order)) + 1 
           : 0
         
         setIntroImages(prev => [...prev, {
-          image_url: '',
-          display_order: nextOrder
+          image: {
+            image_url: '',
+            display_order: nextOrder,
+            tempId: tempId
+          },
+          file: file,
+          preview: preview
         }])
       }
       reader.readAsDataURL(file)
@@ -102,26 +102,14 @@ function AdminClubsPage() {
 
   // 소개 이미지 삭제
   const handleRemoveIntroImage = (index: number) => {
-    // tempId를 index 기반으로 찾기
-    const tempIds = Array.from(introImageFiles.keys())
-    const tempId = tempIds[index]
-    
-    setIntroImages(prev => prev.filter((_, i) => i !== index))
-    if (tempId !== undefined) {
-      setIntroImageFiles(prev => {
-        const newMap = new Map(prev)
-        newMap.delete(tempId)
-        return newMap
-      })
-      setIntroImagePreviews(prev => {
-        const newMap = new Map(prev)
-        newMap.delete(tempId)
-        return newMap
-      })
-    }
-    
-    // 순번 재정렬
-    setIntroImages(prev => prev.map((img, i) => ({ ...img, display_order: i })))
+    setIntroImages(prev => {
+      const newImages = prev.filter((_, i) => i !== index)
+      // 순번 재정렬
+      return newImages.map((item, i) => ({
+        ...item,
+        image: { ...item.image, display_order: i }
+      }))
+    })
   }
 
   // 소개 이미지 순번 변경
@@ -131,44 +119,19 @@ function AdminClubsPage() {
 
     const targetIndex = direction === 'up' ? index - 1 : index + 1
     
-    // 이미지 배열 교환
-    const newImages = [...introImages]
-    const temp = newImages[index]
-    newImages[index] = newImages[targetIndex]
-    newImages[targetIndex] = temp
-    
-    // 순번 재정렬
-    newImages.forEach((img, i) => {
-      img.display_order = i
+    setIntroImages(prev => {
+      const newImages = [...prev]
+      // 배열 교환 (file, preview도 함께 이동)
+      const temp = newImages[index]
+      newImages[index] = newImages[targetIndex]
+      newImages[targetIndex] = temp
+      
+      // 순번 재정렬
+      return newImages.map((item, i) => ({
+        ...item,
+        image: { ...item.image, display_order: i }
+      }))
     })
-    
-    setIntroImages(newImages)
-    
-    // 파일과 미리보기도 함께 교환
-    const tempIds = Array.from(introImageFiles.keys())
-    const tempId1 = tempIds[index]
-    const tempId2 = tempIds[targetIndex]
-    
-    if (tempId1 !== undefined && tempId2 !== undefined) {
-      const file1 = introImageFiles.get(tempId1)
-      const file2 = introImageFiles.get(tempId2)
-      const preview1 = introImagePreviews.get(tempId1)
-      const preview2 = introImagePreviews.get(tempId2)
-      
-      setIntroImageFiles(prev => {
-        const newMap = new Map(prev)
-        if (file1) newMap.set(tempId1, file1)
-        if (file2) newMap.set(tempId2, file2)
-        return newMap
-      })
-      
-      setIntroImagePreviews(prev => {
-        const newMap = new Map(prev)
-        if (preview1) newMap.set(tempId1, preview1)
-        if (preview2) newMap.set(tempId2, preview2)
-        return newMap
-      })
-    }
   }
 
   // 폼 초기화
@@ -182,8 +145,6 @@ function AdminClubsPage() {
     setThumbnailFile(null)
     setThumbnailPreview('')
     setIntroImages([])
-    setIntroImageFiles(new Map())
-    setIntroImagePreviews(new Map())
     setEditingClub(null)
   }
 
@@ -194,7 +155,7 @@ function AdminClubsPage() {
   }
 
   // 수정 모달 열기
-  const handleOpenEdit = (club: Club) => {
+  const handleOpenEdit = async (club: Club) => {
     setFormData({
       name: club.name,
       description: club.description,
@@ -203,10 +164,21 @@ function AdminClubsPage() {
     })
     setThumbnailPreview(club.image_url)
     setThumbnailFile(null)
-    setIntroImages(club.intro_images || [])
-    setIntroImageFiles(new Map())
-    setIntroImagePreviews(new Map())
     setEditingClub(club)
+    
+    // 소개 이미지 별도 조회
+    try {
+      const images = await clubApi.getIntroImages(club.id)
+      const sortedImages = images.sort((a, b) => a.display_order - b.display_order)
+      setIntroImages(sortedImages.map(img => ({
+        image: img,
+        preview: img.image_url
+      })))
+    } catch (err) {
+      console.error('소개 이미지를 불러오는데 실패했습니다.', err)
+      setIntroImages([])
+    }
+    
     setShowEditModal(true)
   }
 
@@ -264,33 +236,37 @@ function AdminClubsPage() {
         thumbnailUrl = await uploadImage(thumbnailFile)
       }
 
-      // 소개 이미지 업로드
-      const uploadedIntroImages: ClubImage[] = []
-      for (let i = 0; i < introImages.length; i++) {
-        const tempId = Array.from(introImageFiles.keys())[i]
-        const file = tempId ? introImageFiles.get(tempId) : null
-        
-        if (file) {
-          const imageUrl = await uploadImage(file)
-          uploadedIntroImages.push({
-            image_url: imageUrl,
-            display_order: introImages[i].display_order
-          })
-        } else if (introImages[i].image_url) {
-          // 기존 이미지 URL이 있는 경우 (수정 시)
-          uploadedIntroImages.push(introImages[i])
-        }
-      }
-
+      // 1. 동아리 생성
       const newClub: ClubCreate = {
         name: formData.name,
         description: formData.description,
         image_url: thumbnailUrl,
         website_url: formData.website_url || null,
-        intro_images: uploadedIntroImages.length > 0 ? uploadedIntroImages : undefined,
       }
 
-      await clubApi.create(newClub)
+      const createdClub = await clubApi.create(newClub)
+
+      // 2. 소개 이미지 별도 추가
+      if (introImages.length > 0) {
+        for (const item of introImages) {
+          if (item.file) {
+            // 새로 업로드된 파일
+            const timestamp = Date.now()
+            const filename = `${timestamp}_${item.file.name}`
+            const { presigned_url, public_url } = await clubApi.getIntroImagePresignedUrl(createdClub.id, filename)
+            
+            // R2에 직접 업로드
+            await clubApi.uploadImageToR2(presigned_url, item.file)
+            
+            // 소개 이미지 추가
+            await clubApi.createIntroImage(createdClub.id, {
+              image_url: public_url,
+              display_order: item.image.display_order
+            })
+          }
+        }
+      }
+
       alert('동아리가 추가되었습니다.')
       resetForm()
       setShowAddModal(false)
@@ -323,35 +299,49 @@ function AdminClubsPage() {
         thumbnailUrl = await uploadImage(thumbnailFile)
       }
 
-      // 소개 이미지 업로드
-      const uploadedIntroImages: ClubImage[] = []
-      const tempIds = Array.from(introImageFiles.keys())
-      
-      for (let i = 0; i < introImages.length; i++) {
-        const tempId = tempIds[i]
-        const file = tempId !== undefined ? introImageFiles.get(tempId) : null
-        
-        if (file) {
-          const imageUrl = await uploadImage(file)
-          uploadedIntroImages.push({
-            image_url: imageUrl,
-            display_order: introImages[i].display_order
-          })
-        } else if (introImages[i].image_url) {
-          // 기존 이미지 URL이 있는 경우
-          uploadedIntroImages.push(introImages[i])
-        }
-      }
-
+      // 1. 동아리 정보 수정 (소개 이미지 없이)
       const updateData: ClubUpdate = {
         name: formData.name,
         description: formData.description,
         image_url: thumbnailUrl,
         website_url: formData.website_url || null,
-        intro_images: uploadedIntroImages.length > 0 ? uploadedIntroImages : undefined,
       }
 
       await clubApi.update(editingClub.id, updateData)
+
+      // 2. 기존 소개 이미지 모두 삭제
+      const existingImages = await clubApi.getIntroImages(editingClub.id)
+      for (const img of existingImages) {
+        await clubApi.deleteIntroImage(editingClub.id, img.id)
+      }
+
+      // 3. 현재 소개 이미지들 새로 추가
+      if (introImages.length > 0) {
+        for (const item of introImages) {
+          if (item.file) {
+            // 새로 업로드된 파일
+            const timestamp = Date.now()
+            const filename = `${timestamp}_${item.file.name}`
+            const { presigned_url, public_url } = await clubApi.getIntroImagePresignedUrl(editingClub.id, filename)
+            
+            // R2에 직접 업로드
+            await clubApi.uploadImageToR2(presigned_url, item.file)
+            
+            // 소개 이미지 추가
+            await clubApi.createIntroImage(editingClub.id, {
+              image_url: public_url,
+              display_order: item.image.display_order
+            })
+          } else if ('id' in item.image && item.image.id) {
+            // 기존 이미지 (순서만 변경된 경우)
+            await clubApi.createIntroImage(editingClub.id, {
+              image_url: item.image.image_url,
+              display_order: item.image.display_order
+            })
+          }
+        }
+      }
+
       alert('동아리 정보가 수정되었습니다.')
       resetForm()
       setShowEditModal(false)
@@ -463,7 +453,6 @@ function AdminClubsPage() {
           formData={formData}
           thumbnailPreview={thumbnailPreview}
           introImages={introImages}
-          introImagePreviews={introImagePreviews}
           isUploading={isUploading}
           isSubmitting={isSubmitting}
           onClose={() => {
@@ -487,7 +476,6 @@ function AdminClubsPage() {
           formData={formData}
           thumbnailPreview={thumbnailPreview}
           introImages={introImages}
-          introImagePreviews={introImagePreviews}
           isUploading={isUploading}
           isSubmitting={isSubmitting}
           onClose={() => {
@@ -512,8 +500,7 @@ type ClubModalProps = {
   isEditing: boolean
   formData: ClubCreate
   thumbnailPreview: string
-  introImages: ClubImage[]
-  introImagePreviews: Map<number, string>
+  introImages: IntroImageState[]
   isUploading: boolean
   isSubmitting: boolean
   onClose: () => void
@@ -531,7 +518,6 @@ function ClubModal({
   formData,
   thumbnailPreview,
   introImages,
-  introImagePreviews,
   isUploading,
   isSubmitting,
   onClose,
@@ -614,13 +600,13 @@ function ClubModal({
               </div>
             ) : (
               <div className="space-y-3">
-                {introImages.map((image, index) => {
-                  const tempId = Array.from(introImagePreviews.keys())[index]
-                  const preview = tempId ? introImagePreviews.get(tempId) : image.image_url
+                {introImages.map((item, index) => {
+                  const preview = item.preview || item.image.image_url
+                  const key = 'id' in item.image ? item.image.id : ('tempId' in item.image ? item.image.tempId : index)
                   
                   return (
                     <div
-                      key={index}
+                      key={key}
                       className="border border-gray-200 rounded-lg p-3 bg-gray-50"
                     >
                       <div className="flex gap-3">
@@ -641,7 +627,7 @@ function ClubModal({
                         <div className="flex-1 flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-gray-900">
-                              순번: {image.display_order + 1}
+                              순번: {item.image.display_order + 1}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
                               {preview ? '이미지 업로드됨' : '이미지 없음'}
