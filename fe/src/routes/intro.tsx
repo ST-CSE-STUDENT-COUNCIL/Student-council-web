@@ -58,25 +58,29 @@ function Intro() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">학생회 소개</h1>
-        <p className="text-gray-600">현행 학생회에 대한 소개입니다.</p>
-      </div>
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">학생회 소개</h1>
+          <p className="text-gray-600">현행 학생회에 대한 소개입니다.</p>
+        </div>
 
-      <div className="space-y-6">
-        {images.map((image) => (
-          <div key={image.id} className="w-full">
-            <img
-              src={image.image_url}
-              alt={image.title}
-              className="w-full h-auto object-contain rounded-lg shadow-sm"
-            />
-            {image.title && (
-              <p className="text-sm text-gray-500 mt-2 text-center">{image.title}</p>
-            )}
-          </div>
-        ))}
+        <div className="space-y-6">
+          {images.map((image) => (
+            <div key={image.id} className="w-full bg-white rounded-lg shadow-sm py-5">
+              <div className="px-5">
+                <img
+                  src={image.image_url}
+                  alt={image.title}
+                  className="w-full h-auto object-contain rounded-lg"
+                />
+                {image.title && (
+                  <p className="text-sm text-gray-500 mt-2 text-center">{image.title}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
