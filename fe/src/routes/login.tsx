@@ -14,6 +14,7 @@ function Login() {
   const login = useAuthStore((state) => state.login)
   const [studentId, setStudentId] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,7 +27,7 @@ function Login() {
         password: password
       })
 
-      login(response.data.user, response.data.access_token)
+      login(response.data.user, response.data.access_token, rememberMe)
       navigate({ to: '/' })
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 401) {
@@ -114,14 +115,16 @@ function Login() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-500">
                   로그인 유지
                 </label>
               </div>
               <Link to="/reset-password" className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                비밀번호 찾기
+                비밀번호 재설정
               </Link>
             </div>
 
