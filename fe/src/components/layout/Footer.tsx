@@ -29,7 +29,7 @@ export default function Footer() {
                         <h4 className="text-white font-semibold mb-4">바로가기</h4>
                         <ul className="space-y-2 text-sm">
                             <li><a href="/intro" className="hover:text-blue-400 transition-colors">학생회 소개</a></li>
-                            <li><a href="/events" className="hover:text-blue-400 transition-colors">행사 일정</a></li>
+                            <li><a href="/activities" className="hover:text-blue-400 transition-colors">신청</a></li>
                             <li><a href="/notices" className="hover:text-blue-400 transition-colors">공지사항</a></li>
                             <li><a href="/welfare" className="hover:text-blue-400 transition-colors">학생 복지</a></li>
                             <li><a href="/clubs" className="hover:text-blue-400 transition-colors">동아리 소개</a></li>

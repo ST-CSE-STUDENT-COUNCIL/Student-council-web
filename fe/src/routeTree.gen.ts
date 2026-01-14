@@ -21,15 +21,15 @@ import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NoticesIndexRouteImport } from './routes/notices/index'
-import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as ActivitiesIndexRouteImport } from './routes/activities/index'
 import { Route as NoticesNoticeIdRouteImport } from './routes/notices/$noticeId'
 import { Route as AdminWelfareRouteImport } from './routes/admin/welfare'
 import { Route as AdminSuggestionsRouteImport } from './routes/admin/suggestions'
 import { Route as AdminNoticesRouteImport } from './routes/admin/notices'
 import { Route as AdminIntroRouteImport } from './routes/admin/intro'
-import { Route as AdminEventsRouteImport } from './routes/admin/events'
 import { Route as AdminClubsRouteImport } from './routes/admin/clubs'
+import { Route as AdminActivitiesRouteImport } from './routes/admin/activities'
 
 const WelfareRoute = WelfareRouteImport.update({
   id: '/welfare',
@@ -91,15 +91,15 @@ const NoticesIndexRoute = NoticesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => NoticesRoute,
 } as any)
-const EventsIndexRoute = EventsIndexRouteImport.update({
-  id: '/events/',
-  path: '/events/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const ActivitiesIndexRoute = ActivitiesIndexRouteImport.update({
+  id: '/activities/',
+  path: '/activities/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
   id: '/$noticeId',
@@ -126,14 +126,14 @@ const AdminIntroRoute = AdminIntroRouteImport.update({
   path: '/intro',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminEventsRoute = AdminEventsRouteImport.update({
-  id: '/events',
-  path: '/events',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminClubsRoute = AdminClubsRouteImport.update({
   id: '/clubs',
   path: '/clubs',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminActivitiesRoute = AdminActivitiesRouteImport.update({
+  id: '/activities',
+  path: '/activities',
   getParentRoute: () => AdminRoute,
 } as any)
 
@@ -149,15 +149,15 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/admin/activities': typeof AdminActivitiesRoute
   '/admin/clubs': typeof AdminClubsRoute
-  '/admin/events': typeof AdminEventsRoute
   '/admin/intro': typeof AdminIntroRoute
   '/admin/notices': typeof AdminNoticesRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/activities': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
-  '/events': typeof EventsIndexRoute
   '/notices/': typeof NoticesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -170,15 +170,15 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/admin/activities': typeof AdminActivitiesRoute
   '/admin/clubs': typeof AdminClubsRoute
-  '/admin/events': typeof AdminEventsRoute
   '/admin/intro': typeof AdminIntroRoute
   '/admin/notices': typeof AdminNoticesRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/activities': typeof ActivitiesIndexRoute
   '/admin': typeof AdminIndexRoute
-  '/events': typeof EventsIndexRoute
   '/notices': typeof NoticesIndexRoute
 }
 export interface FileRoutesById {
@@ -194,15 +194,15 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
   '/welfare': typeof WelfareRoute
+  '/admin/activities': typeof AdminActivitiesRoute
   '/admin/clubs': typeof AdminClubsRoute
-  '/admin/events': typeof AdminEventsRoute
   '/admin/intro': typeof AdminIntroRoute
   '/admin/notices': typeof AdminNoticesRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
+  '/activities/': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
-  '/events/': typeof EventsIndexRoute
   '/notices/': typeof NoticesIndexRoute
 }
 export interface FileRouteTypes {
@@ -219,15 +219,15 @@ export interface FileRouteTypes {
     | '/signup'
     | '/suggestion'
     | '/welfare'
+    | '/admin/activities'
     | '/admin/clubs'
-    | '/admin/events'
     | '/admin/intro'
     | '/admin/notices'
     | '/admin/suggestions'
     | '/admin/welfare'
     | '/notices/$noticeId'
+    | '/activities'
     | '/admin/'
-    | '/events'
     | '/notices/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -240,15 +240,15 @@ export interface FileRouteTypes {
     | '/signup'
     | '/suggestion'
     | '/welfare'
+    | '/admin/activities'
     | '/admin/clubs'
-    | '/admin/events'
     | '/admin/intro'
     | '/admin/notices'
     | '/admin/suggestions'
     | '/admin/welfare'
     | '/notices/$noticeId'
+    | '/activities'
     | '/admin'
-    | '/events'
     | '/notices'
   id:
     | '__root__'
@@ -263,15 +263,15 @@ export interface FileRouteTypes {
     | '/signup'
     | '/suggestion'
     | '/welfare'
+    | '/admin/activities'
     | '/admin/clubs'
-    | '/admin/events'
     | '/admin/intro'
     | '/admin/notices'
     | '/admin/suggestions'
     | '/admin/welfare'
     | '/notices/$noticeId'
+    | '/activities/'
     | '/admin/'
-    | '/events/'
     | '/notices/'
   fileRoutesById: FileRoutesById
 }
@@ -287,7 +287,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SuggestionRoute: typeof SuggestionRoute
   WelfareRoute: typeof WelfareRoute
-  EventsIndexRoute: typeof EventsIndexRoute
+  ActivitiesIndexRoute: typeof ActivitiesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -376,19 +376,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NoticesIndexRouteImport
       parentRoute: typeof NoticesRoute
     }
-    '/events/': {
-      id: '/events/'
-      path: '/events'
-      fullPath: '/events'
-      preLoaderRoute: typeof EventsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/': {
       id: '/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/activities/': {
+      id: '/activities/'
+      path: '/activities'
+      fullPath: '/activities'
+      preLoaderRoute: typeof ActivitiesIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/notices/$noticeId': {
       id: '/notices/$noticeId'
@@ -425,13 +425,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIntroRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/events': {
-      id: '/admin/events'
-      path: '/events'
-      fullPath: '/admin/events'
-      preLoaderRoute: typeof AdminEventsRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/clubs': {
       id: '/admin/clubs'
       path: '/clubs'
@@ -439,12 +432,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminClubsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/activities': {
+      id: '/admin/activities'
+      path: '/activities'
+      fullPath: '/admin/activities'
+      preLoaderRoute: typeof AdminActivitiesRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminActivitiesRoute: typeof AdminActivitiesRoute
   AdminClubsRoute: typeof AdminClubsRoute
-  AdminEventsRoute: typeof AdminEventsRoute
   AdminIntroRoute: typeof AdminIntroRoute
   AdminNoticesRoute: typeof AdminNoticesRoute
   AdminSuggestionsRoute: typeof AdminSuggestionsRoute
@@ -453,8 +453,8 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminActivitiesRoute: AdminActivitiesRoute,
   AdminClubsRoute: AdminClubsRoute,
-  AdminEventsRoute: AdminEventsRoute,
   AdminIntroRoute: AdminIntroRoute,
   AdminNoticesRoute: AdminNoticesRoute,
   AdminSuggestionsRoute: AdminSuggestionsRoute,
@@ -489,7 +489,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SuggestionRoute: SuggestionRoute,
   WelfareRoute: WelfareRoute,
-  EventsIndexRoute: EventsIndexRoute,
+  ActivitiesIndexRoute: ActivitiesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

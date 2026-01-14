@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router'
 
 const navItems = [
     { to: '/intro', label: '학생회 소개' },
-    { to: '/events', label: '행사' },
+    { to: '/activities', label: '신청' },
     {
         to: '/notices',
         label: '공지사항',

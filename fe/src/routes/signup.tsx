@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { authApi } from '../lib/api/auth'
 import { isAxiosError } from 'axios'
+import { PhoneInput } from '../components/common/PhoneInput'
 
 export const Route = createFileRoute('/signup')({
     component: SignUp,
@@ -299,15 +300,14 @@ function SignUp() {
                             {/* Phone */}
                             <div className="sm:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">전화번호</label>
-                                <input
-                                    type="tel"
-                                    name="phone"
-                                    required
-                                    className="block w-full px-4 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white"
-                                    placeholder="010-0000-0000"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                />
+                                <div className="pb-6">
+                                    <PhoneInput
+                                        value={formData.phone}
+                                        onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
+                                        required
+                                        showValidation={true}
+                                    />
+                                </div>
                             </div>
 
                             {/* Password */}

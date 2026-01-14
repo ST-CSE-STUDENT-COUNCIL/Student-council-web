@@ -24,6 +24,7 @@ from app.schemas.activities import (
     ActivityRegistrationListResponse,
     SurveySubmitRequest,
     SurveyStatsResponse,
+    RegistrationStatusUpdateRequest,
     ErrorResponse
 )
 from app.utils.auth import optional_current_user, require_verified_user, require_admin
@@ -203,6 +204,15 @@ async def get_activity(
                 is_registered = True
                 my_registration_id = reg_result.data[0]["id"]
         
+        # 활동 이미지 조회
+        images_result = supabase.table("activity_images")\
+            .select("id, image_url, caption, display_order")\
+            .eq("activity_id", activity_id)\
+            .order("display_order")\
+            .execute()
+        
+        images = images_result.data if images_result.data else []
+        
         return ActivityResponse(
             id=activity["id"],
             type=activity["type"],
@@ -216,6 +226,7 @@ async def get_activity(
             config=activity.get("config", {}),
             form_fields=activity.get("form_fields", []),
             thumbnail_url=activity.get("thumbnail_url"),
+            images=images,
             is_active=activity["is_active"],
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
@@ -681,17 +692,49 @@ async def update_activity(
         if body.is_active is not None:
             update_data["is_active"] = body.is_active
         
-        if not update_data:
+        # image_urls가 있으면 check 플래그만 세팅 (아래에서 처리)
+        has_image_updates = body.image_urls is not None
+        
+        if not update_data and not has_image_updates:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="수정할 항목이 없습니다"
             )
         
-        result = supabase.table("activities")\
-            .update(update_data)\
-            .eq("id", activity_id)\
-            .eq("is_deleted", False)\
-            .execute()
+        admin_supabase = get_supabase_admin()
+        
+        # 활동 정보 업데이트 (update_data가 있는 경우)
+        if update_data:
+            result = admin_supabase.table("activities")\
+                .update(update_data)\
+                .eq("id", activity_id)\
+                .eq("is_deleted", False)\
+                .execute()
+        else:
+            # 이미지만 업데이트하는 경우 기존 데이터 조회
+            result = admin_supabase.table("activities")\
+                .select("*")\
+                .eq("id", activity_id)\
+                .eq("is_deleted", False)\
+                .execute()
+        
+        # 이미지 URL 업데이트 (기존 삭제 후 새로 추가)
+        if has_image_updates:
+            # 기존 이미지 삭제
+            admin_supabase.table("activity_images")\
+                .delete()\
+                .eq("activity_id", activity_id)\
+                .execute()
+            
+            # 새 이미지 추가
+            for idx, img in enumerate(body.image_urls):
+                image_data = {
+                    'activity_id': activity_id,
+                    'image_url': img.get("public_url") or img.get("image_url"),
+                    'caption': img.get("caption"),
+                    'display_order': idx
+                }
+                admin_supabase.table("activity_images").insert(image_data).execute()
         
         if not result.data:
             raise HTTPException(
@@ -848,6 +891,115 @@ async def get_activity_registrations(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"신청자 목록 조회 실패: {str(e)}"
         )
+
+
+@router.patch(
+    "/admin/activities/{activity_id}/registrations/{registration_id}",
+    response_model=ActivityRegistrationResponse,
+    status_code=status.HTTP_200_OK,
+    summary="신청 상태 변경 (관리자)",
+    description="활동 신청의 상태를 승인/거절로 변경합니다. (관리자 권한 필요)",
+    responses={
+        200: {"description": "성공"},
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "권한 없음"},
+        404: {"model": ErrorResponse, "description": "신청 정보 없음"}
+    }
+)
+async def update_registration_status(
+    activity_id: int,
+    registration_id: int,
+    body: RegistrationStatusUpdateRequest,
+    current_user: dict = Depends(require_admin)
+):
+    """신청 상태 변경 (관리자 전용)"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # 신청 정보 조회
+        existing = admin_supabase.table("activity_registrations")\
+            .select("*")\
+            .eq("id", registration_id)\
+            .eq("activity_id", activity_id)\
+            .execute()
+        
+        if not existing.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="신청 정보를 찾을 수 없습니다"
+            )
+        
+        # 상태 업데이트
+        update_data = {"status": body.status}
+        if body.admin_note:
+            update_data["admin_note"] = body.admin_note
+        
+        result = admin_supabase.table("activity_registrations")\
+            .update(update_data)\
+            .eq("id", registration_id)\
+            .execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="상태 변경 실패"
+            )
+        
+        reg = result.data[0]
+        
+        return ActivityRegistrationResponse(
+            id=reg["id"],
+            activity_id=reg["activity_id"],
+            user_id=reg.get("user_id"),
+            name=reg.get("name"),
+            student_id=reg.get("student_id"),
+            department=reg.get("department"),
+            phone=reg.get("phone"),
+            email=reg.get("email"),
+            form_responses=reg.get("form_responses", {}),
+            kakao_id=reg.get("kakao_id"),
+            verification_image_url=reg.get("verification_image_url"),
+            status=reg["status"],
+            created_at=datetime.fromisoformat(reg["created_at"].replace('Z', '+00:00'))
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"상태 변경 실패: {str(e)}"
+        )
+
+
+@router.post(
+    "/admin/activities/presigned-url",
+    summary="활동 이미지 업로드용 Presigned URL 발급 (관리자)",
+    description="활동 생성/수정 시 이미지 업로드를 위한 Presigned URL을 발급합니다."
+)
+async def get_admin_activity_presigned_url(
+    filename: str,
+    current_user: dict = Depends(require_admin)
+):
+    """관리자용 활동 이미지 Presigned URL 발급"""
+    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.gif', '.webp'})
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"activities/{unique_filename}"
+    
+    presigned_url = generate_presigned_url(
+        bucket_name="event-images",
+        file_key=file_key,
+        expires_in=300
+    )
+    
+    base_url = get_bucket_url("event-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
 
 
 @router.get(
