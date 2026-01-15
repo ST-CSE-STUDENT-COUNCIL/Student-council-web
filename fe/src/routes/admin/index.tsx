@@ -1,21 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-    BadgeCheck,
-    CheckCircle2,
-    Clock3,
-    Coins,
-    Eye,
-    Filter,
-    LockOpen,
-    RefreshCw,
-    Search,
-    Shield,
-    Users,
-    XCircle,
-} from 'lucide-react'
+import { Clock3, Shield, Users, XCircle } from 'lucide-react'
 import { adminApi } from '../../lib/api/admin'
 import type { PendingUserItem, UserListItem, RejectedUserItem, BlockedUserItem } from '../../types/users'
+import {
+    AdminFilters,
+    AdminStatsCards,
+    AllMembersTable,
+    BlockedMembersList,
+    ImagePreviewModal,
+    PendingMembersList,
+    RejectedMembersList,
+} from '../../components/admin/index'
 
 export const Route = createFileRoute('/admin/')({
     component: RouteComponent,
@@ -119,6 +115,7 @@ function RouteComponent() {
     const [blockedLoading, setBlockedLoading] = useState(false)
     const [blockedError, setBlockedError] = useState<string | null>(null)
     const [unblockingId, setUnblockingId] = useState<string | null>(null)
+    const [previewImage, setPreviewImage] = useState<string | null>(null)
 
     const fetchPendingMembers = useCallback(async () => {
         setPendingLoading(true)
@@ -374,430 +371,82 @@ function RouteComponent() {
     ]
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <p className="text-sm font-semibold text-blue-600">유저 관리 시스템</p>
-                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900">회원 승인 · 역할 · 회비 관리</h1>
-                    <p className="text-sm text-gray-500 mt-1">승인 대기, 거절, 차단 상태를 한 화면에서 확인하고 조치할 수 있습니다.</p>
-                </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {stats.map((stat) => (
-                    <div key={stat.label} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-600">{stat.label}</span>
-                            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.color}`}>
-                                <stat.icon size={18} />
-                            </div>
-                        </div>
-                        <p className="mt-2 text-2xl font-bold text-slate-900">{stat.value}</p>
-                        <p className="text-xs text-gray-500 mt-1">실시간 상태 반영</p>
+        <>
+            <div className="space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p className="text-sm font-semibold text-blue-600">유저 관리 시스템</p>
+                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900">회원 승인 · 역할 · 회비 관리</h1>
+                        <p className="text-sm text-gray-500 mt-1">승인 대기, 거절, 차단 상태를 한 화면에서 확인하고 조치할 수 있습니다.</p>
                     </div>
-                ))}
-            </div>
+                </div>
 
-            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative w-full flex-1 min-w-[240px]">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="이름, 학번, 전공, 연락처로 검색"
-                            className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                <AdminStatsCards stats={stats} />
+
+                <AdminFilters
+                    search={search}
+                    onSearchChange={setSearch}
+                    roleFilter={roleFilter}
+                    onRoleFilterChange={setRoleFilter}
+                    duesFilter={duesFilter}
+                    onDuesFilterChange={setDuesFilter}
+                    view={view}
+                    onViewChange={setView}
+                />
+
+                <div className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+                    {view === 'pending' && (
+                        <PendingMembersList
+                            members={filteredPending}
+                            loading={pendingLoading}
+                            error={pendingError}
+                            approvingId={approvingId}
+                            rejectingId={rejectingId}
+                            onRefresh={fetchPendingMembers}
+                            onApprove={handleApprove}
+                            onReject={handleReject}
+                            onPreview={(url) => setPreviewImage(url)}
                         />
-                    </div>
+                    )}
 
-                    <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-2 py-1">
-                        <Filter size={16} className="text-gray-500" />
-                        <select
-                            value={roleFilter}
-                            onChange={(e) => setRoleFilter(e.target.value as Role | 'all')}
-                            className="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none"
-                        >
-                            <option value="all">전체 역할</option>
-                            <option value="student">학생</option>
-                            <option value="admin">관리자</option>
-                        </select>
-                    </div>
+                    {view === 'all' && (
+                        <AllMembersTable
+                            members={filteredMembers}
+                            loading={membersLoading}
+                            error={membersError}
+                            editedRoles={editedRoles}
+                            roleSavingId={roleSavingId}
+                            duesUpdatingId={duesUpdatingId}
+                            onRefresh={fetchMembers}
+                            onRoleSelect={handleRoleSelect}
+                            onRoleSave={handleRoleSave}
+                            onToggleDues={handleToggleDues}
+                        />
+                    )}
 
-                    <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2 py-1">
-                        <Coins size={16} className="text-gray-500" />
-                        <select
-                            value={duesFilter}
-                            onChange={(e) => setDuesFilter(e.target.value as 'all' | 'paid' | 'unpaid')}
-                            className="bg-transparent text-sm font-semibold text-gray-700 focus:outline-none"
-                        >
-                            <option value="all">회비 전체</option>
-                            <option value="paid">회비 납부</option>
-                            <option value="unpaid">미납</option>
-                        </select>
-                    </div>
+                    {view === 'rejected' && (
+                        <RejectedMembersList
+                            members={filteredRejected}
+                            loading={rejectedLoading}
+                            error={rejectedError}
+                            onRefresh={fetchRejectedMembers}
+                        />
+                    )}
 
-                    <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-1 py-1">
-                        {[
-                            { key: 'pending', label: '승인 대기' },
-                            { key: 'all', label: '전체 회원' },
-                            { key: 'rejected', label: '거절' },
-                            { key: 'blocked', label: '차단' },
-                        ].map((item) => (
-                            <button
-                                key={item.key}
-                                type="button"
-                                onClick={() => setView(item.key as typeof view)}
-                                className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                                    view === item.key
-                                        ? 'bg-blue-600 text-white shadow-sm'
-                                        : 'text-gray-700 hover:bg-white'
-                                }`}
-                            >
-                                {item.label}
-                            </button>
-                        ))}
-                    </div>
+                    {view === 'blocked' && (
+                        <BlockedMembersList
+                            members={filteredBlocked}
+                            loading={blockedLoading}
+                            error={blockedError}
+                            unblockingId={unblockingId}
+                            onUnblock={handleUnblock}
+                            onRefresh={fetchBlockedMembers}
+                        />
+                    )}
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-100 bg-white shadow-sm">
-                {view === 'pending' && (
-                    <div className="space-y-4 p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-900">승인 대기 회원</h2>
-                                <p className="text-sm text-gray-500">등록 정보 확인 후 승인 또는 거절하세요.</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {pendingError && <span className="text-sm font-semibold text-rose-600">{pendingError}</span>}
-                                <button
-                                    type="button"
-                                    onClick={fetchPendingMembers}
-                                    disabled={pendingLoading}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    <RefreshCw size={16} className={pendingLoading ? 'animate-spin' : ''} />
-                                    {pendingLoading ? '불러오는 중' : '새로고침'}
-                                </button>
-                            </div>
-                        </div>
-
-                        {pendingLoading ? (
-                            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-gray-500">
-                                승인 대기 회원을 불러오는 중입니다.
-                            </div>
-                        ) : pendingError ? (
-                            <div className="rounded-xl border border-dashed border-rose-200 bg-rose-50 p-8 text-center text-rose-700">
-                                <p className="font-semibold">승인 대기 회원 목록을 불러오지 못했습니다.</p>
-                                <button
-                                    type="button"
-                                    onClick={fetchPendingMembers}
-                                    className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-                                >
-                                    <RefreshCw size={16} />
-                                    다시 시도
-                                </button>
-                            </div>
-                        ) : filteredPending.length === 0 ? (
-                            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-gray-500">
-                                승인 대기 중인 회원이 없습니다.
-                            </div>
-                        ) : (
-                            <div className="grid gap-3">
-                                {filteredPending.map((member) => (
-                                    <div
-                                        key={member.id}
-                                        className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between"
-                                    >
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-base font-semibold text-slate-900">{member.name}</span>
-                                                <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
-                                                    승인 대기
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2 text-sm text-gray-600">
-                                                <span className="rounded-lg bg-slate-50 px-2.5 py-1 font-medium">학번 {member.studentId}</span>
-                                                <span className="rounded-lg bg-slate-50 px-2.5 py-1 font-medium">{member.major}</span>
-                                                <span className="rounded-lg bg-slate-50 px-2.5 py-1 font-medium">{member.email}</span>
-                                                <span className="rounded-lg bg-slate-50 px-2.5 py-1 font-medium">{member.phone}</span>
-                                            </div>
-                                            <p className="text-xs text-gray-500">신청일 {member.joinedAt}</p>
-                                        </div>
-
-                                        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
-                                            {member.verificationImageUrl && (
-                                                <a
-                                                    href={member.verificationImageUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
-                                                >
-                                                    <Eye size={16} />
-                                                    학적인증
-                                                </a>
-                                            )}
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    type="button"
-                                                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                                    onClick={() => handleApprove(member.id)}
-                                                    disabled={pendingLoading || approvingId === member.id || rejectingId === member.id}
-                                                >
-                                                    <CheckCircle2 size={16} className={approvingId === member.id ? 'animate-spin' : ''} />
-                                                    {approvingId === member.id ? '승인 중...' : '승인'}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="inline-flex items-center gap-2 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                                    onClick={() => handleReject(member.id)}
-                                                    disabled={pendingLoading || rejectingId === member.id || approvingId === member.id}
-                                                >
-                                                    <XCircle size={16} className={rejectingId === member.id ? 'animate-spin' : ''} />
-                                                    {rejectingId === member.id ? '거절 중...' : '거절'}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {view === 'all' && (
-                    <div className="space-y-4 p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-900">전체 회원</h2>
-                                <p className="text-sm text-gray-500">역할 변경, 회비 납부 상태를 즉시 조정할 수 있습니다.</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {membersError && <span className="text-sm font-semibold text-rose-600">{membersError}</span>}
-                                <button
-                                    type="button"
-                                    onClick={fetchMembers}
-                                    disabled={membersLoading}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    <RefreshCw size={16} className={membersLoading ? 'animate-spin' : ''} />
-                                    {membersLoading ? '불러오는 중' : '새로고침'}
-                                </button>
-                            </div>
-                        </div>
-
-                        {membersLoading ? (
-                            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-gray-500">
-                                회원 목록을 불러오는 중입니다.
-                            </div>
-                        ) : membersError ? (
-                            <div className="rounded-xl border border-dashed border-rose-200 bg-rose-50 p-8 text-center text-rose-700">
-                                <p className="font-semibold">회원 목록을 불러오지 못했습니다.</p>
-                                <button
-                                    type="button"
-                                    onClick={fetchMembers}
-                                    className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-                                >
-                                    <RefreshCw size={16} />
-                                    다시 시도
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto rounded-xl border border-slate-100">
-                                <table className="min-w-full divide-y divide-slate-100 text-sm">
-                                    <thead className="bg-slate-50">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left font-semibold text-gray-600">회원</th>
-                                            <th className="px-4 py-3 text-left font-semibold text-gray-600">역할</th>
-                                            <th className="px-4 py-3 text-left font-semibold text-gray-600">회비</th>
-                                            <th className="px-4 py-3 text-left font-semibold text-gray-600">연락처</th>
-                                            <th className="px-4 py-3 text-left font-semibold text-gray-600">가입일</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {filteredMembers.map((member) => (
-                                            <tr key={member.id} className="hover:bg-slate-50/50">
-                                                <td className="px-4 py-3">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-semibold text-slate-900">{member.name}</span>
-                                                        <span className="text-xs text-gray-500">학번 {member.studentId} · {member.major}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <select
-                                                            value={editedRoles[member.id] ?? member.role}
-                                                            onChange={(e) => handleRoleSelect(member.id, e.target.value as Role)}
-                                                            disabled={membersLoading}
-                                                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                                        >
-                                                            <option value="student">학생</option>
-                                                            <option value="admin">관리자</option>
-                                                        </select>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRoleSave(member.id)}
-                                                            disabled={
-                                                                membersLoading ||
-                                                                roleSavingId === member.id ||
-                                                                (editedRoles[member.id] ?? member.role) === member.role
-                                                            }
-                                                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-gray-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                                        >
-                                                            <BadgeCheck size={14} className={roleSavingId === member.id ? 'animate-spin' : ''} />
-                                                            저장
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <button
-                                                        type="button"
-                                                        className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${
-                                                            member.duesPaid
-                                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                                                                : 'bg-amber-50 text-amber-700 border border-amber-100'
-                                                        }`}
-                                                        onClick={() => handleToggleDues(member.id)}
-                                                        disabled={duesUpdatingId === member.id || membersLoading}
-                                                    >
-                                                        <Coins size={16} className={duesUpdatingId === member.id ? 'animate-spin' : ''} />
-                                                        {member.duesPaid ? '납부' : '미납'}
-                                                    </button>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex flex-col text-sm text-gray-700">
-                                                        <span>{member.email}</span>
-                                                        <span className="text-xs text-gray-500">{member.phone}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3 text-sm text-gray-600">{member.joinedAt}</td>
-                                            </tr>
-                                        ))}
-                                        {filteredMembers.length === 0 && (
-                                            <tr>
-                                                <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={6}>
-                                                    조건에 맞는 회원이 없습니다.
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {view === 'rejected' && (
-                    <div className="space-y-4 p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-900">거절된 회원</h2>
-                                <p className="text-sm text-gray-500">거절 사유를 확인하고 필요 시 재신청을 안내하세요.</p>
-                            </div>
-                        </div>
-
-                        {rejectedLoading ? (
-                            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-gray-500">
-                                거절된 회원을 불러오는 중입니다.
-                            </div>
-                        ) : rejectedError ? (
-                            <div className="rounded-xl border border-dashed border-rose-200 bg-rose-50 p-8 text-center text-rose-700">
-                                <p className="font-semibold">거절된 회원 목록을 불러오지 못했습니다.</p>
-                                <button
-                                    type="button"
-                                    onClick={fetchRejectedMembers}
-                                    className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-                                >
-                                    <RefreshCw size={16} />
-                                    다시 시도
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="grid gap-3">
-                                {filteredRejected.map((member) => (
-                                    <div key={member.id} className="flex items-start justify-between rounded-xl border border-rose-100 bg-rose-50 p-4">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-base font-semibold text-rose-800">{member.name}</span>
-                                                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-rose-700">거절됨</span>
-                                            </div>
-                                            <p className="text-sm text-rose-700">학번 {member.studentId} · {member.major}</p>
-                                            <p className="text-sm text-rose-700">사유: {member.rejectionReason}</p>
-                                            <p className="text-xs text-rose-600">신청일 {member.joinedAt}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                                {filteredRejected.length === 0 && (
-                                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-gray-500">
-                                        거절된 회원이 없습니다.
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {view === 'blocked' && (
-                    <div className="space-y-4 p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-900">차단된 회원</h2>
-                                <p className="text-sm text-gray-500">차단 해제 후 회원 목록으로 복귀시킬 수 있습니다.</p>
-                            </div>
-                        </div>
-
-                        {blockedLoading ? (
-                            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-gray-500">
-                                차단된 회원을 불러오는 중입니다.
-                            </div>
-                        ) : blockedError ? (
-                            <div className="rounded-xl border border-dashed border-rose-200 bg-rose-50 p-8 text-center text-rose-700">
-                                <p className="font-semibold">차단된 회원 목록을 불러오지 못했습니다.</p>
-                                <button
-                                    type="button"
-                                    onClick={fetchBlockedMembers}
-                                    className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-                                >
-                                    <RefreshCw size={16} />
-                                    다시 시도
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="grid gap-3">
-                                {filteredBlocked.map((member) => (
-                                    <div key={member.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 md:flex-row md:items-center md:justify-between">
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-base font-semibold text-slate-900">{member.name}</span>
-                                                <span className="rounded-full bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white">차단됨</span>
-                                            </div>
-                                            <p className="text-sm text-gray-600">학번 {member.studentId} · {member.major}</p>
-                                            <p className="text-xs text-gray-500">차단일 {member.blockedAt || '-'}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                type="button"
-                                                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                                onClick={() => handleUnblock(member.id)}
-                                                disabled={unblockingId === member.id || blockedLoading}
-                                            >
-                                                <LockOpen size={16} className={unblockingId === member.id ? 'animate-spin' : ''} />
-                                                {unblockingId === member.id ? '해제 중...' : '차단 해제'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {filteredBlocked.length === 0 && (
-                                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-gray-500">
-                                        차단된 회원이 없습니다.
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-        </div>
+            <ImagePreviewModal imageUrl={previewImage} onClose={() => setPreviewImage(null)} />
+        </>
     )
 }
