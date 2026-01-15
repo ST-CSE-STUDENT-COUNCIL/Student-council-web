@@ -675,9 +675,10 @@ async def reset_password(body: ResetPasswordRequest):
         user_id = user_result.data['id']
         email = user_result.data['email']
         
-        # 3. Supabase Auth에서 비밀번호 변경
+        # 3. Supabase Auth에서 비밀번호 변경 (admin 클라이언트 사용)
         try:
-            supabase.auth.admin.update_user_by_id(
+            admin_supabase = get_supabase_admin()
+            admin_supabase.auth.admin.update_user_by_id(
                 user_id,
                 {"password": body.new_password}
             )

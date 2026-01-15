@@ -98,60 +98,23 @@ async def change_password(
 
 
 @router.post(
-    "/verification-image/presigned-url",
-    summary="학적 인증 이미지 업로드용 Presigned URL 발급",
+    "/verification-image/upload",
+    summary="학적 인증 이미지 직접 업로드",
     responses={
         401: {"model": ErrorResponse, "description": "인증 필요"}
     }
 )
-async def get_verification_image_presigned_url(
-    filename: str,
-    current_user: dict = Depends(get_current_user)
-):
-    """학적 인증 이미지 업로드를 위한 Presigned URL 발급"""
-    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png'})
-    user_id = current_user["id"]
-    unique_filename = f"{uuid.uuid4()}{file_ext}"
-    file_key = f"verifications/user-{user_id}/{unique_filename}"
-    
-    # event-images 버킷 사용 (또는 별도 버킷)
-    presigned_url = generate_presigned_url(
-        bucket_name="event-images",
-        file_key=file_key,
-        expires_in=300
-    )
-    
-    base_url = get_bucket_url("event-images")
-    public_url = f"{base_url}/{file_key}"
-    
-    return {
-        "presigned_url": presigned_url,
-        "public_url": public_url,
-        "file_key": file_key
-    }
-
-
-@router.post(
-    "/verification-image",
-    response_model=UploadVerificationImageResponse,
-    status_code=status.HTTP_200_OK,
-    summary="학적 인증 이미지 업로드 완료",
-    description="Presigned URL로 업로드한 학적 인증 이미지를 DB에 저장합니다",
-    responses={
-        401: {"model": ErrorResponse, "description": "인증 필요"},
-        400: {"model": ErrorResponse, "description": "잘못된 요청"},
-        500: {"model": ErrorResponse, "description": "저장 실패"}
-    }
-)
-async def complete_verification_image_upload(
-    body: UploadVerificationImageRequest,
+async def upload_verification_image_direct(
+    file: UploadFile,
     current_user: dict = Depends(get_current_user)
 ):
     """
-    학적 인증 이미지 업로드 완료 (Presigned URL 사용)
+    학적 인증 이미지 직접 업로드 (Supabase Storage)
     
-    Presigned URL로 업로드 완료 후 이 API를 호출하여 DB에 저장합니다.
+    Private 버킷 'verification-images'에 업로드합니다.
     """
+    from app.utils.storage import upload_verification_image
+    
     try:
         # 이미 승인된 사용자는 업로드 불가
         if current_user.get('verification_status') == 'approved':
@@ -159,24 +122,40 @@ async def complete_verification_image_upload(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="이미 승인된 사용자는 학적 인증 이미지를 재업로드할 수 없습니다"
             )
+
+        # 파일 업로드
+        try:
+            file_path = await upload_verification_image(file, current_user['id'])
+        except Exception:
+            raise
         
-        # users 테이블에 이미지 URL 저장 및 상태를 'submitted'로 변경
-        supabase.table('users')\
-            .update({'verification_image_url': body.image_url, 'verification_status': 'submitted'})\
-            .eq('id', current_user['id'])\
-            .execute()
+        # users 테이블에 파일 경로 저장 및 상태를 'submitted'로 변경 (admin 권한 사용)
+        from app.database import get_supabase_admin
+        admin_supabase = get_supabase_admin()
         
-        return UploadVerificationImageResponse(
-            file_path=body.image_url
-        )
-    
+        try:
+            admin_supabase.table('users')\
+                .update({'verification_image_url': file_path, 'verification_status': 'submitted'})\
+                .eq('id', current_user['id'])\
+                .execute()
+        except Exception:
+            raise
+
+        return {
+            "file_path": file_path,
+            "message": "학적 인증 이미지 업로드 성공. 관리자 승인을 기다려주세요."
+        }
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 정보 저장 실패: {str(e)}"
+            detail=f"이미지 업로드 실패: {str(e)}"
         )
+
+
+# 기존 Presigned URL 방식 엔드포인트 제거됨
+# 이제 /verification-image/upload로 직접 업로드 사용
 
 
 @router.delete(

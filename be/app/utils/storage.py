@@ -65,7 +65,7 @@ def validate_image_file(file: UploadFile) -> None:
         )
 
 
-async def upload_verification_image(file: UploadFile) -> str:
+async def upload_verification_image(file: UploadFile, user_id: str) -> str:
     """
     학적 인증 이미지를 Supabase Storage에 업로드
     
@@ -74,9 +74,10 @@ async def upload_verification_image(file: UploadFile) -> str:
     
     Args:
         file: 업로드할 이미지 파일
+        user_id: 사용자 ID (폴더 구조용)
     
     Returns:
-        str: Storage 내 파일 경로 (예: "uuid-123.jpg")
+        str: Storage 내 파일 경로 (예: "user-{user_id}/uuid-123.jpg")
     
     Raises:
         HTTPException 400: 파일이 유효하지 않은 경우
@@ -111,12 +112,13 @@ async def upload_verification_image(file: UploadFile) -> str:
     filename = file.filename or "unknown"
     file_ext = os.path.splitext(filename)[1].lower()
     unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_path = f"user-{user_id}/{unique_filename}"
     
     # 4. Supabase Storage에 업로드 (admin 클라이언트 사용 - RLS 우회)
     try:
         admin_client = get_supabase_admin()
         result = admin_client.storage.from_('verification-images').upload(
-            path=unique_filename,
+            path=file_path,
             file=file_content,
             file_options={
                 "content-type": file.content_type or "image/jpeg",
@@ -131,7 +133,7 @@ async def upload_verification_image(file: UploadFile) -> str:
                 detail="파일 업로드에 실패했습니다"
             )
         
-        return unique_filename
+        return file_path
     
     except HTTPException:
         raise

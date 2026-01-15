@@ -20,7 +20,8 @@ from app.utils.r2_storage import (
     upload_file_to_r2 as upload_file_to_supabase,
     generate_presigned_url,
     validate_file_extension,
-    get_bucket_url
+    get_bucket_url,
+    BROAD_ALLOWED_EXTENSIONS
 )
 from app.database import supabase, get_supabase_admin
 import uuid
@@ -120,7 +121,7 @@ async def get_club_image_presigned_url(
     current_user: dict = Depends(require_admin)
 ):
     """동아리 이미지 업로드를 위한 Presigned URL 발급"""
-    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png'})
+    file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     file_key = f"clubs/{unique_filename}"
     
@@ -343,7 +344,7 @@ async def get_club_intro_image_presigned_url(
     current_user: dict = Depends(require_admin)
 ):
     """동아리 소개 이미지 Presigned URL 발급"""
-    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.gif', '.webp'})
+    file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     file_key = f"clubs/{club_id}/intro/{unique_filename}"
     

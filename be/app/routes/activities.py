@@ -33,7 +33,8 @@ from app.utils.r2_storage import (
     delete_file_from_r2,
     generate_presigned_url,
     validate_file_extension,
-    get_bucket_url
+    get_bucket_url,
+    BROAD_ALLOWED_EXTENSIONS
 )
 from app.database import supabase, get_supabase_admin
 import uuid
@@ -258,7 +259,7 @@ async def get_activity_verification_presigned_url(
     filename: str
 ):
     """활동 신청 인증 이미지 업로드를 위한 Presigned URL 발급"""
-    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png'})
+    file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     file_key = f"activity-{activity_id}/verification/{unique_filename}"
     
@@ -982,7 +983,7 @@ async def get_admin_activity_presigned_url(
     current_user: dict = Depends(require_admin)
 ):
     """관리자용 활동 이미지 Presigned URL 발급"""
-    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.gif', '.webp'})
+    file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     file_key = f"activities/{unique_filename}"
     

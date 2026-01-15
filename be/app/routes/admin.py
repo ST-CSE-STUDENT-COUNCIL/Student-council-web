@@ -63,10 +63,15 @@ async def get_pending_users():
         
         # 각 사용자의 이미지에 대한 Signed URL 생성
         for user in users:
-            if user.get('verification_image_url'):
+            original_url = user.get('verification_image_url')
+            if original_url:
                 # Private Storage이므로 Signed URL 생성 (1시간 유효)
-                signed_url = create_signed_url(user['verification_image_url'], expires_in=3600)
-                user['verification_image_url'] = signed_url
+                signed_url = create_signed_url(original_url, expires_in=3600)
+                if signed_url:
+                    user['verification_image_url'] = signed_url
+                else:
+                    # 실패 시 None 유지
+                    user['verification_image_url'] = None
         
         return PendingUserListResponse(
             users=users,
