@@ -48,3 +48,14 @@ class UploadVerificationImageResponse(BaseModel):
     """학적 인증 이미지 업로드 응답"""
     file_path: str = Field(..., description="Storage에 저장된 파일 경로")
     message: str = Field(default="이미지 업로드 성공. 관리자 승인을 기다려주세요.", description="안내 메시지")
+
+
+class WithdrawRequest(BaseModel):
+    """회원탈퇴 요청"""
+    password: str = Field(..., description="현재 비밀번호 확인")
+
+
+class WithdrawResponse(BaseModel):
+    """회원탈퇴 응답"""
+    message: str = Field(default="회원탈퇴가 완료되었습니다.", description="결과 메시지")
+

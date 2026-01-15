@@ -81,6 +81,56 @@ async def get_pending_users():
 
 
 @router.get(
+    "/rejected-users",
+    summary="거절된 회원 목록 조회",
+    description="가입이 거절된 회원의 목록을 조회합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"}
+    }
+)
+async def get_rejected_users(
+    page: int = 1,
+    page_size: int = 20
+):
+    """
+    거절된 회원 목록 조회
+    
+    rejected_users 테이블에서 거절된 회원 목록을 조회합니다.
+    """
+    try:
+        admin_supabase = get_supabase_admin()
+        offset = (page - 1) * page_size
+        
+        # 전체 개수 조회
+        count_result = admin_supabase.table('rejected_users')\
+            .select('id', count='exact')\
+            .execute()
+        
+        total = count_result.count or 0
+        
+        # 목록 조회
+        result = admin_supabase.table('rejected_users')\
+            .select('*')\
+            .order('rejected_at', desc=True)\
+            .range(offset, offset + page_size - 1)\
+            .execute()
+        
+        return {
+            "items": result.data,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total + page_size - 1) // page_size if page_size > 0 else 0
+        }
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"거절된 회원 목록 조회 실패: {str(e)}"
+        )
+
+@router.get(
     "/users",
     response_model=UserListResponse,
     summary="전체 회원 목록 조회",
@@ -271,10 +321,22 @@ async def reject_user(user_id: str, request: RejectUserRequest):
         
         # 4. Supabase Auth에서 삭제
         try:
-            supabase.auth.admin.delete_user(user_id)
+            print(f"[INFO] Auth 삭제 시도 user_id={user_id}")
+            admin_supabase.auth.admin.delete_user(user_id)
+            print(f"[INFO] Auth 삭제 성공 user_id={user_id}")
         except Exception as auth_error:
-            # Auth 삭제 실패해도 진행 (이미 없을 수 있음)
-            pass
+            # Auth 삭제 실패 로깅
+            print(f"[ERROR] Auth 삭제 실패 user_id={user_id}: {str(auth_error)}")
+        
+        # 5. email_verifications 삭제 (재가입 허용) - 직접 삭제
+        try:
+            user_email = user_data.get('email')
+            print(f"[INFO] email_verifications 삭제 시도: {user_email}")
+            # 해당 이메일의 모든 레코드 삭제 (verified 상태와 무관하게)
+            result = admin_supabase.table('email_verifications').delete().eq('email', user_email).execute()
+            print(f"[INFO] email_verifications 삭제 완료: {user_email}, 삭제된 행: {len(result.data) if result.data else 0}")
+        except Exception as ev_error:
+            print(f"[ERROR] email_verifications 삭제 실패: {str(ev_error)}")
         
         return RejectUserResponse(user_id=user_id)
     

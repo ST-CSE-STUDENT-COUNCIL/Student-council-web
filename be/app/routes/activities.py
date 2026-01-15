@@ -321,12 +321,12 @@ async def register_for_activity(
                 detail="카톡방 초대 신청은 로그인이 필요합니다"
             )
         
-        # 비회원 신청 시 필수 정보 확인
+        # 비회원 신청 시 필수 정보 확인 (이메일 제외)
         if not current_user:
-            if not all([body.name, body.student_id, body.department, body.phone, body.email]):
+            if not all([body.name, body.student_id, body.department, body.phone]):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="비회원은 이름, 학번, 학과, 전화번호, 이메일을 모두 입력해야 합니다"
+                    detail="비회원은 이름, 학번, 학과, 전화번호를 모두 입력해야 합니다"
                 )
         
         # 회원 정보 가져오기
