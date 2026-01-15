@@ -1,10 +1,9 @@
 import React from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { Lock, Key } from 'lucide-react'
+import { Key } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { mypageApi } from '../lib/api/mypage'
-import { welfareApi } from '../lib/api/welfare'
-import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, InfoCard, VerifyModal, ChangePasswordModal } from '../components/mypage'
+import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, ChangePasswordModal } from '../components/mypage'
 import type { User } from '../types/users'
 import type { MyRegistration } from '../lib/api/mypage'
 
@@ -16,15 +15,11 @@ function MyPage() {
   const navigate = useNavigate()
   const { user, isAuthenticated, logout, setUser } = useAuthStore()
   const [profile, setProfile] = React.useState<User | null>(user)
-  const [activeTab, setActiveTab] = React.useState<'info' | 'events' | 'welfare'>('info')
+  const [activeTab, setActiveTab] = React.useState<'info' | 'events'>('info')
   const [showVerifyModal, setShowVerifyModal] = React.useState(false)
   const [showPasswordModal, setShowPasswordModal] = React.useState(false)
   const [myRegistrations, setMyRegistrations] = React.useState<MyRegistration[]>([])
-  const [borrowedItems, setBorrowedItems] = React.useState<{ name: string; returnDate: string }[]>([])
-  const [lockerLocation, setLockerLocation] = React.useState('')
-  const [lockerPeriod, setLockerPeriod] = React.useState('')
   const currentUser = profile ?? user
-  const userId = currentUser?.id
 
   const handleLogout = React.useCallback(async () => {
     logout()
@@ -70,57 +65,6 @@ function MyPage() {
       cancelled = true
     }
   }, [isAuthenticated, setUser])
-
-  React.useEffect(() => {
-    if (!userId) return
-
-    const controller = new AbortController()
-
-    async function loadWelfare() {
-      try {
-        const [requests, rentals, lockers, periodData] = await Promise.all([
-          welfareApi.getRentalRequests(userId!),
-          welfareApi.getRentalItems(),
-          welfareApi.getLockerRentals(userId!),
-          welfareApi.getLockerPeriods(),
-        ])
-
-        const rentalsMap = new Map<number, { item_name?: string }>()
-        rentals.forEach((r: { id: number; item_name?: string }) => rentalsMap.set(r.id, r))
-
-        const borrowed = requests.map((req: { rental_id: number; rental_end_date: string }) => {
-          const rental = rentalsMap.get(req.rental_id)
-          return {
-            name: rental?.item_name || '알 수 없는 물품',
-            returnDate: req.rental_end_date,
-          }
-        })
-
-        setBorrowedItems(borrowed)
-
-        const locker = lockers[0]
-        if (locker) {
-          setLockerLocation(`미래관 3층 ${locker.locker_number}번`)
-
-          const periods = Array.isArray(periodData) ? periodData : [periodData]
-          const period = periods.find((p: { id: number; usage_start?: string; usage_end?: string }) => p.id === locker.period_id)
-          if (period && period.usage_start && period.usage_end) {
-            setLockerPeriod(`${formatDate(period.usage_start)} ~ ${formatDate(period.usage_end)}`)
-          }
-        } else {
-          setLockerLocation('')
-          setLockerPeriod('')
-        }
-      } catch (err) {
-        if (controller.signal.aborted) return
-        console.error('Failed to load welfare data', err)
-      }
-    }
-
-    loadWelfare()
-
-    return () => controller.abort()
-  }, [userId])
 
   if (!isAuthenticated || !currentUser) {
     return (
@@ -189,25 +133,9 @@ function MyPage() {
   const shouldShowVerificationButton =
     currentUser.verification_status === 'pending' || currentUser.verification_status === 'rejected'
 
-  const welfareInfo = {
-    returnPeriod:
-      borrowedItems.length > 0
-        ? `${formatDate(
-          borrowedItems.reduce((acc, cur) => (cur.returnDate < acc ? cur.returnDate : acc), borrowedItems[0].returnDate),
-        )} ~ ${formatDate(
-          borrowedItems.reduce((acc, cur) => (cur.returnDate > acc ? cur.returnDate : acc), borrowedItems[0].returnDate),
-        )}`
-        : '',
-    borrowedItems,
-    lockerLocation,
-    lockerPeriod,
-    verificationStatus: verificationStatusLabel,
-  }
-
   const sidebarItems = [
     { id: 'info', label: '내 정보' },
     { id: 'events', label: '행사' },
-    { id: 'welfare', label: '복지사업' },
   ]
 
   return (
@@ -310,12 +238,7 @@ function MyPage() {
                     <div key={event.title} className="border border-gray-100 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm text-gray-500">{event.date}</p>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.rawStatus === 'approved' ? 'bg-green-100 text-green-700' :
-                          event.rawStatus === 'pending' ? 'bg-amber-100 text-amber-700' :
-                            'bg-blue-100 text-blue-700'
-                          }`}>
-                          {event.status}
-                        </span>
+                        <StatusPill status={event.status} />
                       </div>
                       <p className="font-semibold text-gray-900">{event.title}</p>
                     </div>
@@ -344,38 +267,6 @@ function MyPage() {
                 </div>
               </section>
             </>
-          )}
-
-          {activeTab === 'welfare' && (
-            <section className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">복지사업</h2>
-                <Link to="/welfare" className="text-sm text-blue-600 hover:underline">복지사업 보기</Link>
-              </div>
-              <div className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <InfoCard
-                    title="내 사물함 위치"
-                    value={welfareInfo.lockerLocation || '현재 대여 중인 사물함이 없습니다'}
-                    sub={welfareInfo.lockerLocation ? welfareInfo.lockerPeriod : undefined}
-                  />
-                  {shouldShowVerificationButton ? (
-                    <div className="border border-gray-100 rounded-xl p-4 flex items-center justify-between">
-                      <div><p className="text-sm text-gray-500 mb-1">학생 가입 인증</p></div>
-                      <button
-                        type="button"
-                        onClick={() => setShowVerifyModal(true)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
-                      >
-                        인증하기
-                      </button>
-                    </div>
-                  ) : (
-                    <InfoCard title="학생 가입 인증" value={welfareInfo.verificationStatus} />
-                  )}
-                </div>
-              </div>
-            </section>
           )}
         </main>
 
