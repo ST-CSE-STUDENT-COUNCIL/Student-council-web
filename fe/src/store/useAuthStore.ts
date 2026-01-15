@@ -9,6 +9,7 @@ type AuthState = {
     accessToken: string | null
     rememberMe: boolean
     login: (user: User, accessToken: string, rememberMe?: boolean) => void
+    setUser: (user: User | null) => void
     logout: () => void
 }
 
@@ -44,6 +45,7 @@ export const useAuthStore = create<AuthState>()(
                 }
                 set({ user, accessToken, isAuthenticated: true, rememberMe })
             },
+            setUser: (user) => set({ user }),
             logout: () => {
                 // 로그아웃 시 모든 storage 클리어
                 localStorage.removeItem('auth-storage')

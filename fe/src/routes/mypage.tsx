@@ -1,26 +1,36 @@
 import React from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { Lock, Key } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { mypageApi } from '../lib/api/mypage'
 import { welfareApi } from '../lib/api/welfare'
-import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, InfoCard, VerifyModal } from '../components/mypage'
+import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, InfoCard, VerifyModal, ChangePasswordModal } from '../components/mypage'
 import type { User } from '../types/users'
+import type { MyRegistration } from '../lib/api/mypage'
 
 export const Route = createFileRoute('/mypage')({
   component: MyPage,
 })
 
 function MyPage() {
+  const navigate = useNavigate()
   const { user, isAuthenticated, logout, setUser } = useAuthStore()
   const [profile, setProfile] = React.useState<User | null>(user)
   const [activeTab, setActiveTab] = React.useState<'info' | 'events' | 'welfare'>('info')
   const [showVerifyModal, setShowVerifyModal] = React.useState(false)
   const [showPasswordModal, setShowPasswordModal] = React.useState(false)
+  const [myRegistrations, setMyRegistrations] = React.useState<MyRegistration[]>([])
   const [borrowedItems, setBorrowedItems] = React.useState<{ name: string; returnDate: string }[]>([])
   const [lockerLocation, setLockerLocation] = React.useState('')
   const [lockerPeriod, setLockerPeriod] = React.useState('')
   const currentUser = profile ?? user
   const userId = currentUser?.id
+
+  const handleLogout = React.useCallback(async () => {
+    logout()
+    await navigate({ to: '/login' })
+  }, [logout, navigate])
+
   const handleVerificationUploaded = React.useCallback(async () => {
     try {
       const profileData = await mypageApi.getProfile()
@@ -36,24 +46,31 @@ function MyPage() {
 
     let cancelled = false
 
-    async function loadProfile() {
+    async function loadData() {
       try {
-        const profileData = await mypageApi.getProfile()
+        const [profileData, registrationsData] = await Promise.all([
+          mypageApi.getProfile(),
+          mypageApi.getMyRegistrations()
+        ])
+
         if (cancelled) return
+
         setProfile(profileData)
         setUser(profileData)
+        setMyRegistrations(registrationsData.registrations)
       } catch (err) {
         if (cancelled) return
-        console.error('Failed to load profile', err)
+        console.error('Failed to load profile or registrations', err)
       }
     }
 
-    loadProfile()
+    loadData()
 
     return () => {
       cancelled = true
     }
   }, [isAuthenticated, setUser])
+
   React.useEffect(() => {
     if (!userId) return
 
@@ -62,9 +79,9 @@ function MyPage() {
     async function loadWelfare() {
       try {
         const [requests, rentals, lockers, periodData] = await Promise.all([
-          welfareApi.getRentalRequests(userId),
+          welfareApi.getRentalRequests(userId!),
           welfareApi.getRentalItems(),
-          welfareApi.getLockerRentals(userId),
+          welfareApi.getLockerRentals(userId!),
           welfareApi.getLockerPeriods(),
         ])
 
@@ -85,7 +102,6 @@ function MyPage() {
         if (locker) {
           setLockerLocation(`미래관 3층 ${locker.locker_number}번`)
 
-          // periodData는 단일 객체 또는 배열일 수 있음
           const periods = Array.isArray(periodData) ? periodData : [periodData]
           const period = periods.find((p: { id: number; usage_start?: string; usage_end?: string }) => p.id === locker.period_id)
           if (period && period.usage_start && period.usage_end) {
@@ -106,7 +122,6 @@ function MyPage() {
     return () => controller.abort()
   }, [userId])
 
-  // 로그인하지 않은 경우
   if (!isAuthenticated || !currentUser) {
     return (
       <div className="flex min-h-[calc(100vh-300px)] items-center justify-center px-4 py-12">
@@ -129,17 +144,46 @@ function MyPage() {
     )
   }
 
-  // 하드코딩된 이벤트 데이터 (TODO: 백엔드 API 연동 필요)
-  const upcomingEvents = [
-    { title: '학생회 MT', date: '2025.01.15', status: '신청 완료' },
-    { title: '동아리 박람회', date: '2025.02.02', status: '입금 대기' },
-    { title: '신입생 오리엔테이션', date: '2025.03.01', status: '접수 완료' },
-  ]
+  const upcomingEvents = React.useMemo(() => {
+    const now = new Date().toISOString()
 
-  const completedEvents = [
-    { title: '가을 체육대회', date: '2024.10.12' },
-    { title: '학과 네트워킹 데이', date: '2024.11.05' },
-  ]
+    return myRegistrations
+      .filter(reg => {
+        if (reg.status === 'cancelled') return false
+        if (!reg.activity) return false
+
+        const endDate = reg.activity.registration_end
+          ? reg.activity.registration_end
+          : '9999-12-31' // 종료일 없으면 계속 예정으로 취급
+
+        return endDate >= now
+      })
+      .map(reg => ({
+        title: reg.activity!.title,
+        date: formatDate(reg.activity!.registration_end || reg.created_at),
+        status: getStatusLabel(reg.status),
+        rawStatus: reg.status
+      }))
+  }, [myRegistrations])
+
+  const completedEvents = React.useMemo(() => {
+    const now = new Date().toISOString()
+
+    return myRegistrations
+      .filter(reg => {
+        if (!reg.activity) return false
+        if (reg.status === 'cancelled') return false
+
+        const endDate = reg.activity.registration_end
+        if (!endDate) return false // 종료일 없으면 완료되지 않음 (상시)
+
+        return endDate < now
+      })
+      .map(reg => ({
+        title: reg.activity!.title,
+        date: formatDate(reg.activity!.registration_end || reg.created_at),
+      }))
+  }, [myRegistrations])
 
   const verificationStatusLabel = getVerificationStatus(currentUser)
   const shouldShowVerificationButton =
@@ -171,9 +215,7 @@ function MyPage() {
       <h1 className="text-3xl font-bold text-gray-900 mb-8">마이페이지</h1>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* 왼쪽 사이드바 */}
         <aside className="w-full lg:w-64 flex-shrink-0">
-          {/* 프로필 카드 */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
             <div className="flex flex-col items-center text-center">
               <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-3xl mb-3">
@@ -184,7 +226,6 @@ function MyPage() {
             </div>
           </div>
 
-          {/* 정보 요약 */}
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6 space-y-3 text-sm">
             <InfoRow label="학생회비" value={getMembershipStatus(currentUser)} />
             {shouldShowVerificationButton ? (
@@ -203,21 +244,11 @@ function MyPage() {
             )}
           </div>
 
-          {/* 요약 카드 */}
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <SummaryCard
-              title="예정 행사"
-              value={upcomingEvents.length}
-              tone="blue"
-            />
-            <SummaryCard
-              title="완료 행사"
-              value={completedEvents.length}
-              tone="gray"
-            />
+            <SummaryCard title="예정 행사" value={upcomingEvents.length} tone="blue" />
+            <SummaryCard title="완료 행사" value={completedEvents.length} tone="gray" />
           </div>
 
-          {/* 메뉴 */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 divide-y divide-gray-200">
             {sidebarItems.map((item) => (
               <button
@@ -233,7 +264,6 @@ function MyPage() {
             ))}
           </div>
 
-          {/* 액션 버튼 */}
           <div className="mt-6 space-y-2">
             <button
               onClick={() => setShowPasswordModal(true)}
@@ -251,138 +281,77 @@ function MyPage() {
           </div>
         </aside>
 
-        {/* 오른쪽 콘텐츠 */}
         <main className="flex-1 space-y-6">
-          {/* 내 정보 */}
           {activeTab === 'info' && (
             <section className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">
-                내 정보
-              </h2>
-
+              <h2 className="text-xl font-bold text-gray-900 mb-6">내 정보</h2>
               <div className="space-y-4">
                 <InfoLine label="이름" value={currentUser.name} />
                 <InfoLine label="학번" value={currentUser.student_id} />
                 <InfoLine label="이메일" value={currentUser.email} />
                 <InfoLine label="학과" value={currentUser.department || '미등록'} />
-
                 <div className="flex items-center justify-between py-3 border-b border-gray-100">
                   <span className="text-gray-600 font-medium">학생회비</span>
                   <Badge tone={getMembershipStatus(currentUser)} />
                 </div>
               </div>
-
-              {/* 비밀번호 변경 섹션 */}
-              <div className="mt-8 pt-6 border-t border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Lock size={18} />
-                  보안
-                </h3>
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                  <div>
-                    <p className="font-medium text-gray-900">비밀번호</p>
-                    <p className="text-sm text-gray-500">정기적으로 비밀번호를 변경하세요</p>
-                  </div>
-                  <button
-                    onClick={() => setShowPasswordModal(true)}
-                    className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition text-sm"
-                  >
-                    변경하기
-                  </button>
-                </div>
-              </div>
             </section>
           )}
 
-          {/* 행사 */}
           {activeTab === 'events' && (
             <>
               <section className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">
-                    신청한 행사
-                  </h2>
-                  <Link to="/activities" className="text-sm text-blue-600 hover:underline">
-                    행사 보기
-                  </Link>
+                  <h2 className="text-xl font-bold text-gray-900">신청한 행사</h2>
+                  <Link to="/activities" className="text-sm text-blue-600 hover:underline">행사 보기</Link>
                 </div>
-
                 <div className="grid md:grid-cols-2 gap-4">
                   {upcomingEvents.map((event) => (
-                    <div
-                      key={event.title}
-                      className="border border-gray-100 rounded-lg p-4"
-                    >
+                    <div key={event.title} className="border border-gray-100 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm text-gray-500">{event.date}</p>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.status === '신청 완료' ? 'bg-green-100 text-green-700' :
-                          event.status === '입금 대기' ? 'bg-amber-100 text-amber-700' :
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.rawStatus === 'approved' ? 'bg-green-100 text-green-700' :
+                          event.rawStatus === 'pending' ? 'bg-amber-100 text-amber-700' :
                             'bg-blue-100 text-blue-700'
                           }`}>
                           {event.status}
                         </span>
                       </div>
-                      <p className="font-semibold text-gray-900">
-                        {event.title}
-                      </p>
+                      <p className="font-semibold text-gray-900">{event.title}</p>
                     </div>
                   ))}
-
                   {upcomingEvents.length === 0 && (
-                    <p className="text-gray-400 text-center py-4 md:col-span-2">
-                      신청한 예정 행사가 없습니다.
-                    </p>
+                    <p className="text-gray-400 text-center py-4 md:col-span-2">신청한 예정 행사가 없습니다.</p>
                   )}
                 </div>
               </section>
 
               <section className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">
-                    참여 완료 행사
-                  </h2>
-                  <Link to="/activities" className="text-sm text-blue-600 hover:underline">
-                    지난 행사 보기
-                  </Link>
+                  <h2 className="text-xl font-bold text-gray-900">참여 완료 행사</h2>
+                  <Link to="/activities" className="text-sm text-blue-600 hover:underline">지난 행사 보기</Link>
                 </div>
-
                 <div className="grid md:grid-cols-2 gap-4">
                   {completedEvents.map((event) => (
-                    <div
-                      key={event.title}
-                      className="border border-gray-100 rounded-lg p-4"
-                    >
-                      <p className="text-sm text-gray-500 mb-1">
-                        {event.date}
-                      </p>
-                      <p className="font-semibold text-gray-900">
-                        {event.title}
-                      </p>
+                    <div key={event.title} className="border border-gray-100 rounded-lg p-4">
+                      <p className="text-sm text-gray-500 mb-1">{event.date}</p>
+                      <p className="font-semibold text-gray-900">{event.title}</p>
                     </div>
                   ))}
-
                   {completedEvents.length === 0 && (
-                    <p className="text-gray-400 text-center py-4 md:col-span-2">
-                      참여 완료한 행사가 없습니다.
-                    </p>
+                    <p className="text-gray-400 text-center py-4 md:col-span-2">참여 완료한 행사가 없습니다.</p>
                   )}
                 </div>
               </section>
             </>
           )}
 
-          {/* 복지사업 */}
           {activeTab === 'welfare' && (
             <section className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  복지사업
-                </h2>
-                <Link to="/welfare" className="text-sm text-blue-600 hover:underline">
-                  복지사업 보기
-                </Link>
+                <h2 className="text-xl font-bold text-gray-900">복지사업</h2>
+                <Link to="/welfare" className="text-sm text-blue-600 hover:underline">복지사업 보기</Link>
               </div>
-
               <div className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <InfoCard
@@ -392,9 +361,7 @@ function MyPage() {
                   />
                   {shouldShowVerificationButton ? (
                     <div className="border border-gray-100 rounded-xl p-4 flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">학생 가입 인증</p>
-                      </div>
+                      <div><p className="text-sm text-gray-500 mb-1">학생 가입 인증</p></div>
                       <button
                         type="button"
                         onClick={() => setShowVerifyModal(true)}
@@ -404,10 +371,7 @@ function MyPage() {
                       </button>
                     </div>
                   ) : (
-                    <InfoCard
-                      title="학생 가입 인증"
-                      value={welfareInfo.verificationStatus}
-                    />
+                    <InfoCard title="학생 가입 인증" value={welfareInfo.verificationStatus} />
                   )}
                 </div>
               </div>
@@ -415,19 +379,12 @@ function MyPage() {
           )}
         </main>
 
-        {/* 모달들 */}
-        {showVerifyModal && (
-          <VerifyModal
-            onClose={() => setShowVerifyModal(false)}
-            onUploaded={handleVerificationUploaded}
-          />
-        )}
+        {showVerifyModal && <VerifyModal onClose={() => setShowVerifyModal(false)} onUploaded={handleVerificationUploaded} />}
+        {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
       </div>
     </div>
   )
 }
-
-/* ---------- 상태 계산 ---------- */
 
 function getMembershipStatus(user: { membership_paid: boolean }) {
   return user.membership_paid ? '납부' : '미납부'
@@ -444,4 +401,14 @@ function formatDate(dateStr: string) {
   const parts = dateStr?.split('-')
   if (parts.length === 3) return `${parts[0]}.${parts[1]}.${parts[2]}`
   return dateStr
+}
+
+function getStatusLabel(status: string) {
+  switch (status) {
+    case 'pending': return '신청 대기'
+    case 'approved': return '신청 승인'
+    case 'rejected': return '반려됨'
+    case 'cancelled': return '취소됨'
+    default: return status
+  }
 }
