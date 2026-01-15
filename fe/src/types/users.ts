@@ -9,8 +9,8 @@ export type User = {
     student_id: string
     phone: string
     department: string
-    role: 'student' | 'council' | 'admin'
-    verification_status: 'pending' | 'approved' | 'rejected'
+    role: 'student' | 'admin'
+    verification_status: 'pending' | 'submitted' | 'approved' | 'rejected'
     verification_image_url?: string | null
     membership_paid: boolean
     rejection_reason?: string | null

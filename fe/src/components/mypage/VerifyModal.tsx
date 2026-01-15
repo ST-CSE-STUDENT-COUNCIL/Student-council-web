@@ -1,15 +1,24 @@
 import { useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
+import { mypageApi } from '../../lib/api/mypage'
 
-export function VerifyModal({ onClose }: { onClose: () => void }) {
+type VerifyModalProps = {
+  onClose: () => void
+  onUploaded?: () => Promise<void> | void
+}
+
+export function VerifyModal({ onClose, onUploaded }: VerifyModalProps) {
   const [file, setFile] = useState<File | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   function onChange(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
     if (!f) return
     setFile(f)
+    setError(null)
   }
 
   function onDrop(e: DragEvent<HTMLDivElement>) {
@@ -18,6 +27,7 @@ export function VerifyModal({ onClose }: { onClose: () => void }) {
     const f = e.dataTransfer.files?.[0]
     if (!f) return
     setFile(f)
+    setError(null)
   }
 
   function onDragOver(e: DragEvent<HTMLDivElement>) {
@@ -27,6 +37,32 @@ export function VerifyModal({ onClose }: { onClose: () => void }) {
 
   function onDragLeave() {
     setIsDragging(false)
+  }
+
+  async function handleUpload() {
+    if (!file || isUploading) return
+    if (file.size > 5 * 1024 * 1024) {
+      setError('5MB 이하의 이미지를 업로드해주세요.')
+      return
+    }
+
+    setError(null)
+    setIsUploading(true)
+    try {
+      const { presigned_url, public_url } = await mypageApi.getVerificationPresignedUrl(file.name)
+      await mypageApi.uploadVerificationImageToStorage(presigned_url, file)
+      await mypageApi.completeVerificationImageUpload(public_url)
+      if (onUploaded) {
+        await onUploaded()
+      }
+      onClose()
+      alert('업로드가 완료되었습니다. 확인 중입니다.')
+    } catch (err) {
+      console.error('Failed to upload verification image', err)
+      setError('업로드에 실패했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   return (
@@ -62,18 +98,20 @@ export function VerifyModal({ onClose }: { onClose: () => void }) {
             onChange={onChange}
           />
           <p className="text-xs text-gray-500 mt-2">
-            {file ? `선택된 파일: ${file.name}` : 'JPG, PNG · 최대 10MB 권장'}
+            {file ? `선택된 파일: ${file.name}` : 'JPG, PNG · 최대 5MB'}
           </p>
         </div>
+
+        {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
 
         <div className="flex justify-end gap-2 mt-6">
           <button onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">취소</button>
           <button
-            onClick={onClose}
-            disabled={!file}
-            className={`px-4 py-2 rounded-md text-sm text-white ${file ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'}`}
+            onClick={handleUpload}
+            disabled={!file || isUploading}
+            className={`px-4 py-2 rounded-md text-sm text-white ${file && !isUploading ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'}`}
           >
-            선택 완료
+            {isUploading ? '업로드 중...' : '선택 완료'}
           </button>
         </div>
       </div>
