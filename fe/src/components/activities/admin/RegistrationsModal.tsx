@@ -99,9 +99,6 @@ export const RegistrationsModal = ({ activity, onClose }: RegistrationsModalProp
 
     // Handle status change
     const handleStatusChange = async (registrationId: number, status: 'pending' | 'approved' | 'rejected') => {
-        const statusLabels = { approved: '승인', rejected: '거절', pending: '대기' }
-        if (!confirm(`${statusLabels[status]}(으)로 변경하시겠습니까?`)) return
-
         try {
             await activityAdminApi.updateRegistrationStatus(activity.id, registrationId, status)
             fetchRegistrations(page)
@@ -114,14 +111,13 @@ export const RegistrationsModal = ({ activity, onClose }: RegistrationsModalProp
     // Handle bulk status change
     const handleBulkStatusChange = async (status: 'approved' | 'rejected') => {
         if (selectedIds.length === 0) return
-        if (!confirm(`선택한 ${selectedIds.length}명을 ${status === 'approved' ? '승인' : '거절'}하시겠습니까?`)) return
 
         setProcessingBulk(true)
         try {
             await Promise.all(selectedIds.map(id =>
                 activityAdminApi.updateRegistrationStatus(activity.id, id, status)
             ))
-            alert(`${selectedIds.length}명이 ${status === 'approved' ? '승인' : '거절'}되었습니다.`)
+            // alert(`${selectedIds.length}명이 ${status === 'approved' ? '승인' : '거절'}되었습니다.`)
             setSelectedIds([])
             fetchRegistrations(page)
         } catch (error) {
