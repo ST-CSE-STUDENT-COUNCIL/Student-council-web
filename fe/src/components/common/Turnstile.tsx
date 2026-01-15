@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 
 declare global {
     interface Window {
@@ -29,27 +29,53 @@ type TurnstileProps = {
 export function Turnstile({ onVerify, onError, onExpire }: TurnstileProps) {
     const containerRef = useRef<HTMLDivElement>(null)
     const widgetIdRef = useRef<string | null>(null)
+    const isInitializedRef = useRef(false)
     const [isLoaded, setIsLoaded] = useState(false)
+
+    // 콜백을 ref로 저장하여 의존성 문제 해결
+    const onVerifyRef = useRef(onVerify)
+    const onErrorRef = useRef(onError)
+    const onExpireRef = useRef(onExpire)
+
+    // 콜백 업데이트
+    useEffect(() => {
+        onVerifyRef.current = onVerify
+        onErrorRef.current = onError
+        onExpireRef.current = onExpire
+    }, [onVerify, onError, onExpire])
 
     const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || ''
 
+    // 안정적인 콜백 래퍼
+    const handleVerify = useCallback((token: string) => {
+        onVerifyRef.current(token)
+    }, [])
+
+    const handleError = useCallback(() => {
+        onErrorRef.current?.()
+    }, [])
+
+    const handleExpire = useCallback(() => {
+        onExpireRef.current?.()
+    }, [])
+
     useEffect(() => {
-        // Turnstile 스크립트 로드
+        // 이미 초기화되었으면 스킵
+        if (isInitializedRef.current) return
+        if (!siteKey) return
+
         const scriptId = 'cf-turnstile-script'
         let script = document.getElementById(scriptId) as HTMLScriptElement | null
 
         const initTurnstile = () => {
-            if (containerRef.current && window.turnstile && siteKey) {
-                // 기존 위젯 제거
-                if (widgetIdRef.current) {
-                    window.turnstile.remove(widgetIdRef.current)
-                }
+            if (containerRef.current && window.turnstile && !widgetIdRef.current) {
+                isInitializedRef.current = true
 
                 widgetIdRef.current = window.turnstile.render(containerRef.current, {
                     sitekey: siteKey,
-                    callback: onVerify,
-                    'error-callback': onError,
-                    'expired-callback': onExpire,
+                    callback: handleVerify,
+                    'error-callback': handleError,
+                    'expired-callback': handleExpire,
                     theme: 'light',
                     size: 'normal',
                 })
@@ -68,18 +94,23 @@ export function Turnstile({ onVerify, onError, onExpire }: TurnstileProps) {
         } else if (window.turnstile) {
             initTurnstile()
         } else {
-            script.onload = initTurnstile
+            script.addEventListener('load', initTurnstile)
         }
 
         return () => {
             if (widgetIdRef.current && window.turnstile) {
-                window.turnstile.remove(widgetIdRef.current)
+                try {
+                    window.turnstile.remove(widgetIdRef.current)
+                } catch (e) {
+                    // 이미 제거된 경우 무시
+                }
+                widgetIdRef.current = null
+                isInitializedRef.current = false
             }
         }
-    }, [siteKey, onVerify, onError, onExpire])
+    }, [siteKey, handleVerify, handleError, handleExpire])
 
     if (!siteKey) {
-        // Site Key가 없으면 경고 메시지 표시 (개발 환경)
         return (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
                 ⚠️ Turnstile Site Key가 설정되지 않았습니다.
