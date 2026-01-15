@@ -5,6 +5,7 @@ import {
     CheckCircle2,
     Clock3,
     Coins,
+    Eye,
     Filter,
     LockOpen,
     RefreshCw,
@@ -525,6 +526,17 @@ function RouteComponent() {
                                         </div>
 
                                         <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+                                            {member.verificationImageUrl && (
+                                                <a
+                                                    href={member.verificationImageUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                                                >
+                                                    <Eye size={16} />
+                                                    학적인증
+                                                </a>
+                                            )}
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     type="button"
