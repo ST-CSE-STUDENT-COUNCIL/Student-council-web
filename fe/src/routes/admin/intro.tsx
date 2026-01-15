@@ -182,12 +182,20 @@ function AdminIntroPage() {
 
     setIsSubmitting(true)
     try {
-      // 참고: 백엔드 스키마에 image_url 업데이트가 없으므로 이미지 변경은 지원하지 않습니다.
-      // 이미지를 변경하려면 삭제 후 재생성해야 합니다.
+      let imageUrl = formData.image_url
+
+      // 새 이미지가 있으면 업로드
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile)
+      }
+
       const updateData: IntroductionImageUpdate = {
         title: formData.title,
         display_order: formData.display_order,
       }
+
+      // 참고: 백엔드 스키마에 image_url 업데이트가 없으므로 이미지 변경은 지원하지 않습니다.
+      // 이미지를 변경하려면 삭제 후 재생성해야 합니다.
 
       await introductionApi.update(editingImage.id, updateData)
       alert('이미지 정보가 수정되었습니다.')

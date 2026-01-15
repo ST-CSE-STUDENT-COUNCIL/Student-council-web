@@ -1,7 +1,8 @@
 import React from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '../store/useAuthStore'
 import { welfareApi } from '../lib/api/welfare'
+import { authApi } from '../lib/api/auth'
 import { InfoRow, InfoLine, SummaryCard, Badge, InfoCard, VerifyModal, ChangePasswordModal } from '../components/mypage'
 import { Lock, Key } from 'lucide-react'
 
@@ -11,12 +12,23 @@ export const Route = createFileRoute('/mypage')({
 
 function MyPage() {
   const { user, isAuthenticated, logout } = useAuthStore()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = React.useState<'info' | 'events' | 'welfare'>('info')
   const [showVerifyModal, setShowVerifyModal] = React.useState(false)
   const [showPasswordModal, setShowPasswordModal] = React.useState(false)
   const [borrowedItems, setBorrowedItems] = React.useState<{ name: string; returnDate: string }[]>([])
   const [lockerLocation, setLockerLocation] = React.useState('')
   const [lockerPeriod, setLockerPeriod] = React.useState('')
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout()
+    } catch (err) {
+      console.error('로그아웃 API 호출 실패:', err)
+    }
+    logout()
+    navigate({ to: '/' })
+  }
 
   React.useEffect(() => {
     if (!user) return
@@ -210,7 +222,7 @@ function MyPage() {
               비밀번호 변경
             </button>
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="w-full py-2 border border-red-300 rounded-lg text-red-600 hover:bg-red-50 transition font-medium text-sm"
             >
               로그아웃
@@ -283,8 +295,8 @@ function MyPage() {
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm text-gray-500">{event.date}</p>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.status === '신청 완료' ? 'bg-green-100 text-green-700' :
-                            event.status === '입금 대기' ? 'bg-amber-100 text-amber-700' :
-                              'bg-blue-100 text-blue-700'
+                          event.status === '입금 대기' ? 'bg-amber-100 text-amber-700' :
+                            'bg-blue-100 text-blue-700'
                           }`}>
                           {event.status}
                         </span>

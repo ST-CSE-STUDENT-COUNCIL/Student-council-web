@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { clubApi } from '../../lib/api/clubs'
-import type { Club, ClubCreate, ClubUpdate, IntroImageState } from '../../types/clubs'
+import type { Club, ClubCreate, ClubUpdate, ClubImage, IntroImageState } from '../../types/clubs'
 import { Plus, Trash2, Edit2, ChevronUp, ChevronDown, X } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/clubs')({
