@@ -2,12 +2,8 @@ import React from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAuthStore } from '../store/useAuthStore'
 import { welfareApi } from '../lib/api/welfare'
-import { mypageApi, type MyRegistration } from '../lib/api/mypage'
-import { activityTypeLabels } from '../types/activities'
-import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, InfoCard, VerifyModal } from '../components/mypage'
-import {
-  Calendar, Clock, CheckCircle, XCircle, User, Loader2, Image as ImageIcon
-} from 'lucide-react'
+import { InfoRow, InfoLine, SummaryCard, Badge, InfoCard, VerifyModal, ChangePasswordModal } from '../components/mypage'
+import { Lock, Key } from 'lucide-react'
 
 export const Route = createFileRoute('/mypage')({
   component: MyPage,
@@ -17,13 +13,10 @@ function MyPage() {
   const { user, isAuthenticated, logout } = useAuthStore()
   const [activeTab, setActiveTab] = React.useState<'info' | 'events' | 'welfare'>('info')
   const [showVerifyModal, setShowVerifyModal] = React.useState(false)
+  const [showPasswordModal, setShowPasswordModal] = React.useState(false)
   const [borrowedItems, setBorrowedItems] = React.useState<{ name: string; returnDate: string }[]>([])
   const [lockerLocation, setLockerLocation] = React.useState('')
   const [lockerPeriod, setLockerPeriod] = React.useState('')
-
-  // 신청 내역 상태
-  const [registrations, setRegistrations] = React.useState<MyRegistration[]>([])
-  const [loadingRegistrations, setLoadingRegistrations] = React.useState(false)
 
   React.useEffect(() => {
     if (!user) return
@@ -78,25 +71,6 @@ function MyPage() {
     return () => controller.abort()
   }, [user])
 
-  // 신청 내역 로드
-  React.useEffect(() => {
-    if (!user) return
-
-    async function loadRegistrations() {
-      setLoadingRegistrations(true)
-      try {
-        const data = await mypageApi.getMyRegistrations()
-        setRegistrations(data.registrations)
-      } catch (err) {
-        console.error('Failed to load registrations', err)
-      } finally {
-        setLoadingRegistrations(false)
-      }
-    }
-
-    loadRegistrations()
-  }, [user])
-
   // 로그인하지 않은 경우
   if (!isAuthenticated || !user) {
     return (
@@ -120,20 +94,17 @@ function MyPage() {
     )
   }
 
-  // 신청 내역 분류
-  const upcomingRegistrations = registrations.filter(reg => {
-    if (!reg.activity) return false
-    const endDate = reg.activity.registration_end
-    if (!endDate) return reg.activity.is_active
-    return new Date(endDate) >= new Date() && reg.status !== 'cancelled'
-  })
+  // 하드코딩된 이벤트 데이터 (TODO: 백엔드 API 연동 필요)
+  const upcomingEvents = [
+    { title: '학생회 MT', date: '2025.01.15', status: '신청 완료' },
+    { title: '동아리 박람회', date: '2025.02.02', status: '입금 대기' },
+    { title: '신입생 오리엔테이션', date: '2025.03.01', status: '접수 완료' },
+  ]
 
-  const completedRegistrations = registrations.filter(reg => {
-    if (!reg.activity) return false
-    const endDate = reg.activity.registration_end
-    if (!endDate) return !reg.activity.is_active
-    return new Date(endDate) < new Date() || reg.status === 'cancelled'
-  })
+  const completedEvents = [
+    { title: '가을 체육대회', date: '2024.10.12' },
+    { title: '학과 네트워킹 데이', date: '2024.11.05' },
+  ]
 
   const welfareInfo = {
     returnPeriod:
@@ -161,19 +132,6 @@ function MyPage() {
     { id: 'events', label: '행사' },
     { id: 'welfare', label: '복지사업' },
   ]
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return { label: '승인됨', icon: <CheckCircle size={12} />, className: 'bg-emerald-100 text-emerald-700' }
-      case 'rejected':
-        return { label: '거절됨', icon: <XCircle size={12} />, className: 'bg-red-100 text-red-700' }
-      case 'cancelled':
-        return { label: '취소됨', icon: <XCircle size={12} />, className: 'bg-gray-100 text-gray-600' }
-      default:
-        return { label: '대기중', icon: <Clock size={12} />, className: 'bg-amber-100 text-amber-700' }
-    }
-  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -216,12 +174,12 @@ function MyPage() {
           <div className="grid grid-cols-2 gap-3 mb-6">
             <SummaryCard
               title="예정 행사"
-              value={upcomingRegistrations.length}
+              value={upcomingEvents.length}
               tone="blue"
             />
             <SummaryCard
               title="완료 행사"
-              value={completedRegistrations.length}
+              value={completedEvents.length}
               tone="gray"
             />
           </div>
@@ -244,6 +202,13 @@ function MyPage() {
 
           {/* 액션 버튼 */}
           <div className="mt-6 space-y-2">
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              className="w-full py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-medium text-sm flex items-center justify-center gap-2"
+            >
+              <Key size={16} />
+              비밀번호 변경
+            </button>
             <button
               onClick={logout}
               className="w-full py-2 border border-red-300 rounded-lg text-red-600 hover:bg-red-50 transition font-medium text-sm"
@@ -273,6 +238,26 @@ function MyPage() {
                   <Badge tone={getMembershipStatus(user)} />
                 </div>
               </div>
+
+              {/* 비밀번호 변경 섹션 */}
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Lock size={18} />
+                  보안
+                </h3>
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div>
+                    <p className="font-medium text-gray-900">비밀번호</p>
+                    <p className="text-sm text-gray-500">정기적으로 비밀번호를 변경하세요</p>
+                  </div>
+                  <button
+                    onClick={() => setShowPasswordModal(true)}
+                    className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition text-sm"
+                  >
+                    변경하기
+                  </button>
+                </div>
+              </div>
             </section>
           )}
 
@@ -289,119 +274,66 @@ function MyPage() {
                   </Link>
                 </div>
 
-                {loadingRegistrations ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="animate-spin text-blue-600" size={24} />
-                    <span className="ml-2 text-gray-500">불러오는 중...</span>
-                  </div>
-                ) : upcomingRegistrations.length > 0 ? (
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {upcomingRegistrations.map((reg) => {
-                      const status = getStatusBadge(reg.status)
-                      return (
-                        <div
-                          key={reg.id}
-                          className="border border-gray-100 rounded-xl p-4 hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex items-start gap-3">
-                            {reg.activity?.thumbnail_url ? (
-                              <img
-                                src={reg.activity.thumbnail_url}
-                                alt=""
-                                className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                              />
-                            ) : (
-                              <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                <ImageIcon size={20} className="text-gray-400" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                                  {activityTypeLabels[reg.activity?.type as keyof typeof activityTypeLabels] || reg.activity?.type}
-                                </span>
-                                <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${status.className}`}>
-                                  {status.icon}
-                                  {status.label}
-                                </span>
-                              </div>
-                              <p className="font-semibold text-gray-900 truncate">
-                                {reg.activity?.title}
-                              </p>
-                              {reg.activity?.registration_end && (
-                                <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                                  <Calendar size={12} />
-                                  ~{formatDate(reg.activity.registration_end)}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-gray-400 text-center py-8">
-                    신청한 예정 행사가 없습니다.
-                  </p>
-                )}
+                <div className="grid md:grid-cols-2 gap-4">
+                  {upcomingEvents.map((event) => (
+                    <div
+                      key={event.title}
+                      className="border border-gray-100 rounded-lg p-4"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm text-gray-500">{event.date}</p>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.status === '신청 완료' ? 'bg-green-100 text-green-700' :
+                            event.status === '입금 대기' ? 'bg-amber-100 text-amber-700' :
+                              'bg-blue-100 text-blue-700'
+                          }`}>
+                          {event.status}
+                        </span>
+                      </div>
+                      <p className="font-semibold text-gray-900">
+                        {event.title}
+                      </p>
+                    </div>
+                  ))}
+
+                  {upcomingEvents.length === 0 && (
+                    <p className="text-gray-400 text-center py-4 md:col-span-2">
+                      신청한 예정 행사가 없습니다.
+                    </p>
+                  )}
+                </div>
               </section>
 
               <section className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-gray-900">
-                    지난 행사
+                    참여 완료 행사
                   </h2>
                   <Link to="/activities" className="text-sm text-blue-600 hover:underline">
                     지난 행사 보기
                   </Link>
                 </div>
 
-                {completedRegistrations.length > 0 ? (
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {completedRegistrations.map((reg) => {
-                      const status = getStatusBadge(reg.status)
-                      return (
-                        <div
-                          key={reg.id}
-                          className="border border-gray-100 rounded-xl p-4 opacity-75 hover:opacity-100 transition-opacity"
-                        >
-                          <div className="flex items-start gap-3">
-                            {reg.activity?.thumbnail_url ? (
-                              <img
-                                src={reg.activity.thumbnail_url}
-                                alt=""
-                                className="w-14 h-14 rounded-lg object-cover flex-shrink-0 grayscale"
-                              />
-                            ) : (
-                              <div className="w-14 h-14 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                <ImageIcon size={18} className="text-gray-400" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${status.className}`}>
-                                  {status.icon}
-                                  {status.label}
-                                </span>
-                              </div>
-                              <p className="font-medium text-gray-700 truncate">
-                                {reg.activity?.title}
-                              </p>
-                              <p className="text-xs text-gray-400 mt-1">
-                                신청일: {new Date(reg.created_at).toLocaleDateString('ko-KR')}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-gray-400 text-center py-8">
-                    지난 행사가 없습니다.
-                  </p>
-                )}
+                <div className="grid md:grid-cols-2 gap-4">
+                  {completedEvents.map((event) => (
+                    <div
+                      key={event.title}
+                      className="border border-gray-100 rounded-lg p-4"
+                    >
+                      <p className="text-sm text-gray-500 mb-1">
+                        {event.date}
+                      </p>
+                      <p className="font-semibold text-gray-900">
+                        {event.title}
+                      </p>
+                    </div>
+                  ))}
+
+                  {completedEvents.length === 0 && (
+                    <p className="text-gray-400 text-center py-4 md:col-span-2">
+                      참여 완료한 행사가 없습니다.
+                    </p>
+                  )}
+                </div>
               </section>
             </>
           )}
@@ -449,9 +381,14 @@ function MyPage() {
             </section>
           )}
         </main>
+
+        {/* 모달들 */}
         {showVerifyModal && (
-          <VerifyModal onClose={() => setShowVerifyModal(false)} />)
-        }
+          <VerifyModal onClose={() => setShowVerifyModal(false)} />
+        )}
+        {showPasswordModal && (
+          <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
+        )}
       </div>
     </div>
   )
