@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 import { clubApi } from '../lib/api/clubs'
-import { ClubsHeader, CategoryFilter, ClubCard, ClubDetailModal } from '../components/clubs'
+import { ClubsHeader, ClubCard, ClubDetailModal } from '../components/clubs'
 import type { Club } from '../types/clubs'
 
 export const Route = createFileRoute('/clubs')({
@@ -10,7 +10,6 @@ export const Route = createFileRoute('/clubs')({
 
 function Clubs() {
   const [clubs, setClubs] = React.useState<Club[]>([])
-  const [selectedCategory, setSelectedCategory] = React.useState<string>('전체')
   const [loading, setLoading] = React.useState(true)
   const [selectedClub, setSelectedClub] = React.useState<Club | null>(null)
 
@@ -29,11 +28,6 @@ function Clubs() {
     loadClubs()
   }, [])
 
-  const categories = ['전체', ...Array.from(new Set(clubs.map(club => club.category)))]
-  const filteredClubs = selectedCategory === '전체'
-    ? clubs
-    : clubs.filter(club => club.category === selectedCategory)
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -46,21 +40,15 @@ function Clubs() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <ClubsHeader />
 
-      <CategoryFilter
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onSelect={setSelectedCategory}
-      />
-
-      {filteredClubs.length > 0 ? (
+      {clubs.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredClubs.map((club) => (
+          {clubs.map((club) => (
             <ClubCard key={club.id} club={club} onDetail={() => setSelectedClub(club)} />
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-gray-400">해당 카테고리의 동아리가 없습니다.</p>
+          <p className="text-gray-400">등록된 동아리가 없습니다.</p>
         </div>
       )}
 
@@ -70,4 +58,3 @@ function Clubs() {
     </div>
   )
 }
-

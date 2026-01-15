@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { authApi } from '../lib/api/auth'
 import { isAxiosError } from 'axios'
 import { PhoneInput } from '../components/common/PhoneInput'
+import { Turnstile } from '../components/common/Turnstile'
+import { CheckCircle } from 'lucide-react'
 
 export const Route = createFileRoute('/signup')({
     component: SignUp,
@@ -35,6 +37,9 @@ function SignUp() {
     const [isStudentIdChecking, setIsStudentIdChecking] = useState(false)
     const [isStudentIdAvailable, setIsStudentIdAvailable] = useState<boolean | null>(null)
 
+    // Turnstile State
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+
     // 타이머 로직
     useEffect(() => {
         if (timeLeft <= 0) {
@@ -61,6 +66,20 @@ function SignUp() {
     // 비밀번호 일치 여부 확인
     const passwordsMatch = formData.password === formData.password_confirm
     const showPasswordError = formData.password_confirm.length > 0 && !passwordsMatch
+
+    // 비밀번호 유효성 검사
+    const passwordValidation = {
+        minLength: formData.password.length >= 8,
+        hasNumber: /\d/.test(formData.password),
+        hasLetter: /[a-zA-Z]/.test(formData.password),
+        hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(formData.password)
+    }
+
+    const isPasswordValid =
+        passwordValidation.minLength &&
+        passwordValidation.hasNumber &&
+        passwordValidation.hasLetter &&
+        passwordValidation.hasSpecialChar
 
     const checkStudentId = async () => {
         if (formData.student_id.length < 4) return // 최소 길이 체크
@@ -171,6 +190,11 @@ function SignUp() {
             return
         }
 
+        if (!isPasswordValid) {
+            alert('비밀번호는 8자 이상, 영문, 숫자, 특수문자를 포함해야 합니다.')
+            return
+        }
+
         if (isStudentIdAvailable !== true) {
             alert('학번 중복 확인을 완료해주세요.')
             return
@@ -178,6 +202,11 @@ function SignUp() {
 
         if (!isEmailVerified) {
             alert('이메일 인증을 완료해주세요.')
+            return
+        }
+
+        if (!turnstileToken) {
+            alert('보안 검증을 완료해주세요.')
             return
         }
 
@@ -405,11 +434,38 @@ function SignUp() {
                                         name="password"
                                         required
                                         minLength={8}
-                                        className="block w-full px-4 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white"
+                                        className={`block w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${formData.password.length > 0 && isPasswordValid
+                                            ? 'border-green-500 focus:border-green-500 focus:ring-green-200'
+                                            : formData.password.length > 0 && !isPasswordValid
+                                                ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200'
+                                                : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                                            }`}
                                         value={formData.password}
                                         onChange={handleChange}
-                                        placeholder="8자 이상 입력"
+                                        placeholder="8자 이상, 영문+숫자+특수문자"
                                     />
+
+                                    {/* Password Requirements */}
+                                    {formData.password.length > 0 && (
+                                        <div className="mt-3 grid grid-cols-2 gap-2">
+                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.minLength ? 'text-green-600' : 'text-gray-400'}`}>
+                                                <CheckCircle size={12} />
+                                                8자 이상
+                                            </div>
+                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasLetter ? 'text-green-600' : 'text-gray-400'}`}>
+                                                <CheckCircle size={12} />
+                                                영문 포함
+                                            </div>
+                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-400'}`}>
+                                                <CheckCircle size={12} />
+                                                숫자 포함
+                                            </div>
+                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-gray-400'}`}>
+                                                <CheckCircle size={12} />
+                                                특수문자 포함
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호 확인</label>
@@ -454,12 +510,20 @@ function SignUp() {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Turnstile */}
+                            <div className="sm:col-span-2 py-2">
+                                <Turnstile
+                                    onVerify={(token) => setTurnstileToken(token)}
+                                    onExpire={() => setTurnstileToken(null)}
+                                />
+                            </div>
                         </div>
 
                         <div className="pt-6">
                             <button
                                 type="submit"
-                                disabled={!isEmailVerified || isStudentIdAvailable !== true || showPasswordError}
+                                disabled={!isEmailVerified || isStudentIdAvailable !== true || showPasswordError || !isPasswordValid || !passwordsMatch || !turnstileToken}
                                 className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.99]"
                             >
                                 가입하기

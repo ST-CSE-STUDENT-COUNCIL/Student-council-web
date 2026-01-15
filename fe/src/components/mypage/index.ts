@@ -5,3 +5,5 @@ export { StatusPill } from './StatusPill'
 export { Badge } from './Badge'
 export { InfoCard } from './InfoCard'
 export { VerifyModal } from './VerifyModal'
+export { ChangePasswordModal } from './ChangePasswordModal'
+

@@ -1,14 +1,75 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { activityApi, activityAdminApi } from '../../lib/api/activities'
 import type { ActivityListItem, Activity, ActivityCreateRequest, ActivityType } from '../../types/activities'
 import { activityTypeLabels, getActivityStatus } from '../../types/activities'
 import { RegistrationsModal, FormFieldsManager, ImageUploader, type UploadImage } from '../../components/activities/admin'
+import { ToastContainer, useToast } from '../../components/common/Toast'
+import {
+  Plus, Search, Filter, LayoutGrid, List, Calendar, Users, Clock, Edit2, Trash2, Eye,
+  CheckCircle, XCircle, Pause, ChevronLeft, ChevronRight, ClipboardList, Image as ImageIcon,
+  X, ChevronDown, TrendingUp
+} from 'lucide-react'
 
 export const Route = createFileRoute('/admin/activities')({
   component: AdminActivitiesPage,
 })
 
+type ViewMode = 'table' | 'card'
+type StatusFilter = 'all' | 'active' | 'scheduled' | 'closed'
+type SortOption = 'newest' | 'oldest' | 'title' | 'registrations'
+
+// ========== Skeleton Components ==========
+function SkeletonCard() {
+  return (
+    <div className="animate-pulse bg-white rounded-2xl border border-gray-100 p-5">
+      <div className="flex items-start gap-4 mb-4">
+        <div className="w-20 h-20 bg-gray-200 rounded-xl" />
+        <div className="flex-1">
+          <div className="h-5 w-20 bg-gray-200 rounded-full mb-2" />
+          <div className="h-6 w-3/4 bg-gray-200 rounded mb-1" />
+          <div className="h-4 w-1/2 bg-gray-200 rounded" />
+        </div>
+      </div>
+      <div className="flex gap-2 mt-4">
+        <div className="h-8 flex-1 bg-gray-200 rounded-lg" />
+        <div className="h-8 flex-1 bg-gray-200 rounded-lg" />
+      </div>
+    </div>
+  )
+}
+
+function SkeletonRow() {
+  return (
+    <tr className="animate-pulse">
+      <td className="px-6 py-4"><div className="h-5 w-16 bg-gray-200 rounded-full" /></td>
+      <td className="px-6 py-4"><div className="h-5 w-48 bg-gray-200 rounded" /></td>
+      <td className="px-6 py-4"><div className="h-5 w-16 bg-gray-200 rounded-full" /></td>
+      <td className="px-6 py-4"><div className="h-5 w-20 bg-gray-200 rounded" /></td>
+      <td className="px-6 py-4"><div className="h-5 w-32 bg-gray-200 rounded" /></td>
+      <td className="px-6 py-4"><div className="h-5 w-20 bg-gray-200 rounded" /></td>
+    </tr>
+  )
+}
+
+// ========== Stats Card ==========
+function StatsCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
+  const colorStyles: Record<string, string> = {
+    blue: 'bg-blue-50 text-blue-600 border-blue-100',
+    green: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    amber: 'bg-amber-50 text-amber-600 border-amber-100',
+    gray: 'bg-gray-50 text-gray-600 border-gray-100',
+  }
+  return (
+    <div className={`flex items-center gap-3 p-4 rounded-xl border ${colorStyles[color]}`}>
+      <div className="p-2 rounded-lg bg-white shadow-sm">{icon}</div>
+      <div>
+        <p className="text-2xl font-bold">{value}</p>
+        <p className="text-xs opacity-80">{label}</p>
+      </div>
+    </div>
+  )
+}
 
 function AdminActivitiesPage() {
   const [activities, setActivities] = useState<ActivityListItem[]>([])
@@ -17,8 +78,21 @@ function AdminActivitiesPage() {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
   const [viewingRegistrationsActivity, setViewingRegistrationsActivity] = useState<ActivityListItem | null>(null)
   const [saving, setSaving] = useState(false)
+  const toast = useToast()
 
-  // 이미지 관련 상태
+  // View & Filter State
+  const [viewMode, setViewMode] = useState<ViewMode>('table')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('newest')
+  const [showSortDropdown, setShowSortDropdown] = useState(false)
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = viewMode === 'card' ? 9 : 10
+
+  // Image State
   const [images, setImages] = useState<UploadImage[]>([])
   const [isDragging, setIsDragging] = useState(false)
 
@@ -43,6 +117,7 @@ function AdminActivitiesPage() {
       setActivities(response.activities)
     } catch (error) {
       console.error('Failed to fetch activities', error)
+      toast.error('신청 목록을 불러오는데 실패했습니다.')
     } finally {
       setLoading(false)
     }
@@ -52,37 +127,79 @@ function AdminActivitiesPage() {
     fetchActivities()
   }, [])
 
+  // Filtered and sorted activities
+  const filteredActivities = useMemo(() => {
+    let result = [...activities]
 
+    // Status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(a => getActivityStatus(a) === statusFilter)
+    }
 
-  // 이미지 업로드 함수
+    // Type filter
+    if (typeFilter !== 'all') {
+      result = result.filter(a => a.type === typeFilter)
+    }
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      result = result.filter(a => a.title.toLowerCase().includes(query))
+    }
+
+    // Sort
+    switch (sortBy) {
+      case 'newest':
+        result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+        break
+      case 'oldest':
+        result.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime())
+        break
+      case 'title':
+        result.sort((a, b) => a.title.localeCompare(b.title, 'ko'))
+        break
+      case 'registrations':
+        result.sort((a, b) => (b.current_count || 0) - (a.current_count || 0))
+        break
+    }
+
+    return result
+  }, [activities, statusFilter, typeFilter, searchQuery, sortBy])
+
+  // Pagination
+  const totalPages = Math.ceil(filteredActivities.length / itemsPerPage)
+  const paginatedActivities = filteredActivities.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  // Stats
+  const stats = useMemo(() => {
+    const activeCount = activities.filter(a => getActivityStatus(a) === 'active').length
+    const scheduledCount = activities.filter(a => getActivityStatus(a) === 'scheduled').length
+    const closedCount = activities.filter(a => getActivityStatus(a) === 'closed').length
+    const totalRegistrations = activities.reduce((sum, a) => sum + (a.current_count || 0), 0)
+    return { activeCount, scheduledCount, closedCount, totalRegistrations }
+  }, [activities])
+
+  // Image upload
   const uploadImages = async (): Promise<string[]> => {
     const uploadedUrls: string[] = []
-
     for (const img of images) {
       if (img.uploaded && img.url) {
         uploadedUrls.push(img.url)
         continue
       }
-
       try {
-        setImages(prev => prev.map(i =>
-          i.id === img.id ? { ...i, uploading: true } : i
-        ))
-
+        setImages(prev => prev.map(i => i.id === img.id ? { ...i, uploading: true } : i))
         const { presigned_url, public_url } = await activityAdminApi.getPresignedUrl(img.file.name)
         await activityAdminApi.uploadImage(presigned_url, img.file)
-
-        setImages(prev => prev.map(i =>
-          i.id === img.id ? { ...i, uploading: false, uploaded: true, url: public_url } : i
-        ))
+        setImages(prev => prev.map(i => i.id === img.id ? { ...i, uploading: false, uploaded: true, url: public_url } : i))
         uploadedUrls.push(public_url)
       } catch (error) {
-        setImages(prev => prev.map(i =>
-          i.id === img.id ? { ...i, uploading: false, error: '업로드 실패' } : i
-        ))
+        setImages(prev => prev.map(i => i.id === img.id ? { ...i, uploading: false, error: '업로드 실패' } : i))
       }
     }
-
     return uploadedUrls
   }
 
@@ -98,6 +215,7 @@ function AdminActivitiesPage() {
       require_membership: false,
       is_active: true,
       thumbnail_url: '',
+      form_fields: [],
       config: {}
     })
     setImages([])
@@ -121,7 +239,6 @@ function AdminActivitiesPage() {
         form_fields: detail.form_fields || [],
         config: detail.config || {}
       })
-      // 기존 이미지 로드: image_urls가 있으면 사용, 없으면 thumbnail_url 사용
       const existingImages: UploadImage[] = []
       if (detail.images && detail.images.length > 0) {
         detail.images.forEach((img, idx) => {
@@ -148,6 +265,7 @@ function AdminActivitiesPage() {
       setIsModalOpen(true)
     } catch (error) {
       console.error('Failed to fetch activity detail', error)
+      toast.error('상세 정보를 불러오는데 실패했습니다.')
     }
   }
 
@@ -156,9 +274,10 @@ function AdminActivitiesPage() {
     try {
       await activityAdminApi.delete(id)
       fetchActivities()
+      toast.success('삭제되었습니다.')
     } catch (error) {
       console.error('Failed to delete activity', error)
-      alert('삭제에 실패했습니다.')
+      toast.error('삭제에 실패했습니다.')
     }
   }
 
@@ -166,12 +285,8 @@ function AdminActivitiesPage() {
     e.preventDefault()
     try {
       setSaving(true)
-
-      // 이미지 업로드
       const uploadedUrls = await uploadImages()
       const thumbnailUrl = uploadedUrls[0] || formData.thumbnail_url
-
-      // 모든 이미지를 image_urls 형식으로 변환
       const imageUrls = uploadedUrls.map(url => ({ public_url: url }))
 
       if (editingActivity) {
@@ -185,28 +300,29 @@ function AdminActivitiesPage() {
           is_active: formData.is_active,
           thumbnail_url: thumbnailUrl || undefined,
           form_fields: formData.form_fields,
-          image_urls: imageUrls.length > 0 ? imageUrls : undefined // 다중 이미지도 업데이트 지원
+          image_urls: imageUrls.length > 0 ? imageUrls : undefined
         })
+        toast.success('수정되었습니다.')
       } else {
         await activityAdminApi.create({
           ...formData,
           registration_start: formData.registration_start ? new Date(formData.registration_start).toISOString() : undefined,
           registration_end: formData.registration_end ? new Date(formData.registration_end).toISOString() : undefined,
           thumbnail_url: thumbnailUrl,
-          image_urls: imageUrls, // 다중 이미지 URL 전송
+          image_urls: imageUrls
         })
+        toast.success('새 신청이 생성되었습니다.')
       }
       setIsModalOpen(false)
       fetchActivities()
     } catch (error) {
       console.error('Failed to save activity', error)
-      alert('저장에 실패했습니다.')
+      toast.error('저장에 실패했습니다.')
     } finally {
       setSaving(false)
     }
   }
 
-  // datetime-local input 용으로 날짜 포맷 변환 (UTC -> Local YYYY-MM-DDTHH:mm)
   const toLocalISOString = (dateStr?: string) => {
     if (!dateStr) return ''
     const date = new Date(dateStr)
@@ -214,212 +330,501 @@ function AdminActivitiesPage() {
     return new Date(date.getTime() - offset).toISOString().slice(0, 16)
   }
 
-  const getStatusBadge = (activity: ActivityListItem) => {
+  const getStatusInfo = (activity: ActivityListItem) => {
     const status = getActivityStatus(activity)
     const styles = {
-      active: 'bg-green-100 text-green-800',
-      scheduled: 'bg-blue-100 text-blue-800',
-      closed: 'bg-gray-100 text-gray-800'
+      active: { bg: 'bg-emerald-100', text: 'text-emerald-700', label: '진행중', icon: <CheckCircle size={12} /> },
+      scheduled: { bg: 'bg-blue-100', text: 'text-blue-700', label: '예정됨', icon: <Clock size={12} /> },
+      closed: { bg: 'bg-gray-100', text: 'text-gray-600', label: '마감됨', icon: <XCircle size={12} /> }
     }
-    const labels = {
-      active: '진행중',
-      scheduled: '예정됨',
-      closed: '마감됨'
-    }
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status]}`}>
-        {labels[status]}
-      </span>
-    )
+    return styles[status]
   }
 
+  const clearFilters = () => {
+    setStatusFilter('all')
+    setTypeFilter('all')
+    setSearchQuery('')
+  }
+
+  const hasActiveFilters = statusFilter !== 'all' || typeFilter !== 'all' || searchQuery
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* 헤더 */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">신청 관리</h1>
+    <div className="p-6 max-w-7xl mx-auto text-gray-900 font-sans">
+      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
+
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/25">
+            <ClipboardList size={28} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">신청 관리</h1>
+            <p className="text-gray-500 mt-0.5">행사, 설문조사, 카톡방 초대 신청을 관리합니다</p>
+          </div>
+        </div>
         <button
           onClick={handleCreate}
-          className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-purple-500/25 hover:shadow-xl transform hover:-translate-y-0.5 font-medium"
         >
-          + 새 신청 만들기
+          <Plus size={20} />
+          <span>새 신청 만들기</span>
         </button>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatsCard icon={<CheckCircle size={20} className="text-emerald-600" />} label="진행중" value={stats.activeCount} color="green" />
+        <StatsCard icon={<Clock size={20} className="text-blue-600" />} label="예정됨" value={stats.scheduledCount} color="blue" />
+        <StatsCard icon={<Pause size={20} className="text-gray-600" />} label="마감됨" value={stats.closedCount} color="gray" />
+        <StatsCard icon={<TrendingUp size={20} className="text-amber-600" />} label="총 신청자" value={stats.totalRegistrations} color="amber" />
+      </div>
+
+      {/* Search & Filters */}
+      <div className="space-y-4 mb-6">
+        {/* Search Bar */}
+        <div className="flex gap-3">
+          <div className="flex-1 relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <Search size={20} />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="신청 검색..."
+              className="w-full pl-12 pr-10 py-3.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowSortDropdown(!showSortDropdown)}
+              className={`flex items-center gap-2 px-4 py-3.5 bg-white border border-gray-200 rounded-xl hover:border-gray-300 min-w-[140px] ${showSortDropdown ? 'ring-2 ring-purple-500/20 border-purple-500' : ''}`}
+            >
+              <span className="text-sm font-medium text-gray-700">
+                {sortBy === 'newest' ? '최신순' : sortBy === 'oldest' ? '오래된순' : sortBy === 'title' ? '제목순' : '신청자순'}
+              </span>
+              <ChevronDown size={16} className={`ml-auto text-gray-400 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
+            </button>
+            {showSortDropdown && (
+              <div className="absolute right-0 top-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl py-1 min-w-[160px] z-10">
+                {([['newest', '최신순'], ['oldest', '오래된순'], ['title', '제목순'], ['registrations', '신청자순']] as [SortOption, string][]).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => { setSortBy(value); setShowSortDropdown(false) }}
+                    className={`w-full text-left px-4 py-2.5 text-sm ${sortBy === value ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Filter Pills */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+            {/* Status Filter */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-gray-500">
+                <Filter size={16} />
+                <span className="text-xs font-semibold uppercase tracking-wider">상태</span>
+              </div>
+              <div className="flex gap-1.5 bg-gray-100 p-1 rounded-lg">
+                {([['all', '전체'], ['active', '진행중'], ['scheduled', '예정됨'], ['closed', '마감됨']] as [StatusFilter, string][]).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setStatusFilter(value)}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${statusFilter === value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="hidden lg:block h-6 w-px bg-gray-200" />
+
+            {/* Type Filter */}
+            <div className="flex items-center gap-3 flex-1">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">타입</span>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setTypeFilter('all')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${typeFilter === 'all' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
+                >
+                  전체
+                </button>
+                {Object.entries(activityTypeLabels).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setTypeFilter(value)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${typeFilter === value ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Clear Filters */}
+            {hasActiveFilters && (
+              <button onClick={clearFilters} className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100">
+                <X size={14} />
+                초기화
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex items-center justify-between bg-white rounded-xl p-3 shadow-sm border border-gray-100 mb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('card')}
+              className={`p-2 rounded-md transition-all ${viewMode === 'card' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <LayoutGrid size={18} />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 rounded-md transition-all ${viewMode === 'table' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <List size={18} />
+            </button>
+          </div>
+        </div>
+        <div className="text-sm text-gray-500">
+          총 <span className="font-semibold text-gray-900">{filteredActivities.length}</span>개 신청
+        </div>
+      </div>
+
+      {/* Content */}
       {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        viewMode === 'card' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">타입</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">제목</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">상태</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">신청현황</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">기간</th>
+                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">관리</th>
+                </tr>
+              </thead>
+              <tbody>{Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}</tbody>
+            </table>
+          </div>
+        )
+      ) : filteredActivities.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-100">
+          <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <ClipboardList className="text-gray-400" size={32} />
+          </div>
+          <p className="font-medium text-gray-900">등록된 신청이 없습니다</p>
+          <p className="text-sm text-gray-500 mt-1">새 신청을 만들어보세요</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">타입</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">제목</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">신청현황</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">기간</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">관리</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {activities.map((activity) => (
-                <tr key={activity.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800">
-                      {activityTypeLabels[activity.type]}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      {activity.thumbnail_url && (
-                        <img
-                          src={activity.thumbnail_url}
-                          alt=""
-                          className="w-8 h-8 rounded object-cover border border-gray-200"
-                        />
-                      )}
-                      <span className="text-sm font-medium text-gray-900">{activity.title}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(activity)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {activity.current_count}
-                    {activity.max_capacity ? ` / ${activity.max_capacity}` : ''}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    <div className="flex flex-col gap-1">
-                      {activity.registration_start && (
-                        <div className="text-xs">
-                          <span className="text-gray-400 mr-2">시작</span>
-                          {new Date(activity.registration_start).toLocaleString()}
+        <>
+          {/* Card View */}
+          {viewMode === 'card' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {paginatedActivities.map(activity => {
+                const statusInfo = getStatusInfo(activity)
+                return (
+                  <div key={activity.id} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:border-gray-200 transition-all group">
+                    <div className="flex items-start gap-4 mb-4">
+                      {activity.thumbnail_url ? (
+                        <img src={activity.thumbnail_url} alt="" className="w-20 h-20 rounded-xl object-cover border border-gray-200" />
+                      ) : (
+                        <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                          <ImageIcon size={24} className="text-gray-400" />
                         </div>
                       )}
-                      {activity.registration_end && (
-                        <div className="text-xs">
-                          <span className="text-gray-400 mr-2">종료</span>
-                          {new Date(activity.registration_end).toLocaleString()}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-gray-100 text-gray-600">
+                            {activityTypeLabels[activity.type]}
+                          </span>
+                          <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full flex items-center gap-1 ${statusInfo.bg} ${statusInfo.text}`}>
+                            {statusInfo.icon}
+                            {statusInfo.label}
+                          </span>
                         </div>
-                      )}
+                        <h3 className="font-bold text-gray-900 truncate">{activity.title}</h3>
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
+                          <Users size={12} />
+                          <span>{activity.current_count}{activity.max_capacity ? `/${activity.max_capacity}` : ''}</span>
+                        </div>
+                      </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => setViewingRegistrationsActivity(activity)}
-                      className="text-green-600 hover:text-green-900 mr-4"
-                    >
-                      신청자
-                    </button>
-                    <button
-                      onClick={() => handleEdit(activity)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      수정
-                    </button>
-                    <button
-                      onClick={() => handleDelete(activity.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      삭제
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
 
-          {activities.length === 0 && (
-            <div className="text-center py-12 text-gray-500 border-t border-gray-200">
-              등록된 신청이 없습니다.
+                    {/* Period */}
+                    <div className="text-xs text-gray-500 mb-4 space-y-1">
+                      {activity.registration_start && (
+                        <div className="flex items-center gap-1.5">
+                          <Calendar size={12} />
+                          <span>{new Date(activity.registration_start).toLocaleDateString('ko-KR')} ~ {activity.registration_end ? new Date(activity.registration_end).toLocaleDateString('ko-KR') : ''}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-4 border-t border-gray-100">
+                      <button
+                        type="button"
+                        onClick={() => setViewingRegistrationsActivity(activity)}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all"
+                      >
+                        <Eye size={14} />
+                        신청자 보기
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(activity)}
+                        className="p-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-600 transition-all"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(activity.id)}
+                        className="p-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-red-100 hover:text-red-600 transition-all"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
-        </div>
+
+          {/* Table View */}
+          {viewMode === 'table' && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gradient-to-br from-gray-50 to-gray-100/50">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">타입</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase w-1/3">제목</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">상태</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">신청현황</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">기간</th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">관리</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {paginatedActivities.map(activity => {
+                      const statusInfo = getStatusInfo(activity)
+                      return (
+                        <tr key={activity.id} className="hover:bg-gray-50/80 transition-colors group">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="px-2.5 py-1 text-[10px] font-bold uppercase rounded-full bg-gray-100 text-gray-700">
+                              {activityTypeLabels[activity.type]}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              {activity.thumbnail_url && (
+                                <img src={activity.thumbnail_url} alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-200" />
+                              )}
+                              <span className="font-medium text-gray-900 truncate max-w-xs">{activity.title}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2.5 py-1 text-xs font-medium rounded-full flex items-center gap-1 w-fit ${statusInfo.bg} ${statusInfo.text}`}>
+                              {statusInfo.icon}
+                              {statusInfo.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5 text-sm">
+                              <Users size={14} className="text-gray-400" />
+                              <span className="font-medium text-gray-900">{activity.current_count}</span>
+                              {activity.max_capacity && <span className="text-gray-400">/ {activity.max_capacity}</span>}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {activity.registration_start && (
+                              <div className="flex items-center gap-1.5 text-xs">
+                                <Calendar size={12} className="text-gray-400" />
+                                {new Date(activity.registration_start).toLocaleDateString('ko-KR')}
+                                {activity.registration_end && ` ~ ${new Date(activity.registration_end).toLocaleDateString('ko-KR')}`}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setViewingRegistrationsActivity(activity)}
+                                className="px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all"
+                              >
+                                신청자
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleEdit(activity)}
+                                className="p-1.5 text-gray-600 bg-gray-100 rounded-lg hover:bg-blue-100 hover:text-blue-600 transition-all"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(activity.id)}
+                                className="p-1.5 text-gray-600 bg-gray-100 rounded-lg hover:bg-red-100 hover:text-red-600 transition-all"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
+                  .map((page, idx, arr) => {
+                    const showEllipsis = idx > 0 && arr[idx - 1] !== page - 1
+                    return (
+                      <div key={page} className="flex items-center">
+                        {showEllipsis && <span className="px-2 text-gray-400">...</span>}
+                        <button
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-10 h-10 rounded-lg font-medium transition-all ${currentPage === page ? 'bg-purple-600 text-white shadow-lg shadow-purple-200' : 'text-gray-600 hover:bg-gray-100'}`}
+                        >
+                          {page}
+                        </button>
+                      </div>
+                    )
+                  })}
+              </div>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Modal */}
+      {/* Create/Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-xl flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-              <h2 className="text-lg font-bold text-gray-900">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-900">
                 {editingActivity ? '신청 수정' : '새 신청 만들기'}
               </h2>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
+              <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1">
-              <div className="space-y-6">
-                {/* 이미지 업로드 */}
-                <ImageUploader
-                  images={images}
-                  onImagesChange={setImages}
-                  isDragging={isDragging}
-                  onDraggingChange={setIsDragging}
-                  maxImages={10}
-                />
-              </div>
+            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6">
+              {/* Image Upload */}
+              <ImageUploader
+                images={images}
+                onImagesChange={setImages}
+                isDragging={isDragging}
+                onDraggingChange={setIsDragging}
+                maxImages={10}
+              />
 
-              {/* 기본 정보 */}
+              {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">신청 타입</label>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">신청 타입</label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as ActivityType }))}
                     disabled={!!editingActivity}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 disabled:bg-gray-100"
                   >
                     {Object.entries(activityTypeLabels).map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
                     ))}
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">최대 정원</label>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">최대 정원</label>
                   <input
                     type="number"
                     value={formData.max_capacity || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, max_capacity: e.target.value ? parseInt(e.target.value) : undefined }))}
                     min={1}
                     placeholder="무제한"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
+                <label className="block text-sm font-bold text-gray-900 mb-2">제목</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="신청 제목을 입력하세요"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">설명</label>
+                <label className="block text-sm font-bold text-gray-900 mb-2">설명</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  placeholder="신청에 대한 설명을 입력하세요"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 resize-none"
                 />
               </div>
 
               {formData.type === 'notice' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">외부 링크</label>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">외부 링크</label>
                   <input
                     type="text"
                     value={formData.config?.external_link || ''}
@@ -428,7 +833,7 @@ function AdminActivitiesPage() {
                       config: { ...prev.config, external_link: e.target.value }
                     }))}
                     placeholder="https://example.com"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                   />
                   <p className="mt-1 text-xs text-gray-500">배너 클릭 시 이동할 외부 링크를 입력하세요.</p>
                 </div>
@@ -441,76 +846,74 @@ function AdminActivitiesPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">신청 시작</label>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">신청 시작</label>
                   <input
                     type="datetime-local"
                     value={formData.registration_start}
                     onChange={(e) => setFormData(prev => ({ ...prev, registration_start: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">신청 종료</label>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">신청 종료</label>
                   <input
                     type="datetime-local"
                     value={formData.registration_end}
                     onChange={(e) => setFormData(prev => ({ ...prev, registration_end: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.require_membership}
-                    onChange={(e) => setFormData(prev => ({ ...prev, require_membership: e.target.checked }))}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">회비 납부자만</span>
+              <div className="flex items-center gap-6 p-4 bg-gray-50 rounded-xl">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <div
+                    onClick={() => setFormData(prev => ({ ...prev, require_membership: !prev.require_membership }))}
+                    className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-all ${formData.require_membership ? 'bg-purple-500' : 'bg-gray-300'}`}
+                  >
+                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${formData.require_membership ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">회비 납부자만</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">활성화</span>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <div
+                    onClick={() => setFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
+                    className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-all ${formData.is_active ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                  >
+                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${formData.is_active ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">활성화</span>
                 </label>
               </div>
-              <div className="flex gap-3 pt-6 mt-6 border-t border-gray-200">
+
+              <div className="flex gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-2 px-4 bg-white border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="flex-1 py-3 px-4 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-all"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 py-2 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                  {saving ? '저장 중...' : (editingActivity ? '수정' : '생성')}
+                  {saving ? '저장 중...' : (editingActivity ? '수정 완료' : '생성하기')}
                 </button>
               </div>
             </form>
-          </div >
-        </div >
-      )
-      }
+          </div>
+        </div>
+      )}
 
-      {/* 신청자 목록 모달 */}
-      {
-        viewingRegistrationsActivity && (
-          <RegistrationsModal
-            activity={viewingRegistrationsActivity}
-            onClose={() => setViewingRegistrationsActivity(null)}
-          />
-        )
-      }
-    </div >
+      {/* Registrations Modal */}
+      {viewingRegistrationsActivity && (
+        <RegistrationsModal
+          activity={viewingRegistrationsActivity}
+          onClose={() => setViewingRegistrationsActivity(null)}
+        />
+      )}
+    </div>
   )
 }

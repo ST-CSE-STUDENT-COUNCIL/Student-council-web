@@ -1,8 +1,10 @@
 import React from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '../store/useAuthStore'
 import { welfareApi } from '../lib/api/welfare'
-import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, InfoCard, VerifyModal } from '../components/mypage'
+import { authApi } from '../lib/api/auth'
+import { InfoRow, InfoLine, SummaryCard, Badge, InfoCard, VerifyModal, ChangePasswordModal } from '../components/mypage'
+import { Lock, Key } from 'lucide-react'
 
 export const Route = createFileRoute('/mypage')({
   component: MyPage,
@@ -10,11 +12,24 @@ export const Route = createFileRoute('/mypage')({
 
 function MyPage() {
   const { user, isAuthenticated, logout } = useAuthStore()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = React.useState<'info' | 'events' | 'welfare'>('info')
   const [showVerifyModal, setShowVerifyModal] = React.useState(false)
+  const [showPasswordModal, setShowPasswordModal] = React.useState(false)
   const [borrowedItems, setBorrowedItems] = React.useState<{ name: string; returnDate: string }[]>([])
   const [lockerLocation, setLockerLocation] = React.useState('')
   const [lockerPeriod, setLockerPeriod] = React.useState('')
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout()
+    } catch (err) {
+      console.error('로그아웃 API 호출 실패:', err)
+    }
+    logout()
+    navigate({ to: '/' })
+  }
+
   React.useEffect(() => {
     if (!user) return
     const userId = user.id
@@ -91,6 +106,7 @@ function MyPage() {
     )
   }
 
+  // 하드코딩된 이벤트 데이터 (TODO: 백엔드 API 연동 필요)
   const upcomingEvents = [
     { title: '학생회 MT', date: '2025.01.15', status: '신청 완료' },
     { title: '동아리 박람회', date: '2025.02.02', status: '입금 대기' },
@@ -199,7 +215,14 @@ function MyPage() {
           {/* 액션 버튼 */}
           <div className="mt-6 space-y-2">
             <button
-              onClick={logout}
+              onClick={() => setShowPasswordModal(true)}
+              className="w-full py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-medium text-sm flex items-center justify-center gap-2"
+            >
+              <Key size={16} />
+              비밀번호 변경
+            </button>
+            <button
+              onClick={handleLogout}
               className="w-full py-2 border border-red-300 rounded-lg text-red-600 hover:bg-red-50 transition font-medium text-sm"
             >
               로그아웃
@@ -227,6 +250,26 @@ function MyPage() {
                   <Badge tone={getMembershipStatus(user)} />
                 </div>
               </div>
+
+              {/* 비밀번호 변경 섹션 */}
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Lock size={18} />
+                  보안
+                </h3>
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div>
+                    <p className="font-medium text-gray-900">비밀번호</p>
+                    <p className="text-sm text-gray-500">정기적으로 비밀번호를 변경하세요</p>
+                  </div>
+                  <button
+                    onClick={() => setShowPasswordModal(true)}
+                    className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition text-sm"
+                  >
+                    변경하기
+                  </button>
+                </div>
+              </div>
             </section>
           )}
 
@@ -251,7 +294,12 @@ function MyPage() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm text-gray-500">{event.date}</p>
-                        <StatusPill status={event.status} />
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.status === '신청 완료' ? 'bg-green-100 text-green-700' :
+                          event.status === '입금 대기' ? 'bg-amber-100 text-amber-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                          {event.status}
+                        </span>
                       </div>
                       <p className="font-semibold text-gray-900">
                         {event.title}
@@ -345,9 +393,14 @@ function MyPage() {
             </section>
           )}
         </main>
+
+        {/* 모달들 */}
         {showVerifyModal && (
-          <VerifyModal onClose={() => setShowVerifyModal(false)} />)
-        }
+          <VerifyModal onClose={() => setShowVerifyModal(false)} />
+        )}
+        {showPasswordModal && (
+          <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
+        )}
       </div>
     </div>
   )

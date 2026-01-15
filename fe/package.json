@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --mode dev",
+    "dev": "vite dev",
     "dev:remote": "vite --mode remote",
     "mock": "node mock-server/server.js",
     "build": "tsc -b && vite build",
