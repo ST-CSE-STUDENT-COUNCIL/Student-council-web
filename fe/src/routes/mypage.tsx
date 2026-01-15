@@ -1,38 +1,61 @@
 import React from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '../store/useAuthStore'
+import { mypageApi } from '../lib/api/mypage'
 import { welfareApi } from '../lib/api/welfare'
-import { authApi } from '../lib/api/auth'
-import { InfoRow, InfoLine, SummaryCard, Badge, InfoCard, VerifyModal, ChangePasswordModal } from '../components/mypage'
-import { Lock, Key } from 'lucide-react'
+import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, InfoCard, VerifyModal } from '../components/mypage'
+import type { User } from '../types/users'
 
 export const Route = createFileRoute('/mypage')({
   component: MyPage,
 })
 
 function MyPage() {
-  const { user, isAuthenticated, logout } = useAuthStore()
-  const navigate = useNavigate()
+  const { user, isAuthenticated, logout, setUser } = useAuthStore()
+  const [profile, setProfile] = React.useState<User | null>(user)
   const [activeTab, setActiveTab] = React.useState<'info' | 'events' | 'welfare'>('info')
   const [showVerifyModal, setShowVerifyModal] = React.useState(false)
   const [showPasswordModal, setShowPasswordModal] = React.useState(false)
   const [borrowedItems, setBorrowedItems] = React.useState<{ name: string; returnDate: string }[]>([])
   const [lockerLocation, setLockerLocation] = React.useState('')
   const [lockerPeriod, setLockerPeriod] = React.useState('')
-
-  const handleLogout = async () => {
+  const currentUser = profile ?? user
+  const userId = currentUser?.id
+  const handleVerificationUploaded = React.useCallback(async () => {
     try {
-      await authApi.logout()
+      const profileData = await mypageApi.getProfile()
+      setProfile(profileData)
+      setUser(profileData)
     } catch (err) {
-      console.error('로그아웃 API 호출 실패:', err)
+      console.error('Failed to refresh profile after verification upload', err)
     }
-    logout()
-    navigate({ to: '/' })
-  }
+  }, [setUser])
 
   React.useEffect(() => {
-    if (!user) return
-    const userId = user.id
+    if (!isAuthenticated) return
+
+    let cancelled = false
+
+    async function loadProfile() {
+      try {
+        const profileData = await mypageApi.getProfile()
+        if (cancelled) return
+        setProfile(profileData)
+        setUser(profileData)
+      } catch (err) {
+        if (cancelled) return
+        console.error('Failed to load profile', err)
+      }
+    }
+
+    loadProfile()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated, setUser])
+  React.useEffect(() => {
+    if (!userId) return
 
     const controller = new AbortController()
 
@@ -81,10 +104,10 @@ function MyPage() {
     loadWelfare()
 
     return () => controller.abort()
-  }, [user])
+  }, [userId])
 
   // 로그인하지 않은 경우
-  if (!isAuthenticated || !user) {
+  if (!isAuthenticated || !currentUser) {
     return (
       <div className="flex min-h-[calc(100vh-300px)] items-center justify-center px-4 py-12">
         <div className="text-center">
@@ -118,6 +141,10 @@ function MyPage() {
     { title: '학과 네트워킹 데이', date: '2024.11.05' },
   ]
 
+  const verificationStatusLabel = getVerificationStatus(currentUser)
+  const shouldShowVerificationButton =
+    currentUser.verification_status === 'pending' || currentUser.verification_status === 'rejected'
+
   const welfareInfo = {
     returnPeriod:
       borrowedItems.length > 0
@@ -130,13 +157,7 @@ function MyPage() {
     borrowedItems,
     lockerLocation,
     lockerPeriod,
-
-    verificationStatus:
-      user.verification_status === 'pending'
-        ? '가입 인증 대기'
-        : user.verification_status === 'approved'
-          ? '가입 인증 완료'
-          : '미인증',
+    verificationStatus: verificationStatusLabel,
   }
 
   const sidebarItems = [
@@ -158,15 +179,15 @@ function MyPage() {
               <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-3xl mb-3">
                 🧑‍🎓
               </div>
-              <h2 className="text-lg font-bold text-gray-900">{user.name}</h2>
-              <p className="text-sm text-gray-500 mb-4">{user.student_id}</p>
+              <h2 className="text-lg font-bold text-gray-900">{currentUser.name}</h2>
+              <p className="text-sm text-gray-500 mb-4">{currentUser.student_id}</p>
             </div>
           </div>
 
           {/* 정보 요약 */}
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6 space-y-3 text-sm">
-            <InfoRow label="학생회비" value={getMembershipStatus(user)} />
-            {getVerificationStatus(user) === '미인증' ? (
+            <InfoRow label="학생회비" value={getMembershipStatus(currentUser)} />
+            {shouldShowVerificationButton ? (
               <div className="flex justify-between items-center text-sm bg-white border border-gray-200 rounded-lg px-3 py-2">
                 <span className="text-gray-600">가입 인증</span>
                 <button
@@ -178,7 +199,7 @@ function MyPage() {
                 </button>
               </div>
             ) : (
-              <InfoRow label="가입 인증" value={getVerificationStatus(user)} />
+              <InfoRow label="가입 인증" value={verificationStatusLabel} />
             )}
           </div>
 
@@ -240,14 +261,14 @@ function MyPage() {
               </h2>
 
               <div className="space-y-4">
-                <InfoLine label="이름" value={user.name} />
-                <InfoLine label="학번" value={user.student_id} />
-                <InfoLine label="이메일" value={user.email} />
-                <InfoLine label="학과" value={user.department || '미등록'} />
+                <InfoLine label="이름" value={currentUser.name} />
+                <InfoLine label="학번" value={currentUser.student_id} />
+                <InfoLine label="이메일" value={currentUser.email} />
+                <InfoLine label="학과" value={currentUser.department || '미등록'} />
 
                 <div className="flex items-center justify-between py-3 border-b border-gray-100">
                   <span className="text-gray-600 font-medium">학생회비</span>
-                  <Badge tone={getMembershipStatus(user)} />
+                  <Badge tone={getMembershipStatus(currentUser)} />
                 </div>
               </div>
 
@@ -369,7 +390,7 @@ function MyPage() {
                     value={welfareInfo.lockerLocation || '현재 대여 중인 사물함이 없습니다'}
                     sub={welfareInfo.lockerLocation ? welfareInfo.lockerPeriod : undefined}
                   />
-                  {user.verification_status === 'rejected' ? (
+                  {shouldShowVerificationButton ? (
                     <div className="border border-gray-100 rounded-xl p-4 flex items-center justify-between">
                       <div>
                         <p className="text-sm text-gray-500 mb-1">학생 가입 인증</p>
@@ -396,10 +417,10 @@ function MyPage() {
 
         {/* 모달들 */}
         {showVerifyModal && (
-          <VerifyModal onClose={() => setShowVerifyModal(false)} />
-        )}
-        {showPasswordModal && (
-          <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
+          <VerifyModal
+            onClose={() => setShowVerifyModal(false)}
+            onUploaded={handleVerificationUploaded}
+          />
         )}
       </div>
     </div>
@@ -408,18 +429,14 @@ function MyPage() {
 
 /* ---------- 상태 계산 ---------- */
 
-function getMembershipStatus(user: {
-  membership_paid: boolean
-  verification_status: string
-}) {
-  if (user.verification_status === 'pending') return '확인중'
-  if (user.membership_paid) return '납부'
-  return '미납부'
+function getMembershipStatus(user: { membership_paid: boolean }) {
+  return user.membership_paid ? '납부' : '미납부'
 }
 
 function getVerificationStatus(user: { verification_status: string }) {
   if (user.verification_status === 'approved') return '인증 완료'
   if (user.verification_status === 'pending') return '인증 대기'
+  if (user.verification_status === 'submitted') return '확인 중'
   return '미인증'
 }
 

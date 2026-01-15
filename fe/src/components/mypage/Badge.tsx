@@ -1,6 +1,7 @@
 export function Badge({ tone }: { tone: string }) {
   const colorMap: Record<string, string> = {
     확인중: 'bg-yellow-100 text-yellow-700',
+    '확인 중': 'bg-yellow-100 text-yellow-700',
     납부: 'bg-green-100 text-green-700',
     미납부: 'bg-red-100 text-red-700',
     '인증 완료': 'bg-green-100 text-green-700',

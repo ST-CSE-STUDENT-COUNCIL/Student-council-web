@@ -1,15 +1,31 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
+import { mypageApi } from '../../lib/api/mypage'
 
-export function VerifyModal({ onClose }: { onClose: () => void }) {
+type VerifyModalProps = {
+  onClose: () => void
+  onUploaded?: () => Promise<void> | void
+}
+
+export function VerifyModal({ onClose, onUploaded }: VerifyModalProps) {
   const [file, setFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  function setFileWithPreview(f: File) {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setFile(f)
+    setPreviewUrl(URL.createObjectURL(f))
+    setError(null)
+  }
 
   function onChange(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
     if (!f) return
-    setFile(f)
+    setFileWithPreview(f)
   }
 
   function onDrop(e: DragEvent<HTMLDivElement>) {
@@ -17,7 +33,7 @@ export function VerifyModal({ onClose }: { onClose: () => void }) {
     setIsDragging(false)
     const f = e.dataTransfer.files?.[0]
     if (!f) return
-    setFile(f)
+    setFileWithPreview(f)
   }
 
   function onDragOver(e: DragEvent<HTMLDivElement>) {
@@ -29,14 +45,47 @@ export function VerifyModal({ onClose }: { onClose: () => void }) {
     setIsDragging(false)
   }
 
+  async function handleUpload() {
+    if (!file || isUploading) return
+    if (file.size > 5 * 1024 * 1024) {
+      setError('5MB 이하의 이미지를 업로드해주세요.')
+      return
+    }
+
+    setError(null)
+    setIsUploading(true)
+    try {
+      await mypageApi.uploadVerificationImage(file)
+      if (onUploaded) {
+        await onUploaded()
+      }
+      onClose()
+      alert('업로드가 완료되었습니다. 확인 중입니다.')
+    } catch (err) {
+      console.error('Failed to upload verification image', err)
+      setError('업로드에 실패했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6">
         <h3 className="text-lg font-bold text-gray-900 mb-2">학생 가입 인증</h3>
         <p className="text-sm text-gray-600 mb-4">
-          학생증 또는 재학증명서를 선택해 주세요.
+          학번과 학적상태가 포함되어있는 통정시 화면을 업로드해주세요.
         </p>
+        <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          한번 업로드하면 수정할 수 없습니다. 신중하게 올려주세요.
+        </div>
 
         <div
           className={`border border-dashed rounded-lg p-4 text-center mb-3 transition ${
@@ -62,18 +111,36 @@ export function VerifyModal({ onClose }: { onClose: () => void }) {
             onChange={onChange}
           />
           <p className="text-xs text-gray-500 mt-2">
-            {file ? `선택된 파일: ${file.name}` : 'JPG, PNG · 최대 10MB 권장'}
+            {file ? `선택된 파일: ${file.name}` : 'JPG, PNG · 최대 5MB'}
           </p>
         </div>
+
+        {previewUrl && (
+          <div className="mt-3 border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+            <div className="flex items-center justify-between px-3 py-2 text-xs text-gray-600">
+              <span>선택한 이미지</span>
+              <span className="font-medium text-gray-800">{file?.name}</span>
+            </div>
+            <div className="max-h-72 overflow-hidden bg-white">
+              <img
+                src={previewUrl}
+                alt="선택한 인증 이미지"
+                className="w-full h-full max-h-72 object-contain"
+              />
+            </div>
+          </div>
+        )}
+
+        {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
 
         <div className="flex justify-end gap-2 mt-6">
           <button onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">취소</button>
           <button
-            onClick={onClose}
-            disabled={!file}
-            className={`px-4 py-2 rounded-md text-sm text-white ${file ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'}`}
+            onClick={handleUpload}
+            disabled={!file || isUploading}
+            className={`px-4 py-2 rounded-md text-sm text-white ${file && !isUploading ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'}`}
           >
-            선택 완료
+            {isUploading ? '업로드 중...' : '선택 완료'}
           </button>
         </div>
       </div>

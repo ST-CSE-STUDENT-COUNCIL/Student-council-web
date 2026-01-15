@@ -44,12 +44,12 @@ export const mypageApi = {
         const formData = new FormData()
         formData.append('file', file)
 
-        const response = await api.post<{ file_path: string }>(`${API_BASE_URL}/verification-image`, formData, {
+        const response = await api.post<{ file_path: string }>(`${API_BASE_URL}/verification-image/upload`, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+                'Content-Type': 'multipart/form-data',
+            },
         })
         return response.data
-    }
+    },
 }
 
