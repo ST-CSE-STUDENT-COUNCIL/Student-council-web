@@ -6,14 +6,24 @@ type Props = {
 }
 
 export function ClubCard({ club, onDetail }: Props) {
+    // 설명을 한 줄로 제한 (최대 100자)
+    const shortDescription = club.description.length > 100 
+        ? club.description.substring(0, 100) + '...' 
+        : club.description
+
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition overflow-hidden flex flex-col">
-            {/* 이미지 영역 */}
+        <div 
+            className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition overflow-hidden flex flex-col cursor-pointer"
+            onClick={onDetail}
+        >
+            {/* 썸네일 이미지 */}
             <div className="w-full h-48 bg-gray-100 flex items-center justify-center flex-shrink-0">
-                {club.logo_url ? (
-                    <img src={club.logo_url} alt={club.name} className="w-full h-full object-cover" />
-                ) : club.detail_image_url ? (
-                    <img src={club.detail_image_url} alt={club.name} className="w-full h-full object-cover" />
+                {club.image_url ? (
+                    <img 
+                        src={club.image_url} 
+                        alt={club.name} 
+                        className="w-full h-full object-cover" 
+                    />
                 ) : (
                     <div className="flex flex-col items-center justify-center text-gray-400">
                         <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -25,23 +35,11 @@ export function ClubCard({ club, onDetail }: Props) {
             </div>
 
             {/* 텍스트 영역 */}
-            <div className="p-6 flex flex-col flex-grow text-center">
-                <div className="flex items-center justify-center mb-3 flex-col">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{club.name}</h3>
-                    <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-semibold rounded">
-                        {club.category}
-                    </span>
-                </div>
-                <p className="text-gray-600 text-sm leading-relaxed">{club.description}</p>
-                <div className="mt-4">
-                    <button
-                        type="button"
-                        onClick={onDetail}
-                        className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-                    >
-                        자세히 보기
-                    </button>
-                </div>
+            <div className="p-6 flex flex-col flex-grow">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{club.name}</h3>
+                <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
+                    {shortDescription}
+                </p>
             </div>
         </div>
     )
