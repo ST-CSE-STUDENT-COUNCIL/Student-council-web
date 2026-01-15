@@ -47,15 +47,15 @@ async def get_pending_users():
     """
     승인 대기 회원 목록 조회
     
-    verification_status가 'pending'인 회원들을 조회합니다.
+    verification_status가 'pending' 또는 'submitted'인 회원들을 조회합니다.
     생성일 기준 오래된 순으로 정렬합니다.
     학적 인증 이미지가 있는 경우 Signed URL을 생성하여 반환합니다.
     """
     try:
-        # 승인 대기 중인 회원 조회
+        # 승인 대기 중인 회원 조회 (pending + submitted)
         result = supabase.table('users')\
             .select('id, student_id, name, email, department, phone, verification_image_url, created_at')\
-            .eq('verification_status', 'pending')\
+            .in_('verification_status', ['pending', 'submitted'])\
             .order('created_at', desc=False)\
             .execute()
         
@@ -321,22 +321,18 @@ async def reject_user(user_id: str, request: RejectUserRequest):
         
         # 4. Supabase Auth에서 삭제
         try:
-            print(f"[INFO] Auth 삭제 시도 user_id={user_id}")
             admin_supabase.auth.admin.delete_user(user_id)
-            print(f"[INFO] Auth 삭제 성공 user_id={user_id}")
         except Exception as auth_error:
             # Auth 삭제 실패 로깅
-            print(f"[ERROR] Auth 삭제 실패 user_id={user_id}: {str(auth_error)}")
+            pass
         
         # 5. email_verifications 삭제 (재가입 허용) - 직접 삭제
         try:
             user_email = user_data.get('email')
-            print(f"[INFO] email_verifications 삭제 시도: {user_email}")
             # 해당 이메일의 모든 레코드 삭제 (verified 상태와 무관하게)
             result = admin_supabase.table('email_verifications').delete().eq('email', user_email).execute()
-            print(f"[INFO] email_verifications 삭제 완료: {user_email}, 삭제된 행: {len(result.data) if result.data else 0}")
         except Exception as ev_error:
-            print(f"[ERROR] email_verifications 삭제 실패: {str(ev_error)}")
+            pass  # 삭제 실패 무시
         
         return RejectUserResponse(user_id=user_id)
     

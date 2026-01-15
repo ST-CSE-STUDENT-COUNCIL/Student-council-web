@@ -100,7 +100,7 @@ async def send_verification(body: SendVerificationRequest, request: Request):
         code = await create_email_verification(body.email)
         
         # 5. 인증번호 발송
-        await send_verification_email(body.email, code)
+        send_verification_email(body.email, code)
         
         return SendVerificationResponse(email=body.email)
     
@@ -232,16 +232,13 @@ async def signup(request: SignupRequest):
         # 5. Supabase Auth에 사용자 생성 (admin 클라이언트 사용)
         try:
             admin_supabase = get_supabase_admin()
-            print(f"[DEBUG] Auth 사용자 생성 시도: {request.email}")
             auth_response = admin_supabase.auth.admin.create_user({
                 "email": request.email,
                 "password": request.password,
                 "email_confirm": True
             })
-            print(f"[DEBUG] Auth 사용자 생성 성공")
         except Exception as auth_error:
             error_message = str(auth_error)
-            print(f"[ERROR] Auth 생성 실패: {error_message}")
             if "already been registered" in error_message:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -260,7 +257,6 @@ async def signup(request: SignupRequest):
             )
         
         user_id = auth_response.user.id
-        print(f"[DEBUG] 생성된 user_id: {user_id}")
         
         # 6. users 테이블에 프로필 정보 저장
         user_data = {
@@ -275,11 +271,9 @@ async def signup(request: SignupRequest):
         }
         
         try:
-            print(f"[DEBUG] users 테이블 INSERT 시도")
-            supabase.table('users').insert(user_data).execute()
-            print(f"[DEBUG] users 테이블 INSERT 성공")
+            # RLS 우회를 위해 admin_supabase 사용
+            admin_supabase.table('users').insert(user_data).execute()
         except Exception as insert_error:
-            print(f"[ERROR] users INSERT 실패: {str(insert_error)}")
             raise
         
         # 7. 이메일 인증 사용됨으로 표시
@@ -294,13 +288,11 @@ async def signup(request: SignupRequest):
     except HTTPException:
         raise
     except APIError as e:
-        print(f"[ERROR] APIError: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"회원가입 실패: {str(e)}"
         )
     except Exception as e:
-        print(f"[ERROR] Exception: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"서버 오류: {str(e)}"
@@ -598,7 +590,7 @@ async def forgot_password(body: ForgotPasswordRequest, request: Request):
         code = await create_password_reset(body.student_id, email)
         
         # 3. 이메일 발송
-        await send_password_reset_email(email, code)
+        send_password_reset_email(email, code)
         
         return ForgotPasswordResponse(email=email)
     

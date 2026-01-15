@@ -160,9 +160,9 @@ async def complete_verification_image_upload(
                 detail="이미 승인된 사용자는 학적 인증 이미지를 재업로드할 수 없습니다"
             )
         
-        # users 테이블에 이미지 URL 저장
+        # users 테이블에 이미지 URL 저장 및 상태를 'submitted'로 변경
         supabase.table('users')\
-            .update({'verification_image_url': body.image_url, 'verification_status': 'pending'})\
+            .update({'verification_image_url': body.image_url, 'verification_status': 'submitted'})\
             .eq('id', current_user['id'])\
             .execute()
         

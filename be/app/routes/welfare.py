@@ -44,12 +44,12 @@ async def get_locker_info():
     supabase = get_supabase()
     
     # locker_info 테이블에서 데이터 조회 (id=1, 단일 레코드)
-    result = supabase.table('locker_info').select('*').eq('id', 1).single().execute()
+    result = supabase.table('locker_info').select('*').eq('id', 1).limit(1).execute()
     
     if not result.data:
         raise HTTPException(status_code=404, detail="사물함 정보가 없습니다")
     
-    return result.data
+    return result.data[0]
 
 
 @router.post("/admin/welfare/locker_image/presigned-url", summary="사물함 이미지 업로드용 Presigned URL 발급 (관리자)")
