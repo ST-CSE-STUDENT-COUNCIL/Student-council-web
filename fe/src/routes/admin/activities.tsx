@@ -186,8 +186,13 @@ function AdminActivitiesPage() {
   const uploadImages = async (): Promise<string[]> => {
     const uploadedUrls: string[] = []
     for (const img of images) {
+      // 이미 업로드된 이미지는 URL만 추가
       if (img.uploaded && img.url) {
         uploadedUrls.push(img.url)
+        continue
+      }
+      // 현재 업로드 중인 이미지는 건너뛰기
+      if (img.uploading) {
         continue
       }
       try {
@@ -197,6 +202,7 @@ function AdminActivitiesPage() {
         setImages(prev => prev.map(i => i.id === img.id ? { ...i, uploading: false, uploaded: true, url: public_url } : i))
         uploadedUrls.push(public_url)
       } catch (error) {
+        console.error('Image upload error:', error)
         setImages(prev => prev.map(i => i.id === img.id ? { ...i, uploading: false, error: '업로드 실패' } : i))
       }
     }
@@ -283,6 +289,10 @@ function AdminActivitiesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // 중복 제출 방지
+    if (saving) return
+
     try {
       setSaving(true)
       const uploadedUrls = await uploadImages()
