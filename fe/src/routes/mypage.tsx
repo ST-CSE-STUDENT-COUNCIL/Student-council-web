@@ -66,28 +66,6 @@ function MyPage() {
     }
   }, [isAuthenticated, setUser])
 
-  if (!isAuthenticated || !currentUser) {
-    return (
-      <div className="flex min-h-[calc(100vh-300px)] items-center justify-center px-4 py-12">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            로그인이 필요한 페이지입니다
-          </h2>
-          <p className="text-gray-600 mb-6">
-            마이페이지를 이용하려면 로그인해주세요.
-          </p>
-          <Link
-            to="/login"
-            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition"
-          >
-            로그인하러 가기
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
   const upcomingEvents = React.useMemo(() => {
     const now = new Date().toISOString()
 
@@ -128,6 +106,28 @@ function MyPage() {
         date: formatDate(reg.activity!.registration_end || reg.created_at),
       }))
   }, [myRegistrations])
+
+  if (!isAuthenticated || !currentUser) {
+    return (
+      <div className="flex min-h-[calc(100vh-300px)] items-center justify-center px-4 py-12">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            로그인이 필요한 페이지입니다
+          </h2>
+          <p className="text-gray-600 mb-6">
+            마이페이지를 이용하려면 로그인해주세요.
+          </p>
+          <Link
+            to="/login"
+            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition"
+          >
+            로그인하러 가기
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   const verificationStatusLabel = getVerificationStatus(currentUser)
   const shouldShowVerificationButton =
