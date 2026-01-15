@@ -391,13 +391,8 @@ function MyPage() {
 
 /* ---------- 상태 계산 ---------- */
 
-function getMembershipStatus(user: {
-  membership_paid: boolean
-  verification_status: string
-}) {
-  if (user.verification_status === 'pending' || user.verification_status === 'submitted') return '확인 중'
-  if (user.membership_paid) return '납부'
-  return '미납부'
+function getMembershipStatus(user: { membership_paid: boolean }) {
+  return user.membership_paid ? '납부' : '미납부'
 }
 
 function getVerificationStatus(user: { verification_status: string }) {
