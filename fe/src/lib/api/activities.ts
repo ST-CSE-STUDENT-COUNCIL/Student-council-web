@@ -92,13 +92,19 @@ export const activityApi = {
      * 파일 업로드
      */
     uploadFile: async (presignedUrl: string, file: File): Promise<void> => {
-        await fetch(presignedUrl, {
+        const response = await fetch(presignedUrl, {
             method: 'PUT',
             body: file,
             headers: {
                 'Content-Type': 'application/octet-stream'
             }
         })
+
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => 'No response body')
+            console.error('File upload failed:', response.status, response.statusText, errorText)
+            throw new Error(`File upload failed: ${response.status} ${response.statusText}`)
+        }
     }
 }
 
@@ -122,7 +128,7 @@ export const activityAdminApi = {
      * 프론트엔드도 동일한 Content-Type을 사용해야 403 에러가 발생하지 않음
      */
     uploadImage: async (presignedUrl: string, file: File): Promise<void> => {
-        await fetch(presignedUrl, {
+        const response = await fetch(presignedUrl, {
             method: 'PUT',
             body: file,
             headers: {
@@ -130,6 +136,12 @@ export const activityAdminApi = {
                 'Content-Type': 'application/octet-stream'
             }
         })
+
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => 'No response body')
+            console.error('Image upload failed:', response.status, response.statusText, errorText)
+            throw new Error(`Image upload failed: ${response.status} ${response.statusText}`)
+        }
     },
 
     /**
