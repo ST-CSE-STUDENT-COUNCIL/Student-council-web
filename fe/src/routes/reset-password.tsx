@@ -4,6 +4,7 @@ import { authApi } from '../lib/api/auth'
 import { isAxiosError } from 'axios'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, Key, CheckCircle2, ChevronLeft } from 'lucide-react'
+import { Turnstile } from '../components/common/Turnstile'
 
 export const Route = createFileRoute('/reset-password')({
     component: ResetPassword,
@@ -17,12 +18,17 @@ function ResetPassword() {
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
 
     // Step 1: Send Verification Code
     const handleSendCode = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!email.endsWith('@seoultech.ac.kr')) {
             alert('서울과기대 이메일(@seoultech.ac.kr)을 입력해주세요.')
+            return
+        }
+        if (!turnstileToken) {
+            alert('보안 검증을 완료해주세요.')
             return
         }
         setIsLoading(true)
@@ -151,9 +157,18 @@ function ResetPassword() {
                                         />
                                     </div>
                                 </div>
+
+                                {/* Turnstile */}
+                                <div className="py-2">
+                                    <Turnstile
+                                        onVerify={(token) => setTurnstileToken(token)}
+                                        onExpire={() => setTurnstileToken(null)}
+                                    />
+                                </div>
+
                                 <button
                                     type="submit"
-                                    disabled={isLoading}
+                                    disabled={isLoading || !turnstileToken}
                                     className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-all active:scale-[0.99]"
                                 >
                                     {isLoading ? '전송 중...' : '인증번호 받기'}

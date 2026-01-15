@@ -4,6 +4,7 @@ import { isAxiosError } from 'axios'
 import { User, Lock } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { authApi } from '../lib/api/auth'
+import { Turnstile } from '../components/common/Turnstile'
 
 export const Route = createFileRoute('/login')({
   component: Login,
@@ -16,9 +17,16 @@ function Login() {
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!turnstileToken) {
+      alert('보안 검증을 완료해주세요.')
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -128,9 +136,17 @@ function Login() {
               </Link>
             </div>
 
+            {/* Turnstile */}
+            <div className="py-2">
+              <Turnstile
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken(null)}
+              />
+            </div>
+
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !turnstileToken}
               className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-all active:scale-[0.99]"
             >
               {isLoading ? '로그인 중...' : '로그인'}

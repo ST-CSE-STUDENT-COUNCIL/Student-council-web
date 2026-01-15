@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { authApi } from '../lib/api/auth'
 import { isAxiosError } from 'axios'
 import { PhoneInput } from '../components/common/PhoneInput'
+import { Turnstile } from '../components/common/Turnstile'
 import { CheckCircle } from 'lucide-react'
 
 export const Route = createFileRoute('/signup')({
@@ -35,6 +36,9 @@ function SignUp() {
     // Student ID Check States
     const [isStudentIdChecking, setIsStudentIdChecking] = useState(false)
     const [isStudentIdAvailable, setIsStudentIdAvailable] = useState<boolean | null>(null)
+
+    // Turnstile State
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
 
     // 타이머 로직
     useEffect(() => {
@@ -198,6 +202,11 @@ function SignUp() {
 
         if (!isEmailVerified) {
             alert('이메일 인증을 완료해주세요.')
+            return
+        }
+
+        if (!turnstileToken) {
+            alert('보안 검증을 완료해주세요.')
             return
         }
 
@@ -426,10 +435,10 @@ function SignUp() {
                                         required
                                         minLength={8}
                                         className={`block w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${formData.password.length > 0 && isPasswordValid
-                                                ? 'border-green-500 focus:border-green-500 focus:ring-green-200'
-                                                : formData.password.length > 0 && !isPasswordValid
-                                                    ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200'
-                                                    : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                                            ? 'border-green-500 focus:border-green-500 focus:ring-green-200'
+                                            : formData.password.length > 0 && !isPasswordValid
+                                                ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200'
+                                                : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
                                             }`}
                                         value={formData.password}
                                         onChange={handleChange}
@@ -501,12 +510,20 @@ function SignUp() {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Turnstile */}
+                            <div className="sm:col-span-2 py-2">
+                                <Turnstile
+                                    onVerify={(token) => setTurnstileToken(token)}
+                                    onExpire={() => setTurnstileToken(null)}
+                                />
+                            </div>
                         </div>
 
                         <div className="pt-6">
                             <button
                                 type="submit"
-                                disabled={!isEmailVerified || isStudentIdAvailable !== true || showPasswordError || !isPasswordValid || !passwordsMatch}
+                                disabled={!isEmailVerified || isStudentIdAvailable !== true || showPasswordError || !isPasswordValid || !passwordsMatch || !turnstileToken}
                                 className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.99]"
                             >
                                 가입하기
