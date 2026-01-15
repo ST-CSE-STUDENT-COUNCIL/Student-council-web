@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { clubApi } from '../../lib/api/clubs'
-import type { Club, ClubCreate, ClubUpdate, ClubImage, IntroImageState } from '../../types/clubs'
+import type { Club, ClubCreate, ClubUpdate, IntroImageState } from '../../types/clubs'
 import { Plus, Trash2, Edit2, ChevronUp, ChevronDown, X } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/clubs')({
@@ -29,10 +29,10 @@ function AdminClubsPage() {
   // 썸네일 이미지 업로드 상태
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [thumbnailPreview, setThumbnailPreview] = useState('')
-  
+
   // 소개 이미지 상태 (image, file, preview를 함께 관리)
   const [introImages, setIntroImages] = useState<IntroImageState[]>([])
-  
+
   const [isUploading, setIsUploading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -81,10 +81,10 @@ function AdminClubsPage() {
       reader.onloadend = () => {
         const preview = reader.result as string
         const tempId = Date.now()
-        const nextOrder = introImages.length > 0 
-          ? Math.max(...introImages.map(item => item.image.display_order)) + 1 
+        const nextOrder = introImages.length > 0
+          ? Math.max(...introImages.map(item => item.image.display_order)) + 1
           : 0
-        
+
         setIntroImages(prev => [...prev, {
           image: {
             image_url: '',
@@ -118,14 +118,14 @@ function AdminClubsPage() {
     if (direction === 'down' && index === introImages.length - 1) return
 
     const targetIndex = direction === 'up' ? index - 1 : index + 1
-    
+
     setIntroImages(prev => {
       const newImages = [...prev]
       // 배열 교환 (file, preview도 함께 이동)
       const temp = newImages[index]
       newImages[index] = newImages[targetIndex]
       newImages[targetIndex] = temp
-      
+
       // 순번 재정렬
       return newImages.map((item, i) => ({
         ...item,
@@ -165,7 +165,7 @@ function AdminClubsPage() {
     setThumbnailPreview(club.image_url)
     setThumbnailFile(null)
     setEditingClub(club)
-    
+
     // 소개 이미지 별도 조회
     try {
       const images = await clubApi.getIntroImages(club.id)
@@ -178,7 +178,7 @@ function AdminClubsPage() {
       console.error('소개 이미지를 불러오는데 실패했습니다.', err)
       setIntroImages([])
     }
-    
+
     setShowEditModal(true)
   }
 
@@ -254,10 +254,10 @@ function AdminClubsPage() {
             const timestamp = Date.now()
             const filename = `${timestamp}_${item.file.name}`
             const { presigned_url, public_url } = await clubApi.getIntroImagePresignedUrl(createdClub.id, filename)
-            
+
             // R2에 직접 업로드
             await clubApi.uploadImageToR2(presigned_url, item.file)
-            
+
             // 소개 이미지 추가
             await clubApi.createIntroImage(createdClub.id, {
               image_url: public_url,
@@ -323,10 +323,10 @@ function AdminClubsPage() {
             const timestamp = Date.now()
             const filename = `${timestamp}_${item.file.name}`
             const { presigned_url, public_url } = await clubApi.getIntroImagePresignedUrl(editingClub.id, filename)
-            
+
             // R2에 직접 업로드
             await clubApi.uploadImageToR2(presigned_url, item.file)
-            
+
             // 소개 이미지 추가
             await clubApi.createIntroImage(editingClub.id, {
               image_url: public_url,
@@ -592,7 +592,7 @@ function ClubModal({
                 이미지 추가
               </button>
             </div>
-            
+
             {introImages.length === 0 ? (
               <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
                 <p className="text-gray-500 text-sm">소개 이미지가 없습니다.</p>
@@ -603,7 +603,7 @@ function ClubModal({
                 {introImages.map((item, index) => {
                   const preview = item.preview || item.image.image_url
                   const key = 'id' in item.image ? item.image.id : ('tempId' in item.image ? item.image.tempId : index)
-                  
+
                   return (
                     <div
                       key={key}
@@ -623,7 +623,7 @@ function ClubModal({
                             </div>
                           )}
                         </div>
-                        
+
                         <div className="flex-1 flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-gray-900">
@@ -633,7 +633,7 @@ function ClubModal({
                               {preview ? '이미지 업로드됨' : '이미지 없음'}
                             </p>
                           </div>
-                          
+
                           <div className="flex items-center gap-1">
                             <button
                               type="button"

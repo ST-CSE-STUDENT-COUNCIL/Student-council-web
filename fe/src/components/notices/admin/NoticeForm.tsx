@@ -1,4 +1,4 @@
-import { Upload, FileText, X, Eye, EyeOff, Image as ImageIcon, File, AlertCircle } from 'lucide-react'
+import { Upload, X, Eye, EyeOff, Image as ImageIcon, File, AlertCircle } from 'lucide-react'
 import { Modal } from '../../common/Modal'
 import { CATEGORIES, BOARD_SUB_CATEGORIES } from './constants'
 import { useState, useCallback, useRef } from 'react'

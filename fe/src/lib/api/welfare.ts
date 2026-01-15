@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 환경 변수에서 API URL을 가져옴 (기본값: 프록시 경유)
 const API_BASE_URL =
-    import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://seoultechcom-api.onrender.com');
+    import.meta.env.VITE_API_URL || '/api';
 
 export type WelfareRental = {
     id: number;

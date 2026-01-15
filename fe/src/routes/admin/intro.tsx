@@ -182,20 +182,12 @@ function AdminIntroPage() {
 
     setIsSubmitting(true)
     try {
-      let imageUrl = formData.image_url
-
-      // 새 이미지가 있으면 업로드
-      if (imageFile) {
-        imageUrl = await uploadImage(imageFile)
-      }
-
+      // 참고: 백엔드 스키마에 image_url 업데이트가 없으므로 이미지 변경은 지원하지 않습니다.
+      // 이미지를 변경하려면 삭제 후 재생성해야 합니다.
       const updateData: IntroductionImageUpdate = {
         title: formData.title,
         display_order: formData.display_order,
       }
-      
-      // 참고: 백엔드 스키마에 image_url 업데이트가 없으므로 이미지 변경은 지원하지 않습니다.
-      // 이미지를 변경하려면 삭제 후 재생성해야 합니다.
 
       await introductionApi.update(editingImage.id, updateData)
       alert('이미지 정보가 수정되었습니다.')
@@ -293,9 +285,8 @@ function AdminIntroPage() {
           {images.map((image, index) => (
             <div
               key={image.id}
-              className={`border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow ${
-                !image.is_active ? 'opacity-60 border-gray-300' : 'border-gray-200'
-              }`}
+              className={`border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow ${!image.is_active ? 'opacity-60 border-gray-300' : 'border-gray-200'
+                }`}
             >
               <div className="flex gap-4">
                 <div className="flex-shrink-0 w-48 h-32">
@@ -317,11 +308,10 @@ function AdminIntroPage() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleToggleActive(image)}
-                        className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
-                          image.is_active
+                        className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${image.is_active
                             ? 'bg-green-100 text-green-700 hover:bg-green-200'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                          }`}
                       >
                         {image.is_active ? '활성' : '비활성'}
                       </button>

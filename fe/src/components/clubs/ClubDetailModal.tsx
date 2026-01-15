@@ -15,16 +15,19 @@ export function ClubDetailModal({ club, onClose }: Props) {
     useEffect(() => {
         if (!club) return
 
+        const clubId = club.id
+        const currentClub = club
+
         // 동아리 상세 정보와 소개 이미지 가져오기
         async function loadClubDetail() {
             setLoading(true)
             try {
-                const detail = await clubApi.getById(club.id)
+                const detail = await clubApi.getById(clubId)
                 setClubDetail(detail)
-                
+
                 // 소개 이미지 별도 조회
                 try {
-                    const images = await clubApi.getIntroImages(club.id)
+                    const images = await clubApi.getIntroImages(clubId)
                     setIntroImages(images.sort((a, b) => a.display_order - b.display_order))
                 } catch (imgErr) {
                     console.error('소개 이미지를 불러오는데 실패했습니다.', imgErr)
@@ -33,7 +36,7 @@ export function ClubDetailModal({ club, onClose }: Props) {
             } catch (err) {
                 console.error('동아리 상세 정보를 불러오는데 실패했습니다.', err)
                 // 실패 시 전달받은 club 정보 사용
-                setClubDetail(club)
+                setClubDetail(currentClub)
                 setIntroImages([])
             } finally {
                 setLoading(false)
