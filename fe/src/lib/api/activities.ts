@@ -172,7 +172,7 @@ export const activityAdminApi = {
     updateRegistrationStatus: async (
         activityId: number,
         registrationId: number,
-        status: 'approved' | 'rejected',
+        status: 'pending' | 'approved' | 'rejected',
         adminNote?: string
     ): Promise<void> => {
         await api.patch(`/admin/activities/${activityId}/registrations/${registrationId}`, {
