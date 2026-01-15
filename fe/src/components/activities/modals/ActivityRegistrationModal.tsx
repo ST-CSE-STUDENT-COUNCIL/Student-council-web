@@ -52,9 +52,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             const fetchDetail = async () => {
                 try {
                     setFetching(true)
-                    console.log('Fetching activity detail for:', activity.id)
                     const detail = await activityApi.getById(activity.id)
-                    console.log('Fetched detail:', detail)
 
                     // Survey 타입의 경우 config.questions를 form_fields로 변환
                     if (activity.type === 'survey' && (!detail.form_fields || detail.form_fields.length === 0) && detail.config?.questions) {
@@ -90,7 +88,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         // [중요] 1단계이고 추가 질문이 있다면, 어떤 이유로든 제출(Submit) 이벤트가 발생하면
         // 서버로 보내지 말고 '다음 단계'로 이동 처리 (엔터키 방지, 버튼 오작동 방지)
         if (step === 1 && hasAdditionalFields) {
-            console.log('Intercepted submit on step 1 -> moving to next step')
+
             handleNext()
             return
         }
@@ -167,7 +165,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             if (activity.type === 'kakao_invite' && !formData.verification_image_url) return alert('학적 인증자료를 제출해주세요.')
         }
 
-        console.log('Moving to step 2')
+
         setStep(2)
     }
 

@@ -117,7 +117,6 @@ export const RegistrationsModal = ({ activity, onClose }: RegistrationsModalProp
             await Promise.all(selectedIds.map(id =>
                 activityAdminApi.updateRegistrationStatus(activity.id, id, status)
             ))
-            // alert(`${selectedIds.length}명이 ${status === 'approved' ? '승인' : '거절'}되었습니다.`)
             setSelectedIds([])
             fetchRegistrations(page)
         } catch (error) {
