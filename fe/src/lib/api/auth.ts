@@ -38,7 +38,20 @@ export const authApi = {
         return response.data
     },
 
-    resetPassword: async (data: { email: string; new_password: string }) => {
+    // 비밀번호 찾기 - 학번으로 인증번호 발송
+    forgotPassword: async (student_id: string) => {
+        const response = await api.post<{ email: string }>(`${API_BASE_URL}/forgot-password`, { student_id })
+        return response.data
+    },
+
+    // 비밀번호 재설정 인증번호 확인
+    verifyResetCode: async (data: { student_id: string; code: string }) => {
+        const response = await api.post<{ student_id: string }>(`${API_BASE_URL}/verify-reset-code`, data)
+        return response.data
+    },
+
+    // 비밀번호 재설정
+    resetPassword: async (data: { student_id: string; new_password: string }) => {
         const response = await api.post<{ message: string }>(`${API_BASE_URL}/reset-password`, data)
         return response.data
     }
