@@ -79,6 +79,9 @@ export const welfareApi = {
         const response = await fetch(presignedUrl, {
             method: 'PUT',
             body: file,
+            headers: {
+                'Content-Type': 'application/octet-stream'
+            }
         });
 
         if (!response.ok) {

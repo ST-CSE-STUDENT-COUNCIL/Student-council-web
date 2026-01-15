@@ -1,5 +1,5 @@
 import { api } from '../axios'
-import type { PendingUserItem, UserListItem, User, RejectedUserItem, BlockedUserItem } from '../../types/users'
+import type { PendingUserItem, UserListItem, RejectedUserItem, BlockedUserItem } from '../../types/users'
 
 export const adminApi = {
     getPendingUsers: async () => {

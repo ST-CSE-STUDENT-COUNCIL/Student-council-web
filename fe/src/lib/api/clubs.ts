@@ -49,7 +49,6 @@ export const clubApi = {
         const response = await fetch(presignedUrl, {
             method: 'PUT',
             headers: {
-                // 백엔드의 presigned URL 서명과 일치시키기 위해 application/octet-stream 사용
                 'Content-Type': 'application/octet-stream'
             },
             body: file,
