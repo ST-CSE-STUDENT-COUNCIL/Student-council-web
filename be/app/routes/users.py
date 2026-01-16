@@ -1,8 +1,8 @@
 """
 사용자 프로필 관련 라우트
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Form
-from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Form, Query
+from typing import Optional, List
 from app.schemas.users import (
     UserProfileResponse,
     ChangePasswordRequest,
@@ -13,7 +13,8 @@ from app.schemas.users import (
     WithdrawResponse
 )
 from app.schemas.auth import ErrorResponse
-from app.utils.auth import get_current_user
+from app.schemas.activities import MyActivitiesResponse
+from app.utils.auth import get_current_user, require_verified_user
 from app.utils.storage import upload_verification_image
 from app.utils.r2_storage import (
     generate_presigned_url,
@@ -220,3 +221,106 @@ async def withdraw(
             detail=f"회원탈퇴 처리 중 오류 발생: {str(e)}"
         )
 
+
+@router.get(
+    "/activities",
+    response_model=MyActivitiesResponse,
+    summary="내 활동 목록 조회",
+    description="로그인한 회원이 신청한 활동(행사) 목록을 조회합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "승인 필요"}
+    }
+)
+async def get_my_activities(
+    status_filter: Optional[str] = Query(
+        None,
+        description="신청 상태 필터 (pending, approved, rejected, cancelled)",
+        alias="status"
+    ),
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
+    current_user: dict = Depends(require_verified_user)
+):
+    """
+    내 활동 목록 조회
+    
+    현재 로그인한 사용자가 신청한 모든 활동(행사)을 조회합니다.
+    활동 정보와 신청 상태를 함께 반환합니다.
+    """
+    try:
+        user_id = current_user['id']
+        
+        # 기본 쿼리: 내 신청 목록 + 활동 정보 조인
+        query = supabase.table("activity_registrations")\
+            .select(
+                "id, status, created_at, updated_at, "
+                "activities(id, type, title, description, thumbnail_url, "
+                "registration_start, registration_end, max_capacity, current_count, "
+                "require_membership, is_active)"
+            )\
+            .eq("user_id", user_id)
+        
+        # 상태 필터 적용
+        if status_filter and status_filter in ['pending', 'approved', 'rejected', 'cancelled']:
+            query = query.eq("status", status_filter)
+        
+        # 정렬: 최신순
+        query = query.order("created_at", desc=True)
+        
+        # 전체 개수 조회
+        count_result = supabase.table("activity_registrations")\
+            .select("id", count="exact")\
+            .eq("user_id", user_id)
+        
+        if status_filter and status_filter in ['pending', 'approved', 'rejected', 'cancelled']:
+            count_result = count_result.eq("status", status_filter)
+        
+        count_result = count_result.execute()
+        total = count_result.count or 0
+        
+        # 페이지네이션 적용
+        offset = (page - 1) * page_size
+        query = query.range(offset, offset + page_size - 1)
+        
+        result = query.execute()
+        
+        # 응답 데이터 가공
+        items = []
+        for reg in (result.data or []):
+            activity = reg.get("activities") or {}
+            items.append({
+                "registration_id": reg.get("id"),
+                "status": reg.get("status"),
+                "registered_at": reg.get("created_at"),
+                "updated_at": reg.get("updated_at"),
+                "activity": {
+                    "id": activity.get("id"),
+                    "type": activity.get("type"),
+                    "title": activity.get("title"),
+                    "description": activity.get("description"),
+                    "thumbnail_url": activity.get("thumbnail_url"),
+                    "registration_start": activity.get("registration_start"),
+                    "registration_end": activity.get("registration_end"),
+                    "max_capacity": activity.get("max_capacity"),
+                    "current_count": activity.get("current_count"),
+                    "require_membership": activity.get("require_membership"),
+                    "is_active": activity.get("is_active")
+                }
+            })
+        
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total + page_size - 1) // page_size if page_size > 0 else 0
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"활동 목록 조회 실패: {str(e)}"
+        )
