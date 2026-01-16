@@ -24,6 +24,15 @@ export function RejectedMembersList({ members, loading, error, onRefresh }: Reje
                     <h2 className="text-lg font-bold text-slate-900">거절된 회원</h2>
                     <p className="text-sm text-gray-500">거절 사유를 확인하고 필요 시 재신청을 안내하세요.</p>
                 </div>
+                <button
+                    type="button"
+                    onClick={onRefresh}
+                    disabled={loading}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                    {loading ? '불러오는 중' : '새로고침'}
+                </button>
             </div>
 
             {loading ? (

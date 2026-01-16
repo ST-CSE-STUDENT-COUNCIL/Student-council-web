@@ -26,8 +26,8 @@ export function AdminFilters({
     onViewChange,
 }: AdminFiltersProps) {
     const viewOptions: Array<{ key: ViewKey; label: string }> = [
-        { key: 'pending', label: '승인 대기' },
         { key: 'all', label: '전체 회원' },
+        { key: 'pending', label: '승인 대기' },
         { key: 'rejected', label: '거절' },
         { key: 'blocked', label: '차단' },
     ]
