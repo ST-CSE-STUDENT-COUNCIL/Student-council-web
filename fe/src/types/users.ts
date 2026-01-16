@@ -77,3 +77,46 @@ export type PendingUserItem = {
     verification_image_url?: string | null
     created_at: string
 }
+
+/**
+ * Rejected User Item
+ * Returned from /admin/rejected-users
+ */
+export type RejectedUserItem = {
+    id: number
+    original_user_id: string
+    email: string
+    name: string
+    student_id: string
+    department: string
+    phone: string
+    rejection_reason: string
+    rejected_at: string
+    rejected_by: string | null
+}
+
+/**
+ * Blocked User Item
+ * Returned from /admin/users/blocked
+ */
+export type BlockedUserItem = {
+    id?: string | number | null
+    student_id?: string | null
+    name?: string | null
+    email?: string | null
+    department?: string | null
+    phone?: string | null
+    blocked_at?: string | null
+    block_until?: string | null
+    block_reason?: string | null
+    failed_attempts?: number | null
+    created_at?: string | null
+    recent_attempts?: Array<{
+        id: number
+        student_id: string
+        attempt_time: string
+        success: boolean
+        ip_address: string
+        created_at: string
+    }>
+}
