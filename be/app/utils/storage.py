@@ -182,7 +182,7 @@ def create_signed_url(
     
     except Exception as e:
         # 에러 발생 시 None 반환 (이미지가 없어도 다른 정보는 표시되도록)
-        print(f"Signed URL 생성 실패: {str(e)}")
+        print(f"Signed URL 생성 실패 - bucket: {bucket}, file_path: {file_path}, error: {str(e)}")
         return None
 
 
