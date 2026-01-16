@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Modal } from '../../common/Modal'
+import { PhoneInput } from '../../common/PhoneInput'
 import type { Activity, ActivityListItem, ActivityRegistrationRequest } from '../../../types/activities'
 import { activityApi } from '../../../lib/api/activities'
+import { useAuthStore } from '../../../store/useAuthStore'
 
 type ActivityRegistrationModalProps = {
     isOpen: boolean
@@ -12,6 +14,7 @@ type ActivityRegistrationModalProps = {
 }
 
 export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit }: ActivityRegistrationModalProps) => {
+    const { user } = useAuthStore()
     const [step, setStep] = useState(1)
     const [detailActivity, setDetailActivity] = useState<Activity | null>(null)
     const [fetching, setFetching] = useState(false)
@@ -31,13 +34,13 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     // 모달이 열릴 때마다 초기화 및 상세 정보 가져오기
     useEffect(() => {
         if (isOpen) {
-            // 1. 상태 초기화
+            // 1. 상태 초기화 (로그인된 사용자 정보로 자동 채우기)
             setStep(1)
             setFormData({
-                name: '',
-                student_id: '',
-                department: '컴퓨터공학과',
-                phone: '',
+                name: user?.name || '',
+                student_id: user?.student_id || '',
+                department: user?.department || '컴퓨터공학과',
+                phone: user?.phone || '',
                 kakao_id: '',
                 verification_image_url: '',
                 form_responses: {}
@@ -49,9 +52,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             const fetchDetail = async () => {
                 try {
                     setFetching(true)
-                    console.log('Fetching activity detail for:', activity.id)
                     const detail = await activityApi.getById(activity.id)
-                    console.log('Fetched detail:', detail)
 
                     // Survey 타입의 경우 config.questions를 form_fields로 변환
                     if (activity.type === 'survey' && (!detail.form_fields || detail.form_fields.length === 0) && detail.config?.questions) {
@@ -75,7 +76,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             }
             fetchDetail()
         }
-    }, [isOpen, activity.id])
+    }, [isOpen, activity.id, user])
 
     // 추가 질문 여부 확인 (detailActivity 기준)
     const hasAdditionalFields = detailActivity?.form_fields && detailActivity.form_fields.length > 0
@@ -87,7 +88,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         // [중요] 1단계이고 추가 질문이 있다면, 어떤 이유로든 제출(Submit) 이벤트가 발생하면
         // 서버로 보내지 말고 '다음 단계'로 이동 처리 (엔터키 방지, 버튼 오작동 방지)
         if (step === 1 && hasAdditionalFields) {
-            console.log('Intercepted submit on step 1 -> moving to next step')
+
             handleNext()
             return
         }
@@ -164,7 +165,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             if (activity.type === 'kakao_invite' && !formData.verification_image_url) return alert('학적 인증자료를 제출해주세요.')
         }
 
-        console.log('Moving to step 2')
+
         setStep(2)
     }
 
@@ -270,14 +271,13 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">연락처</label>
-                                            <input
-                                                type="tel"
-                                                name="phone"
-                                                value={formData.phone}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                placeholder="010-0000-0000"
-                                            />
+                                            <div className="pb-6">
+                                                <PhoneInput
+                                                    value={formData.phone || ''}
+                                                    onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
+                                                    showValidation={true}
+                                                />
+                                            </div>
                                         </div>
 
                                         {activity.type === 'kakao_invite' && (
@@ -340,7 +340,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                 </div>
 
                                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                                    {detailActivity?.form_fields?.map((field, index) => (
+                                    {detailActivity?.form_fields?.map((field) => (
                                         <div key={field.name}>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 {field.label}
@@ -348,20 +348,27 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                             </label>
 
                                             {field.type === 'select' ? (
-                                                <select
-                                                    value={formData.form_responses?.[field.name] || ''}
-                                                    onChange={(e) => setFormData(prev => ({
-                                                        ...prev,
-                                                        form_responses: { ...prev.form_responses, [field.name]: e.target.value }
-                                                    }))}
-                                                    required={field.required}
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                >
-                                                    <option value="">선택하세요</option>
+                                                <div className="space-y-2">
                                                     {field.options?.map((opt) => (
-                                                        <option key={opt} value={opt}>{opt}</option>
+                                                        <label key={opt} className="flex items-center gap-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-all">
+                                                            <div className="relative flex items-center justify-center w-5 h-5">
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`field_${field.name}`}
+                                                                    value={opt}
+                                                                    checked={formData.form_responses?.[field.name] === opt}
+                                                                    onChange={(e) => setFormData(prev => ({
+                                                                        ...prev,
+                                                                        form_responses: { ...prev.form_responses, [field.name]: e.target.value }
+                                                                    }))}
+                                                                    required={field.required}
+                                                                    className="peer appearance-none w-5 h-5 border-2 border-gray-300 rounded-full checked:border-blue-500 checked:border-4 transition-all"
+                                                                />
+                                                            </div>
+                                                            <span className="text-sm font-medium text-gray-700 peer-checked:text-blue-700">{opt}</span>
+                                                        </label>
                                                     ))}
-                                                </select>
+                                                </div>
                                             ) : field.type === 'textarea' ? (
                                                 <textarea
                                                     value={formData.form_responses?.[field.name] || ''}
@@ -377,20 +384,22 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                             ) : field.type === 'radio' ? (
                                                 <div className="space-y-2">
                                                     {field.options?.map((opt) => (
-                                                        <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                                                            <input
-                                                                type="radio"
-                                                                name={`field_${field.name}`}
-                                                                value={opt}
-                                                                checked={formData.form_responses?.[field.name] === opt}
-                                                                onChange={(e) => setFormData(prev => ({
-                                                                    ...prev,
-                                                                    form_responses: { ...prev.form_responses, [field.name]: e.target.value }
-                                                                }))}
-                                                                required={field.required}
-                                                                className="text-blue-600 focus:ring-blue-500"
-                                                            />
-                                                            <span className="text-sm text-gray-700">{opt}</span>
+                                                        <label key={opt} className="flex items-center gap-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-all">
+                                                            <div className="relative flex items-center justify-center w-5 h-5">
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`field_${field.name}`}
+                                                                    value={opt}
+                                                                    checked={formData.form_responses?.[field.name] === opt}
+                                                                    onChange={(e) => setFormData(prev => ({
+                                                                        ...prev,
+                                                                        form_responses: { ...prev.form_responses, [field.name]: e.target.value }
+                                                                    }))}
+                                                                    required={field.required}
+                                                                    className="peer appearance-none w-5 h-5 border-2 border-gray-300 rounded-full checked:border-blue-500 checked:border-4 transition-all"
+                                                                />
+                                                            </div>
+                                                            <span className="text-sm font-medium text-gray-700 peer-checked:text-blue-700">{opt}</span>
                                                         </label>
                                                     ))}
                                                 </div>
@@ -463,7 +472,8 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     placeholder={field.placeholder}
                                                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                 />
-                                            )}
+                                            )
+                                            }
                                             {field.help_text && (
                                                 <p className="text-xs text-gray-500 mt-1">{field.help_text}</p>
                                             )}

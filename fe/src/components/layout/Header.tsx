@@ -1,14 +1,22 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '../../store/useAuthStore'
+import { authApi } from '../../lib/api/auth'
 import Menu from './Menu'
 import { Code2, LogOut, LogIn, UserPlus } from 'lucide-react'
 
 export default function Header() {
     const { isAuthenticated, user, logout } = useAuthStore()
+    const navigate = useNavigate()
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         if (confirm('로그아웃 하시겠습니까?')) {
+            try {
+                await authApi.logout()
+            } catch (err) {
+                console.error('로그아웃 API 호출 실패:', err)
+            }
             logout()
+            navigate({ to: '/' })
         }
     }
 

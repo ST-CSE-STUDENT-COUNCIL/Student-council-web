@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 
-import { LockerManagementView } from '../../components/admin/welfare/LockerManagementView.tsx'
-import { RentalManagementView } from '../../components/admin/welfare/RentalManagementView'
+import { LockerManagementView } from '../../components/welfare/admin/LockerManagementView'
+import { RentalManagementView } from '../../components/welfare/admin/RentalManagementView'
 import { welfareApi, type WelfareRental } from '../../lib/api/welfare'
 
 // Admin welfare route
@@ -68,11 +68,10 @@ function AdminWelfarePage() {
                     <button
                         key={category}
                         onClick={() => setSelectedCategory(category as '대여사업' | '사물함')}
-                        className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                            selectedCategory === category
+                        className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${selectedCategory === category
                                 ? 'bg-gray-900 text-white border-gray-900'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                        }`}
+                            }`}
                     >
                         {category}
                     </button>

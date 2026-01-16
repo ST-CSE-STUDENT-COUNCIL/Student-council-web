@@ -3,7 +3,8 @@ import { useState } from 'react'
 import { authApi } from '../lib/api/auth'
 import { isAxiosError } from 'axios'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Lock, Key, CheckCircle2, ChevronLeft } from 'lucide-react'
+import { User, Lock, Key, CheckCircle2, ChevronLeft, Mail, CheckCircle } from 'lucide-react'
+import { Turnstile } from '../components/common/Turnstile'
 
 export const Route = createFileRoute('/reset-password')({
     component: ResetPassword,
@@ -12,32 +13,64 @@ export const Route = createFileRoute('/reset-password')({
 function ResetPassword() {
     const navigate = useNavigate()
     const [step, setStep] = useState<1 | 2 | 3>(1)
-    const [email, setEmail] = useState('')
+    const [studentId, setStudentId] = useState('')
+    const [maskedEmail, setMaskedEmail] = useState('')
     const [code, setCode] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
 
-    // Step 1: Send Verification Code
+    // 비밀번호 유효성 검사
+    const passwordValidation = {
+        minLength: password.length >= 8,
+        hasNumber: /\d/.test(password),
+        hasLetter: /[a-zA-Z]/.test(password),
+        hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)
+    }
+
+    const isPasswordValid =
+        passwordValidation.minLength &&
+        passwordValidation.hasNumber &&
+        passwordValidation.hasLetter &&
+        passwordValidation.hasSpecialChar
+
+    // 이메일 마스킹 (예: ex***@seoultech.ac.kr)
+    const maskEmail = (email: string) => {
+        const [local, domain] = email.split('@')
+        if (local.length <= 2) return email
+        return `${local.slice(0, 2)}${'*'.repeat(Math.min(local.length - 2, 5))}@${domain}`
+    }
+
+    // Step 1: 학번으로 인증번호 발송
     const handleSendCode = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!email.endsWith('@seoultech.ac.kr')) {
-            alert('서울과기대 이메일(@seoultech.ac.kr)을 입력해주세요.')
+        if (studentId.length < 4) {
+            alert('학번을 입력해주세요.')
+            return
+        }
+        if (!turnstileToken) {
+            alert('보안 검증을 완료해주세요.')
             return
         }
         setIsLoading(true)
         try {
-            await authApi.sendVerification(email)
+            const result = await authApi.forgotPassword(studentId)
+            setMaskedEmail(maskEmail(result.email))
             setStep(2)
-            alert('인증번호가 발송되었습니다.')
+            alert(`${maskEmail(result.email)}로 인증번호가 발송되었습니다.`)
         } catch (error) {
-            alert('인증번호 발송에 실패했습니다.')
+            if (isAxiosError(error) && error.response?.data?.detail) {
+                alert(error.response.data.detail)
+            } else {
+                alert('인증번호 발송에 실패했습니다.')
+            }
         } finally {
             setIsLoading(false)
         }
     }
 
-    // Step 2: Verify Code
+    // Step 2: 인증번호 확인
     const handleVerifyCode = async (e: React.FormEvent) => {
         e.preventDefault()
         if (code.length !== 6) {
@@ -46,25 +79,33 @@ function ResetPassword() {
         }
         setIsLoading(true)
         try {
-            await authApi.verifyEmail({ email, code })
+            await authApi.verifyResetCode({ student_id: studentId, code })
             setStep(3)
         } catch (error) {
-            alert('인증번호가 올바르지 않습니다.')
+            if (isAxiosError(error) && error.response?.data?.detail) {
+                alert(error.response.data.detail)
+            } else {
+                alert('인증번호가 올바르지 않습니다.')
+            }
         } finally {
             setIsLoading(false)
         }
     }
 
-    // Step 3: Reset Password
+    // Step 3: 비밀번호 재설정
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault()
         if (password !== confirmPassword) {
             alert('비밀번호가 일치하지 않습니다.')
             return
         }
+        if (!isPasswordValid) {
+            alert('비밀번호는 8자 이상, 영문, 숫자, 특수문자를 포함해야 합니다.')
+            return
+        }
         setIsLoading(true)
         try {
-            await authApi.resetPassword({ email, new_password: password })
+            await authApi.resetPassword({ student_id: studentId, new_password: password })
             alert('비밀번호가 성공적으로 변경되었습니다.')
             navigate({ to: '/login' })
         } catch (error) {
@@ -108,8 +149,13 @@ function ResetPassword() {
                         </Link>
                         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">비밀번호 재설정</h2>
                         <p className="mt-2 text-sm text-gray-500">
-                            {step === 1 && "가입한 이메일 주소를 입력해주세요."}
-                            {step === 2 && "이메일로 전송된 인증번호를 입력해주세요."}
+                            {step === 1 && "가입한 학번을 입력해주세요."}
+                            {step === 2 && (
+                                <>
+                                    <Mail className="inline-block w-4 h-4 mr-1" />
+                                    {maskedEmail}로 전송된 인증번호를 입력해주세요.
+                                </>
+                            )}
                             {step === 3 && "새로운 비밀번호를 입력해주세요."}
                         </p>
                     </div>
@@ -136,24 +182,34 @@ function ResetPassword() {
                                 className="space-y-6"
                             >
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">이메일</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">학번</label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <Mail className="h-5 w-5 text-gray-400" />
+                                            <User className="h-5 w-5 text-gray-400" />
                                         </div>
                                         <input
-                                            type="email"
+                                            type="text"
                                             required
+                                            maxLength={8}
                                             className="block w-full pl-10 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white"
-                                            placeholder="example@seoultech.ac.kr"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="학번을 입력해주세요"
+                                            value={studentId}
+                                            onChange={(e) => setStudentId(e.target.value)}
                                         />
                                     </div>
                                 </div>
+
+                                {/* Turnstile */}
+                                <div className="py-2">
+                                    <Turnstile
+                                        onVerify={(token) => setTurnstileToken(token)}
+                                        onExpire={() => setTurnstileToken(null)}
+                                    />
+                                </div>
+
                                 <button
                                     type="submit"
-                                    disabled={isLoading}
+                                    disabled={isLoading || !turnstileToken || studentId.length < 4}
                                     className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-all active:scale-[0.99]"
                                 >
                                     {isLoading ? '전송 중...' : '인증번호 받기'}
@@ -183,18 +239,18 @@ function ResetPassword() {
                                             className="block w-full pl-10 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 text-lg tracking-widest transition-all bg-gray-50 focus:bg-white"
                                             placeholder="000000"
                                             value={code}
-                                            onChange={(e) => setCode(e.target.value)}
+                                            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                                         />
                                     </div>
                                     <div className="mt-2 text-right">
                                         <button type="button" onClick={() => setStep(1)} className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                                            이메일 다시 입력하기
+                                            학번 다시 입력하기
                                         </button>
                                     </div>
                                 </div>
                                 <button
                                     type="submit"
-                                    disabled={isLoading}
+                                    disabled={isLoading || code.length !== 6}
                                     className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-all active:scale-[0.99]"
                                 >
                                     {isLoading ? '확인 중...' : '인증하기'}
@@ -220,12 +276,40 @@ function ResetPassword() {
                                         <input
                                             type="password"
                                             required
-                                            className="block w-full pl-10 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white"
-                                            placeholder="새 비밀번호 입력"
+                                            minLength={8}
+                                            className={`block w-full pl-10 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${password.length > 0 && isPasswordValid
+                                                ? 'border-green-500 focus:border-green-500 focus:ring-green-200'
+                                                : password.length > 0 && !isPasswordValid
+                                                    ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200'
+                                                    : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                                                }`}
+                                            placeholder="8자 이상, 영문+숫자+특수문자"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                         />
                                     </div>
+
+                                    {/* Password Requirements */}
+                                    {password.length > 0 && (
+                                        <div className="mt-3 grid grid-cols-2 gap-2">
+                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.minLength ? 'text-green-600' : 'text-gray-400'}`}>
+                                                <CheckCircle size={12} />
+                                                8자 이상
+                                            </div>
+                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasLetter ? 'text-green-600' : 'text-gray-400'}`}>
+                                                <CheckCircle size={12} />
+                                                영문 포함
+                                            </div>
+                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-400'}`}>
+                                                <CheckCircle size={12} />
+                                                숫자 포함
+                                            </div>
+                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-gray-400'}`}>
+                                                <CheckCircle size={12} />
+                                                특수문자 포함
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호 확인</label>
@@ -236,16 +320,24 @@ function ResetPassword() {
                                         <input
                                             type="password"
                                             required
-                                            className="block w-full pl-10 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white"
+                                            className={`block w-full pl-10 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${confirmPassword && password !== confirmPassword
+                                                ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                                                : confirmPassword && password === confirmPassword
+                                                    ? 'border-green-500 focus:border-green-500 focus:ring-green-200'
+                                                    : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                                                }`}
                                             placeholder="새 비밀번호 확인"
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
                                         />
                                     </div>
+                                    {confirmPassword && password !== confirmPassword && (
+                                        <p className="mt-2 text-sm text-red-600">비밀번호가 일치하지 않습니다.</p>
+                                    )}
                                 </div>
                                 <button
                                     type="submit"
-                                    disabled={isLoading}
+                                    disabled={isLoading || password !== confirmPassword || !isPasswordValid}
                                     className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-all active:scale-[0.99]"
                                 >
                                     {isLoading ? '변경 중...' : '비밀번호 변경하기'}

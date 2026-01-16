@@ -79,7 +79,7 @@ export const postApi = {
 
             // 각 파일에 대해 Presigned URL 발급 및 업로드
             for (const file of data.attachments) {
-                const contentType = file.type || 'application/octet-stream'
+                const contentType = 'application/octet-stream'
 
                 const { presigned_url, public_url } = await postApi.getPresignedUrl(
                     file.name,

@@ -4,6 +4,7 @@ import { isAxiosError } from 'axios'
 import { User, Lock } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { authApi } from '../lib/api/auth'
+import { Turnstile } from '../components/common/Turnstile'
 
 export const Route = createFileRoute('/login')({
   component: Login,
@@ -14,10 +15,18 @@ function Login() {
   const login = useAuthStore((state) => state.login)
   const [studentId, setStudentId] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!turnstileToken) {
+      alert('보안 검증을 완료해주세요.')
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -26,11 +35,23 @@ function Login() {
         password: password
       })
 
-      login(response.data.user, response.data.access_token)
+      login(response.data.user, response.data.access_token, rememberMe)
       navigate({ to: '/' })
     } catch (error) {
-      if (isAxiosError(error) && error.response?.status === 401) {
-        alert('학번 또는 비밀번호가 일치하지 않습니다.')
+      if (isAxiosError(error) && error.response) {
+        const status = error.response.status
+        const detail = error.response.data?.detail || ''
+
+        if (status === 403) {
+          // 거절된 사용자 또는 로그인 차단
+          alert(detail || '접근이 거부되었습니다.')
+        } else if (status === 401) {
+          alert(detail || '학번 또는 비밀번호가 일치하지 않습니다.')
+        } else if (status === 404) {
+          alert(detail || '등록되지 않은 학번입니다.')
+        } else {
+          alert(detail || '로그인 중 오류가 발생했습니다.')
+        }
       } else {
         console.error('Login failed:', error)
         alert('로그인 중 오류가 발생했습니다.')
@@ -114,20 +135,30 @@ function Login() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-500">
                   로그인 유지
                 </label>
               </div>
               <Link to="/reset-password" className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                비밀번호 찾기
+                비밀번호 재설정
               </Link>
+            </div>
+
+            {/* Turnstile */}
+            <div className="py-2">
+              <Turnstile
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken(null)}
+              />
             </div>
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !turnstileToken}
               className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-all active:scale-[0.99]"
             >
               {isLoading ? '로그인 중...' : '로그인'}

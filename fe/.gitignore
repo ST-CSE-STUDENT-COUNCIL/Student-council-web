@@ -11,7 +11,6 @@ lerna-debug.log*
 .tanstack
 
 
-
 # 노드 모듈 무시
 node_modules
 dist
@@ -33,3 +32,7 @@ dist-ssr
 #묵서버 데이터베이스json 무시
 uploads
 mock-server/db.json
+
+.env
+.env.local
+.env.remote
