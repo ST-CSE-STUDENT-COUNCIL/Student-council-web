@@ -85,8 +85,7 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
         return []
     })()
 
-    const handleRegistrationSubmit = async (data: any) => {
-        console.log('Registration Submitted:', data)
+    const handleRegistrationSubmit = async (_data: unknown) => {
         // API 호출은 모달 내부에서 처리
     }
 
