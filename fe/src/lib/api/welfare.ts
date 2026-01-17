@@ -18,19 +18,6 @@ export type WelfareRental = {
     updated_at: string;
 };
 
-export type LockerPeriod = {
-    id: number;
-    layout_image_url?: string;
-    application_form_url?: string;
-    return_extension_form_url?: string;
-    application_start?: string;
-    application_end?: string;
-    return_extension_start?: string;
-    return_extension_end?: string;
-    description?: string;
-    created_at: string;
-    updated_at: string;
-};
 
 export type LockerInfo = {
     id: number;
@@ -42,6 +29,7 @@ export type LockerInfo = {
     return_extension_start?: string;
     return_extension_end?: string;
     description?: string | null;
+    created_at: string;
     updated_at: string;
 };
 
@@ -108,15 +96,7 @@ export const welfareApi = {
     },
 
     /**
-     * 사물함 기간 정보를 가져옵니다.
-     */
-    getLockerPeriods: async (): Promise<LockerPeriod> => {
-        const response = await axios.get(`${API_BASE_URL}/welfare/locker_periods`);
-        return response.data;
-    },
-
-    /**
-     * 사물함 정보를 가져옵니다 (getLockerPeriods의 별칭).
+     * 사물함 정보를 가져옵니다.
      */
     getLockerInfo: async (): Promise<LockerInfo> => {
         const response = await axios.get(`${API_BASE_URL}/welfare/locker_periods`);
@@ -162,9 +142,9 @@ export const welfareApi = {
     },
 
     /**
-     * 사물함 기간 정보를 수정합니다.
+     * 사물함 정보를 수정합니다.
      */
-    updateLockerPeriods: async (data: {
+    updateLockerInfo: async (data: {
         application_form_url?: string | null;
         return_extension_form_url?: string | null;
         application_start?: string | null;
@@ -172,7 +152,7 @@ export const welfareApi = {
         return_extension_start?: string | null;
         return_extension_end?: string | null;
         description?: string | null;
-    }, token?: string | null): Promise<LockerPeriod> => {
+    }, token?: string | null): Promise<LockerInfo> => {
         const response = await axios.put(`${API_BASE_URL}/admin/welfare/locker_periods`, data, {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
