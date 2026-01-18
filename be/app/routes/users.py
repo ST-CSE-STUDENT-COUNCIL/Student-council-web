@@ -195,12 +195,14 @@ async def withdraw(
         # 2. users 테이블에서 삭제
         admin_supabase.table('users').delete().eq('id', user_id).execute()
         
-        # 3. Supabase Auth에서 삭제
+        # 3. Supabase Auth에서 삭제 (새 클라이언트 사용 - 인증 상태 오염 방지)
         try:
-            admin_supabase.auth.admin.delete_user(user_id)
-        except Exception:
-            # Auth 삭제 실패해도 진행
-            pass
+            from app.database import get_fresh_admin_client
+            fresh_client = get_fresh_admin_client()
+            fresh_client.auth.admin.delete_user(user_id)
+        except Exception as auth_del_error:
+            # Auth 삭제 실패 로그
+            print(f"[WITHDRAW ERROR] Auth 삭제 실패: {str(auth_del_error)}")
         
         # 4. email_verifications 삭제 (재가입 허용)
         try:
@@ -208,8 +210,8 @@ async def withdraw(
                 .delete()\
                 .eq('email', user_email)\
                 .execute()
-        except Exception:
-            pass
+        except Exception as email_del_error:
+            print(f"[WITHDRAW ERROR] email_verifications 삭제 실패: {str(email_del_error)}")
         
         return WithdrawResponse()
     

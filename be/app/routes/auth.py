@@ -229,16 +229,18 @@ async def signup(request: SignupRequest):
                 detail="이미 사용 중인 학번입니다"
             )
         
-        # 5. Supabase Auth에 사용자 생성 (admin 클라이언트 사용)
+        # 5. Supabase Auth에 사용자 생성 (새 클라이언트 사용)
         try:
-            admin_supabase = get_supabase_admin()
-            auth_response = admin_supabase.auth.admin.create_user({
+            from app.database import get_fresh_admin_client
+            fresh_client = get_fresh_admin_client()
+            auth_response = fresh_client.auth.admin.create_user({
                 "email": request.email,
                 "password": request.password,
                 "email_confirm": True
             })
         except Exception as auth_error:
             error_message = str(auth_error)
+            print(f"[SIGNUP ERROR] Auth 생성 실패: {error_message}")
             if "already been registered" in error_message:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -274,6 +276,7 @@ async def signup(request: SignupRequest):
             # RLS 우회를 위해 admin_supabase 사용
             admin_supabase.table('users').insert(user_data).execute()
         except Exception as insert_error:
+            print(f"[SIGNUP ERROR] users 테이블 insert 실패: {str(insert_error)}")
             raise
         
         # 7. 이메일 인증 사용됨으로 표시
@@ -675,10 +678,11 @@ async def reset_password(body: ResetPasswordRequest):
         user_id = user_result.data['id']
         email = user_result.data['email']
         
-        # 3. Supabase Auth에서 비밀번호 변경 (admin 클라이언트 사용)
+        # 3. Supabase Auth에서 비밀번호 변경 (새 클라이언트 사용)
         try:
-            admin_supabase = get_supabase_admin()
-            admin_supabase.auth.admin.update_user_by_id(
+            from app.database import get_fresh_admin_client
+            fresh_client = get_fresh_admin_client()
+            fresh_client.auth.admin.update_user_by_id(
                 user_id,
                 {"password": body.new_password}
             )

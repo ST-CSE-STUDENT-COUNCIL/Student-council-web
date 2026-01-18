@@ -138,6 +138,7 @@ async def upload_verification_image(file: UploadFile, user_id: str) -> str:
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[STORAGE ERROR] verification-images 업로드 실패: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Storage 업로드 실패: {str(e)}"
