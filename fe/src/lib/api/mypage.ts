@@ -61,7 +61,10 @@ export const mypageApi = {
 
     withdraw: async (password: string) => {
         const response = await api.delete<{ message: string }>(`${API_BASE_URL}`, {
-            data: { password }
+            data: { password },
+            headers: {
+                'Content-Type': 'application/json'
+            }
         })
         return response.data
     }

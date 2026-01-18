@@ -32,7 +32,10 @@ export function WithdrawModal({ onClose }: WithdrawModalProps) {
             await navigate({ to: '/' })
         } catch (err: any) {
             console.error('Failed to withdraw', err)
-            setError(err.response?.data?.detail || '회원 탈퇴에 실패했습니다.')
+            const status = err.response?.status
+            const detail = err.response?.data?.detail
+            const errorMessage = detail || (status ? `오류가 발생했습니다 (${status})` : '회원 탈퇴에 실패했습니다.')
+            setError(errorMessage)
         } finally {
             setLoading(false)
         }
