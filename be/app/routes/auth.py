@@ -229,16 +229,18 @@ async def signup(request: SignupRequest):
                 detail="이미 사용 중인 학번입니다"
             )
         
-        # 5. Supabase Auth에 사용자 생성 (admin 클라이언트 사용)
+        # 5. Supabase Auth에 사용자 생성 (새 클라이언트 사용)
         try:
-            admin_supabase = get_supabase_admin()
-            auth_response = admin_supabase.auth.admin.create_user({
+            from app.database import get_fresh_admin_client
+            fresh_client = get_fresh_admin_client()
+            auth_response = fresh_client.auth.admin.create_user({
                 "email": request.email,
                 "password": request.password,
                 "email_confirm": True
             })
         except Exception as auth_error:
             error_message = str(auth_error)
+            print(f"[SIGNUP ERROR] Auth 생성 실패: {error_message}")
             if "already been registered" in error_message:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -271,9 +273,10 @@ async def signup(request: SignupRequest):
         }
         
         try:
-            # RLS 우회를 위해 admin_supabase 사용
-            admin_supabase.table('users').insert(user_data).execute()
+            # RLS 우회를 위해 fresh_client 사용
+            fresh_client.table('users').insert(user_data).execute()
         except Exception as insert_error:
+            print(f"[SIGNUP ERROR] users 테이블 insert 실패: {str(insert_error)}")
             raise
         
         # 7. 이메일 인증 사용됨으로 표시
@@ -384,9 +387,13 @@ async def login(body: LoginRequest, request: Request):
                     detail=f"로그인이 일시 차단되었습니다. 약 {int(remaining)}분 후 다시 시도해주세요. (10회 실패)"
                 )
         
-        # 3. Supabase Auth로 로그인 시도
+        # 3. Supabase Auth로 로그인 시도 (새 클라이언트 사용)
         try:
-            auth_response = supabase.auth.sign_in_with_password({
+            # 싱글톤 오염 방지를 위해 새 클라이언트 생성
+            from app.database import get_fresh_admin_client
+            fresh_client = get_fresh_admin_client()
+            
+            auth_response = fresh_client.auth.sign_in_with_password({
                 "email": email,
                 "password": body.password
             })
@@ -433,42 +440,6 @@ async def login(body: LoginRequest, request: Request):
             )
         
         access_token = auth_response.session.access_token
-        
-        # 4. 거절된 사용자는 로그인 차단
-        try:
-            auth_response = supabase.auth.sign_in_with_password({
-                "email": email,
-                "password": body.password
-            })
-        except Exception as auth_error:
-            # 로그인 실패 기록
-            await record_login_attempt(body.student_id, False, client_ip)
-            
-            # 실패 횟수 증가 및 차단 처리
-            result = await increment_failed_attempts(body.student_id)
-            
-            if result['is_permanent']:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="로그인 시도 횟수 초과로 계정이 차단되었습니다. 본인이 맞다면 관리자에게 문의하여 차단 해제를 요청하세요."
-                )
-            elif result['is_blocked']:
-                reason = result['block_reason']
-                if reason == '10_minutes':
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="로그인 5회 실패로 10분간 차단되었습니다."
-                    )
-                elif reason == '1_hour':
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="로그인 10회 실패로 1시간 동안 차단되었습니다."
-                    )
-            
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"학번 또는 비밀번호가 올바르지 않습니다. (실패 {result['failed_attempts']}/15)"
-            )
         
         if not auth_response.user or not auth_response.session:
             # 로그인 실패 기록
@@ -535,10 +506,14 @@ async def logout(authorization: Optional[str] = Header(None)):
         # Supabase에서 사용자의 모든 세션 무효화
         # 1. 토큰으로 사용자 정보 조회
         try:
-            user_response = supabase.auth.get_user(access_token)
+            # 싱글톤 오염 방지를 위해 새 클라이언트 생성
+            from app.database import get_fresh_admin_client
+            fresh_client = get_fresh_admin_client()
+            
+            user_response = fresh_client.auth.get_user(access_token)
             if user_response and user_response.user:
                 # 2. 해당 사용자의 모든 세션 무효화
-                supabase.auth.admin.sign_out(user_response.user.id, scope='global')
+                fresh_client.auth.admin.sign_out(user_response.user.id, scope='global')
         except Exception:
             # 토큰이 이미 만료되었거나 유효하지 않은 경우
             # 프론트엔드에서는 이미 삭제할 것이므로 성공 처리
@@ -675,10 +650,11 @@ async def reset_password(body: ResetPasswordRequest):
         user_id = user_result.data['id']
         email = user_result.data['email']
         
-        # 3. Supabase Auth에서 비밀번호 변경 (admin 클라이언트 사용)
+        # 3. Supabase Auth에서 비밀번호 변경 (새 클라이언트 사용)
         try:
-            admin_supabase = get_supabase_admin()
-            admin_supabase.auth.admin.update_user_by_id(
+            from app.database import get_fresh_admin_client
+            fresh_client = get_fresh_admin_client()
+            fresh_client.auth.admin.update_user_by_id(
                 user_id,
                 {"password": body.new_password}
             )

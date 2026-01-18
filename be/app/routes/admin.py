@@ -324,12 +324,14 @@ async def reject_user(user_id: str, request: RejectUserRequest):
         # 3. users 테이블에서 삭제
         admin_supabase.table('users').delete().eq('id', user_id).execute()
         
-        # 4. Supabase Auth에서 삭제
+        # 4. Supabase Auth에서 삭제 (새 클라이언트 사용)
         try:
-            admin_supabase.auth.admin.delete_user(user_id)
+            from app.database import get_fresh_admin_client
+            fresh_client = get_fresh_admin_client()
+            fresh_client.auth.admin.delete_user(user_id)
         except Exception as auth_error:
             # Auth 삭제 실패 로깅
-            pass
+            print(f"[ADMIN REJECT ERROR] Auth 삭제 실패: {str(auth_error)}")
         
         # 5. email_verifications 삭제 (재가입 허용) - 직접 삭제
         try:
