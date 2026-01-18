@@ -19,7 +19,7 @@ function SignUp() {
         phone: '',
         password: '',
         password_confirm: '',
-        department: '',
+        department: '컴퓨터공학과',
     })
 
     // Verification States
