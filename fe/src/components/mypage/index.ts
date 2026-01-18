@@ -6,4 +6,4 @@ export { Badge } from './Badge'
 export { InfoCard } from './InfoCard'
 export { VerifyModal } from './VerifyModal'
 export { ChangePasswordModal } from './ChangePasswordModal'
-
+export { WithdrawModal } from './WithdrawModal'
