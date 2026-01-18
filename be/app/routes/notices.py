@@ -143,17 +143,32 @@ async def get_notices(
         posts_data = result.data if result.data else []
         
         # 응답 데이터 구성 (이미 board, author 정보가 포함되어 있음)
+
         notices = []
         for post in posts_data:
             # 관계형 쿼리 결과에서 board, author 추출
             board_data = post.pop('boards', None)
             author_data = post.pop('author', None)
             
+            # Pydantic 유효성 검사를 위한 안전한 기본값 처리
+            board_info = board_data if board_data else {
+                'id': post.get('board_id') or 0,  # None이면 0
+                'name': '알 수 없음', 
+                'category': 'Unknown'
+            }
+            
+            author_info = author_data if author_data else {
+                'id': post.get('author_id') or 'deleted-user', # None이면 문자열
+                'name': '알 수 없음'
+            }
+            
             notices.append({
                 **post,
-                'board': board_data if board_data else {'id': post.get('board_id'), 'name': '', 'category': ''},
-                'author': author_data if author_data else {'id': post.get('author_id'), 'name': '알 수 없음'}
+                'board': board_info,
+                'author': author_info
             })
+            
+
         
         # 전체 개수 조회 (필터 적용)
         count_query = supabase.table('posts')\
@@ -192,6 +207,7 @@ async def get_notices(
         )
     
     except Exception as e:
+        print(f"[NOTICES ERROR] {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"공지사항 조회 실패: {str(e)}"

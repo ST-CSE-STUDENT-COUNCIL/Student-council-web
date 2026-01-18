@@ -138,10 +138,25 @@ async def upload_verification_image(file: UploadFile, user_id: str) -> str:
     except HTTPException:
         raise
     except Exception as e:
+        error_msg = str(e)
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        
+        # Supabase Storage 에러 파싱
+        if "StorageApiError" in error_msg:
+            if "Duplicate" in error_msg:
+                status_code = status.HTTP_409_CONFLICT
+                error_msg = "이미 존재하는 파일입니다"
+            elif "The object exceeded the maximum allowed size" in error_msg:
+                status_code = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+                error_msg = "파일 크기가 너무 큽니다 (최대 5MB)"
+            elif "unauthorized" in error_msg.lower():
+                status_code = status.HTTP_401_UNAUTHORIZED
+                error_msg = "스토리지 접근 권한이 없습니다"
+        
         print(f"[STORAGE ERROR] verification-images 업로드 실패: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Storage 업로드 실패: {str(e)}"
+            status_code=status_code,
+            detail=f"이미지 업로드 실패: {error_msg}"
         )
 
 

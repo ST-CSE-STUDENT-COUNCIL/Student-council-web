@@ -63,9 +63,13 @@ async def change_password(
 ):
     """비밀번호 변경"""
     try:
-        # 1. 현재 비밀번호로 재인증
+        # 새 클라이언트 생성 (싱글톤 오염 방지)
+        from app.database import get_fresh_admin_client
+        fresh_client = get_fresh_admin_client()
+        
+        # 1. 현재 비밀번호로 재인증 (fresh 클라이언트 사용)
         try:
-            supabase.auth.sign_in_with_password({
+            fresh_client.auth.sign_in_with_password({
                 "email": current_user['email'],
                 "password": body.current_password
             })
@@ -75,13 +79,14 @@ async def change_password(
                 detail="현재 비밀번호가 올바르지 않습니다"
             )
         
-        # 2. 새 비밀번호로 변경
+        # 2. 새 비밀번호로 변경 (같은 fresh 클라이언트로 admin API 호출)
         try:
-            supabase.auth.admin.update_user_by_id(
+            fresh_client.auth.admin.update_user_by_id(
                 current_user['id'],
                 {"password": body.new_password}
             )
         except Exception as e:
+            print(f"[CHANGE PASSWORD ERROR] {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="비밀번호 변경 실패"
@@ -178,7 +183,11 @@ async def withdraw(
     try:
         # 1. 비밀번호 확인
         try:
-            supabase.auth.sign_in_with_password({
+            # 싱글톤 오염 방지를 위해 새 클라이언트 생성
+            from app.database import get_fresh_admin_client
+            fresh_client = get_fresh_admin_client()
+            
+            fresh_client.auth.sign_in_with_password({
                 "email": current_user['email'],
                 "password": body.password
             })
@@ -192,26 +201,24 @@ async def withdraw(
         user_email = current_user['email']
         admin_supabase = get_supabase_admin()
         
-        # 2. users 테이블에서 삭제
-        admin_supabase.table('users').delete().eq('id', user_id).execute()
-        
-        # 3. Supabase Auth에서 삭제 (새 클라이언트 사용 - 인증 상태 오염 방지)
+        # 2. PostgreSQL 함수로 사용자 완전 삭제 (users + auth.users + 관련 데이터)
         try:
-            from app.database import get_fresh_admin_client
-            fresh_client = get_fresh_admin_client()
-            fresh_client.auth.admin.delete_user(user_id)
-        except Exception as auth_del_error:
-            # Auth 삭제 실패 로그
-            print(f"[WITHDRAW ERROR] Auth 삭제 실패: {str(auth_del_error)}")
+            admin_supabase.rpc('delete_user_completely', {'target_user_id': user_id}).execute()
+        except Exception as rpc_error:
+            print(f"[WITHDRAW ERROR] RPC 삭제 실패: {str(rpc_error)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"회원탈퇴 처리 실패: {str(rpc_error)}"
+            )
         
-        # 4. email_verifications 삭제 (재가입 허용)
+        # 3. email_verifications 삭제 (재가입 허용)
         try:
             admin_supabase.table('email_verifications')\
                 .delete()\
                 .eq('email', user_email)\
                 .execute()
         except Exception as email_del_error:
-            print(f"[WITHDRAW ERROR] email_verifications 삭제 실패: {str(email_del_error)}")
+            print(f"[WITHDRAW] email_verifications 삭제: {str(email_del_error)}")
         
         return WithdrawResponse()
     
