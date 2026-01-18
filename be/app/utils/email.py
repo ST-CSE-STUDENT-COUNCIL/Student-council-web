@@ -79,18 +79,29 @@ def _get_gmail_credentials() -> Credentials:
     
     Refresh Token 기반으로 Access Token을 갱신합니다.
     """
-    credentials = Credentials(
-        token=None,
-        refresh_token=settings.GOOGLE_REFRESH_TOKEN,
-        token_uri="https://oauth2.googleapis.com/token",
-        client_id=settings.GOOGLE_CLIENT_ID,
-        client_secret=settings.GOOGLE_CLIENT_SECRET,
-        scopes=[GMAIL_SEND_SCOPE]
-    )
-    
-    # Access Token 갱신 (만료/미발급 시)
-    credentials.refresh(Request())
-    return credentials
+    try:
+        credentials = Credentials(
+            token=None,
+            refresh_token=settings.GOOGLE_REFRESH_TOKEN,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=settings.GOOGLE_CLIENT_ID,
+            client_secret=settings.GOOGLE_CLIENT_SECRET,
+            scopes=[GMAIL_SEND_SCOPE]
+        )
+        
+        # Access Token 갱신 (만료/미발급 시)
+        credentials.refresh(Request())
+        return credentials
+    except Exception as e:
+        error_msg = str(e)
+        if "invalid_scope" in error_msg:
+            logger.error(
+                "Gmail API Scope 에러: Refresh Token이 gmail.send 권한 없이 생성되었습니다.\n"
+                "해결 방법: python scripts/generate_gmail_token.py 를 실행하여 "
+                "새로운 Refresh Token을 생성하세요.\n"
+                "자세한 가이드: GMAIL_SETUP_GUIDE.md 파일을 참고하세요."
+            )
+        raise
 
 
 def _send_gmail_message(message: EmailMessage, credentials: Credentials) -> None:
@@ -112,7 +123,7 @@ def _send_gmail_message(message: EmailMessage, credentials: Credentials) -> None
         raise
 
 
-async def send_verification_email(to_email: str, code: str) -> None:
+def send_verification_email(to_email: str, code: str) -> None:
     """
     이메일 인증번호 발송
     
@@ -272,20 +283,16 @@ async def create_password_reset(student_id: str, email: str) -> str:
     return code
 
 
-async def send_password_reset_email(email: str, code: str) -> None:
+def _build_password_reset_message(email: str, code: str) -> EmailMessage:
     """
-    비밀번호 재설정 인증번호 이메일 발송
-    
-    Args:
-        email: 이메일 주소
-        code: 6자리 인증번호
+    비밀번호 재설정 이메일 메시지 생성
     """
     message = EmailMessage()
     message["From"] = f"{settings.GMAIL_FROM_NAME} <{settings.GMAIL_FROM_EMAIL}>"
     message["To"] = email
     message["Subject"] = "[서울과기대 컴공학생회] 비밀번호 재설정 인증번호"
     
-    # HTML 본문 (회원가입 인증 디자인과 동일)
+    # HTML 본문
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -317,27 +324,28 @@ async def send_password_reset_email(email: str, code: str) -> None:
     message.set_content("인증번호: " + code)
     message.add_alternative(html_content, subtype="html")
     
-    try:
-        creds = Credentials(
-            token=None,
-            refresh_token=settings.GOOGLE_REFRESH_TOKEN,
-            token_uri="https://oauth2.googleapis.com/token",
-            client_id=settings.GOOGLE_CLIENT_ID,
-            client_secret=settings.GOOGLE_CLIENT_SECRET,
-            scopes=[GMAIL_SEND_SCOPE]
-        )
-        creds.refresh(Request())
-        
-        service = build("gmail", "v1", credentials=creds)
-        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
-        send_message = {"raw": raw_message}
-        service.users().messages().send(userId="me", body=send_message).execute()
-        
-        logger.info(f"비밀번호 재설정 이메일 발송 성공: {email}")
+    return message
+
+
+def send_password_reset_email(email: str, code: str) -> None:
+    """
+    비밀번호 재설정 인증번호 이메일 발송
     
-    except Exception as e:
-        logger.error(f"비밀번호 재설정 이메일 발송 실패: {str(e)}")
-        raise Exception(f"이메일 발송 실패: {str(e)}")
+    Args:
+        email: 이메일 주소
+        code: 6자리 인증번호
+    
+    Raises:
+        Exception: 이메일 발송 실패 시
+    """
+    try:
+        message = _build_password_reset_message(email, code)
+        credentials = _get_gmail_credentials()
+        _send_gmail_message(message, credentials)
+        logger.info(f"비밀번호 재설정 이메일 발송 성공: {email}")
+    except Exception as exc:
+        logger.exception("비밀번호 재설정 이메일 발송 실패")
+        raise exc
 
 
 async def verify_password_reset_code(student_id: str, code: str) -> bool:

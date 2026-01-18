@@ -47,15 +47,15 @@ async def get_pending_users():
     """
     승인 대기 회원 목록 조회
     
-    verification_status가 'pending'인 회원들을 조회합니다.
+    verification_status가 'pending' 또는 'submitted'인 회원들을 조회합니다.
     생성일 기준 오래된 순으로 정렬합니다.
     학적 인증 이미지가 있는 경우 Signed URL을 생성하여 반환합니다.
     """
     try:
-        # 승인 대기 중인 회원 조회
+        # 승인 대기 중인 회원 조회 (pending + submitted)
         result = supabase.table('users')\
             .select('id, student_id, name, email, department, phone, verification_image_url, created_at')\
-            .eq('verification_status', 'pending')\
+            .in_('verification_status', ['pending', 'submitted'])\
             .order('created_at', desc=False)\
             .execute()
         
@@ -63,10 +63,15 @@ async def get_pending_users():
         
         # 각 사용자의 이미지에 대한 Signed URL 생성
         for user in users:
-            if user.get('verification_image_url'):
+            original_url = user.get('verification_image_url')
+            if original_url:
                 # Private Storage이므로 Signed URL 생성 (1시간 유효)
-                signed_url = create_signed_url(user['verification_image_url'], expires_in=3600)
-                user['verification_image_url'] = signed_url
+                signed_url = create_signed_url(original_url, expires_in=3600)
+                if signed_url:
+                    user['verification_image_url'] = signed_url
+                else:
+                    # 실패 시 None 유지
+                    user['verification_image_url'] = None
         
         return PendingUserListResponse(
             users=users,
@@ -79,6 +84,56 @@ async def get_pending_users():
             detail=f"승인 대기 목록 조회 실패: {str(e)}"
         )
 
+
+@router.get(
+    "/rejected-users",
+    summary="거절된 회원 목록 조회",
+    description="가입이 거절된 회원의 목록을 조회합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"}
+    }
+)
+async def get_rejected_users(
+    page: int = 1,
+    page_size: int = 20
+):
+    """
+    거절된 회원 목록 조회
+    
+    rejected_users 테이블에서 거절된 회원 목록을 조회합니다.
+    """
+    try:
+        admin_supabase = get_supabase_admin()
+        offset = (page - 1) * page_size
+        
+        # 전체 개수 조회
+        count_result = admin_supabase.table('rejected_users')\
+            .select('id', count='exact')\
+            .execute()
+        
+        total = count_result.count or 0
+        
+        # 목록 조회
+        result = admin_supabase.table('rejected_users')\
+            .select('*')\
+            .order('rejected_at', desc=True)\
+            .range(offset, offset + page_size - 1)\
+            .execute()
+        
+        return {
+            "items": result.data,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total + page_size - 1) // page_size if page_size > 0 else 0
+        }
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"거절된 회원 목록 조회 실패: {str(e)}"
+        )
 
 @router.get(
     "/users",
@@ -224,8 +279,9 @@ async def reject_user(user_id: str, request: RejectUserRequest):
     """
     회원 거부
     
-    해당 회원의 verification_status를 'rejected'로 변경하고,
-    거부 사유를 기록합니다. 거부된 회원은 로그인할 수 없습니다.
+    해당 회원을 rejected_users 테이블로 이동하고,
+    users 및 auth.users에서 삭제합니다.
+    거부된 회원은 재가입이 가능합니다.
     
     Args:
         user_id: 거부할 회원의 UUID
@@ -235,9 +291,11 @@ async def reject_user(user_id: str, request: RejectUserRequest):
         거부 완료 메시지와 user_id
     """
     try:
-        # 1. 사용자 존재 확인
-        user_check = supabase.table('users')\
-            .select('id, verification_status')\
+        admin_supabase = get_supabase_admin()
+        
+        # 1. 사용자 정보 조회
+        user_check = admin_supabase.table('users')\
+            .select('*')\
             .eq('id', user_id)\
             .single()\
             .execute()
@@ -248,19 +306,38 @@ async def reject_user(user_id: str, request: RejectUserRequest):
                 detail="사용자를 찾을 수 없습니다"
             )
         
-        # 2. 거부 처리
-        from datetime import timezone, timedelta
-        kst = timezone(timedelta(hours=9))
+        user_data = user_check.data
         
-        admin_supabase = get_supabase_admin()
-        result = admin_supabase.table('users')\
-            .update({
-                'verification_status': 'rejected',
-                'rejection_reason': request.reason,
-                'updated_at': datetime.now(kst).isoformat()
-            })\
-            .eq('id', user_id)\
-            .execute()
+        # 2. rejected_users 테이블에 아카이브
+        archive_data = {
+            'original_user_id': user_id,
+            'email': user_data.get('email'),
+            'name': user_data.get('name'),
+            'student_id': user_data.get('student_id'),
+            'department': user_data.get('department'),
+            'phone': user_data.get('phone'),
+            'rejection_reason': request.reason
+        }
+        
+        admin_supabase.table('rejected_users').insert(archive_data).execute()
+        
+        # 3. users 테이블에서 삭제
+        admin_supabase.table('users').delete().eq('id', user_id).execute()
+        
+        # 4. Supabase Auth에서 삭제
+        try:
+            admin_supabase.auth.admin.delete_user(user_id)
+        except Exception as auth_error:
+            # Auth 삭제 실패 로깅
+            pass
+        
+        # 5. email_verifications 삭제 (재가입 허용) - 직접 삭제
+        try:
+            user_email = user_data.get('email')
+            # 해당 이메일의 모든 레코드 삭제 (verified 상태와 무관하게)
+            result = admin_supabase.table('email_verifications').delete().eq('email', user_email).execute()
+        except Exception as ev_error:
+            pass  # 삭제 실패 무시
         
         return RejectUserResponse(user_id=user_id)
     
@@ -443,9 +520,13 @@ async def get_blocked_users():
     관리자가 실제 본인의 시도인지 악의적인 공격인지 판단할 수 있습니다.
     """
     try:
-        # 차단된 사용자 조회
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+        
+        # 실제 차단된 사용자 조회 (block_reason이 있는 경우)
         blocks_result = supabase.table('login_blocks')\
             .select('*')\
+            .not_.is_('block_reason', 'null')\
             .execute()
         
         if not blocks_result.data:
@@ -454,8 +535,34 @@ async def get_blocked_users():
                 'total': 0
             }
         
+        # 현재 차단 중인 사용자만 필터링 (영구차단 또는 block_until > 현재시간)
+        active_blocks = []
+        for block in blocks_result.data:
+            block_reason = block.get('block_reason')
+            block_until_str = block.get('block_until')
+            
+            # 영구 차단은 항상 표시
+            if block_reason == 'permanent':
+                active_blocks.append(block)
+                continue
+            
+            # 일시 차단은 block_until이 현재보다 미래인 경우만 표시
+            if block_until_str:
+                try:
+                    block_until = datetime.fromisoformat(block_until_str.replace('Z', '+00:00'))
+                    if block_until > now:
+                        active_blocks.append(block)
+                except:
+                    pass
+        
+        if not active_blocks:
+            return {
+                'blocked_users': [],
+                'total': 0
+            }
+        
         # N+1 방지: 모든 student_id를 수집하여 한 번에 조회
-        student_ids = [block['student_id'] for block in blocks_result.data]
+        student_ids = [block['student_id'] for block in active_blocks]
         
         # 사용자 정보 한 번에 조회
         users_result = supabase.table('users')\
@@ -481,7 +588,7 @@ async def get_blocked_users():
                 attempts_map[sid].append(attempt)
         
         blocked_users = []
-        for block in blocks_result.data:
+        for block in active_blocks:
             student_id = block['student_id']
             user_info = user_map.get(student_id, {})
             attempts = attempts_map.get(student_id, [])
@@ -529,20 +636,19 @@ async def unblock_user_by_admin(student_id: str):
     차단을 해제하고 로그인 실패 횟수를 초기화합니다.
     """
     try:
-        # 1. 사용자 존재 확인
-        user_result = supabase.table('users')\
+        # 차단 정보 존재 확인
+        block_result = supabase.table('login_blocks')\
             .select('id')\
             .eq('student_id', student_id)\
-            .single()\
             .execute()
         
-        if not user_result.data:
+        if not block_result.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="사용자를 찾을 수 없습니다"
+                detail="해당 학번의 차단 정보가 없습니다"
             )
         
-        # 2. 차단 해제
+        # 차단 해제
         await unblock_user(student_id)
         
         return {

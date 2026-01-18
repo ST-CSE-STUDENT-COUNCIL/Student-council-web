@@ -25,6 +25,7 @@ from app.schemas.activities import (
     SurveySubmitRequest,
     SurveyStatsResponse,
     RegistrationStatusUpdateRequest,
+    DemandSurveyStatsResponse,
     ErrorResponse
 )
 from app.utils.auth import optional_current_user, require_verified_user, require_admin
@@ -33,7 +34,8 @@ from app.utils.r2_storage import (
     delete_file_from_r2,
     generate_presigned_url,
     validate_file_extension,
-    get_bucket_url
+    get_bucket_url,
+    BROAD_ALLOWED_EXTENSIONS
 )
 from app.database import supabase, get_supabase_admin
 import uuid
@@ -258,7 +260,7 @@ async def get_activity_verification_presigned_url(
     filename: str
 ):
     """활동 신청 인증 이미지 업로드를 위한 Presigned URL 발급"""
-    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png'})
+    file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     file_key = f"activity-{activity_id}/verification/{unique_filename}"
     
@@ -321,12 +323,12 @@ async def register_for_activity(
                 detail="카톡방 초대 신청은 로그인이 필요합니다"
             )
         
-        # 비회원 신청 시 필수 정보 확인
+        # 비회원 신청 시 필수 정보 확인 (이메일 제외)
         if not current_user:
-            if not all([body.name, body.student_id, body.department, body.phone, body.email]):
+            if not all([body.name, body.student_id, body.department, body.phone]):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="비회원은 이름, 학번, 학과, 전화번호, 이메일을 모두 입력해야 합니다"
+                    detail="비회원은 이름, 학번, 학과, 전화번호를 모두 입력해야 합니다"
                 )
         
         # 회원 정보 가져오기
@@ -982,7 +984,7 @@ async def get_admin_activity_presigned_url(
     current_user: dict = Depends(require_admin)
 ):
     """관리자용 활동 이미지 Presigned URL 발급"""
-    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.gif', '.webp'})
+    file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     file_key = f"activities/{unique_filename}"
     
@@ -1095,6 +1097,143 @@ async def get_survey_stats(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"설문조사 통계 조회 실패: {str(e)}"
+        )
+
+
+@router.get(
+    "/activities/{activity_id}/demand-survey/stats",
+    response_model=DemandSurveyStatsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="수요조사 통계 조회",
+    description="수요조사 응답 통계를 조회합니다. 객관식(select, radio)과 주관식(text, textarea)을 분리하여 제공합니다. (관리자 권한 필요)",
+    responses={
+        200: {"description": "성공"},
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "권한 없음"},
+        404: {"model": ErrorResponse, "description": "수요조사 없음"}
+    }
+)
+async def get_demand_survey_stats(
+    activity_id: int,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    수요조사 통계 조회 (관리자 전용)
+    
+    해당 수요조사의 응답 통계를 객관식/주관식으로 분류하여 반환합니다.
+    - 객관식 (select, radio, checkbox): 옵션별 응답 수
+    - 주관식 (text, textarea): 모든 응답 목록
+    """
+    try:
+        # 수요조사 확인
+        activity_result = supabase.table("activities")\
+            .select("form_fields, title")\
+            .eq("id", activity_id)\
+            .eq("type", "demand_survey")\
+            .eq("is_deleted", False)\
+            .single()\
+            .execute()
+        
+        if not activity_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="수요조사를 찾을 수 없습니다"
+            )
+        
+        # 응답 조회
+        responses_result = supabase.table("activity_registrations")\
+            .select("form_responses, name, student_id, created_at")\
+            .eq("activity_id", activity_id)\
+            .neq("status", "cancelled")\
+            .order("created_at", desc=True)\
+            .execute()
+        
+        total_responses = len(responses_result.data) if responses_result.data else 0
+        form_fields = activity_result.data.get("form_fields", [])
+        
+        # 객관식/주관식 분류
+        objective_stats = []  # 객관식 (select, radio, checkbox)
+        subjective_stats = []  # 주관식 (text, textarea)
+        
+        # 객관식 타입
+        objective_types = {"select", "radio", "checkbox"}
+        # 주관식 타입
+        subjective_types = {"text", "textarea", "number", "date"}
+        
+        for field in form_fields:
+            field_name = field.get("name")
+            field_label = field.get("label", field_name)
+            field_type = field.get("type", "text")
+            field_options = field.get("options", [])
+            
+            if field_type in objective_types:
+                # 객관식: 옵션별 응답 수 집계
+                option_counts = {opt: 0 for opt in field_options}
+                other_count = 0
+                
+                for resp in (responses_result.data or []):
+                    form_resp = resp.get("form_responses", {})
+                    answer = form_resp.get(field_name)
+                    
+                    if answer:
+                        # checkbox는 리스트일 수 있음
+                        if isinstance(answer, list):
+                            for a in answer:
+                                if a in option_counts:
+                                    option_counts[a] += 1
+                                else:
+                                    other_count += 1
+                        else:
+                            if answer in option_counts:
+                                option_counts[answer] += 1
+                            else:
+                                other_count += 1
+                
+                objective_stats.append({
+                    "field_name": field_name,
+                    "label": field_label,
+                    "type": field_type,
+                    "options": field_options,
+                    "counts": option_counts,
+                    "other_count": other_count
+                })
+            
+            elif field_type in subjective_types:
+                # 주관식: 모든 응답 수집
+                answers = []
+                for resp in (responses_result.data or []):
+                    form_resp = resp.get("form_responses", {})
+                    answer = form_resp.get(field_name)
+                    
+                    if answer is not None and str(answer).strip():
+                        answers.append({
+                            "answer": answer,
+                            "respondent": resp.get("name") or f"학번 {resp.get('student_id', '미상')}",
+                            "created_at": resp.get("created_at")
+                        })
+                
+                subjective_stats.append({
+                    "field_name": field_name,
+                    "label": field_label,
+                    "type": field_type,
+                    "response_count": len(answers),
+                    "responses": answers
+                })
+        
+        return {
+            "activity_id": activity_id,
+            "title": activity_result.data.get("title"),
+            "total_responses": total_responses,
+            "objective_questions": objective_stats,
+            "subjective_questions": subjective_stats
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"수요조사 통계 조회 실패: {str(e)}"
         )
 
 

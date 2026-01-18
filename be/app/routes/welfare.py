@@ -20,7 +20,8 @@ from app.utils.r2_storage import (
     delete_file_from_r2,
     generate_presigned_url,
     validate_file_extension,
-    get_bucket_url
+    get_bucket_url,
+    BROAD_ALLOWED_EXTENSIONS
 )
 import uuid
 import os
@@ -44,12 +45,12 @@ async def get_locker_info():
     supabase = get_supabase()
     
     # locker_info 테이블에서 데이터 조회 (id=1, 단일 레코드)
-    result = supabase.table('locker_info').select('*').eq('id', 1).single().execute()
+    result = supabase.table('locker_info').select('*').eq('id', 1).limit(1).execute()
     
     if not result.data:
         raise HTTPException(status_code=404, detail="사물함 정보가 없습니다")
     
-    return result.data
+    return result.data[0]
 
 
 @router.post("/admin/welfare/locker_image/presigned-url", summary="사물함 이미지 업로드용 Presigned URL 발급 (관리자)")
@@ -67,7 +68,7 @@ async def get_locker_image_presigned_url(
       3. /admin/welfare/locker_image/complete API로 업로드 완료 알림
     """
     # 파일 확장자 검증
-    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.svg'})
+    file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
     
     # 고유한 파일명 생성
     unique_filename = f"{uuid.uuid4()}{file_ext}"
@@ -297,7 +298,7 @@ async def get_rental_item_presigned_url(
     
     - **관리자 전용**: admin 권한 필요
     """
-    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png'})
+    file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     file_key = f"rental-items/{unique_filename}"
     

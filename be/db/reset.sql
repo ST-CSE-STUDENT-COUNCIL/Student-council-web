@@ -41,9 +41,9 @@ TRUNCATE TABLE activities CASCADE;
 -- TRUNCATE TABLE event_images CASCADE;
 -- TRUNCATE TABLE events CASCADE;
 
--- 복지 관련 (rental_items, locker_info는 마스터 데이터이므로 유지)
--- 복지 대여/사물함 데이터는 rental_items, locker_info 테이블의 status만 업데이트
--- (별도 신청 테이블이 없고 status로 관리)
+-- 복지 관련 (rental_items, locker_info 포함 전체 삭제)
+TRUNCATE TABLE rental_items CASCADE;
+TRUNCATE TABLE locker_info CASCADE;
 
 -- 동아리
 TRUNCATE TABLE clubs CASCADE;
@@ -64,6 +64,7 @@ TRUNCATE TABLE password_resets CASCADE;
 TRUNCATE TABLE email_verifications CASCADE;
 
 -- 사용자 (users 테이블만 삭제, auth.users는 별도 처리)
+TRUNCATE TABLE rejected_users CASCADE;
 TRUNCATE TABLE users CASCADE;
 
 -- ============================================================================
