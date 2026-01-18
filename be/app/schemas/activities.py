@@ -298,6 +298,126 @@ class RegistrationStatusUpdateRequest(BaseModel):
 
 
 # ============================================================================
+# 수요조사 통계 스키마 (관리자용)
+# ============================================================================
+class ObjectiveQuestionStats(BaseModel):
+    """객관식 질문 통계"""
+    field_name: str = Field(..., description="필드 이름")
+    label: str = Field(..., description="질문 라벨")
+    type: str = Field(..., description="질문 타입 (select, radio, checkbox)")
+    options: List[str] = Field(default_factory=list, description="선택지 목록")
+    counts: Dict[str, int] = Field(default_factory=dict, description="옵션별 응답 수")
+    other_count: int = Field(default=0, description="기타 응답 수")
+
+
+class SubjectiveAnswer(BaseModel):
+    """주관식 응답 항목"""
+    answer: Any = Field(..., description="응답 내용")
+    respondent: str = Field(..., description="응답자")
+    created_at: Optional[str] = Field(None, description="응답 시각")
+
+
+class SubjectiveQuestionStats(BaseModel):
+    """주관식 질문 통계"""
+    field_name: str = Field(..., description="필드 이름")
+    label: str = Field(..., description="질문 라벨")
+    type: str = Field(..., description="질문 타입 (text, textarea)")
+    response_count: int = Field(default=0, description="응답 수")
+    responses: List[SubjectiveAnswer] = Field(default_factory=list, description="응답 목록")
+
+
+class DemandSurveyStatsResponse(BaseModel):
+    """수요조사 통계 응답 (관리자용)"""
+    activity_id: int = Field(..., description="활동 ID")
+    title: Optional[str] = Field(None, description="수요조사 제목")
+    total_responses: int = Field(default=0, description="총 응답 수")
+    objective_questions: List[ObjectiveQuestionStats] = Field(default_factory=list, description="객관식 질문 통계")
+    subjective_questions: List[SubjectiveQuestionStats] = Field(default_factory=list, description="주관식 질문 통계")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "activity_id": 1,
+                "title": "간식 수요조사",
+                "total_responses": 50,
+                "objective_questions": [
+                    {
+                        "field_name": "snack_preference",
+                        "label": "선호하는 간식",
+                        "type": "radio",
+                        "options": ["빵", "과자", "음료"],
+                        "counts": {"빵": 20, "과자": 25, "음료": 5},
+                        "other_count": 0
+                    }
+                ],
+                "subjective_questions": [
+                    {
+                        "field_name": "suggestion",
+                        "label": "기타 의견",
+                        "type": "textarea",
+                        "response_count": 10,
+                        "responses": [
+                            {"answer": "아이스크림도 추가해주세요", "respondent": "홍길동", "created_at": "2026-01-16T10:00:00Z"}
+                        ]
+                    }
+                ]
+            }
+        }
+
+
+# ============================================================================
+# 내 활동 조회 스키마 (회원용)
+# ============================================================================
+class MyActivityItem(BaseModel):
+    """내 활동 항목"""
+    registration_id: int = Field(..., description="신청 ID")
+    status: str = Field(..., description="신청 상태 (pending, approved, rejected, cancelled)")
+    registered_at: datetime = Field(..., description="신청 일시")
+    updated_at: Optional[datetime] = Field(None, description="상태 변경 일시")
+    activity: Dict[str, Any] = Field(..., description="활동 정보")
+
+
+class MyActivitiesResponse(BaseModel):
+    """내 활동 목록 응답"""
+    items: List[MyActivityItem] = Field(default_factory=list, description="활동 목록")
+    total: int = Field(default=0, description="총 개수")
+    page: int = Field(default=1, description="현재 페이지")
+    page_size: int = Field(default=20, description="페이지 크기")
+    total_pages: int = Field(default=0, description="총 페이지 수")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "items": [
+                    {
+                        "registration_id": 1,
+                        "status": "approved",
+                        "registered_at": "2026-01-15T10:00:00Z",
+                        "updated_at": "2026-01-16T09:00:00Z",
+                        "activity": {
+                            "id": 5,
+                            "type": "event",
+                            "title": "OT 신청",
+                            "description": "2026년 신입생 OT",
+                            "thumbnail_url": "https://example.com/image.jpg",
+                            "registration_start": "2026-01-10T00:00:00Z",
+                            "registration_end": "2026-01-20T23:59:59Z",
+                            "max_capacity": 100,
+                            "current_count": 45,
+                            "require_membership": False,
+                            "is_active": True
+                        }
+                    }
+                ],
+                "total": 3,
+                "page": 1,
+                "page_size": 20,
+                "total_pages": 1
+            }
+        }
+
+
+# ============================================================================
 # 에러 응답
 # ============================================================================
 class ErrorResponse(BaseModel):

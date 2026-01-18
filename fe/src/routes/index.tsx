@@ -22,7 +22,8 @@ import {
 } from 'lucide-react'
 import { activityApi } from '../lib/api/activities'
 import { postApi } from '../lib/api/notices'
-import type { ActivityListItem, Activity } from '../types/activities'
+import type { ActivityListItem } from '../types/activities'
+import { getActivityStatus } from '../types/activities'
 import type { NoticeListItem } from '../types/posts'
 import { ActivityCard } from '../components/activities/ActivityCard'
 
@@ -52,8 +53,7 @@ const getSubCategoryLabel = (sub: string) => {
 };
 
 function Index() {
-    const [_activities, setActivities] = useState<ActivityListItem[]>([])
-    const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
+    const [featuredActivities, setFeaturedActivities] = useState<ActivityListItem[]>([])
     const [posts, setPosts] = useState<NoticeListItem[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -61,15 +61,16 @@ function Index() {
         const fetchData = async () => {
             try {
                 const [activitiesResponse, postsResponse] = await Promise.all([
-                    activityApi.getAll({ is_active_only: false, page: 1, page_size: 5 }),
+                    activityApi.getAll({ is_active_only: true, page: 1, page_size: 20 }),
                     postApi.getAll({ page: 1, page_size: 5, sort: 'newest' })
                 ])
 
-                setActivities(activitiesResponse.activities)
-                if (activitiesResponse.activities.length > 0) {
-                    const detail = await activityApi.getById(activitiesResponse.activities[0].id)
-                    setSelectedActivity(detail)
-                }
+                const validActivities = activitiesResponse.activities.filter(activity => {
+                    const status = getActivityStatus(activity)
+                    return status === 'active' || status === 'scheduled'
+                })
+
+                setFeaturedActivities(validActivities)
                 setPosts(postsResponse.posts)
             } catch (error) {
                 console.error('Failed to fetch data', error)
@@ -157,19 +158,20 @@ function Index() {
                                     slidesPerView={1}
                                     className="h-auto min-h-[500px]"
                                 >
-                                    {selectedActivity && (
-                                        <SwiperSlide className="p-4 sm:p-6 box-border">
-                                            <div className="w-full h-full relative">
-                                                <ActivityCard activity={selectedActivity} />
-                                            </div>
-                                        </SwiperSlide>
-                                    )}
-                                    {!selectedActivity && (
+                                    {featuredActivities.length > 0 ? (
+                                        featuredActivities.map((activity) => (
+                                            <SwiperSlide key={activity.id} className="p-4 sm:p-6 box-border">
+                                                <div className="w-full h-full relative">
+                                                    <ActivityCard activity={activity} />
+                                                </div>
+                                            </SwiperSlide>
+                                        ))
+                                    ) : (
                                         <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-gray-400 gap-4">
                                             <div className="p-4 bg-white rounded-full shadow-sm">
                                                 <Megaphone size={32} className="text-gray-300" />
                                             </div>
-                                            <span>현재 진행 중인 신청이 없습니다.</span>
+                                            <span>현재 진행 중인 행사가 없습니다.</span>
                                         </div>
                                     )}
                                 </Swiper>

@@ -12,6 +12,13 @@ from datetime import timedelta
 from app.config import settings
 
 
+# 다양한 문서/압축 파일 확장자 모음
+BROAD_ALLOWED_EXTENSIONS = {
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf',
+    '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.hwp', '.hwpx', '.txt',
+    '.zip', '.7z', '.rar'
+}
+
 # 버킷 타입 정의
 BucketType = Literal[
     "club-images",
@@ -274,7 +281,7 @@ async def upload_post_attachment(file: UploadFile, post_id: int) -> dict:
     
     # 확장자 검증
     file_ext = os.path.splitext(file.filename)[1].lower()
-    allowed_extensions = {'.jpg', '.jpeg', '.png', '.pdf'}
+    allowed_extensions = BROAD_ALLOWED_EXTENSIONS
     
     if file_ext not in allowed_extensions:
         raise HTTPException(

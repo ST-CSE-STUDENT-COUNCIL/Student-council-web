@@ -33,7 +33,30 @@ type Member = {
     duesPaid: boolean
     rejectionReason?: string
     blockedAt?: string
+    blockReason?: string
     verificationImageUrl?: string
+}
+
+const formatDateTime = (date: string | null | undefined) => {
+    if (!date) return undefined
+    const parsed = new Date(date)
+    if (Number.isNaN(parsed.getTime())) return date.slice ? date.slice(0, 10) : undefined
+    return parsed.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+}
+
+const translateBlockReason = (reason?: string | null) => {
+    if (!reason) return undefined
+    switch (reason) {
+        case 'permanent':
+            return '영구'
+        case '10_minutes':
+            return '10분'
+        case '1_hour':
+        case '1_hours':
+            return '1시간'
+        default:
+            return reason
+    }
 }
 
 const mapPendingUserToMember = (user: PendingUserItem): Member => ({
@@ -86,14 +109,15 @@ const mapBlockedUserToMember = (user: BlockedUserItem): Member => ({
     major: user.department ?? '학과 미정',
     email: user.email ?? '-',
     phone: user.phone ?? '-',
-    joinedAt: user.blocked_at ? user.blocked_at.slice(0, 10) : user.block_until ? user.block_until.slice(0, 10) : '',
+    joinedAt: formatDateTime(user.blocked_at) ?? formatDateTime(user.block_until) ?? '',
     duesPaid: false,
-    blockedAt: user.block_until ?? user.blocked_at ?? undefined,
+    blockedAt: formatDateTime(user.created_at) ?? formatDateTime(user.blocked_at) ?? formatDateTime(user.block_until),
     rejectionReason: user.block_reason ?? undefined,
+    blockReason: translateBlockReason(user.block_reason),
 })
 
 function RouteComponent() {
-    const [view, setView] = useState<'pending' | 'all' | 'rejected' | 'blocked'>('pending')
+    const [view, setView] = useState<'pending' | 'all' | 'rejected' | 'blocked'>('all')
     const [search, setSearch] = useState('')
     const [roleFilter, setRoleFilter] = useState<'all' | Role>('all')
     const [duesFilter, setDuesFilter] = useState<'all' | 'paid' | 'unpaid'>('all')
@@ -325,9 +349,10 @@ function RouteComponent() {
 
     const handleUnblock = async (id: string) => {
         const target = blockedMembers.find((m) => m.id === id)
+        const studentId = target?.studentId ?? id
         setUnblockingId(id)
         try {
-            await adminApi.unblockUser(id)
+            await adminApi.unblockUser(studentId)
             setBlockedMembers((prev) => prev.filter((m) => m.id !== id))
             if (target) {
                 setMembers((membersState) => [

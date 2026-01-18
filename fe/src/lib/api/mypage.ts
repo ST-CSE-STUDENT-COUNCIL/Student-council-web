@@ -4,10 +4,10 @@ import type { User } from '../../types/users'
 const API_BASE_URL = '/mypage'
 
 export type MyRegistration = {
-    id: number
-    activity_id: number
+    registration_id: number
     status: 'pending' | 'approved' | 'rejected' | 'cancelled'
-    created_at: string
+    registered_at: string
+    updated_at?: string
     activity: {
         id: number
         type: string
@@ -16,12 +16,19 @@ export type MyRegistration = {
         thumbnail_url?: string
         registration_start?: string
         registration_end?: string
+        max_capacity?: number
+        current_count?: number
+        require_membership?: boolean
         is_active: boolean
-    } | null
+    }
 }
 
 export type MyRegistrationsResponse = {
-    registrations: MyRegistration[]
+    items: MyRegistration[]
+    total: number
+    page: number
+    page_size: number
+    total_pages: number
 }
 
 export const mypageApi = {
@@ -31,7 +38,7 @@ export const mypageApi = {
     },
 
     getMyRegistrations: async (): Promise<MyRegistrationsResponse> => {
-        const response = await api.get<MyRegistrationsResponse>(`${API_BASE_URL}/registrations`)
+        const response = await api.get<MyRegistrationsResponse>(`${API_BASE_URL}/activities`)
         return response.data
     },
 
@@ -51,5 +58,15 @@ export const mypageApi = {
         })
         return response.data
     },
+
+    withdraw: async (password: string) => {
+        const response = await api.delete<{ message: string }>(`${API_BASE_URL}`, {
+            data: { password },
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        return response.data
+    }
 }
 

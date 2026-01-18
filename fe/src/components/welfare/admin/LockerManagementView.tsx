@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { welfareApi, type LockerPeriod } from '../../../lib/api/welfare'
+import { welfareApi, type LockerInfo } from '../../../lib/api/welfare'
 import { useAuthStore } from '../../../store/useAuthStore.ts'
 
 import { LockerLayoutSection } from './LockerLayoutSection'
@@ -54,7 +54,7 @@ const formatInputDateForApi = (inputValue?: string): string | null => {
 	return `${date.getFullYear()}-${padTimeUnit(date.getMonth() + 1)}-${padTimeUnit(date.getDate())}T${padTimeUnit(date.getHours())}:${padTimeUnit(date.getMinutes())}:${padTimeUnit(date.getSeconds())}${offset}`
 }
 
-const createLockerFormState = (data?: Partial<LockerPeriod>): LockerFormState => ({
+const createLockerFormState = (data?: Partial<LockerInfo>): LockerFormState => ({
 	application_form_url: data?.application_form_url || '',
 	return_extension_form_url: data?.return_extension_form_url || '',
 	application_start: formatDateForInput(data?.application_start),
@@ -93,7 +93,7 @@ export function LockerManagementView() {
 	React.useEffect(() => {
 		const loadLockerInfo = async () => {
 			try {
-				const data = await welfareApi.getLockerPeriods()
+				const data = await welfareApi.getLockerInfo()
 				if (data) {
 					setLayoutImage(data.layout_image_url || null)
 					setFormData(createLockerFormState(data))
@@ -178,7 +178,7 @@ export function LockerManagementView() {
 			}
 
 			const submitData = buildLockerPeriodPayload(formData)
-			const responseData = await welfareApi.updateLockerPeriods(submitData, accessToken)
+			const responseData = await welfareApi.updateLockerInfo(submitData, accessToken)
 			setTimeline([
 				{
 					label: '신청기간',

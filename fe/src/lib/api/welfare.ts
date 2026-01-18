@@ -18,31 +18,6 @@ export type WelfareRental = {
     updated_at: string;
 };
 
-export type RentalRequestPayload = {
-    rental_id: number;
-    user_id: string;
-    status: string;
-    rental_start_date: string;
-    rental_end_date: string;
-    actual_return_date: string | null;
-    notes: string | null;
-    created_at: string;
-    updated_at: string;
-};
-
-export type LockerPeriod = {
-    id: number;
-    layout_image_url?: string;
-    application_form_url?: string;
-    return_extension_form_url?: string;
-    application_start?: string;
-    application_end?: string;
-    return_extension_start?: string;
-    return_extension_end?: string;
-    description?: string;
-    created_at: string;
-    updated_at: string;
-};
 
 export type LockerInfo = {
     id: number;
@@ -54,6 +29,7 @@ export type LockerInfo = {
     return_extension_start?: string;
     return_extension_end?: string;
     description?: string | null;
+    created_at: string;
     updated_at: string;
 };
 
@@ -111,109 +87,64 @@ export const welfareApi = {
         return response.data;
     },
 
+    /**
+     * 복지 물품 목록을 가져옵니다.
+     */
     getRentals: async (): Promise<WelfareRental[]> => {
         const response = await axios.get(`${API_BASE_URL}/welfare/welfare_rentals`);
         return response.data;
     },
 
     /**
-     * 복지 물품 목록을 가져옵니다 (getRentals의 별칭)
+     * 사물함 정보를 가져옵니다.
      */
-    getRentalItems: async (): Promise<WelfareRental[]> => {
-        const response = await axios.get(`${API_BASE_URL}/welfare/welfare_rentals`);
-        return response.data;
-    },
-
-    /**
-     * 특정 사용자의 복지 물품 대여 요청 목록을 가져옵니다.
-     */
-    getRentalRequests: async (userId: string): Promise<RentalRequestPayload[]> => {
-        const response = await axios.get(`${API_BASE_URL}/welfare/welfare_rental_requests`, {
-            params: { user_id: userId },
-        });
-        return response.data;
-    },
-
-    /**
-     * 특정 사용자의 사물함 대여 정보를 가져옵니다.
-     */
-    getLockerRentals: async (userId: string): Promise<{ id: number; locker_number: string; period_id: number }[]> => {
-        const response = await axios.get(`${API_BASE_URL}/welfare/locker_rentals`, {
-            params: { user_id: userId },
-        });
-        return response.data;
-    },
-
-    getLockerPeriods: async (): Promise<LockerPeriod> => {
-        const response = await axios.get(`${API_BASE_URL}/welfare/locker_periods`);
-        return response.data;
-    },
-
     getLockerInfo: async (): Promise<LockerInfo> => {
         const response = await axios.get(`${API_BASE_URL}/welfare/locker_periods`);
         return response.data;
     },
 
+    /**
+     * 특정 복지 물품 정보를 가져옵니다.
+     */
     getRentalById: async (id: number): Promise<WelfareRental> => {
         const response = await axios.get(`${API_BASE_URL}/welfare/welfare_rentals/${id}`);
         return response.data;
     },
 
+    /**
+     * 복지 물품을 생성합니다.
+     */
     createRental: async (payload: Partial<WelfareRental>, token?: string | null) => {
         const response = await axios.post(`${API_BASE_URL}/admin/welfare/welfare_rentals`, payload, {
-            headers: token
-                ? {
-                    Authorization: `Bearer ${token}`,
-                }
-                : undefined,
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return response.data;
     },
 
-    createRentalRequest: async (payload: RentalRequestPayload, token?: string | null) => {
-        const response = await axios.post(`${API_BASE_URL}/admin/welfare/welfare_rental_requests`, payload, {
-            headers: token
-                ? {
-                    Authorization: `Bearer ${token}`,
-                }
-                : undefined,
-        });
-        return response.data;
-    },
-
+    /**
+     * 복지 물품을 삭제합니다.
+     */
     deleteRental: async (itemId: number, token?: string | null) => {
         const response = await axios.delete(`${API_BASE_URL}/admin/welfare/welfare_rentals/${itemId}`, {
-            headers: token
-                ? {
-                    Authorization: `Bearer ${token}`,
-                }
-                : undefined,
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return response.data;
     },
 
+    /**
+     * 복지 물품을 수정합니다.
+     */
     updateRental: async (itemId: number, payload: Partial<WelfareRental>, token?: string | null) => {
         const response = await axios.put(`${API_BASE_URL}/admin/welfare/welfare_rentals/${itemId}`, payload, {
-            headers: token
-                ? {
-                    Authorization: `Bearer ${token}`,
-                }
-                : undefined,
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return response.data;
     },
 
-    uploadLockerImage: async (formData: FormData, token?: string | null) => {
-        const response = await axios.post(`${API_BASE_URL}/admin/welfare/locker_image`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-        });
-        return response.data;
-    },
-
-    updateLockerPeriods: async (data: {
+    /**
+     * 사물함 정보를 수정합니다.
+     */
+    updateLockerInfo: async (data: {
         application_form_url?: string | null;
         return_extension_form_url?: string | null;
         application_start?: string | null;
@@ -221,10 +152,11 @@ export const welfareApi = {
         return_extension_start?: string | null;
         return_extension_end?: string | null;
         description?: string | null;
-    }, token?: string | null): Promise<LockerPeriod> => {
+    }, token?: string | null): Promise<LockerInfo> => {
         const response = await axios.put(`${API_BASE_URL}/admin/welfare/locker_periods`, data, {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return response.data;
     },
 };
+

@@ -27,6 +27,14 @@ type AllMembersTableProps = {
     onToggleDues: (id: string) => void
 }
 
+const formatPhone = (phone: string) => {
+    const digits = (phone ?? '').replace(/\D/g, '')
+    if (!digits) return phone || '-'
+    if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
+    if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
+    return phone
+}
+
 export function AllMembersTable({
     members,
     loading,
@@ -141,7 +149,7 @@ export function AllMembersTable({
                                     <td className="px-4 py-3">
                                         <div className="flex flex-col text-sm text-gray-700">
                                             <span>{member.email}</span>
-                                            <span className="text-xs text-gray-500">{member.phone}</span>
+                                            <span className="text-xs text-gray-500">{formatPhone(member.phone)}</span>
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-sm text-gray-600">{member.joinedAt}</td>

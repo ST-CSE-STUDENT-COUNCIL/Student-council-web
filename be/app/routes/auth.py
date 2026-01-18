@@ -46,7 +46,7 @@ from app.utils.login_security import (
     unblock_user
 )
 from app.utils.turnstile import verify_turnstile
-from app.database import supabase
+from app.database import supabase, get_supabase_admin
 from postgrest.exceptions import APIError
 
 
@@ -66,7 +66,7 @@ limiter = Limiter(key_func=get_remote_address)
         500: {"model": ErrorResponse, "description": "이메일 발송 실패"}
     }
 )
-@limiter.limit("1/minute")
+@limiter.limit("3/minute")
 async def send_verification(body: SendVerificationRequest, request: Request):
     """이메일 인증번호 발송"""
     try:
@@ -100,7 +100,7 @@ async def send_verification(body: SendVerificationRequest, request: Request):
         code = await create_email_verification(body.email)
         
         # 5. 인증번호 발송
-        await send_verification_email(body.email, code)
+        send_verification_email(body.email, code)
         
         return SendVerificationResponse(email=body.email)
     
@@ -229,9 +229,10 @@ async def signup(request: SignupRequest):
                 detail="이미 사용 중인 학번입니다"
             )
         
-        # 5. Supabase Auth에 사용자 생성
+        # 5. Supabase Auth에 사용자 생성 (admin 클라이언트 사용)
         try:
-            auth_response = supabase.auth.admin.create_user({
+            admin_supabase = get_supabase_admin()
+            auth_response = admin_supabase.auth.admin.create_user({
                 "email": request.email,
                 "password": request.password,
                 "email_confirm": True
@@ -269,7 +270,11 @@ async def signup(request: SignupRequest):
             'membership_paid': False
         }
         
-        supabase.table('users').insert(user_data).execute()
+        try:
+            # RLS 우회를 위해 admin_supabase 사용
+            admin_supabase.table('users').insert(user_data).execute()
+        except Exception as insert_error:
+            raise
         
         # 7. 이메일 인증 사용됨으로 표시
         await mark_email_used(request.email)
@@ -324,16 +329,31 @@ async def login(body: LoginRequest, request: Request):
         user_result = supabase.table('users')\
             .select('*')\
             .eq('student_id', body.student_id)\
-            .single()\
+            .limit(1)\
             .execute()
         
-        if not user_result.data:
+        if not user_result.data or len(user_result.data) == 0:
+            # users에 없으면 rejected_users 확인
+            rejected_result = supabase.table('rejected_users')\
+                .select('rejection_reason, rejected_at')\
+                .eq('student_id', body.student_id)\
+                .order('rejected_at', desc=True)\
+                .limit(1)\
+                .execute()
+            
+            if rejected_result.data and len(rejected_result.data) > 0:
+                rejection_reason = rejected_result.data[0].get('rejection_reason', '사유 없음')
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"가입이 거절되었습니다. 사유: {rejection_reason}. 재가입을 원하시면 다시 회원가입해주세요."
+                )
+            
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="등록되지 않은 학번입니다"
             )
         
-        user_data = user_result.data
+        user_data = user_result.data[0]
         email = user_data['email']
         
         # 3. 학번 기반 차단 확인
@@ -547,7 +567,7 @@ async def logout(authorization: Optional[str] = Header(None)):
         500: {"model": ErrorResponse, "description": "이메일 발송 실패"}
     }
 )
-@limiter.limit("1/minute")
+@limiter.limit("3/minute")
 async def forgot_password(body: ForgotPasswordRequest, request: Request):
     """비밀번호 찾기 - 학번으로 인증번호 발송"""
     try:
@@ -570,7 +590,7 @@ async def forgot_password(body: ForgotPasswordRequest, request: Request):
         code = await create_password_reset(body.student_id, email)
         
         # 3. 이메일 발송
-        await send_password_reset_email(email, code)
+        send_password_reset_email(email, code)
         
         return ForgotPasswordResponse(email=email)
     
@@ -655,9 +675,10 @@ async def reset_password(body: ResetPasswordRequest):
         user_id = user_result.data['id']
         email = user_result.data['email']
         
-        # 3. Supabase Auth에서 비밀번호 변경
+        # 3. Supabase Auth에서 비밀번호 변경 (admin 클라이언트 사용)
         try:
-            supabase.auth.admin.update_user_by_id(
+            admin_supabase = get_supabase_admin()
+            admin_supabase.auth.admin.update_user_by_id(
                 user_id,
                 {"password": body.new_password}
             )

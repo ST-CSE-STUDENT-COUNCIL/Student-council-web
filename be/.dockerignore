@@ -31,3 +31,5 @@ venv/
 # Docs
 docs/
 *.md
+
+create_admins.py

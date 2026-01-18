@@ -22,7 +22,8 @@ from app.utils.r2_storage import (
     generate_presigned_url,
     generate_presigned_url_with_content_type,
     validate_file_extension,
-    get_bucket_url
+    get_bucket_url,
+    BROAD_ALLOWED_EXTENSIONS
 )
 from app.database import supabase, get_supabase_admin
 import uuid

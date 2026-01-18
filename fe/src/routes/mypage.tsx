@@ -1,9 +1,9 @@
 import React from 'react'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { Key } from 'lucide-react'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { Key, UserX } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { mypageApi } from '../lib/api/mypage'
-import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, ChangePasswordModal } from '../components/mypage'
+import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, ChangePasswordModal, WithdrawModal } from '../components/mypage'
 import type { User } from '../types/users'
 import type { MyRegistration } from '../lib/api/mypage'
 
@@ -12,19 +12,18 @@ export const Route = createFileRoute('/mypage')({
 })
 
 function MyPage() {
-  const navigate = useNavigate()
-  const { user, isAuthenticated, logout, setUser } = useAuthStore()
+  const { user, isAuthenticated, setUser } = useAuthStore()
   const [profile, setProfile] = React.useState<User | null>(user)
   const [activeTab, setActiveTab] = React.useState<'info' | 'events'>('info')
   const [showVerifyModal, setShowVerifyModal] = React.useState(false)
   const [showPasswordModal, setShowPasswordModal] = React.useState(false)
+  const [showWithdrawModal, setShowWithdrawModal] = React.useState(false)
   const [myRegistrations, setMyRegistrations] = React.useState<MyRegistration[]>([])
   const currentUser = profile ?? user
 
-  const handleLogout = React.useCallback(async () => {
-    logout()
-    await navigate({ to: '/login' })
-  }, [logout, navigate])
+  const handleWithdraw = React.useCallback(() => {
+    setShowWithdrawModal(true)
+  }, [])
 
   const handleVerificationUploaded = React.useCallback(async () => {
     try {
@@ -52,7 +51,7 @@ function MyPage() {
 
         setProfile(profileData)
         setUser(profileData)
-        setMyRegistrations(registrationsData.registrations)
+        setMyRegistrations(registrationsData.items)
       } catch (err) {
         if (cancelled) return
         console.error('Failed to load profile or registrations', err)
@@ -82,7 +81,7 @@ function MyPage() {
       })
       .map(reg => ({
         title: reg.activity!.title,
-        date: formatDate(reg.activity!.registration_end || reg.created_at),
+        date: formatDate(reg.registered_at),
         status: getStatusLabel(reg.status),
         rawStatus: reg.status
       }))
@@ -103,7 +102,7 @@ function MyPage() {
       })
       .map(reg => ({
         title: reg.activity!.title,
-        date: formatDate(reg.activity!.registration_end || reg.created_at),
+        date: formatDate(reg.activity!.registration_end || reg.registered_at),
       }))
   }, [myRegistrations])
 
@@ -201,10 +200,11 @@ function MyPage() {
               비밀번호 변경
             </button>
             <button
-              onClick={handleLogout}
-              className="w-full py-2 border border-red-300 rounded-lg text-red-600 hover:bg-red-50 transition font-medium text-sm"
+              onClick={handleWithdraw}
+              className="w-full py-2 border border-red-300 rounded-lg text-red-600 hover:bg-red-50 transition font-medium text-sm flex items-center justify-center gap-2"
             >
-              로그아웃
+              <UserX size={16} />
+              회원 탈퇴
             </button>
           </div>
         </aside>
@@ -257,7 +257,10 @@ function MyPage() {
                 <div className="grid md:grid-cols-2 gap-4">
                   {completedEvents.map((event) => (
                     <div key={event.title} className="border border-gray-100 rounded-lg p-4">
-                      <p className="text-sm text-gray-500 mb-1">{event.date}</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm text-gray-500">{event.date}</p>
+                        <StatusPill status="마감" />
+                      </div>
                       <p className="font-semibold text-gray-900">{event.title}</p>
                     </div>
                   ))}
@@ -272,6 +275,7 @@ function MyPage() {
 
         {showVerifyModal && <VerifyModal onClose={() => setShowVerifyModal(false)} onUploaded={handleVerificationUploaded} />}
         {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
+        {showWithdrawModal && <WithdrawModal onClose={() => setShowWithdrawModal(false)} />}
       </div>
     </div>
   )
@@ -289,9 +293,16 @@ function getVerificationStatus(user: { verification_status: string }) {
 }
 
 function formatDate(dateStr: string) {
-  const parts = dateStr?.split('-')
-  if (parts.length === 3) return `${parts[0]}.${parts[1]}.${parts[2]}`
-  return dateStr
+  if (!dateStr) return '-'
+  try {
+    const date = new Date(dateStr)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}.${month}.${day}`
+  } catch (e) {
+    return dateStr
+  }
 }
 
 function getStatusLabel(status: string) {

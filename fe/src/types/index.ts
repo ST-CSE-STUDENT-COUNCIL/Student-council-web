@@ -55,14 +55,6 @@ export type {
     PendingUserItem,
 } from './users'
 
-// Welfare
-export type {
-    RentalRequest,
-    RentalItem,
-    Locker,
-    LockerPeriod,
-} from './welfare'
-
 // Clubs
 export type {
     Club,
@@ -72,4 +64,5 @@ export type {
 export type {
     Board,
 } from './boards'
+
 

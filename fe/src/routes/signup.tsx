@@ -19,7 +19,7 @@ function SignUp() {
         phone: '',
         password: '',
         password_confirm: '',
-        department: '',
+        department: '컴퓨터공학과',
     })
 
     // Verification States
@@ -120,7 +120,16 @@ function SignUp() {
         } catch (error) {
             console.error('Email send failed:', error)
             if (isAxiosError(error) && error.response?.data?.detail) {
-                alert(error.response.data.detail)
+                const detail = error.response.data.detail
+                // 이미 인증된 이메일인 경우 자동 처리
+                if (typeof detail === 'string' && detail.includes('이미 인증 완료된 이메일입니다')) {
+                    setIsEmailVerified(true)
+                    setVerificationStep('verified')
+                    setTimeLeft(0)
+                    alert('이미 인증된 이메일입니다. 회원가입을 계속 진행해주세요.')
+                } else {
+                    alert(detail)
+                }
             } else {
                 alert('인증번호 발송에 실패했습니다.')
             }

@@ -13,6 +13,11 @@ ENV/
 .env
 .env.local
 
+# Gmail Token (민감한 정보)
+scripts/gmail_token.json
+token.json
+credentials.json
+
 # IDE
 .vscode/
 .idea/
@@ -30,3 +35,5 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+create_admins.py

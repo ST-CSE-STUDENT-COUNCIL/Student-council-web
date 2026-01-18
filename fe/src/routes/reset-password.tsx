@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { authApi } from '../lib/api/auth'
 import { isAxiosError } from 'axios'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -20,6 +20,7 @@ function ResetPassword() {
     const [confirmPassword, setConfirmPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+    const [timeLeft, setTimeLeft] = useState(0)
 
     // 비밀번호 유효성 검사
     const passwordValidation = {
@@ -34,6 +35,24 @@ function ResetPassword() {
         passwordValidation.hasNumber &&
         passwordValidation.hasLetter &&
         passwordValidation.hasSpecialChar
+
+    // 타이머 로직
+    useEffect(() => {
+        if (timeLeft <= 0) return
+
+        const timer = setInterval(() => {
+            setTimeLeft(prev => prev - 1)
+        }, 1000)
+
+        return () => clearInterval(timer)
+    }, [timeLeft])
+
+    // 시간 포맷 함수 (mm:ss)
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60)
+        const secs = seconds % 60
+        return `${mins}:${secs.toString().padStart(2, '0')}`
+    }
 
     // 이메일 마스킹 (예: ex***@seoultech.ac.kr)
     const maskEmail = (email: string) => {
@@ -58,6 +77,7 @@ function ResetPassword() {
             const result = await authApi.forgotPassword(studentId)
             setMaskedEmail(maskEmail(result.email))
             setStep(2)
+            setTimeLeft(300) // 5분 타이머 시작
             alert(`${maskEmail(result.email)}로 인증번호가 발송되었습니다.`)
         } catch (error) {
             if (isAxiosError(error) && error.response?.data?.detail) {
@@ -75,6 +95,10 @@ function ResetPassword() {
         e.preventDefault()
         if (code.length !== 6) {
             alert('6자리 인증번호를 입력해주세요.')
+            return
+        }
+        if (timeLeft <= 0) {
+            alert('인증 시간이 만료되었습니다. 처음부터 다시 시도해주세요.')
             return
         }
         setIsLoading(true)
@@ -227,7 +251,13 @@ function ResetPassword() {
                                 className="space-y-6"
                             >
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">인증번호</label>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <label className="block text-sm font-medium text-gray-700">인증번호</label>
+                                        <div className={`flex items-center gap-1.5 text-sm font-mono font-bold ${timeLeft <= 60 ? 'text-red-600' : 'text-blue-600'}`}>
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            <span>{timeLeft > 0 ? formatTime(timeLeft) : '만료됨'}</span>
+                                        </div>
+                                    </div>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <Key className="h-5 w-5 text-gray-400" />
@@ -250,7 +280,7 @@ function ResetPassword() {
                                 </div>
                                 <button
                                     type="submit"
-                                    disabled={isLoading || code.length !== 6}
+                                    disabled={isLoading || code.length !== 6 || timeLeft <= 0}
                                     className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-all active:scale-[0.99]"
                                 >
                                     {isLoading ? '확인 중...' : '인증하기'}
