@@ -157,6 +157,10 @@ function Index() {
                                     spaceBetween={0}
                                     slidesPerView={1}
                                     className="h-auto min-h-[500px]"
+                                    // Swiper 설정 변경 (데이터 로딩 및 루프 대응)
+                                    loop={featuredActivities.length > 1} // 데이터 2개 이상일 때만 루프
+                                    observer={true} // 비동기 데이터 갱신 감지
+                                    observeParents={true} // 부모 요소 변경 감지
                                 >
                                     {featuredActivities.length > 0 ? (
                                         featuredActivities.map((activity) => (
