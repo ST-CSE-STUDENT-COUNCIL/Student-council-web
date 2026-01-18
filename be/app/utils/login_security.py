@@ -3,7 +3,7 @@
 """
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
-from app.database import supabase
+from app.database import supabase, get_supabase_admin
 
 
 async def record_login_attempt(student_id: str, success: bool, ip_address: Optional[str] = None):
@@ -222,8 +222,9 @@ async def reset_failed_attempts(student_id: str):
         student_id: 학번
     """
     try:
-        # 차단 정보 삭제 (성공 시 모두 리셋)
-        supabase.table('login_blocks')\
+        # admin 클라이언트 사용 (RLS 우회)
+        admin_supabase = get_supabase_admin()
+        admin_supabase.table('login_blocks')\
             .delete()\
             .eq('student_id', student_id)\
             .execute()
@@ -239,8 +240,9 @@ async def unblock_user(student_id: str):
         student_id: 학번
     """
     try:
-        # 차단 정보 삭제
-        supabase.table('login_blocks')\
+        # admin 클라이언트 사용 (RLS 우회)
+        admin_supabase = get_supabase_admin()
+        admin_supabase.table('login_blocks')\
             .delete()\
             .eq('student_id', student_id)\
             .execute()

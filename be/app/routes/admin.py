@@ -520,9 +520,13 @@ async def get_blocked_users():
     관리자가 실제 본인의 시도인지 악의적인 공격인지 판단할 수 있습니다.
     """
     try:
-        # 차단된 사용자 조회
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+        
+        # 실제 차단된 사용자 조회 (block_reason이 있는 경우)
         blocks_result = supabase.table('login_blocks')\
             .select('*')\
+            .not_.is_('block_reason', 'null')\
             .execute()
         
         if not blocks_result.data:
@@ -531,8 +535,34 @@ async def get_blocked_users():
                 'total': 0
             }
         
+        # 현재 차단 중인 사용자만 필터링 (영구차단 또는 block_until > 현재시간)
+        active_blocks = []
+        for block in blocks_result.data:
+            block_reason = block.get('block_reason')
+            block_until_str = block.get('block_until')
+            
+            # 영구 차단은 항상 표시
+            if block_reason == 'permanent':
+                active_blocks.append(block)
+                continue
+            
+            # 일시 차단은 block_until이 현재보다 미래인 경우만 표시
+            if block_until_str:
+                try:
+                    block_until = datetime.fromisoformat(block_until_str.replace('Z', '+00:00'))
+                    if block_until > now:
+                        active_blocks.append(block)
+                except:
+                    pass
+        
+        if not active_blocks:
+            return {
+                'blocked_users': [],
+                'total': 0
+            }
+        
         # N+1 방지: 모든 student_id를 수집하여 한 번에 조회
-        student_ids = [block['student_id'] for block in blocks_result.data]
+        student_ids = [block['student_id'] for block in active_blocks]
         
         # 사용자 정보 한 번에 조회
         users_result = supabase.table('users')\
@@ -558,7 +588,7 @@ async def get_blocked_users():
                 attempts_map[sid].append(attempt)
         
         blocked_users = []
-        for block in blocks_result.data:
+        for block in active_blocks:
             student_id = block['student_id']
             user_info = user_map.get(student_id, {})
             attempts = attempts_map.get(student_id, [])
@@ -606,20 +636,19 @@ async def unblock_user_by_admin(student_id: str):
     차단을 해제하고 로그인 실패 횟수를 초기화합니다.
     """
     try:
-        # 1. 사용자 존재 확인
-        user_result = supabase.table('users')\
+        # 차단 정보 존재 확인
+        block_result = supabase.table('login_blocks')\
             .select('id')\
             .eq('student_id', student_id)\
-            .single()\
             .execute()
         
-        if not user_result.data:
+        if not block_result.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="사용자를 찾을 수 없습니다"
+                detail="해당 학번의 차단 정보가 없습니다"
             )
         
-        # 2. 차단 해제
+        # 차단 해제
         await unblock_user(student_id)
         
         return {
