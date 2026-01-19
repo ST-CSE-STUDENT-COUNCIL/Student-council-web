@@ -10,9 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelfareRouteImport } from './routes/welfare'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SuggestionRouteImport } from './routes/suggestion'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as MypageRouteImport } from './routes/mypage'
 import { Route as LoginRouteImport } from './routes/login'
@@ -36,6 +38,11 @@ const WelfareRoute = WelfareRouteImport.update({
   path: '/welfare',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SuggestionRoute = SuggestionRouteImport.update({
   id: '/suggestion',
   path: '/suggestion',
@@ -49,6 +56,11 @@ const SignupRoute = SignupRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NoticesRoute = NoticesRouteImport.update({
@@ -145,9 +157,11 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
   '/notices': typeof NoticesRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
+  '/terms': typeof TermsRoute
   '/welfare': typeof WelfareRoute
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/clubs': typeof AdminClubsRoute
@@ -166,9 +180,11 @@ export interface FileRoutesByTo {
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
+  '/terms': typeof TermsRoute
   '/welfare': typeof WelfareRoute
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/clubs': typeof AdminClubsRoute
@@ -190,9 +206,11 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
   '/notices': typeof NoticesRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/suggestion': typeof SuggestionRoute
+  '/terms': typeof TermsRoute
   '/welfare': typeof WelfareRoute
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/clubs': typeof AdminClubsRoute
@@ -215,9 +233,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/mypage'
     | '/notices'
+    | '/privacy'
     | '/reset-password'
     | '/signup'
     | '/suggestion'
+    | '/terms'
     | '/welfare'
     | '/admin/activities'
     | '/admin/clubs'
@@ -236,9 +256,11 @@ export interface FileRouteTypes {
     | '/intro'
     | '/login'
     | '/mypage'
+    | '/privacy'
     | '/reset-password'
     | '/signup'
     | '/suggestion'
+    | '/terms'
     | '/welfare'
     | '/admin/activities'
     | '/admin/clubs'
@@ -259,9 +281,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/mypage'
     | '/notices'
+    | '/privacy'
     | '/reset-password'
     | '/signup'
     | '/suggestion'
+    | '/terms'
     | '/welfare'
     | '/admin/activities'
     | '/admin/clubs'
@@ -283,9 +307,11 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MypageRoute: typeof MypageRoute
   NoticesRoute: typeof NoticesRouteWithChildren
+  PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   SuggestionRoute: typeof SuggestionRoute
+  TermsRoute: typeof TermsRoute
   WelfareRoute: typeof WelfareRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
 }
@@ -297,6 +323,13 @@ declare module '@tanstack/react-router' {
       path: '/welfare'
       fullPath: '/welfare'
       preLoaderRoute: typeof WelfareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/suggestion': {
@@ -318,6 +351,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notices': {
@@ -485,9 +525,11 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MypageRoute: MypageRoute,
   NoticesRoute: NoticesRouteWithChildren,
+  PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   SuggestionRoute: SuggestionRoute,
+  TermsRoute: TermsRoute,
   WelfareRoute: WelfareRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
 }
