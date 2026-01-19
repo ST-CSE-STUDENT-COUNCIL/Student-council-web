@@ -13,8 +13,8 @@ FastAPI를 기반으로 구축되었으며, Supabase(Database, Auth)와 Cloudfla
 - **Database**: Supabase (PostgreSQL)
 - **Auth**: Supabase Auth (JWT)
 - **Storage**: 
-  - 이미지: Supabase Storage
-  - 첨부파일/문서: Cloudflare R2 (S3 Compatible)
+  - 학적인증 이미지: Supabase Storage
+  - 그 외 이미지 및 첨부파일/문서: Cloudflare R2 (S3 Compatible)
 - **Hosting**: Fly.io
 - **Security**: Cloudflare Turnstile (CAPTCHA)
 
@@ -32,12 +32,12 @@ FastAPI를 기반으로 구축되었으며, Supabase(Database, Auth)와 Cloudfla
 
 | 태그 | 역할 | 주요 기능 |
 |------|------|-----------|
-| **Auth** | 인증 | 회원가입(Turnstile), 로그인, 비밀번호 재설정 |
+| **Auth** | 인증 | 회원가입(Turnstile), 로그인(Turnstile), 비밀번호 재설정 |
 | **Users** | 사용자 | 내 정보 조회, 비밀번호 변경, 회원탈퇴 |
 | **Admin** | 관리자 | 회원 승인/거절, 역할 변경, 학생회비 관리 |
 | **Notices** | 공지사항 | 공지사항 CRUD, 상단 고정 |
 | **Activities** | 활동 | 행사 신청, 수요조사, 건의사항 |
-| **Welfare** | 복지 | 사물함 신청, 제휴 업체 목록 |
+| **Welfare** | 복지 | 대여 사업 및 사물함 신청 |
 
 > 상세한 API 명세는 서버 실행 후 `http://localhost:8000/docs` (Swagger UI)에서 확인할 수 있습니다.
 
