@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { clubApi } from '../../lib/api/clubs'
 import type { Club, ClubCreate, ClubUpdate, IntroImageState } from '../../types/clubs'
 import { Plus, Trash2, Edit2, ChevronUp, ChevronDown, X } from 'lucide-react'
+import { toast } from 'sonner'
+import Swal from 'sweetalert2'
 
 export const Route = createFileRoute('/admin/clubs')({
   component: AdminClubsPage,
@@ -215,15 +217,15 @@ function AdminClubsPage() {
   // 동아리 추가
   const handleAdd = async () => {
     if (!formData.name.trim()) {
-      alert('동아리명을 입력해주세요.')
+      toast.error('동아리명을 입력해주세요.')
       return
     }
     if (!formData.description.trim()) {
-      alert('동아리 설명을 입력해주세요.')
+      toast.error('동아리 설명을 입력해주세요.')
       return
     }
     if (!thumbnailFile && !formData.image_url) {
-      alert('동아리 썸네일 이미지를 업로드해주세요.')
+      toast.error('동아리 썸네일 이미지를 업로드해주세요.')
       return
     }
 
@@ -267,12 +269,12 @@ function AdminClubsPage() {
         }
       }
 
-      alert('동아리가 추가되었습니다.')
+      toast.success('동아리가 추가되었습니다.')
       resetForm()
       setShowAddModal(false)
       fetchClubs()
     } catch (err: any) {
-      alert(err.message || '동아리 추가에 실패했습니다.')
+      toast.error(err.message || '동아리 추가에 실패했습니다.')
     } finally {
       setIsSubmitting(false)
     }
@@ -282,11 +284,11 @@ function AdminClubsPage() {
   const handleUpdate = async () => {
     if (!editingClub) return
     if (!formData.name.trim()) {
-      alert('동아리명을 입력해주세요.')
+      toast.error('동아리명을 입력해주세요.')
       return
     }
     if (!formData.description.trim()) {
-      alert('동아리 설명을 입력해주세요.')
+      toast.error('동아리 설명을 입력해주세요.')
       return
     }
 
@@ -342,12 +344,12 @@ function AdminClubsPage() {
         }
       }
 
-      alert('동아리 정보가 수정되었습니다.')
+      toast.success('동아리 정보가 수정되었습니다.')
       resetForm()
       setShowEditModal(false)
       fetchClubs()
     } catch (err: any) {
-      alert(err.message || '동아리 수정에 실패했습니다.')
+      toast.error(err.message || '동아리 수정에 실패했습니다.')
     } finally {
       setIsSubmitting(false)
     }
@@ -355,16 +357,25 @@ function AdminClubsPage() {
 
   // 동아리 삭제
   const handleDelete = async (club: Club) => {
-    if (!confirm(`"${club.name}" 동아리를 삭제하시겠습니까?`)) {
-      return
-    }
+    const result = await Swal.fire({
+      title: `"${club.name}" 동아리를 삭제하시겠습니까?`,
+      text: "삭제하면 되돌릴 수 없습니다!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: '삭제',
+      cancelButtonText: '취소'
+    })
+
+    if (!result.isConfirmed) return
 
     try {
       await clubApi.delete(club.id)
-      alert('동아리가 삭제되었습니다.')
+      toast.success('동아리가 삭제되었습니다.')
       fetchClubs()
     } catch (err: any) {
-      alert('동아리 삭제에 실패했습니다.')
+      toast.error('동아리 삭제에 실패했습니다.')
       console.error(err)
     }
   }

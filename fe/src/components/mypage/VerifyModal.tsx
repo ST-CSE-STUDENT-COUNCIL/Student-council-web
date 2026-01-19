@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
+import { toast } from 'sonner'
 import { mypageApi } from '../../lib/api/mypage'
 
 type VerifyModalProps = {
@@ -60,7 +61,7 @@ export function VerifyModal({ onClose, onUploaded }: VerifyModalProps) {
         await onUploaded()
       }
       onClose()
-      alert('업로드가 완료되었습니다. 확인 중입니다.')
+      toast.success('업로드가 완료되었습니다. 확인 중입니다.')
     } catch (err) {
       console.error('Failed to upload verification image', err)
       setError('업로드에 실패했습니다. 잠시 후 다시 시도해주세요.')
@@ -79,7 +80,7 @@ export function VerifyModal({ onClose, onUploaded }: VerifyModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-2">학생 가입 인증</h3>
+        <h3 className="text-lg font-bold text-gray-900 mb-2">학적 인증</h3>
         <p className="text-sm text-gray-600 mb-4">
           학번과 학적상태가 포함되어있는 통정시 화면을 업로드해주세요.
         </p>
@@ -88,9 +89,8 @@ export function VerifyModal({ onClose, onUploaded }: VerifyModalProps) {
         </div>
 
         <div
-          className={`border border-dashed rounded-lg p-4 text-center mb-3 transition ${
-            isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-          }`}
+          className={`border border-dashed rounded-lg p-4 text-center mb-3 transition ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+            }`}
           onDrop={onDrop}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}

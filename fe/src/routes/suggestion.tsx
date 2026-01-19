@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import { toast } from 'sonner'
 
 import type { Suggestion, SuggestionListItem } from '../types/suggestions'
 import { suggestionApi } from '../lib/api/suggestions'
@@ -135,7 +136,13 @@ function SuggestionPage() {
                         <button
                             type="button"
                             className="shrink-0 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                            onClick={() => setIsCreateOpen(true)}
+                            onClick={() => {
+                                if (user?.verification_status !== 'approved') {
+                                    toast.error('학적 인증이 완료된 사용자만 건의사항을 작성할 수 있습니다.')
+                                    return
+                                }
+                                setIsCreateOpen(true)
+                            }}
                         >
                             새 건의 작성
                         </button>
@@ -152,7 +159,7 @@ function SuggestionPage() {
                                     setIsOpen(true)
                                 } catch (error) {
                                     console.error('failed to fetch suggestion detail', error)
-                                    alert('건의 상세를 불러오지 못했습니다. 다시 시도해주세요.')
+                                    toast.error('건의 상세를 불러오지 못했습니다. 다시 시도해주세요.')
                                 }
                             }}
                         />
@@ -188,7 +195,7 @@ function SuggestionPage() {
                             setIsCreateOpen(false)
                         } catch (err) {
                             console.error('failed to create suggestion', err)
-                            alert('건의 등록에 실패했습니다. 로그인 상태를 확인해주세요.')
+                            toast.error('건의 등록에 실패했습니다. 로그인 상태를 확인해주세요.')
                         } finally {
                             setSubmitting(false)
                         }

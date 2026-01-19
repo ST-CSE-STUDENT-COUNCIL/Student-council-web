@@ -157,7 +157,7 @@ function MyPage() {
             <InfoRow label="학생회비" value={getMembershipStatus(currentUser)} />
             {shouldShowVerificationButton ? (
               <div className="flex justify-between items-center text-sm bg-white border border-gray-200 rounded-lg px-3 py-2">
-                <span className="text-gray-600">가입 인증</span>
+                <span className="text-gray-600">학적 인증</span>
                 <button
                   type="button"
                   onClick={() => setShowVerifyModal(true)}
@@ -167,7 +167,7 @@ function MyPage() {
                 </button>
               </div>
             ) : (
-              <InfoRow label="가입 인증" value={verificationStatusLabel} />
+              <InfoRow label="학적 인증" value={verificationStatusLabel} />
             )}
           </div>
 
