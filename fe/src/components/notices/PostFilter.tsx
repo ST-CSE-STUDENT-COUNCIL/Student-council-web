@@ -25,7 +25,7 @@ export const PostFilter = ({
     // Main Categories
     const mainCategories = [
         { value: 1, label: '학생회' },
-        { value: 2, label: '민주자치' }
+        { value: 2, label: '정보공개' }
     ];
 
     // Sub Categories based on Main Category selection

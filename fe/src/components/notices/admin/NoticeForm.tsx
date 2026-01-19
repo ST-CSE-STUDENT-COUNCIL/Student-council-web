@@ -1,7 +1,8 @@
 import { Upload, X, Eye, EyeOff, Image as ImageIcon, File, AlertCircle } from 'lucide-react'
 import { Modal } from '../../common/Modal'
 import { CATEGORIES, BOARD_SUB_CATEGORIES } from './constants'
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useLayoutEffect } from 'react'
+import TextareaAutosize from 'react-textarea-autosize'
 
 type NoticeFormData = {
     title: string
@@ -55,6 +56,38 @@ export function NoticeForm({
     const [showPreview, setShowPreview] = useState(false)
     const [localFiles, setLocalFiles] = useState<File[]>([])
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+    // Scroll to center logic
+    const adjustScrollToCenter = useCallback(() => {
+        if (!textareaRef.current) return;
+
+        const textarea = textareaRef.current;
+        const scrollParent = textarea.closest('.overflow-y-auto') as HTMLElement;
+
+        if (scrollParent) {
+            const caret = getCaretCoordinates(textarea, textarea.selectionEnd);
+            // Calculate absolute top of caret relative to the scroll parent
+            const textareaRect = textarea.getBoundingClientRect();
+            const parentRect = scrollParent.getBoundingClientRect();
+            const relativeTop = textareaRect.top - parentRect.top + scrollParent.scrollTop;
+
+            const caretAbsoluteTop = relativeTop + caret.top;
+
+            // We want caretAbsoluteTop to be in the middle of scrollParent visible height
+            const targetScrollTop = caretAbsoluteTop - (scrollParent.clientHeight / 2);
+
+            scrollParent.scrollTo({
+                top: targetScrollTop,
+                behavior: 'smooth'
+            });
+        }
+    }, [])
+
+    // Ensure scroll to center happens when content changes (and thus height potentially changes)
+    useLayoutEffect(() => {
+        adjustScrollToCenter()
+    }, [formData.content, adjustScrollToCenter])
 
     const currentCategoryValue = CATEGORIES.find(c => c.boardId === formData.board_id)?.value || '1'
     const allFiles = files ? Array.from(files) : localFiles
@@ -135,15 +168,15 @@ export function NoticeForm({
                                     key={c.value}
                                     onClick={() => handleMainCategoryChange(c.value)}
                                     className={`relative cursor-pointer p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${isActive
-                                        ? `${colors.active} shadow-sm`
-                                        : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50'
-                                        }`}
+                                            ? `${colors.active} shadow-sm`
+                                            : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50'
+                                        } `}
                                 >
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg ${isActive ? colors.icon : 'bg-gray-100 text-gray-400'}`}>
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg ${isActive ? colors.icon : 'bg-gray-100 text-gray-400'} `}>
                                         {c.label.charAt(0)}
                                     </div>
                                     <div>
-                                        <div className={`font-semibold ${isActive ? colors.text : 'text-gray-600'}`}>
+                                        <div className={`font-semibold ${isActive ? colors.text : 'text-gray-600'} `}>
                                             {c.label}
                                         </div>
                                         <div className="text-xs text-gray-400">
@@ -176,9 +209,9 @@ export function NoticeForm({
                                 type="button"
                                 onClick={() => setFormData(prev => ({ ...prev, subCategory: c.value }))}
                                 className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${formData.subCategory === c.value
-                                    ? 'bg-gray-900 text-white border-gray-900 shadow-lg shadow-gray-200'
-                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                    }`}
+                                        ? 'bg-gray-900 text-white border-gray-900 shadow-lg shadow-gray-200'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                    } `}
                             >
                                 {c.label}
                             </button>
@@ -197,9 +230,9 @@ export function NoticeForm({
                             type="button"
                             onClick={() => setShowPreview(!showPreview)}
                             className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${showPreview
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                } `}
                         >
                             {showPreview ? <EyeOff size={14} /> : <Eye size={14} />}
                             {showPreview ? '편집' : '미리보기'}
@@ -221,11 +254,20 @@ export function NoticeForm({
                             </div>
 
                             <div>
-                                <textarea
+                                <TextareaAutosize
+                                    ref={textareaRef}
                                     name="content"
                                     value={formData.content}
                                     onChange={handleInputChange}
-                                    className="w-full border border-gray-200 rounded-xl p-4 h-56 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-sans leading-relaxed placeholder:text-gray-300"
+                                    minRows={10}
+                                    onFocus={adjustScrollToCenter}
+                                    onClick={adjustScrollToCenter}
+                                    onKeyUp={(e) => {
+                                        if (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                            adjustScrollToCenter();
+                                        }
+                                    }}
+                                    className="w-full border border-gray-200 rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-sans leading-relaxed placeholder:text-gray-300 overflow-hidden"
                                     placeholder="내용을 입력하세요..."
                                     required
                                 />
@@ -272,9 +314,9 @@ export function NoticeForm({
                                 onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
                                 className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${isDragging
-                                    ? 'border-blue-400 bg-blue-50'
-                                    : 'border-gray-200 hover:border-gray-300 hover:bg-white'
-                                    }`}
+                                        ? 'border-blue-400 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300 hover:bg-white'
+                                    } `}
                             >
                                 <input
                                     ref={fileInputRef}
@@ -284,9 +326,9 @@ export function NoticeForm({
                                     className="hidden"
                                 />
                                 <div className={`w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center transition-colors ${isDragging
-                                    ? 'bg-blue-100'
-                                    : 'bg-gray-100'
-                                    }`}>
+                                        ? 'bg-blue-100'
+                                        : 'bg-gray-100'
+                                    } `}>
                                     <Upload size={24} className={isDragging ? 'text-blue-600' : 'text-gray-400'} />
                                 </div>
                                 <p className="font-medium text-gray-700">
@@ -340,11 +382,11 @@ export function NoticeForm({
                     <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
                         <div className="flex items-center gap-3">
                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${formData.isPinned
-                                ? 'bg-amber-100'
-                                : 'bg-gray-100'
-                                }`}>
+                                    ? 'bg-amber-100'
+                                    : 'bg-gray-100'
+                                } `}>
                                 <svg
-                                    className={`w-5 h-5 transition-colors ${formData.isPinned ? 'text-amber-600' : 'text-gray-400'}`}
+                                    className={`w-5 h-5 transition-colors ${formData.isPinned ? 'text-amber-600' : 'text-gray-400'} `}
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
                                 >
@@ -359,11 +401,11 @@ export function NoticeForm({
                         <div
                             onClick={() => setFormData(prev => ({ ...prev, isPinned: !prev.isPinned }))}
                             className={`w-14 h-7 rounded-full p-1 cursor-pointer transition-all ${formData.isPinned
-                                ? 'bg-amber-500 shadow-lg shadow-amber-200'
-                                : 'bg-gray-200'
-                                }`}
+                                    ? 'bg-amber-500 shadow-lg shadow-amber-200'
+                                    : 'bg-gray-200'
+                                } `}
                         >
-                            <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${formData.isPinned ? 'translate-x-7' : 'translate-x-0'}`} />
+                            <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${formData.isPinned ? 'translate-x-7' : 'translate-x-0'} `} />
                         </div>
                     </div>
                 </div>
@@ -395,4 +437,77 @@ export function NoticeForm({
             </form>
         </Modal>
     )
+}
+
+// Helper to get caret coordinates
+const getCaretCoordinates = (element: HTMLTextAreaElement, position: number) => {
+    const {
+        value
+    } = element;
+
+    const properties = [
+        'direction',
+        'boxSizing',
+        'width',
+        'height',
+        'overflowX',
+        'overflowY',
+        'borderTopWidth',
+        'borderRightWidth',
+        'borderBottomWidth',
+        'borderLeftWidth',
+        'paddingTop',
+        'paddingRight',
+        'paddingBottom',
+        'paddingLeft',
+        'fontStyle',
+        'fontVariant',
+        'fontWeight',
+        'fontStretch',
+        'fontSize',
+        'fontSizeAdjust',
+        'lineHeight',
+        'fontFamily',
+        'textAlign',
+        'textTransform',
+        'textIndent',
+        'textDecoration',
+        'letterSpacing',
+        'wordSpacing',
+    ];
+
+    const computed = window.getComputedStyle(element);
+    const div = document.createElement('div');
+    div.id = 'input-textarea-caret-position-mirror-div';
+    document.body.appendChild(div);
+
+    div.style.whiteSpace = 'pre-wrap';
+    div.style.wordWrap = 'break-word';
+    div.style.position = 'absolute';
+    div.style.visibility = 'hidden';
+
+    properties.forEach(prop => {
+        div.style.setProperty(prop, computed.getPropertyValue(prop));
+    });
+
+    if (element.scrollHeight > parseInt(computed.height)) {
+        div.style.overflowY = 'scroll';
+    } else {
+        div.style.overflow = 'hidden';
+    }
+
+    div.textContent = value.substring(0, position);
+
+    const span = document.createElement('span');
+    span.textContent = value.substring(position) || '.';
+    div.appendChild(span);
+
+    const coordinates = {
+        top: span.offsetTop + parseInt(computed.borderTopWidth),
+        left: span.offsetLeft + parseInt(computed.borderLeftWidth)
+    };
+
+    document.body.removeChild(div);
+
+    return coordinates;
 }
