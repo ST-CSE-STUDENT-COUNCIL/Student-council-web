@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } from 'react'
+import TextareaAutosize from 'react-textarea-autosize'
 import { activityApi, activityAdminApi } from '../../lib/api/activities'
 import type { ActivityListItem, Activity, ActivityCreateRequest, ActivityType } from '../../types/activities'
 import { activityTypeLabels, getActivityStatus } from '../../types/activities'
@@ -96,6 +97,8 @@ function AdminActivitiesPage() {
   const [images, setImages] = useState<UploadImage[]>([])
   const [isDragging, setIsDragging] = useState(false)
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
   const [formData, setFormData] = useState<ActivityCreateRequest>({
     type: 'event',
     title: '',
@@ -126,6 +129,41 @@ function AdminActivitiesPage() {
   useEffect(() => {
     fetchActivities()
   }, [])
+
+  // Scroll to center logic
+  const adjustScrollToCenter = useCallback(() => {
+    if (!textareaRef.current) return;
+
+    const textarea = textareaRef.current;
+    // Find the closest parent with overflow-y-auto. 
+    // In the modal form, the direct parent form usually has overflow-y-auto (see line 774 in view_file output: <form ... className="p-6 overflow-y-auto ...">)
+    const scrollParent = textarea.closest('.overflow-y-auto') as HTMLElement;
+
+    if (scrollParent) {
+      const caret = getCaretCoordinates(textarea, textarea.selectionEnd);
+      // Calculate absolute top of caret relative to the scroll parent
+      const textareaRect = textarea.getBoundingClientRect();
+      const parentRect = scrollParent.getBoundingClientRect();
+      const relativeTop = textareaRect.top - parentRect.top + scrollParent.scrollTop;
+
+      const caretAbsoluteTop = relativeTop + caret.top;
+
+      // We want caretAbsoluteTop to be in the middle of scrollParent visible height
+      const targetScrollTop = caretAbsoluteTop - (scrollParent.clientHeight / 2);
+
+      scrollParent.scrollTo({
+        top: targetScrollTop,
+        behavior: 'smooth'
+      });
+    }
+  }, [])
+
+  // Ensure scroll to center happens when content changes
+  useLayoutEffect(() => {
+    if (isModalOpen) {
+      adjustScrollToCenter()
+    }
+  }, [formData.description, adjustScrollToCenter, isModalOpen])
 
   // Filtered and sorted activities
   const filteredActivities = useMemo(() => {
@@ -823,10 +861,18 @@ function AdminActivitiesPage() {
 
               <div>
                 <label className="block text-sm font-bold text-gray-900 mb-2">설명</label>
-                <textarea
+                <TextareaAutosize
+                  ref={textareaRef}
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  rows={4}
+                  minRows={4}
+                  onFocus={adjustScrollToCenter}
+                  onClick={adjustScrollToCenter}
+                  onKeyUp={(e) => {
+                    if (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                      adjustScrollToCenter();
+                    }
+                  }}
                   placeholder="신청에 대한 설명을 입력하세요"
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 resize-none"
                 />
@@ -927,3 +973,48 @@ function AdminActivitiesPage() {
     </div>
   )
 }
+const getCaretCoordinates = (element: HTMLTextAreaElement, position: number) => {
+  const { value } = element;
+  const properties = [
+    'direction', 'boxSizing', 'width', 'height', 'overflowX', 'overflowY',
+    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
+    'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+    'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch', 'fontSize',
+    'fontSizeAdjust', 'lineHeight', 'fontFamily', 'textAlign', 'textTransform',
+    'textIndent', 'textDecoration', 'letterSpacing', 'wordSpacing',
+  ];
+
+  const computed = window.getComputedStyle(element);
+  const div = document.createElement('div');
+  div.id = 'input-textarea-caret-position-mirror-div';
+  document.body.appendChild(div);
+
+  div.style.whiteSpace = 'pre-wrap';
+  div.style.wordWrap = 'break-word';
+  div.style.position = 'absolute';
+  div.style.visibility = 'hidden';
+
+  properties.forEach(prop => {
+    div.style.setProperty(prop, computed.getPropertyValue(prop));
+  });
+
+  if (element.scrollHeight > parseInt(computed.height)) {
+    div.style.overflowY = 'scroll';
+  } else {
+    div.style.overflow = 'hidden';
+  }
+
+  div.textContent = value.substring(0, position);
+
+  const span = document.createElement('span');
+  span.textContent = value.substring(position) || '.';
+  div.appendChild(span);
+
+  const coordinates = {
+    top: span.offsetTop + parseInt(computed.borderTopWidth),
+    left: span.offsetLeft + parseInt(computed.borderLeftWidth)
+  };
+
+  document.body.removeChild(div);
+  return coordinates;
+};
