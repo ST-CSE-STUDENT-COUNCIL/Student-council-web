@@ -5,6 +5,7 @@ import type { Club, ClubCreate, ClubUpdate, IntroImageState } from '../../types/
 import { Plus, Trash2, Edit2, ChevronUp, ChevronDown, X } from 'lucide-react'
 import { toast } from 'sonner'
 import Swal from 'sweetalert2'
+import { Modal } from '../../components/common/Modal'
 
 export const Route = createFileRoute('/admin/clubs')({
   component: AdminClubsPage,
@@ -539,21 +540,14 @@ function ClubModal({
   onIntroImageOrderChange,
   onSubmit,
 }: ClubModalProps) {
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-gray-900">
-            {isEditing ? '동아리 수정' : '동아리 추가'}
-          </h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">
-            ✕
-          </button>
-        </div>
-
-        <div className="p-6 space-y-6">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEditing ? '동아리 수정' : '동아리 추가'}
+      maxWidth="max-w-3xl"
+    >
+      <div className="space-y-6">
           {/* 썸네일 이미지 */}
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-3">
@@ -738,7 +732,6 @@ function ClubModal({
             </button>
           </div>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

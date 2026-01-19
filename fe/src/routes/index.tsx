@@ -148,16 +148,15 @@ function Index() {
                         {/* Slider Area with Outside Buttons */}
                         <div className="relative group px-2">
                             {/* Swiper Container */}
-                            <div className="rounded-3xl overflow-hidden shadow-lg ring-1 ring-black/5 bg-gray-50">
+                            <div className="rounded-3xl overflow-hidden shadow-lg ring-1 ring-black/5 bg-gray-100">
                                 <Swiper
                                     key={featuredActivities.length}
                                     modules={[Autoplay, Pagination, Navigation]}
                                     navigation={{ nextEl: '.custom-next', prevEl: '.custom-prev' }}
                                     pagination={{ clickable: true, dynamicBullets: true }}
-                                    autoplay={{ delay: 5000, disableOnInteraction: false }}
+                                    autoplay={{ delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true }}
                                     spaceBetween={0}
                                     slidesPerView={1}
-                                    autoHeight={true}
                                     className="h-auto min-h-[500px]"
                                     // Swiper 설정 변경 (데이터 로딩 및 루프 대응)
                                     loop={featuredActivities.length > 1} // 데이터 2개 이상일 때만 루프
@@ -166,10 +165,8 @@ function Index() {
                                 >
                                     {featuredActivities.length > 0 ? (
                                         featuredActivities.map((activity) => (
-                                            <SwiperSlide key={activity.id} className="p-4 sm:p-6 box-border">
-                                                <div className="w-full h-full relative">
-                                                    <ActivityCard activity={activity} />
-                                                </div>
+                                            <SwiperSlide key={activity.id} className="box-border">
+                                                <ActivityCard activity={activity} />
                                             </SwiperSlide>
                                         ))
                                     ) : (
