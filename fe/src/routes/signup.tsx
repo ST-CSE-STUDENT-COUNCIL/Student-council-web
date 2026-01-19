@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useState, useEffect, useCallback } from 'react'
 import { authApi } from '../lib/api/auth'
 import { isAxiosError } from 'axios'
+import { toast } from 'sonner'
 import { PhoneInput } from '../components/common/PhoneInput'
 import { Turnstile } from '../components/common/Turnstile'
 import { CheckCircle } from 'lucide-react'
@@ -89,11 +90,11 @@ function SignUp() {
             const result = await authApi.checkStudentId(formData.student_id)
             setIsStudentIdAvailable(result.available)
             if (!result.available) {
-                alert(result.message)
+                toast.error(result.message)
             }
         } catch (error) {
             console.error('Student ID check failed:', error)
-            alert('학번 중복 확인 중 오류가 발생했습니다.')
+            toast.error('학번 중복 확인 중 오류가 발생했습니다.')
         } finally {
             setIsStudentIdChecking(false)
         }
@@ -106,7 +107,7 @@ function SignUp() {
 
     const sendVerificationEmail = async () => {
         if (!formData.email.endsWith('@seoultech.ac.kr')) {
-            alert('서울과기대 이메일(@seoultech.ac.kr)을 입력해주세요.')
+            toast.error('서울과기대 이메일(@seoultech.ac.kr)을 입력해주세요.')
             return
         }
 
@@ -116,7 +117,7 @@ function SignUp() {
             setVerificationStep('sent')
             setTimeLeft(300) // 5분 타이머 시작
             setCanResend(false)
-            alert('인증번호가 발송되었습니다. 이메일을 확인해주세요.')
+            toast.success('인증번호가 발송되었습니다. 이메일을 확인해주세요.')
         } catch (error) {
             console.error('Email send failed:', error)
             if (isAxiosError(error) && error.response?.data?.detail) {
@@ -126,12 +127,12 @@ function SignUp() {
                     setIsEmailVerified(true)
                     setVerificationStep('verified')
                     setTimeLeft(0)
-                    alert('이미 인증된 이메일입니다. 회원가입을 계속 진행해주세요.')
+                    toast.info('이미 인증된 이메일입니다. 회원가입을 계속 진행해주세요.')
                 } else {
-                    alert(detail)
+                    toast.error(detail)
                 }
             } else {
-                alert('인증번호 발송에 실패했습니다.')
+                toast.error('인증번호 발송에 실패했습니다.')
             }
         } finally {
             setIsSendingEmail(false)
@@ -145,13 +146,13 @@ function SignUp() {
             setTimeLeft(300) // 5분 타이머 재시작
             setCanResend(false)
             setVerificationCode('')
-            alert('인증번호가 재발송되었습니다.')
+            toast.success('인증번호가 재발송되었습니다.')
         } catch (error) {
             console.error('Email resend failed:', error)
             if (isAxiosError(error) && error.response?.data?.detail) {
-                alert(error.response.data.detail)
+                toast.error(error.response.data.detail)
             } else {
-                alert('인증번호 재발송에 실패했습니다.')
+                toast.error('인증번호 재발송에 실패했습니다.')
             }
         } finally {
             setIsSendingEmail(false)
@@ -160,12 +161,12 @@ function SignUp() {
 
     const verifyCode = async () => {
         if (verificationCode.length !== 6) {
-            alert('6자리 인증번호를 입력해주세요.')
+            toast.error('6자리 인증번호를 입력해주세요.')
             return
         }
 
         if (timeLeft <= 0) {
-            alert('인증 시간이 만료되었습니다. 인증번호를 재발송해주세요.')
+            toast.error('인증 시간이 만료되었습니다. 인증번호를 재발송해주세요.')
             return
         }
 
@@ -178,13 +179,13 @@ function SignUp() {
             setIsEmailVerified(true)
             setVerificationStep('verified')
             setTimeLeft(0)
-            alert('이메일 인증이 완료되었습니다.')
+            toast.success('이메일 인증이 완료되었습니다.')
         } catch (error) {
             console.error('Verification failed:', error)
             if (isAxiosError(error) && error.response?.data?.detail) {
-                alert(error.response.data.detail)
+                toast.error(error.response.data.detail)
             } else {
-                alert('인증번호 확인에 실패했습니다.')
+                toast.error('인증번호 확인에 실패했습니다.')
             }
         } finally {
             setIsVerifying(false)
@@ -195,27 +196,27 @@ function SignUp() {
         e.preventDefault()
 
         if (!passwordsMatch) {
-            alert('비밀번호가 일치하지 않습니다.')
+            toast.error('비밀번호가 일치하지 않습니다.')
             return
         }
 
         if (!isPasswordValid) {
-            alert('비밀번호는 8자 이상, 영문, 숫자, 특수문자를 포함해야 합니다.')
+            toast.error('비밀번호는 8자 이상, 영문, 숫자, 특수문자를 포함해야 합니다.')
             return
         }
 
         if (isStudentIdAvailable !== true) {
-            alert('학번 중복 확인을 완료해주세요.')
+            toast.error('학번 중복 확인을 완료해주세요.')
             return
         }
 
         if (!isEmailVerified) {
-            alert('이메일 인증을 완료해주세요.')
+            toast.error('이메일 인증을 완료해주세요.')
             return
         }
 
         if (!turnstileToken) {
-            alert('보안 검증을 완료해주세요.')
+            toast.error('보안 검증을 완료해주세요.')
             return
         }
 
@@ -228,14 +229,14 @@ function SignUp() {
                 password: formData.password,
                 department: formData.department
             })
-            alert('회원가입이 완료되었습니다. 로그인해주세요.')
+            toast.success('회원가입이 완료되었습니다. 로그인해주세요.')
             navigate({ to: '/login' })
         } catch (error) {
             console.error('Registration failed:', error)
             if (isAxiosError(error) && error.response?.data?.detail) {
-                alert(error.response.data.detail)
+                toast.error(error.response.data.detail)
             } else {
-                alert('회원가입에 실패했습니다.')
+                toast.error('회원가입에 실패했습니다.')
             }
         }
     }

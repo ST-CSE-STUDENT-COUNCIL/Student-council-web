@@ -12,6 +12,8 @@ import {
   type SuggestionStatus,
   type SummaryCounts,
 } from '../../components/suggestions/admin'
+import { toast } from 'sonner'
+import Swal from 'sweetalert2'
 
 export const Route = createFileRoute('/admin/suggestions')({
   component: AdminSuggestionsPage,
@@ -162,11 +164,11 @@ function AdminSuggestionsPage() {
   const handleSaveDraft = () => {
     if (!selectedSuggestion || isSavingStatus) return
     if (actionDraft.status === 'rejected' && actionDraft.resolutionNote.trim().length === 0) {
-      alert('반려 사유를 입력해주세요.')
+      toast.error('반려 사유를 입력해주세요.')
       return
     }
     if (actionDraft.status === 'approved' && actionDraft.resolutionNote.trim().length === 0) {
-      alert('승인 조치 내용을 입력해주세요.')
+      toast.error('승인 조치 내용을 입력해주세요.')
       return
     }
 
@@ -199,30 +201,43 @@ function AdminSuggestionsPage() {
               : item
           ))
         )
+        toast.success('상태가 업데이트되었습니다.')
       })
       .catch((error) => {
         console.error('failed to update suggestion status', error)
-        alert('상태 업데이트에 실패했습니다. 잠시 후 다시 시도해주세요.')
+        toast.error('상태 업데이트에 실패했습니다. 잠시 후 다시 시도해주세요.')
       })
       .finally(() => {
         setIsSavingStatus(false)
       })
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedSuggestion || isDeleting) return
-    const confirmed = window.confirm('이 건의를 삭제할까요? 삭제 후 복구할 수 없습니다.')
-    if (!confirmed) return
+
+    const result = await Swal.fire({
+      title: '이 건의를 삭제할까요?',
+      text: "삭제 후 복구할 수 없습니다.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: '삭제',
+      cancelButtonText: '취소'
+    })
+
+    if (!result.isConfirmed) return
     setIsDeleting(true)
     suggestionApi.delete(selectedSuggestion.id)
       .then(() => {
         setSuggestions((prev) => prev.filter((item) => item.id !== selectedSuggestion.id))
         setSelectedSuggestion(null)
         setSelectedId(null)
+        toast.success('건의가 삭제되었습니다.')
       })
       .catch((error) => {
         console.error('failed to delete suggestion', error)
-        alert('건의 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')
+        toast.error('건의 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')
       })
       .finally(() => {
         setIsDeleting(false)

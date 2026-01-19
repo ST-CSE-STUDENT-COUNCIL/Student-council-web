@@ -5,7 +5,8 @@ import { activityApi, activityAdminApi } from '../../lib/api/activities'
 import type { ActivityListItem, Activity, ActivityCreateRequest, ActivityType } from '../../types/activities'
 import { activityTypeLabels, getActivityStatus } from '../../types/activities'
 import { RegistrationsModal, FormFieldsManager, ImageUploader, type UploadImage } from '../../components/activities/admin'
-import { ToastContainer, useToast } from '../../components/common/Toast'
+import { toast } from 'sonner'
+import Swal from 'sweetalert2'
 import {
   Plus, Search, Filter, LayoutGrid, List, Calendar, Users, Clock, Edit2, Trash2, Eye,
   CheckCircle, XCircle, Pause, ChevronLeft, ChevronRight, ClipboardList, Image as ImageIcon,
@@ -79,7 +80,6 @@ function AdminActivitiesPage() {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
   const [viewingRegistrationsActivity, setViewingRegistrationsActivity] = useState<ActivityListItem | null>(null)
   const [saving, setSaving] = useState(false)
-  const toast = useToast()
 
   // View & Filter State
   const [viewMode, setViewMode] = useState<ViewMode>('table')
@@ -314,7 +314,19 @@ function AdminActivitiesPage() {
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return
+    const result = await Swal.fire({
+      title: '정말 삭제하시겠습니까?',
+      text: "삭제하면 되돌릴 수 없습니다!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: '삭제',
+      cancelButtonText: '취소'
+    })
+
+    if (!result.isConfirmed) return
+
     try {
       await activityAdminApi.delete(id)
       fetchActivities()
@@ -398,7 +410,6 @@ function AdminActivitiesPage() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto text-gray-900 font-sans">
-      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
 
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">

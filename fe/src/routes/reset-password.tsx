@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { authApi } from '../lib/api/auth'
 import { isAxiosError } from 'axios'
+import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import { User, Lock, Key, CheckCircle2, ChevronLeft, Mail, CheckCircle } from 'lucide-react'
 import { Turnstile } from '../components/common/Turnstile'
@@ -65,11 +66,11 @@ function ResetPassword() {
     const handleSendCode = async (e: React.FormEvent) => {
         e.preventDefault()
         if (studentId.length < 4) {
-            alert('학번을 입력해주세요.')
+            toast.error('학번을 입력해주세요.')
             return
         }
         if (!turnstileToken) {
-            alert('보안 검증을 완료해주세요.')
+            toast.error('보안 검증을 완료해주세요.')
             return
         }
         setIsLoading(true)
@@ -78,12 +79,12 @@ function ResetPassword() {
             setMaskedEmail(maskEmail(result.email))
             setStep(2)
             setTimeLeft(300) // 5분 타이머 시작
-            alert(`${maskEmail(result.email)}로 인증번호가 발송되었습니다.`)
+            toast.success(`${maskEmail(result.email)}로 인증번호가 발송되었습니다.`)
         } catch (error) {
             if (isAxiosError(error) && error.response?.data?.detail) {
-                alert(error.response.data.detail)
+                toast.error(error.response.data.detail)
             } else {
-                alert('인증번호 발송에 실패했습니다.')
+                toast.error('인증번호 발송에 실패했습니다.')
             }
         } finally {
             setIsLoading(false)
@@ -94,11 +95,11 @@ function ResetPassword() {
     const handleVerifyCode = async (e: React.FormEvent) => {
         e.preventDefault()
         if (code.length !== 6) {
-            alert('6자리 인증번호를 입력해주세요.')
+            toast.error('6자리 인증번호를 입력해주세요.')
             return
         }
         if (timeLeft <= 0) {
-            alert('인증 시간이 만료되었습니다. 처음부터 다시 시도해주세요.')
+            toast.error('인증 시간이 만료되었습니다. 처음부터 다시 시도해주세요.')
             return
         }
         setIsLoading(true)
@@ -107,9 +108,9 @@ function ResetPassword() {
             setStep(3)
         } catch (error) {
             if (isAxiosError(error) && error.response?.data?.detail) {
-                alert(error.response.data.detail)
+                toast.error(error.response.data.detail)
             } else {
-                alert('인증번호가 올바르지 않습니다.')
+                toast.error('인증번호가 올바르지 않습니다.')
             }
         } finally {
             setIsLoading(false)
@@ -120,24 +121,24 @@ function ResetPassword() {
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault()
         if (password !== confirmPassword) {
-            alert('비밀번호가 일치하지 않습니다.')
+            toast.error('비밀번호가 일치하지 않습니다.')
             return
         }
         if (!isPasswordValid) {
-            alert('비밀번호는 8자 이상, 영문, 숫자, 특수문자를 포함해야 합니다.')
+            toast.error('비밀번호는 8자 이상, 영문, 숫자, 특수문자를 포함해야 합니다.')
             return
         }
         setIsLoading(true)
         try {
             await authApi.resetPassword({ student_id: studentId, new_password: password })
-            alert('비밀번호가 성공적으로 변경되었습니다.')
+            toast.success('비밀번호가 성공적으로 변경되었습니다.')
             navigate({ to: '/login' })
         } catch (error) {
             console.error('Password reset failed:', error)
             if (isAxiosError(error) && error.response?.data?.detail) {
-                alert(error.response.data.detail)
+                toast.error(error.response.data.detail)
             } else {
-                alert('비밀번호 변경에 실패했습니다.')
+                toast.error('비밀번호 변경에 실패했습니다.')
             }
         } finally {
             setIsLoading(false)

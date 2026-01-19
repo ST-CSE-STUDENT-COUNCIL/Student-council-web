@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
+import { toast } from 'sonner'
 import { mypageApi } from '../../lib/api/mypage'
 
 type VerifyModalProps = {
@@ -60,7 +61,7 @@ export function VerifyModal({ onClose, onUploaded }: VerifyModalProps) {
         await onUploaded()
       }
       onClose()
-      alert('업로드가 완료되었습니다. 확인 중입니다.')
+      toast.success('업로드가 완료되었습니다. 확인 중입니다.')
     } catch (err) {
       console.error('Failed to upload verification image', err)
       setError('업로드에 실패했습니다. 잠시 후 다시 시도해주세요.')

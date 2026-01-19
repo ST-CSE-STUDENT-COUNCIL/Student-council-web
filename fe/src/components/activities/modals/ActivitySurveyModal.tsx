@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Modal } from '../../common/Modal'
 import type { Activity, ActivityListItem, SurveySubmitRequest } from '../../../types/activities'
 import { activityApi } from '../../../lib/api/activities'
+import { toast } from 'sonner'
 
 type ActivitySurveyModalProps = {
     isOpen: boolean
@@ -73,7 +74,7 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
             }
 
             onClose()
-            alert('제출이 완료되었습니다.\n참여해주셔서 감사합니다.')
+            toast.success('제출이 완료되었습니다.\n참여해주셔서 감사합니다.')
             setSurveyResponses({})
         } catch (err: any) {
             const errorMessage = err.response?.data?.detail || '제출 중 오류가 발생했습니다.'
