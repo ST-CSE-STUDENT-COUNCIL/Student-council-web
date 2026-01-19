@@ -154,7 +154,7 @@ function Index() {
                                     modules={[Autoplay, Pagination, Navigation]}
                                     navigation={{ nextEl: '.custom-next', prevEl: '.custom-prev' }}
                                     pagination={{ clickable: true, dynamicBullets: true }}
-                                    autoplay={{ delay: 5000, disableOnInteraction: false }}
+                                    autoplay={{ delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true }}
                                     spaceBetween={0}
                                     slidesPerView={1}
                                     autoHeight={true}
