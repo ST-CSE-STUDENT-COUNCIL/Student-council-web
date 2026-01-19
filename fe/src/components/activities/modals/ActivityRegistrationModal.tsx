@@ -218,14 +218,75 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         }
     }
 
+    // Footer 버튼 렌더링
+    const renderFooter = () => {
+        if (fetching || !detailActivity) return null
+
+        return (
+            <div className="flex gap-3">
+                {step === 1 ? (
+                    <>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                        >
+                            취소
+                        </button>
+                        {hasAdditionalFields ? (
+                            <button
+                                type="button"
+                                onClick={handleNext}
+                                className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
+                            >
+                                다음
+                            </button>
+                        ) : (
+                            <button
+                                type="submit"
+                                form="activity-registration-form"
+                                disabled={loading}
+                                className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
+                            >
+                                {loading ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : '신청하기'}
+                            </button>
+                        )}
+                    </>
+                ) : (
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setStep(1)}
+                            className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                        >
+                            이전
+                        </button>
+                        <button
+                            type="submit"
+                            form="activity-registration-form"
+                            disabled={loading}
+                            className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
+                        >
+                            {loading ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : '신청하기'}
+                        </button>
+                    </>
+                )}
+            </div>
+        )
+    }
+
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={getTitle()}>
+        <Modal isOpen={isOpen} onClose={onClose} title={getTitle()} footer={renderFooter()}>
             {fetching || !detailActivity ? (
                 <div className="flex justify-center py-10">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex flex-col gap-4">
+                <form id="activity-registration-form" onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex flex-col gap-4">
                     {/* Progress Indicators (Only if there are 2 steps) */}
                     {hasAdditionalFields && (
                         <div className="flex items-center gap-2 mb-4">
@@ -371,7 +432,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                     <p>활동에 필요한 추가 정보를 입력해주세요.</p>
                                 </div>
 
-                                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                                <div className="space-y-4">
                                     {detailActivity?.form_fields?.map((field) => (
                                         <div key={field.name}>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -515,59 +576,6 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                             </motion.div>
                         )}
                     </AnimatePresence>
-
-                    {/* Button Group (Outside AnimatePresence to prevent flickering) */}
-                    <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100">
-                        {step === 1 ? (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
-                                >
-                                    취소
-                                </button>
-                                {hasAdditionalFields ? (
-                                    <button
-                                        type="button"
-                                        onClick={handleNext}
-                                        className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
-                                    >
-                                        다음
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
-                                    >
-                                        {loading ? (
-                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        ) : '신청하기'}
-                                    </button>
-                                )}
-                            </>
-                        ) : (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={() => setStep(1)}
-                                    className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
-                                >
-                                    이전
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
-                                >
-                                    {loading ? (
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : '신청하기'}
-                                </button>
-                            </>
-                        )}
-                    </div>
                 </form>
             )}
         </Modal>
