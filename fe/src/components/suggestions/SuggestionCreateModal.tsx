@@ -46,8 +46,30 @@ export function SuggestionCreateModal({
             }}
             title="새 건의 작성"
             maxWidth="max-w-xl"
+            footer={
+                <div className="flex items-center justify-end gap-3">
+                    <button
+                        type="button"
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                        onClick={() => {
+                            if (submitting) return
+                            onClose()
+                        }}
+                    >
+                        취소
+                    </button>
+                    <button
+                        type="submit"
+                        form="suggestion-form"
+                        disabled={submitting}
+                        className={`rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition ${submitting ? 'bg-slate-400' : 'bg-slate-900 hover:-translate-y-0.5 hover:shadow-md'}`}
+                    >
+                        {submitting ? '등록 중...' : '등록하기'}
+                    </button>
+                </div>
+            }
         >
-            <form className="space-y-5" onSubmit={handleSubmit}>
+            <form id="suggestion-form" className="space-y-5" onSubmit={handleSubmit}>
                 <div>
                     <label className="block text-sm font-medium text-slate-700">제목</label>
                     <input
@@ -67,25 +89,6 @@ export function SuggestionCreateModal({
                         className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 resize-y"
                     />
                     <p className="mt-2 text-xs text-slate-500">익명 건의함으로 처리되며, 관리자가 확인 후 진행됩니다.</p>
-                </div>
-                <div className="flex items-center justify-end gap-3">
-                    <button
-                        type="button"
-                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                        onClick={() => {
-                            if (submitting) return
-                            onClose()
-                        }}
-                    >
-                        취소
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={submitting}
-                        className={`rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition ${submitting ? 'bg-slate-400' : 'bg-slate-900 hover:-translate-y-0.5 hover:shadow-md'}`}
-                    >
-                        {submitting ? '등록 중...' : '등록하기'}
-                    </button>
                 </div>
             </form>
         </Modal>

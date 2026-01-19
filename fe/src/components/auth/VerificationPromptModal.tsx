@@ -53,6 +53,23 @@ export function VerificationPromptModal() {
             onClose={handleClose}
             title={isRejected ? "인증 반려 알림" : "학적 인증 안내"}
             maxWidth="max-w-md"
+            footer={
+                <div className="flex gap-3">
+                    <button
+                        onClick={handleClose}
+                        className="flex-1 px-4 py-3 rounded-xl font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+                    >
+                        나중에 하기
+                    </button>
+                    <button
+                        onClick={handleNavigate}
+                        className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                    >
+                        인증하러 가기
+                        <ArrowRight size={18} />
+                    </button>
+                </div>
+            }
         >
             <div className="flex flex-col gap-6">
                 <div className="flex flex-col items-center text-center gap-4">
@@ -72,22 +89,6 @@ export function VerificationPromptModal() {
                             }
                         </p>
                     </div>
-                </div>
-
-                <div className="flex gap-3">
-                    <button
-                        onClick={handleClose}
-                        className="flex-1 px-4 py-3 rounded-xl font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
-                    >
-                        나중에 하기
-                    </button>
-                    <button
-                        onClick={handleNavigate}
-                        className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                    >
-                        인증하러 가기
-                        <ArrowRight size={18} />
-                    </button>
                 </div>
             </div>
         </Modal>
