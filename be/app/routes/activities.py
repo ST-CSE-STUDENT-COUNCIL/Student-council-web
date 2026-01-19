@@ -151,6 +151,7 @@ async def get_activities(
         )
     
     except Exception as e:
+        print(f"[API ERROR] get_activities: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"활동 목록 조회 실패: {str(e)}"
@@ -240,6 +241,7 @@ async def get_activity(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] get_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"활동 조회 실패: {str(e)}"
@@ -398,6 +400,7 @@ async def register_for_activity(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] register_for_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"활동 신청 실패: {str(e)}"
@@ -465,6 +468,7 @@ async def cancel_activity_registration(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] cancel_activity_registration: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"신청 취소 실패: {str(e)}"
@@ -540,6 +544,7 @@ async def submit_survey(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] submit_survey: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"설문조사 제출 실패: {str(e)}"
@@ -644,6 +649,7 @@ async def create_activity(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] create_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"활동 생성 실패: {str(e)}"
@@ -770,6 +776,7 @@ async def update_activity(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] update_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"활동 수정 실패: {str(e)}"
@@ -817,6 +824,7 @@ async def delete_activity(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] delete_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"활동 삭제 실패: {str(e)}"
@@ -889,6 +897,7 @@ async def get_activity_registrations(
         )
     
     except Exception as e:
+        print(f"[API ERROR] get_activity_registrations: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"신청자 목록 조회 실패: {str(e)}"
@@ -968,6 +977,7 @@ async def update_registration_status(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] update_registration_status: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"상태 변경 실패: {str(e)}"
@@ -1094,6 +1104,7 @@ async def get_survey_stats(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] get_survey_stats: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"설문조사 통계 조회 실패: {str(e)}"
@@ -1231,6 +1242,7 @@ async def get_demand_survey_stats(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] get_demand_survey_stats: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"수요조사 통계 조회 실패: {str(e)}"
@@ -1310,6 +1322,7 @@ async def add_activity_image(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] add_activity_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"이미지 추가 실패: {str(e)}"
@@ -1367,6 +1380,7 @@ async def delete_activity_image(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] delete_activity_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"이미지 삭제 실패: {str(e)}"
