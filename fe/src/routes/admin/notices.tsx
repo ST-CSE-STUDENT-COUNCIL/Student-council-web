@@ -7,7 +7,8 @@ import { NoticeList } from '../../components/notices/admin/NoticeList'
 import { NoticeFilter } from '../../components/notices/admin/NoticeFilter'
 import { NoticeForm } from '../../components/notices/admin/NoticeForm'
 import { CATEGORIES, BOARD_SUB_CATEGORIES } from '../../components/notices/admin/constants'
-import { ToastContainer, useToast } from '../../components/common/Toast'
+import { toast } from 'sonner'
+import Swal from 'sweetalert2'
 
 export const Route = createFileRoute('/admin/notices')({
   component: AdminNoticesPage,
@@ -18,7 +19,6 @@ type SortOption = 'newest' | 'oldest' | 'title'
 function AdminNoticesPage() {
   const [posts, setPosts] = useState<NoticeListItem[]>([])
   const [loading, setLoading] = useState(false)
-  const toast = useToast()
 
   // Filter State
   const [filterMain, setFilterMain] = useState<string>('all')
@@ -146,7 +146,19 @@ function AdminNoticesPage() {
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return
+    const result = await Swal.fire({
+      title: '정말 삭제하시겠습니까?',
+      text: "삭제하면 되돌릴 수 없습니다!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: '삭제',
+      cancelButtonText: '취소'
+    })
+
+    if (!result.isConfirmed) return
+
     try {
       await postApi.delete(id)
       await fetchPosts()
@@ -160,7 +172,19 @@ function AdminNoticesPage() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return
-    if (!confirm(`선택한 ${selectedIds.length}개의 공지사항을 삭제하시겠습니까?`)) return
+
+    const result = await Swal.fire({
+      title: `${selectedIds.length}개의 공지사항을 삭제하시겠습니까?`,
+      text: "삭제하면 되돌릴 수 없습니다!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: '삭제',
+      cancelButtonText: '취소'
+    })
+
+    if (!result.isConfirmed) return
 
     try {
       await Promise.all(selectedIds.map(id => postApi.delete(id)))
@@ -293,8 +317,6 @@ function AdminNoticesPage() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto text-gray-900 font-sans">
-      {/* Toast Container */}
-      <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
 
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">

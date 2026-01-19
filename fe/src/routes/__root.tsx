@@ -2,6 +2,8 @@ import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
 import Header from '../components/layout/Header'
 import Footer from '../components/layout/Footer'
+import { VerificationPromptModal } from '../components/auth/VerificationPromptModal'
+import { Toaster } from 'sonner'
 
 // DevTools는 개발 환경에서만 로드
 const TanStackRouterDevtools = import.meta.env.DEV
@@ -22,10 +24,11 @@ export const Route = createRootRoute({
                 </main>
                 <Footer />
             </div>
+            <VerificationPromptModal />
+            <Toaster richColors position="top-center" closeButton />
             <Suspense fallback={null}>
                 <TanStackRouterDevtools position="bottom-right" />
             </Suspense>
         </>
     ),
 })
-

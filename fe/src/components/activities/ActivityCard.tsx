@@ -208,8 +208,8 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
                     </div>
 
                     <div className="flex-1 overflow-y-auto mb-6 custom-scrollbar pr-2 min-h-[100px] md:min-h-0">
-                        <p className="text-gray-600 text-base md:text-lg leading-relaxed whitespace-pre-wrap">
-                            {activity.description}
+                        <p className="text-gray-600 text-base md:text-lg leading-relaxed whitespace-pre-wrap break-words">
+                            <span className="text-sm md:text-base">{activity.description}</span>
                         </p>
                     </div>
 

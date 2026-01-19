@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { isAxiosError } from 'axios'
+import { toast } from 'sonner'
 import { User, Lock } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { authApi } from '../lib/api/auth'
@@ -23,7 +24,7 @@ function Login() {
     e.preventDefault()
 
     if (!turnstileToken) {
-      alert('보안 검증을 완료해주세요.')
+      toast.error('보안 검증을 완료해주세요.')
       return
     }
 
@@ -44,17 +45,17 @@ function Login() {
 
         if (status === 403) {
           // 거절된 사용자 또는 로그인 차단
-          alert(detail || '접근이 거부되었습니다.')
+          toast.error(detail || '접근이 거부되었습니다.')
         } else if (status === 401) {
-          alert(detail || '학번 또는 비밀번호가 일치하지 않습니다.')
+          toast.error(detail || '학번 또는 비밀번호가 일치하지 않습니다.')
         } else if (status === 404) {
-          alert(detail || '등록되지 않은 학번입니다.')
+          toast.error(detail || '등록되지 않은 학번입니다.')
         } else {
-          alert(detail || '로그인 중 오류가 발생했습니다.')
+          toast.error(detail || '로그인 중 오류가 발생했습니다.')
         }
       } else {
         console.error('Login failed:', error)
-        alert('로그인 중 오류가 발생했습니다.')
+        toast.error('로그인 중 오류가 발생했습니다.')
       }
     } finally {
       setIsLoading(false)

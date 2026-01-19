@@ -4,6 +4,8 @@ import { mypageApi } from '../../lib/api/mypage'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useNavigate } from '@tanstack/react-router'
 import { Button } from '../common/Button'
+import { toast } from 'sonner'
+import Swal from 'sweetalert2'
 
 interface WithdrawModalProps {
     onClose: () => void
@@ -20,14 +22,27 @@ export function WithdrawModal({ onClose }: WithdrawModalProps) {
         e.preventDefault()
         if (!password) return
 
-        if (!confirm('정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return
+        if (!password) return
+
+        const result = await Swal.fire({
+            title: '정말로 탈퇴하시겠습니까?',
+            text: "이 작업은 되돌릴 수 없습니다.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: '탈퇴',
+            cancelButtonText: '취소'
+        })
+
+        if (!result.isConfirmed) return
 
         setLoading(true)
         setError('')
 
         try {
             await mypageApi.withdraw(password)
-            alert('회원 탈퇴가 완료되었습니다.')
+            toast.success('회원 탈퇴가 완료되었습니다.')
             logout()
             await navigate({ to: '/' })
         } catch (err: any) {

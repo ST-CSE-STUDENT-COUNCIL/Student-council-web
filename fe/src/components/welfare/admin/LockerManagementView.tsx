@@ -7,6 +7,7 @@ import { LockerLayoutSection } from './LockerLayoutSection'
 import { LockerSettingsModal } from './LockerSettingsModal'
 import { LockerTimelineSection } from './LockerTimelineSection'
 import type { LockerFormState, LockerTimelineStage } from './LockerTypes'
+import { toast } from 'sonner'
 
 const LOCKER_DATE_FIELDS: Array<keyof LockerFormState> = [
 	'application_start',
@@ -168,12 +169,12 @@ export function LockerManagementView() {
 			}
 
 			if (hasInvalidRange(formData.application_start, formData.application_end)) {
-				alert('신청 시작일은 마감일보다 늦을 수 없습니다.')
+				toast.error('신청 시작일은 마감일보다 늦을 수 없습니다.')
 				return
 			}
 
 			if (hasInvalidRange(formData.return_extension_start, formData.return_extension_end)) {
-				alert('반납/연장 시작일은 마감일보다 늦을 수 없습니다.')
+				toast.error('반납/연장 시작일은 마감일보다 늦을 수 없습니다.')
 				return
 			}
 
@@ -205,7 +206,7 @@ export function LockerManagementView() {
 
 			setFormData(createLockerFormState(responseData))
 
-			alert('기간 및 링크가 저장되었습니다.')
+			toast.success('기간 및 링크가 저장되었습니다.')
 			setIsModalOpen(false)
 		} catch (error: any) {
 			let errorMessage = '저장 실패'
@@ -214,7 +215,7 @@ export function LockerManagementView() {
 			} else if (error.response?.data?.detail) {
 				errorMessage = error.response.data.detail
 			}
-			alert(`저장 실패: ${errorMessage}`)
+			toast.error(`저장 실패: ${errorMessage}`)
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -237,7 +238,7 @@ export function LockerManagementView() {
 
 			setLayoutImage(response?.layout_image_url || public_url)
 
-			alert('사물함 배치도가 업로드되었습니다.')
+			toast.success('사물함 배치도가 업로드되었습니다.')
 		} catch (error: any) {
 			let errorMessage = '배치도 업로드에 실패했습니다.'
 
@@ -249,7 +250,7 @@ export function LockerManagementView() {
 				errorMessage = error.response.data.detail
 			}
 
-			alert(`업로드 실패: ${errorMessage}`)
+			toast.error(`업로드 실패: ${errorMessage}`)
 		} finally {
 			setIsUploading(false)
 		}

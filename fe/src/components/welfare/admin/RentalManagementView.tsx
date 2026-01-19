@@ -6,6 +6,8 @@ import { RentalAddModal } from './RentalAddModal.tsx'
 import { RentalEditModal } from './RentalEditModal.tsx'
 import { RentalItemCard } from './RentalItemCard.tsx'
 import type { RentalFormState } from './RentalTypes.ts'
+import { toast } from 'sonner'
+import Swal from 'sweetalert2'
 
 type RentalManagementViewProps = {
     items: WelfareRental[]
@@ -114,15 +116,15 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
         }
 
         if (!addItem.item_name.trim()) {
-            alert('물품명을 입력해주세요.')
+            toast.error('물품명을 입력해주세요.')
             return
         }
         if (!addItem.application_sheet_url.trim()) {
-            alert('신청 시트 URL을 입력해주세요.')
+            toast.error('신청 시트 URL을 입력해주세요.')
             return
         }
         if (!addItem.quantity_cell_range.trim()) {
-            alert('재고 셀 위치를 입력해주세요.')
+            toast.error('재고 셀 위치를 입력해주세요.')
             return
         }
 
@@ -134,13 +136,13 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
                 // 파일명 생성 (타임스탐프 + 파일명으로 중복 방지)
                 const timestamp = Date.now()
                 const filename = `rental_items/${timestamp}_${addImageFile.name}`
-                
+
                 // 1. Presigned URL 획득
                 const { presigned_url, public_url } = await welfareApi.getPresignedUrl(filename, accessToken)
-                
+
                 // 2. S3에 직접 업로드
                 await welfareApi.uploadImageToS3(presigned_url, addImageFile)
-                
+
                 // 3. 업로드된 이미지의 public URL 사용
                 imageUrl = public_url
             }
@@ -162,7 +164,7 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
 
             await welfareApi.createRental(payload, accessToken)
 
-            alert('새 물품이 추가되었습니다.')
+            toast.success('새 물품이 추가되었습니다.')
             resetAddState()
             await onRefresh()
         } catch (error: any) {
@@ -178,7 +180,7 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
                 errorMessage = error.response.data.message
             }
 
-            alert(`물품 추가 실패: ${errorMessage}`)
+            toast.error(`물품 추가 실패: ${errorMessage}`)
         } finally {
             setIsSubmitting(false)
         }
@@ -209,11 +211,11 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
         const category = editItem.category.trim() || editingItem.category || ''
 
         if (!itemName) {
-            alert('물품명을 입력해주세요.')
+            toast.error('물품명을 입력해주세요.')
             return
         }
         if (!sheetUrl) {
-            alert('신청 시트 URL을 입력해주세요.')
+            toast.error('신청 시트 URL을 입력해주세요.')
             return
         }
 
@@ -250,7 +252,7 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
 
             await welfareApi.updateRental(editingItem.id, payload, accessToken)
 
-            alert('물품이 수정되었습니다.')
+            toast.success('물품이 수정되었습니다.')
             resetEditState()
             await onRefresh()
         } catch (error: any) {
@@ -266,20 +268,29 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
                 errorMessage = error.response.data.message
             }
 
-            alert(`물품 수정 실패: ${errorMessage}`)
+            toast.error(`물품 수정 실패: ${errorMessage}`)
         } finally {
             setIsSubmitting(false)
         }
     }
 
     const handleDelete = async (itemId: number) => {
-        if (!confirm('이 물품을 삭제하시겠습니까?')) {
-            return
-        }
+        const result = await Swal.fire({
+            title: '이 물품을 삭제하시겠습니까?',
+            text: "삭제하면 되돌릴 수 없습니다!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: '삭제',
+            cancelButtonText: '취소'
+        })
+
+        if (!result.isConfirmed) return
 
         try {
             await welfareApi.deleteRental(itemId, accessToken)
-            alert('물품이 삭제되었습니다.')
+            toast.success('물품이 삭제되었습니다.')
             await onRefresh()
         } catch (error: any) {
             let errorMessage = '물품 삭제에 실패했습니다.'
@@ -294,7 +305,7 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
                 errorMessage = error.response.data.message
             }
 
-            alert(`물품 삭제 실패: ${errorMessage}`)
+            toast.error(`물품 삭제 실패: ${errorMessage}`)
         }
     }
 

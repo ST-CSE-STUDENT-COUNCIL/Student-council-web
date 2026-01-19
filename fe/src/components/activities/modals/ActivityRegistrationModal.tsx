@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import { Modal } from '../../common/Modal'
 import { PhoneInput } from '../../common/PhoneInput'
 import type { Activity, ActivityListItem, ActivityRegistrationRequest } from '../../../types/activities'
@@ -34,13 +35,14 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     // 모달이 열릴 때마다 초기화 및 상세 정보 가져오기
     useEffect(() => {
         if (isOpen) {
-            // 1. 상태 초기화 (로그인된 사용자 정보로 자동 채우기)
+            // 1. 상태 초기화 (로그인된 사용자 정보로 자동 채우기 - 인증된 사용자만)
+            const isVerified = user?.verification_status === 'approved'
             setStep(1)
             setFormData({
-                name: user?.name || '',
-                student_id: user?.student_id || '',
+                name: isVerified ? (user?.name || '') : '',
+                student_id: isVerified ? (user?.student_id || '') : '',
                 department: user?.department || '컴퓨터공학과',
-                phone: user?.phone || '',
+                phone: isVerified ? (user?.phone || '') : '',
                 kakao_id: '',
                 verification_image_url: '',
                 form_responses: {}
@@ -110,7 +112,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             await activityApi.register(activity.id, submissionData)
             await onSubmit(submissionData)
             onClose()
-            alert('신청이 완료되었습니다!')
+            toast.success('신청이 완료되었습니다!')
             // Reset form
             setFormData({
                 name: '',
@@ -159,10 +161,10 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             // 익명 조사: 입력받는게 없으므로 유효성 검사 패스
         } else {
             // 일반 행사 유효성 검사
-            if (!formData.name) return alert('이름을 입력해주세요.')
-            if (!formData.student_id) return alert('학번을 입력해주세요.')
-            if (!formData.phone) return alert('연락처를 입력해주세요.')
-            if (activity.type === 'kakao_invite' && !formData.verification_image_url) return alert('학적 인증자료를 제출해주세요.')
+            if (!formData.name) return toast.error('이름을 입력해주세요.')
+            if (!formData.student_id) return toast.error('학번을 입력해주세요.')
+            if (!formData.phone) return toast.error('연락처를 입력해주세요.')
+            if (activity.type === 'kakao_invite' && !formData.verification_image_url) return toast.error('학적 인증자료를 제출해주세요.')
         }
 
 
@@ -309,7 +311,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                                 setFormData(prev => ({ ...prev, verification_image_url: public_url }))
                                                             } catch (err) {
                                                                 console.error(err)
-                                                                alert('파일 업로드에 실패했습니다.')
+                                                                toast.error('파일 업로드에 실패했습니다.')
                                                             }
                                                         }}
                                                         className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -448,7 +450,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                                 }))
                                                             } catch (err) {
                                                                 console.error(err)
-                                                                alert('파일 업로드에 실패했습니다.')
+                                                                toast.error('파일 업로드에 실패했습니다.')
                                                             }
                                                         }}
                                                         required={field.required && !formData.form_responses?.[field.name]}

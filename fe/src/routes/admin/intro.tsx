@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { introductionApi } from '../../lib/api/introductions'
 import type { IntroductionImage, IntroductionImageCreate, IntroductionImageUpdate } from '../../types/introductions'
 import { Plus, Trash2, Edit2, ArrowUp, ArrowDown } from 'lucide-react'
+import { toast } from 'sonner'
+import Swal from 'sweetalert2'
 
 export const Route = createFileRoute('/admin/intro')({
   component: AdminIntroPage,
@@ -127,16 +129,16 @@ function AdminIntroPage() {
   // 이미지 추가
   const handleAdd = async () => {
     if (!formData.title.trim()) {
-      alert('제목을 입력해주세요.')
+      toast.error('제목을 입력해주세요.')
       return
     }
     if (!imageFile && !formData.image_url) {
-      alert('이미지를 업로드해주세요.')
+      toast.error('이미지를 업로드해주세요.')
       return
     }
     // display_order가 빈칸인지 검사
     if (formData.display_order === undefined || formData.display_order === null) {
-      alert('표시 순서를 입력해주세요.')
+      toast.error('표시 순서를 입력해주세요.')
       return
     }
 
@@ -156,12 +158,12 @@ function AdminIntroPage() {
       }
 
       await introductionApi.create(newImage)
-      alert('이미지가 추가되었습니다.')
+      toast.success('이미지가 추가되었습니다.')
       resetForm()
       setShowAddModal(false)
       fetchImages()
     } catch (err: any) {
-      alert(err.message || '이미지 추가에 실패했습니다.')
+      toast.error(err.message || '이미지 추가에 실패했습니다.')
     } finally {
       setIsSubmitting(false)
     }
@@ -171,12 +173,12 @@ function AdminIntroPage() {
   const handleUpdate = async () => {
     if (!editingImage) return
     if (!formData.title.trim()) {
-      alert('제목을 입력해주세요.')
+      toast.error('제목을 입력해주세요.')
       return
     }
     // display_order가 빈칸인지 검사
     if (formData.display_order === undefined || formData.display_order === null) {
-      alert('표시 순서를 입력해주세요.')
+      toast.error('표시 순서를 입력해주세요.')
       return
     }
 
@@ -190,12 +192,12 @@ function AdminIntroPage() {
       }
 
       await introductionApi.update(editingImage.id, updateData)
-      alert('이미지 정보가 수정되었습니다.')
+      toast.success('이미지 정보가 수정되었습니다.')
       resetForm()
       setShowEditModal(false)
       fetchImages()
     } catch (err: any) {
-      alert(err.message || '이미지 수정에 실패했습니다.')
+      toast.error(err.message || '이미지 수정에 실패했습니다.')
     } finally {
       setIsSubmitting(false)
     }
@@ -203,16 +205,25 @@ function AdminIntroPage() {
 
   // 이미지 삭제
   const handleDelete = async (image: IntroductionImage) => {
-    if (!confirm(`"${image.title}" 이미지를 삭제하시겠습니까?`)) {
-      return
-    }
+    const result = await Swal.fire({
+      title: `"${image.title}" 이미지를 삭제하시겠습니까?`,
+      text: "삭제하면 되돌릴 수 없습니다!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: '삭제',
+      cancelButtonText: '취소'
+    })
+
+    if (!result.isConfirmed) return
 
     try {
       await introductionApi.delete(image.id)
-      alert('이미지가 삭제되었습니다.')
+      toast.success('이미지가 삭제되었습니다.')
       fetchImages()
     } catch (err: any) {
-      alert('이미지 삭제에 실패했습니다.')
+      toast.error('이미지 삭제에 실패했습니다.')
       console.error(err)
     }
   }
@@ -237,7 +248,7 @@ function AdminIntroPage() {
       ])
       fetchImages()
     } catch (err: any) {
-      alert('순번 변경에 실패했습니다.')
+      toast.error('순번 변경에 실패했습니다.')
       console.error(err)
     }
   }
@@ -246,10 +257,10 @@ function AdminIntroPage() {
   const handleToggleActive = async (image: IntroductionImage) => {
     try {
       await introductionApi.update(image.id, { is_active: !image.is_active })
-      alert(`이미지가 ${image.is_active ? '비활성화' : '활성화'}되었습니다.`)
+      toast.success(`이미지가 ${image.is_active ? '비활성화' : '활성화'}되었습니다.`)
       fetchImages()
     } catch (err: any) {
-      alert('상태 변경에 실패했습니다.')
+      toast.error('상태 변경에 실패했습니다.')
       console.error(err)
     }
   }
