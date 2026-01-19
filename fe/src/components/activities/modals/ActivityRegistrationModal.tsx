@@ -90,10 +90,12 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         // [중요] 1단계이고 추가 질문이 있다면, 어떤 이유로든 제출(Submit) 이벤트가 발생하면
         // 서버로 보내지 말고 '다음 단계'로 이동 처리 (엔터키 방지, 버튼 오작동 방지)
         if (step === 1 && hasAdditionalFields) {
-
             handleNext()
             return
         }
+
+        // 1단계에서 이미 검증이 완료되었으므로 중복 검증 제거
+        // (익명 타입은 제외)
 
         setLoading(true)
         setError(null)
@@ -133,6 +135,15 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
+        
+        // 학번 입력 필드: 숫자만 허용, 최대 8자리
+        if (name === 'student_id') {
+            const numbers = value.replace(/\D/g, '') // 숫자만 추출
+            const limited = numbers.slice(0, 8) // 최대 8자리
+            setFormData(prev => ({ ...prev, [name]: limited }))
+            return
+        }
+        
         setFormData(prev => ({ ...prev, [name]: value }))
     }
 
@@ -162,11 +173,28 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         } else {
             // 일반 행사 유효성 검사
             if (!formData.name) return toast.error('이름을 입력해주세요.')
-            if (!formData.student_id) return toast.error('학번을 입력해주세요.')
-            if (!formData.phone) return toast.error('연락처를 입력해주세요.')
-            if (activity.type === 'kakao_invite' && !formData.verification_image_url) return toast.error('학적 인증자료를 제출해주세요.')
+            
+            // 학번 검증
+            if (!formData.student_id) {
+                return toast.error('학번을 입력해주세요.')
+            }
+            if (formData.student_id.length !== 8) {
+                return toast.error('학번 8자리를 정확히 입력해주세요.')
+            }
+            
+            // 전화번호 검증
+            if (!formData.phone) {
+                return toast.error('연락처를 입력해주세요.')
+            }
+            const phoneNumbers = formData.phone.replace(/-/g, '')
+            if (phoneNumbers.length !== 11) {
+                return toast.error('전화번호를 정확히 입력해주세요.')
+            }
+            
+            if (activity.type === 'kakao_invite' && !formData.verification_image_url) {
+                return toast.error('학적 인증자료를 제출해주세요.')
+            }
         }
-
 
         setStep(2)
     }
@@ -238,7 +266,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                 name="name"
                                                 value={formData.name}
                                                 onChange={handleChange}
-                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
                                                 placeholder="이름을 입력하세요"
                                                 autoFocus
                                             />
@@ -254,7 +282,10 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     name="student_id"
                                                     value={formData.student_id}
                                                     onChange={handleChange}
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    maxLength={8}
+                                                    inputMode="numeric"
+                                                    pattern="[0-9]*"
+                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
                                                     placeholder="예: 25101234"
                                                 />
                                             </div>
@@ -291,7 +322,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                         name="kakao_id"
                                                         value={formData.kakao_id}
                                                         onChange={handleChange}
-                                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
                                                         placeholder="카카오톡 ID를 입력하세요"
                                                     />
                                                 </div>
@@ -381,7 +412,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     required={field.required}
                                                     placeholder={field.placeholder}
                                                     rows={3}
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 resize-none"
                                                 />
                                             ) : field.type === 'radio' ? (
                                                 <div className="space-y-2">
@@ -472,7 +503,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     }))}
                                                     required={field.required}
                                                     placeholder={field.placeholder}
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
                                                 />
                                             )
                                             }

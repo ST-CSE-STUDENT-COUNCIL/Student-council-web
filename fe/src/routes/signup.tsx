@@ -123,6 +123,14 @@ function SignUp() {
             return
         }
         
+        // 학번 입력 필드: 숫자만 허용, 최대 8자리
+        if (name === 'student_id') {
+            const numbers = value.replace(/\D/g, '') // 숫자만 추출
+            const limited = numbers.slice(0, 8) // 최대 8자리
+            setFormData(prev => ({ ...prev, [name]: limited }))
+            return
+        }
+        
         setFormData(prev => ({ ...prev, [name]: value }))
     }
 
@@ -233,6 +241,12 @@ function SignUp() {
             return
         }
 
+        // 학번 8자리 검증
+        if (formData.student_id.length !== 8) {
+            toast.error('학번 8자리를 정확히 입력해주세요.')
+            return
+        }
+
         if (isStudentIdAvailable !== true) {
             toast.error('학번 중복 확인을 완료해주세요.')
             return
@@ -240,6 +254,13 @@ function SignUp() {
 
         if (!isEmailVerified) {
             toast.error('이메일 인증을 완료해주세요.')
+            return
+        }
+
+        // 전화번호 11자리 검증 (하이픈 제외)
+        const phoneNumbers = formData.phone.replace(/-/g, '')
+        if (phoneNumbers.length !== 11) {
+            toast.error('전화번호를 정확히 입력해주세요.')
             return
         }
 
@@ -253,7 +274,7 @@ function SignUp() {
                 name: formData.name,
                 student_id: formData.student_id,
                 email: getFullEmail(),
-                phone: formData.phone.replace(/-/g, ''), // Remove hyphens
+                phone: phoneNumbers, // 하이픈 제거된 숫자만 전송
                 password: formData.password,
                 department: formData.department
             })
@@ -437,6 +458,8 @@ function SignUp() {
                                                     name="student_id"
                                                     required
                                                     maxLength={8}
+                                                    inputMode="numeric"
+                                                    pattern="[0-9]*"
                                                     className={`block w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${isStudentIdAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-200' :
                                                         isStudentIdAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-200' :
                                                             'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
