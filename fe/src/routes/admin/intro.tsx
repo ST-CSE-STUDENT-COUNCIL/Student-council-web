@@ -5,6 +5,7 @@ import type { IntroductionImage, IntroductionImageCreate, IntroductionImageUpdat
 import { Plus, Trash2, Edit2, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import Swal from 'sweetalert2'
+import { Modal } from '../../components/common/Modal'
 
 export const Route = createFileRoute('/admin/intro')({
   component: AdminIntroPage,
@@ -445,113 +446,106 @@ function IntroModal({
   onImageChange,
   onSubmit,
 }: IntroModalProps) {
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-gray-900">
-            {isEditing ? '이미지 수정' : '이미지 추가'}
-          </h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl">
-            ✕
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEditing ? '이미지 수정' : '이미지 추가'}
+      maxWidth="max-w-2xl"
+      footer={
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            취소
+          </button>
+          <button
+            onClick={onSubmit}
+            disabled={isSubmitting || isUploading}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting
+              ? isEditing
+                ? '수정 중...'
+                : '추가 중...'
+              : isEditing
+                ? '수정하기'
+                : '추가하기'}
           </button>
         </div>
-
-        <div className="p-6 space-y-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-3">이미지 *</label>
-            <label className="block cursor-pointer">
-              <div className="w-full h-64 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors">
-                {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="preview"
-                    className="w-full h-full object-contain rounded-lg"
-                  />
-                ) : (
-                  <div className="text-center">
-                    <p className="text-gray-500 font-medium">클릭하여 이미지 업로드</p>
-                    <p className="text-xs text-gray-400">PNG, JPG (최대 10MB)</p>
-                  </div>
-                )}
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={onImageChange}
-                disabled={isUploading || isSubmitting}
-              />
-            </label>
-            {isUploading && (
-              <p className="text-sm text-blue-600 mt-2">이미지 업로드 중...</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">제목 *</label>
+      }
+    >
+      <div className="space-y-6">
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-3">이미지 *</label>
+          <label className="block cursor-pointer">
+            <div className="w-full h-64 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors">
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="preview"
+                  className="w-full h-full object-contain rounded-lg"
+                />
+              ) : (
+                <div className="text-center">
+                  <p className="text-gray-500 font-medium">클릭하여 이미지 업로드</p>
+                  <p className="text-xs text-gray-400">PNG, JPG (최대 10MB)</p>
+                </div>
+              )}
+            </div>
             <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => onChange('title', e.target.value)}
-              placeholder="예: 현행 학생회, 조직도"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={isSubmitting}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onImageChange}
+              disabled={isUploading || isSubmitting}
             />
-          </div>
+          </label>
+          {isUploading && (
+            <p className="text-sm text-blue-600 mt-2">이미지 업로드 중...</p>
+          )}
+        </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">표시 순서 *</label>
-            <input
-              type="number"
-              value={formData.display_order ?? ''}
-              onChange={(e) => {
-                const value = e.target.value
-                if (value === '') {
-                  onChange('display_order', undefined as any)
-                } else {
-                  const numValue = parseInt(value)
-                  if (!isNaN(numValue)) {
-                    onChange('display_order', numValue)
-                  }
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-2">제목 *</label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => onChange('title', e.target.value)}
+            placeholder="예: 현행 학생회, 조직도"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-900 mb-2">표시 순서 *</label>
+          <input
+            type="number"
+            value={formData.display_order ?? ''}
+            onChange={(e) => {
+              const value = e.target.value
+              if (value === '') {
+                onChange('display_order', undefined as any)
+              } else {
+                const numValue = parseInt(value)
+                if (!isNaN(numValue)) {
+                  onChange('display_order', numValue)
                 }
-              }}
-              placeholder="숫자를 입력하세요"
-              min="0"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={isSubmitting}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              숫자가 작을수록 먼저 표시됩니다. (예: 0, 1, 2...)
-            </p>
-          </div>
-
-          <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <button
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              취소
-            </button>
-            <button
-              onClick={onSubmit}
-              disabled={isSubmitting || isUploading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting
-                ? isEditing
-                  ? '수정 중...'
-                  : '추가 중...'
-                : isEditing
-                  ? '수정하기'
-                  : '추가하기'}
-            </button>
-          </div>
+              }
+            }}
+            placeholder="숫자를 입력하세요"
+            min="0"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isSubmitting}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            숫자가 작을수록 먼저 표시됩니다. (예: 0, 1, 2...)
+          </p>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }
