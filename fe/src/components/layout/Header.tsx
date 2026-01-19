@@ -1,12 +1,18 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '../../store/useAuthStore'
 import { authApi } from '../../lib/api/auth'
+import { navItems } from './Menu'
 import Menu from './Menu'
-import { Code2, LogOut, LogIn, UserPlus } from 'lucide-react'
+import { Code2, LogOut, LogIn, UserPlus, Menu as MenuIcon, X } from 'lucide-react'
+import { useState } from 'react'
 
 export default function Header() {
     const { isAuthenticated, user, logout } = useAuthStore()
     const navigate = useNavigate()
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+    const toggleMenu = () => setIsMenuOpen(!isMenuOpen)
+    const closeMenu = () => setIsMenuOpen(false)
 
     const handleLogout = async () => {
         if (confirm('로그아웃 하시겠습니까?')) {
@@ -88,8 +94,37 @@ export default function Header() {
                             </Link>
                         </div>
                     )}
+                    {/* Mobile Menu Button */}
+                    <button
+                        className="md:hidden p-2 text-gray-600 hover:text-indigo-600 transition-colors"
+                        onClick={toggleMenu}
+                        aria-label="메뉴 열기"
+                    >
+                        {isMenuOpen ? <X className="w-6 h-6" /> : <MenuIcon className="w-6 h-6" />}
+                    </button>
                 </div>
             </div>
+
+            {/* Mobile Navigation Dropdown */}
+            {isMenuOpen && (
+                <div className="md:hidden border-t border-gray-100 bg-white absolute top-16 left-0 w-full shadow-lg h-[calc(100vh-4rem)] overflow-y-auto">
+                    <nav className="flex flex-col p-4 space-y-2">
+                        {navItems.map((item) => (
+                            <Link
+                                key={item.to}
+                                to={item.to}
+                                search={item.search}
+                                onClick={closeMenu}
+                                className="px-4 py-3 text-base font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-indigo-600 [&.active]:text-indigo-700 [&.active]:bg-indigo-50 transition-all flex items-center justify-between"
+                            >
+                                {item.label}
+                                <span className="text-gray-300">›</span>
+                            </Link>
+                        ))}
+                        {/* Mobile User Actions (Optional if you want to duplicate or keep header actions visible. Header actions are visible so maybe just navigation here) */}
+                    </nav>
+                </div>
+            )}
         </header>
     )
 }
