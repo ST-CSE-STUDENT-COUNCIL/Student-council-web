@@ -42,7 +42,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                 name: isVerified ? (user?.name || '') : '',
                 student_id: isVerified ? (user?.student_id || '') : '',
                 department: user?.department || '컴퓨터공학과',
-                phone: isVerified ? (user?.phone || '') : '',
+                phone: isVerified ? (user?.phone?.replace(/-/g, '') || '') : '',
                 kakao_id: '',
                 verification_image_url: '',
                 form_responses: {}
