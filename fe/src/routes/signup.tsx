@@ -22,7 +22,7 @@ function SignUp() {
     const [formData, setFormData] = useState({
         name: '',
         student_id: '',
-        email: '',
+        emailPrefix: '',
         phone: '',
         password: '',
         password_confirm: '',
@@ -88,6 +88,14 @@ function SignUp() {
         passwordValidation.hasLetter &&
         passwordValidation.hasSpecialChar
 
+    // 전체 이메일을 조합하는 헬퍼 함수
+    const getFullEmail = () => {
+        return formData.emailPrefix ? `${formData.emailPrefix}@seoultech.ac.kr` : ''
+    }
+
+    // emailPrefix에 @ 문자가 포함되어 있는지 확인
+    const hasAtSymbol = formData.emailPrefix.includes('@')
+
     const checkStudentId = async () => {
         if (formData.student_id.length < 4) return // 최소 길이 체크
 
@@ -108,18 +116,31 @@ function SignUp() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
+        
+        // emailPrefix 입력 시 @ 문자 차단
+        if (name === 'emailPrefix' && value.includes('@')) {
+            toast.error("'@'를 제외한 아이디만 입력해주세요.")
+            return
+        }
+        
         setFormData(prev => ({ ...prev, [name]: value }))
     }
 
     const sendVerificationEmail = async () => {
-        if (!formData.email.endsWith('@seoultech.ac.kr')) {
-            toast.error('서울과기대 이메일(@seoultech.ac.kr)을 입력해주세요.')
+        if (!formData.emailPrefix.trim()) {
+            toast.error('이메일을 입력해주세요.')
             return
         }
 
+        if (hasAtSymbol) {
+            toast.error("'@'를 제외한 아이디만 입력해주세요.")
+            return
+        }
+
+        const fullEmail = getFullEmail()
         setIsSendingEmail(true)
         try {
-            await authApi.sendVerification(formData.email)
+            await authApi.sendVerification(fullEmail)
             setVerificationStep('sent')
             setTimeLeft(300) // 5분 타이머 시작
             setCanResend(false)
@@ -146,9 +167,10 @@ function SignUp() {
     }
 
     const resendVerificationEmail = async () => {
+        const fullEmail = getFullEmail()
         setIsSendingEmail(true)
         try {
-            await authApi.sendVerification(formData.email)
+            await authApi.sendVerification(fullEmail)
             setTimeLeft(300) // 5분 타이머 재시작
             setCanResend(false)
             setVerificationCode('')
@@ -179,7 +201,7 @@ function SignUp() {
         setIsVerifying(true)
         try {
             await authApi.verifyEmail({
-                email: formData.email,
+                email: getFullEmail(),
                 code: verificationCode
             })
             setIsEmailVerified(true)
@@ -230,7 +252,7 @@ function SignUp() {
             await authApi.signup({
                 name: formData.name,
                 student_id: formData.student_id,
-                email: formData.email,
+                email: getFullEmail(),
                 phone: formData.phone.replace(/-/g, ''), // Remove hyphens
                 password: formData.password,
                 department: formData.department
@@ -448,28 +470,34 @@ function SignUp() {
 
                                     {/* Email */}
                                     <div className="sm:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">이메일 (@seoultech.ac.kr)</label>
-                                        <div className="flex gap-3">
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                required
-                                                disabled={isEmailVerified}
-                                                className="block w-full px-4 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white disabled:bg-gray-100 disabled:text-gray-500"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                placeholder="example@seoultech.ac.kr"
-                                            />
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">이메일</label>
+                                        <div className="flex gap-3 items-center">
+                                            <div className="flex items-center gap-2 flex-1">
+                                                <input
+                                                    type="text"
+                                                    name="emailPrefix"
+                                                    required
+                                                    disabled={isEmailVerified}
+                                                    className={`block w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white disabled:bg-gray-100 disabled:text-gray-500 ${hasAtSymbol ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'}`}
+                                                    value={formData.emailPrefix}
+                                                    onChange={handleChange}
+                                                    placeholder="example"
+                                                />
+                                                <span className="text-gray-700 text-md whitespace-nowrap">@seoultech.ac.kr</span>
+                                            </div>
                                             <button
                                                 type="button"
                                                 onClick={sendVerificationEmail}
-                                                disabled={isEmailVerified || isSendingEmail || !formData.email}
+                                                disabled={isEmailVerified || isSendingEmail || !formData.emailPrefix.trim() || hasAtSymbol}
                                                 className={`whitespace-nowrap px-6 py-3 border border-transparent rounded-xl text-sm font-semibold text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isEmailVerified ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
                                                     }`}
                                             >
                                                 {isSendingEmail ? '발송중...' : (isEmailVerified ? '인증완료' : '인증번호 발송')}
                                             </button>
                                         </div>
+                                        {hasAtSymbol && (
+                                            <p className="mt-2 text-sm text-red-600">'@'를 제외한 아이디만 입력해주세요.</p>
+                                        )}
                                     </div>
 
                                     {/* Verification Code */}
