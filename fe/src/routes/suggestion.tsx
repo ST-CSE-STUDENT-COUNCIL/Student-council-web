@@ -135,7 +135,13 @@ function SuggestionPage() {
                         <button
                             type="button"
                             className="shrink-0 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                            onClick={() => setIsCreateOpen(true)}
+                            onClick={() => {
+                                if (user?.verification_status !== 'approved') {
+                                    alert('학적 인증이 완료된 사용자만 건의사항을 작성할 수 있습니다.')
+                                    return
+                                }
+                                setIsCreateOpen(true)
+                            }}
                         >
                             새 건의 작성
                         </button>

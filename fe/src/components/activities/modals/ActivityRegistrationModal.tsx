@@ -34,13 +34,14 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     // 모달이 열릴 때마다 초기화 및 상세 정보 가져오기
     useEffect(() => {
         if (isOpen) {
-            // 1. 상태 초기화 (로그인된 사용자 정보로 자동 채우기)
+            // 1. 상태 초기화 (로그인된 사용자 정보로 자동 채우기 - 인증된 사용자만)
+            const isVerified = user?.verification_status === 'approved'
             setStep(1)
             setFormData({
-                name: user?.name || '',
-                student_id: user?.student_id || '',
+                name: isVerified ? (user?.name || '') : '',
+                student_id: isVerified ? (user?.student_id || '') : '',
                 department: user?.department || '컴퓨터공학과',
-                phone: user?.phone || '',
+                phone: isVerified ? (user?.phone || '') : '',
                 kakao_id: '',
                 verification_image_url: '',
                 form_responses: {}
