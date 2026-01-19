@@ -107,7 +107,7 @@ function Login() {
                     className="block w-full pl-10 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white"
                     placeholder="학번을 입력해주세요"
                     value={studentId}
-                    onChange={(e) => setStudentId(e.target.value)}
+                    onChange={(e) => setStudentId(e.target.value.replace(/[^0-9]/g, ''))}
                   />
                 </div>
               </div>
