@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 
-const navItems = [
+export const navItems = [
     { to: '/intro', label: '학생회 소개' },
     { to: '/activities', label: '신청' },
     {

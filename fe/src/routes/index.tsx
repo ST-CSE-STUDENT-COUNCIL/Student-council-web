@@ -150,12 +150,14 @@ function Index() {
                             {/* Swiper Container */}
                             <div className="rounded-3xl overflow-hidden shadow-lg ring-1 ring-black/5 bg-gray-50">
                                 <Swiper
+                                    key={featuredActivities.length}
                                     modules={[Autoplay, Pagination, Navigation]}
                                     navigation={{ nextEl: '.custom-next', prevEl: '.custom-prev' }}
                                     pagination={{ clickable: true, dynamicBullets: true }}
                                     autoplay={{ delay: 5000, disableOnInteraction: false }}
                                     spaceBetween={0}
                                     slidesPerView={1}
+                                    autoHeight={true}
                                     className="h-auto min-h-[500px]"
                                     // Swiper 설정 변경 (데이터 로딩 및 루프 대응)
                                     loop={featuredActivities.length > 1} // 데이터 2개 이상일 때만 루프
