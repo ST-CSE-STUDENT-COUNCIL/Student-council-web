@@ -186,8 +186,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             if (!formData.phone) {
                 return toast.error('연락처를 입력해주세요.')
             }
-            const phoneNumbers = formData.phone.replace(/-/g, '')
-            if (phoneNumbers.length !== 11) {
+            if (formData.phone.length !== 11) {
                 return toast.error('전화번호를 정확히 입력해주세요.')
             }
             

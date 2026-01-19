@@ -257,9 +257,8 @@ function SignUp() {
             return
         }
 
-        // 전화번호 11자리 검증 (하이픈 제외)
-        const phoneNumbers = formData.phone.replace(/-/g, '')
-        if (phoneNumbers.length !== 11) {
+        // 전화번호 11자리 검증
+        if (formData.phone.length !== 11) {
             toast.error('전화번호를 정확히 입력해주세요.')
             return
         }
@@ -274,7 +273,7 @@ function SignUp() {
                 name: formData.name,
                 student_id: formData.student_id,
                 email: getFullEmail(),
-                phone: phoneNumbers, // 하이픈 제거된 숫자만 전송
+                phone: formData.phone,
                 password: formData.password,
                 department: formData.department
             })
