@@ -1,4 +1,5 @@
-import { Github, Instagram, Mail } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import { Instagram, Mail } from 'lucide-react'
 
 export default function Footer() {
     return (
@@ -14,9 +15,6 @@ export default function Footer() {
                         <div className="flex gap-4 pt-2">
                             <a href="https://www.instagram.com/seoultech_com/" className="text-slate-400 hover:text-white transition-colors">
                                 <Instagram className="w-5 h-5" />
-                            </a>
-                            <a href="https://github.com/jaehoya/Student-council" className="text-slate-400 hover:text-white transition-colors">
-                                <Github className="w-5 h-5" />
                             </a>
                             <a href="mailto:seoultech.cs.42.compass@gmail.com" className="text-slate-400 hover:text-white transition-colors">
                                 <Mail className="w-5 h-5" />
@@ -63,13 +61,11 @@ export default function Footer() {
 
                 <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
                     <div className="flex gap-4">
-                        <a href="#" className="hover:text-slate-300">개인정보처리방침</a>
-                        <a href="#" className="hover:text-slate-300">이용약관</a>
-                        <a href="#" className="hover:text-slate-300">커뮤니티 가이드라인</a>
-                        <a href="#" className="hover:text-slate-300">개발자 정보</a>
+                        <Link to="/privacy" className="hover:text-slate-300">개인정보처리방침</Link>
+                        <Link to="/terms" className="hover:text-slate-300">이용약관</Link>
                     </div>
                     <div>
-                        Designed by <strong>SC Dev Team</strong>
+                        developed by <strong>SC Dev Team</strong>
                     </div>
                 </div>
             </div>
