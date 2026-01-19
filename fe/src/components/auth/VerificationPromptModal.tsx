@@ -51,7 +51,7 @@ export function VerificationPromptModal() {
         <Modal
             isOpen={isOpen}
             onClose={handleClose}
-            title={isRejected ? "인증 반려 알림" : "학생 인증 안내"}
+            title={isRejected ? "인증 반려 알림" : "학적 인증 안내"}
             maxWidth="max-w-md"
         >
             <div className="flex flex-col gap-6">
@@ -63,12 +63,12 @@ export function VerificationPromptModal() {
 
                     <div className="space-y-2">
                         <h4 className="text-lg font-bold text-gray-900">
-                            {isRejected ? '학생 인증이 반려되었습니다' : '학생 인증이 필요합니다'}
+                            {isRejected ? '학적 인증이 반려되었습니다' : '학적 인증이 필요합니다'}
                         </h4>
                         <p className="text-gray-600 leading-relaxed break-keep">
                             {isRejected
                                 ? <>사유: {user.rejection_reason || '확인 불가'}<br />정보를 수정하여 다시 인증을 진행해주세요.</>
-                                : '원활한 서비스 이용을 위해 학생 인증을 진행해주세요. 학생증 또는 재학증명서를 업로드해야 합니다.'
+                                : '원활한 서비스 이용을 위해 학적 인증을 진행해주세요. 학생증 또는 재학증명서를 업로드해야 합니다.'
                             }
                         </p>
                     </div>
