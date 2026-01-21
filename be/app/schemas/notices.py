@@ -32,6 +32,7 @@ class AttachmentInfo(BaseModel):
 class NoticeListItem(BaseModel):
     """공지사항 목록 아이템"""
     id: int
+    no: Optional[int] = None  # 표시용 번호 (계산된 잆)
     title: str
     content: str
     subcategory: Optional[str] = None
