@@ -181,11 +181,11 @@ function Index() {
                             </div>
 
                             {/* Navigation Buttons (Outside) */}
-                            <button className="custom-prev absolute -left-4 md:-left-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-center text-gray-700 hover:text-blue-600 hover:scale-110 transition-all cursor-pointer hidden md:flex">
-                                <ChevronLeft size={24} strokeWidth={2.5} />
+                            <button className="custom-prev absolute left-2 md:-left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/90 md:bg-white rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-center text-gray-700 hover:text-blue-600 hover:scale-110 transition-all cursor-pointer">
+                                <ChevronLeft size={20} strokeWidth={2.5} className="md:w-6 md:h-6" />
                             </button>
-                            <button className="custom-next absolute -right-4 md:-right-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-center text-gray-700 hover:text-blue-600 hover:scale-110 transition-all cursor-pointer hidden md:flex">
-                                <ChevronRight size={24} strokeWidth={2.5} />
+                            <button className="custom-next absolute right-2 md:-right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/90 md:bg-white rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-center text-gray-700 hover:text-blue-600 hover:scale-110 transition-all cursor-pointer">
+                                <ChevronRight size={20} strokeWidth={2.5} className="md:w-6 md:h-6" />
                             </button>
                         </div>
                     </div>
