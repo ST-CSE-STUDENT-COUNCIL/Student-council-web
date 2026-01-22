@@ -36,7 +36,7 @@ export default function Header() {
                             <Code2 className="w-5 h-5" />
                         </div>
                         <span className="tracking-tight hidden sm:inline-block">서울과학기술대학교 컴퓨터공학과 학생회</span>
-                        <span className="tracking-tight sm:hidden">CS App</span>
+                        <span className="tracking-tight sm:hidden">ST 컴퓨터공학과 학생회</span>
                     </Link>
                 </div>
 
