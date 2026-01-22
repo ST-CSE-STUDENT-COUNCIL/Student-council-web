@@ -64,6 +64,7 @@ export default function Footer() {
                     <div className="flex gap-4">
                         <Link to="/privacy" className="hover:text-slate-300">개인정보처리방침</Link>
                         <Link to="/terms" className="hover:text-slate-300">이용약관</Link>
+                        <Link to="/non-member-policy" className="hover:text-slate-300">비회원 처리 규정</Link>
                     </div>
                     <div>
                         developed by <strong>SC Dev Team</strong>

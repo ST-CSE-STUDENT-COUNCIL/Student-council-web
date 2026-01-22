@@ -31,6 +31,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [nonMemberAgreed, setNonMemberAgreed] = useState(false)
 
     // 모달이 열릴 때마다 초기화 및 상세 정보 가져오기
     useEffect(() => {
@@ -49,6 +50,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             })
             setDetailActivity(null) // 로딩 상태 유도
             setError(null)
+            setNonMemberAgreed(false) // 비회원 약관 동의 초기화
 
             // 2. 상세 정보 가져오기 (무조건 새로고침)
             const fetchDetail = async () => {
@@ -83,6 +85,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     // 추가 질문 여부 확인 (detailActivity 기준)
     const hasAdditionalFields = detailActivity?.form_fields && detailActivity.form_fields.length > 0
     const isAnonymousType = activity.type === 'demand_survey' || activity.type === 'survey'
+    const isNonMember = user?.verification_status !== 'approved' // 비회원 여부 확인
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -135,7 +138,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
-        
+
         // 학번 입력 필드: 숫자만 허용, 최대 8자리
         if (name === 'student_id') {
             const numbers = value.replace(/\D/g, '') // 숫자만 추출
@@ -143,7 +146,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             setFormData(prev => ({ ...prev, [name]: limited }))
             return
         }
-        
+
         setFormData(prev => ({ ...prev, [name]: value }))
     }
 
@@ -171,9 +174,14 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         if (isAnonymousType) {
             // 익명 조사: 입력받는게 없으므로 유효성 검사 패스
         } else {
+            // 비회원 약관 동의 검증 (익명이 아닌 경우에만)
+            if (isNonMember && !nonMemberAgreed) {
+                return toast.error('비회원 처리 규정에 동의해주세요.')
+            }
+
             // 일반 행사 유효성 검사
             if (!formData.name) return toast.error('이름을 입력해주세요.')
-            
+
             // 학번 검증
             if (!formData.student_id) {
                 return toast.error('학번을 입력해주세요.')
@@ -181,7 +189,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             if (formData.student_id.length !== 8) {
                 return toast.error('학번 8자리를 정확히 입력해주세요.')
             }
-            
+
             // 전화번호 검증
             if (!formData.phone) {
                 return toast.error('연락처를 입력해주세요.')
@@ -189,7 +197,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             if (formData.phone.length !== 11) {
                 return toast.error('전화번호를 정확히 입력해주세요.')
             }
-            
+
             if (activity.type === 'kakao_invite' && !formData.verification_image_url) {
                 return toast.error('학적 인증자료를 제출해주세요.')
             }
@@ -415,6 +423,37 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                             </>
                                         )}
                                     </>
+                                )}
+
+                                {/* 비회원 약관 동의 (익명이 아니고, 비회원인 경우) */}
+                                {!isAnonymousType && isNonMember && (
+                                    <div className="mt-6 pt-6 border-t border-gray-200">
+                                        <label className="flex items-start gap-3 cursor-pointer p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={nonMemberAgreed}
+                                                onChange={(e) => setNonMemberAgreed(e.target.checked)}
+                                                className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                            />
+                                            <div className="flex-1 text-sm">
+                                                <p className="font-semibold text-gray-900 mb-1">
+                                                    비회원 개인정보 수집 및 처리 규정에 동의합니다. <span className="text-red-500">*</span>
+                                                </p>
+                                                <p className="text-gray-600 text-xs">
+                                                    학생회비 미납부자 및 비회원의 경우, 행사 참가를 위해 개인정보 수집 및 이용에 동의가 필요합니다.{' '}
+                                                    <a
+                                                        href="/non-member-policy"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 underline hover:text-blue-800 font-medium"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        규정 전문 보기
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </label>
+                                    </div>
                                 )}
                             </motion.div>
                         )}
