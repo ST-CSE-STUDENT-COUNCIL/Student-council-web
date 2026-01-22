@@ -26,6 +26,7 @@ import type { ActivityListItem } from '../types/activities'
 import { getActivityStatus } from '../types/activities'
 import type { NoticeListItem } from '../types/posts'
 import { ActivityCard } from '../components/activities/ActivityCard'
+import { LoadingSpinner } from '../components/common/LoadingSpinner'
 
 export const Route = createFileRoute('/')({
     component: Index,
@@ -81,12 +82,7 @@ function Index() {
         fetchData()
     }, [])
 
-    if (loading) return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-500 font-medium">데이터를 불러오고 있습니다...</p>
-        </div>
-    )
+    if (loading) return <LoadingSpinner message="홈페이지를 불러오고 있습니다..." />
 
     return (
         <div className="pb-20 space-y-12">
@@ -181,11 +177,11 @@ function Index() {
                             </div>
 
                             {/* Navigation Buttons (Outside) */}
-                            <button className="custom-prev absolute -left-4 md:-left-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-center text-gray-700 hover:text-blue-600 hover:scale-110 transition-all cursor-pointer hidden md:flex">
-                                <ChevronLeft size={24} strokeWidth={2.5} />
+                            <button className="custom-prev absolute left-2 md:-left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/90 md:bg-white rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-center text-gray-700 hover:text-blue-600 hover:scale-110 transition-all cursor-pointer">
+                                <ChevronLeft size={20} strokeWidth={2.5} className="md:w-6 md:h-6" />
                             </button>
-                            <button className="custom-next absolute -right-4 md:-right-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-center text-gray-700 hover:text-blue-600 hover:scale-110 transition-all cursor-pointer hidden md:flex">
-                                <ChevronRight size={24} strokeWidth={2.5} />
+                            <button className="custom-next absolute right-2 md:-right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/90 md:bg-white rounded-full shadow-lg ring-1 ring-black/5 flex items-center justify-center text-gray-700 hover:text-blue-600 hover:scale-110 transition-all cursor-pointer">
+                                <ChevronRight size={20} strokeWidth={2.5} className="md:w-6 md:h-6" />
                             </button>
                         </div>
                     </div>
@@ -217,15 +213,15 @@ function Index() {
                                     className="block group"
                                 >
                                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all duration-200">
-                                        <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center justify-between mb-2">
                                             <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-tight ${post.board.id === 1
                                                 ? 'bg-blue-50 text-blue-700'
                                                 : 'bg-green-50 text-green-700'
                                                 }`}>
                                                 {getSubCategoryLabel(post.subcategory || '')}
                                             </span>
-                                            <span className="text-xs text-gray-400 font-medium font-mono">
-                                                {post.created_at.split('T')[0]}
+                                            <span className="text-xs text-gray-400 font-medium">
+                                                {post.created_at.split('T')[0].replace(/-/g, '.')}
                                             </span>
                                         </div>
                                         <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
@@ -246,7 +242,7 @@ function Index() {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     )
 }

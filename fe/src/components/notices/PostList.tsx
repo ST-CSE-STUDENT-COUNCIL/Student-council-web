@@ -22,6 +22,15 @@ export const PostList = ({ posts }: PostListProps) => {
         return engToKor[sub] || sub;
     };
 
+    // 날짜 포맷 함수 (2026-01-22 → 2026.01.22)
+    const formatDate = (dateString: string) => {
+        try {
+            return dateString.split('T')[0].replace(/-/g, '.');
+        } catch {
+            return dateString.split('T')[0];
+        }
+    };
+
     return (
         <div className="w-full max-w-5xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Header for Desktop */}
@@ -47,7 +56,7 @@ export const PostList = ({ posts }: PostListProps) => {
                             <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
                                 {getSubCategoryLabel(post.subcategory)}
                             </span>
-                            <span className="text-xs text-gray-400">{post.created_at.split('T')[0]}</span>
+                            <span className="text-xs text-gray-400">{formatDate(post.created_at)}</span>
                         </div>
 
                         {/* Desktop Columns */}
@@ -81,7 +90,7 @@ export const PostList = ({ posts }: PostListProps) => {
 
                         {/* Desktop: Author, Date, Views */}
                         <div className="hidden md:block w-28 text-center text-gray-500 text-sm shrink-0">
-                            {post.created_at.split('T')[0]}
+                            {formatDate(post.created_at)}
                         </div>
 
                     </Link>

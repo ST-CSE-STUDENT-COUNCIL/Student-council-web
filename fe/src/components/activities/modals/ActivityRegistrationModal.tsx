@@ -6,6 +6,7 @@ import { PhoneInput } from '../../common/PhoneInput'
 import type { Activity, ActivityListItem, ActivityRegistrationRequest } from '../../../types/activities'
 import { activityApi } from '../../../lib/api/activities'
 import { useAuthStore } from '../../../store/useAuthStore'
+import { LoadingSpinnerSmall } from '../../common/LoadingSpinner'
 
 type ActivityRegistrationModalProps = {
     isOpen: boolean
@@ -290,9 +291,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={getTitle()} footer={renderFooter()}>
             {fetching || !detailActivity ? (
-                <div className="flex justify-center py-10">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
+                <LoadingSpinnerSmall />
             ) : (
                 <form id="activity-registration-form" onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex flex-col gap-4">
                     {/* Progress Indicators (Only if there are 2 steps) */}

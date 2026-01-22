@@ -4,6 +4,7 @@ import Header from '../components/layout/Header'
 import Footer from '../components/layout/Footer'
 import { VerificationPromptModal } from '../components/auth/VerificationPromptModal'
 import { Toaster } from 'sonner'
+import NotFound from './404'
 
 // DevTools는 개발 환경에서만 로드
 const TanStackRouterDevtools = import.meta.env.DEV
@@ -15,6 +16,7 @@ const TanStackRouterDevtools = import.meta.env.DEV
     : () => null
 
 export const Route = createRootRoute({
+    notFoundComponent: NotFound,
     component: () => (
         <>
             <div className="flex flex-col min-h-screen bg-slate-50 font-sans selection:bg-blue-100 selection:text-blue-900">

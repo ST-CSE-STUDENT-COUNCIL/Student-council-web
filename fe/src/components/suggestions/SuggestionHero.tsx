@@ -56,9 +56,6 @@ export function SuggestionHero({ stats, statusFilter, onStatusFilterChange }: {
         <section className="text-center space-y-8 pt-6 sm:pt-10">
             <div className="space-y-3">
                 <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">건의함</h1>
-                <p className="text-base sm:text-lg text-slate-500 max-w-3xl mx-auto leading-relaxed">
-                    간단한 소개글을 적기(없어도 될듯)
-                </p>
             </div>
 
             <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
@@ -67,8 +64,8 @@ export function SuggestionHero({ stats, statusFilter, onStatusFilterChange }: {
                         key={pill.value}
                         onClick={() => onStatusFilterChange(pill.value)}
                         className={`group rounded-2xl px-6 sm:px-7 py-3 sm:py-3.5 text-sm sm:text-base font-bold transition-all duration-150 border shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] ${statusFilter === pill.value
-                                ? `${tone[pill.value].active} shadow-md`
-                                : `${tone[pill.value].idle} hover:shadow-sm`
+                            ? `${tone[pill.value].active} shadow-md`
+                            : `${tone[pill.value].idle} hover:shadow-sm`
                             }`}
                     >
                         <span className="inline-flex items-center gap-2">

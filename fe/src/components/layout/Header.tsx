@@ -27,11 +27,11 @@ export default function Header() {
     }
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-indigo-50/80 bg-white/95 backdrop-blur-xl transition-all shadow-sm">
+        <header className="sticky top-0 z-50 w-full border-b border-indigo-50/80 bg-white/95 backdrop-blur-xl transition-all shadow-sm" role="banner">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Logo Area */}
                 <div className="flex items-center gap-8">
-                    <Link to="/" className="flex items-center gap-2.5 font-bold text-xl text-slate-900 hover:opacity-80 transition-opacity">
+                    <Link to="/" className="flex items-center gap-2.5 font-bold text-xl text-slate-900 hover:opacity-80 transition-opacity rounded-lg" >
                         <div className="bg-slate-900 p-1.5 rounded-lg text-white shadow-sm">
                             <Code2 className="w-5 h-5" />
                         </div>
@@ -51,7 +51,8 @@ export default function Header() {
                         <div className="flex items-center gap-3">
                             <Link
                                 to="/mypage"
-                                className="flex items-center gap-2 pl-1 pr-3 py-1.5 rounded-full hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200"
+                                className="flex items-center gap-2 pl-1 pr-3 py-1.5 rounded-full hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                aria-label="마이페이지로 이동"
                             >
                                 <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
                                     <span className="text-xs font-bold">{user?.name?.[0] || 'U'}</span>
@@ -70,8 +71,9 @@ export default function Header() {
                             )}
                             <button
                                 onClick={handleLogout}
-                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                                 title="로그아웃"
+                                aria-label="로그아웃"
                             >
                                 <LogOut className="w-5 h-5" />
                             </button>
@@ -96,9 +98,10 @@ export default function Header() {
                     )}
                     {/* Mobile Menu Button */}
                     <button
-                        className="md:hidden p-2 text-gray-600 hover:text-indigo-600 transition-colors"
+                        className="md:hidden p-2 text-gray-600 hover:text-indigo-600 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded"
                         onClick={toggleMenu}
-                        aria-label="메뉴 열기"
+                        aria-label={isMenuOpen ? "메뉴 닫기" : "메뉴 열기"}
+                        aria-expanded={isMenuOpen}
                     >
                         {isMenuOpen ? <X className="w-6 h-6" /> : <MenuIcon className="w-6 h-6" />}
                     </button>
@@ -107,15 +110,15 @@ export default function Header() {
 
             {/* Mobile Navigation Dropdown */}
             {isMenuOpen && (
-                <div className="md:hidden border-t border-gray-100 bg-white absolute top-16 left-0 w-full shadow-lg h-[calc(100vh-4rem)] overflow-y-auto">
-                    <nav className="flex flex-col p-4 space-y-2">
+                <div className="md:hidden border-t border-gray-100 bg-white absolute top-16 left-0 w-full shadow-lg h-[calc(100vh-4rem)] overflow-y-auto" role="dialog" aria-label="모바일 네비게이션">
+                    <nav className="flex flex-col p-4 space-y-2" role="navigation" aria-label="주요 메뉴">
                         {navItems.map((item) => (
                             <Link
                                 key={item.to}
                                 to={item.to}
                                 search={item.search}
                                 onClick={closeMenu}
-                                className="px-4 py-3 text-base font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-indigo-600 [&.active]:text-indigo-700 [&.active]:bg-indigo-50 transition-all flex items-center justify-between"
+                                className="px-4 py-3 text-base font-medium text-gray-600 rounded-xl hover:bg-gray-50 hover:text-indigo-600 [&.active]:text-indigo-700 [&.active]:bg-indigo-50 transition-all flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
                                 {item.label}
                                 <span className="text-gray-300">›</span>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { LockKeyhole } from 'lucide-react'
 
 import type { Suggestion, SuggestionListItem } from '../types/suggestions'
 import { suggestionApi } from '../lib/api/suggestions'
@@ -118,6 +119,42 @@ function SuggestionPage() {
         const end = start + pageSize
         return filteredSuggestions.slice(start, end)
     }, [filteredSuggestions, page, pageSize])
+
+    // 비로그인 사용자 안내 화면
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-16">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+                    <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
+                        <div className="mb-6 flex justify-center">
+                            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
+                                <LockKeyhole className="w-10 h-10 text-blue-600" />
+                            </div>
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                            로그인이 필요합니다
+                        </h2>
+                        <p className="text-gray-600 mb-8 leading-relaxed">
+                            건의함을 이용하시려면 로그인이 필요합니다.<br />
+                            학생회에 건의사항을 전달하고 답변을 받아보세요.
+                        </p>
+                        <Link
+                            to="/login"
+                            className="inline-flex items-center justify-center w-full py-3 px-6 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
+                        >
+                            로그인하러 가기
+                        </Link>
+                        <p className="mt-4 text-sm text-gray-500">
+                            계정이 없으신가요?{' '}
+                            <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+                                회원가입하기
+                            </Link>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-16">
