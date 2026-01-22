@@ -109,8 +109,39 @@ async def get_notices(
                     )
                 )
         
-        # 쿼리 시작 - boards와 users를 함께 조회 (N+1 문제 해결)
-        # Supabase 관계형 쿼리: board_id -> boards, author_id -> users
+        # 1. 전체 개수 조회 (Total Count) - 페이지네이션 및 번호 계산용
+        # 검색 조건도 포함해야 정확한 개수가 나옴
+        count_query = supabase.table('posts')\
+            .select('id', count='exact', head=True)\
+            .eq('is_deleted', False)
+        
+        if board_ids:
+            count_query = count_query.in_('board_id', board_ids)
+        
+        if sub_category_filter:
+            count_query = count_query.eq('subcategory', sub_category_filter)
+            
+        if search:
+            count_query = count_query.or_(f'title.ilike.%{search}%,content.ilike.%{search}%')
+            
+        count_result = count_query.execute()
+        # count='exact', head=True를 사용하면 data는 없고 count 필드에 전체 개수가 옴
+        # 만약 지원하지 않는 구버전이라면 fallback 로직 고려 (여기선 지원한다고 가정)
+        # 혹시 몰라 기존 방식(select id)으로 fallback 하려 했으나, 
+        # count 파라미터는 postgrest-py에서 지원함.
+        if count_result.count is not None:
+             total = count_result.count
+        else:
+             # 만약 count를 못 가져오면 기존 방식으로 재시도 (안전장치)
+             fallback_query = supabase.table('posts').select('id').eq('is_deleted', False)
+             if board_ids: fallback_query = fallback_query.in_('board_id', board_ids)
+             if sub_category_filter: fallback_query = fallback_query.eq('subcategory', sub_category_filter)
+             if search: fallback_query = fallback_query.or_(f'title.ilike.%{search}%,content.ilike.%{search}%')
+             fallback_result = fallback_query.execute()
+             total = len(fallback_result.data) if fallback_result.data else 0
+
+        
+        # 2. 목록 데이터 조회
         query = supabase.table('posts')\
             .select('*, boards:board_id(id, name, category), author:author_id(id, name)')\
             .eq('is_deleted', False)
@@ -119,8 +150,7 @@ async def get_notices(
         if board_ids:
             query = query.in_('board_id', board_ids)
         
-        # 소분류 필터링 (게시글 서브카테고리)
-        # subCategory='all'이면 필터링 안함
+        # 소분류 필터링
         if sub_category_filter:
             query = query.eq('subcategory', sub_category_filter)
         
@@ -142,10 +172,9 @@ async def get_notices(
         
         posts_data = result.data if result.data else []
         
-        # 응답 데이터 구성 (이미 board, author 정보가 포함되어 있음)
-
+        # 응답 데이터 구성
         notices = []
-        for post in posts_data:
+        for i, post in enumerate(posts_data):
             # 관계형 쿼리 결과에서 board, author 추출
             board_data = post.pop('boards', None)
             author_data = post.pop('author', None)
@@ -162,37 +191,22 @@ async def get_notices(
                 'name': '알 수 없음'
             }
             
+            # [수정] 표시용 번호 계산
+            # 공식: total - offset - current_index
+            display_no = total - offset - i
+            
             notices.append({
                 **post,
+                'no': display_no,
                 'board': board_info,
                 'author': author_info
             })
-            
-
-        
-        # 전체 개수 조회 (필터 적용)
-        count_query = supabase.table('posts')\
-            .select('id')\
-            .eq('is_deleted', False)
-        
-        if main_category_kr:
-            # board의 category로 필터링하려면 조인 필요
-            board_result = supabase.table('boards')\
-                .select('id')\
-                .eq('category', main_category_kr)\
-                .execute()
-            board_ids = [b['id'] for b in board_result.data] if board_result.data else []
-            if board_ids:
-                count_query = count_query.in_('board_id', board_ids)
-        
-        if sub_category_filter:
-            count_query = count_query.eq('subcategory', sub_category_filter)
-        
-        count_result = count_query.execute()
-        total = len(count_result.data) if count_result.data else 0
         
         # 페이지 메타 정보
-        total_pages = math.ceil(total / page_size)
+        total_pages = math.ceil(total / page_size) if total > 0 else 1
+        # total=0일때 total_pages=0이 되는 게 맞나? 보통 0 or 1인데, 위 코드는 1로 처리됨.
+        # math.ceil(0/20) -> 0. 
+        if total == 0: total_pages = 0
         
         return NoticeListResponse(
             notices=notices,

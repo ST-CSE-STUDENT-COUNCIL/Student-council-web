@@ -31,6 +31,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [nonMemberAgreed, setNonMemberAgreed] = useState(false)
 
     // 모달이 열릴 때마다 초기화 및 상세 정보 가져오기
     useEffect(() => {
@@ -42,13 +43,14 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                 name: isVerified ? (user?.name || '') : '',
                 student_id: isVerified ? (user?.student_id || '') : '',
                 department: user?.department || '컴퓨터공학과',
-                phone: isVerified ? (user?.phone || '') : '',
+                phone: isVerified ? (user?.phone?.replace(/-/g, '') || '') : '',
                 kakao_id: '',
                 verification_image_url: '',
                 form_responses: {}
             })
             setDetailActivity(null) // 로딩 상태 유도
             setError(null)
+            setNonMemberAgreed(false) // 비회원 약관 동의 초기화
 
             // 2. 상세 정보 가져오기 (무조건 새로고침)
             const fetchDetail = async () => {
@@ -83,6 +85,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     // 추가 질문 여부 확인 (detailActivity 기준)
     const hasAdditionalFields = detailActivity?.form_fields && detailActivity.form_fields.length > 0
     const isAnonymousType = activity.type === 'demand_survey' || activity.type === 'survey'
+    const isNonMember = user?.verification_status !== 'approved' // 비회원 여부 확인
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -90,10 +93,12 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         // [중요] 1단계이고 추가 질문이 있다면, 어떤 이유로든 제출(Submit) 이벤트가 발생하면
         // 서버로 보내지 말고 '다음 단계'로 이동 처리 (엔터키 방지, 버튼 오작동 방지)
         if (step === 1 && hasAdditionalFields) {
-
             handleNext()
             return
         }
+
+        // 1단계에서 이미 검증이 완료되었으므로 중복 검증 제거
+        // (익명 타입은 제외)
 
         setLoading(true)
         setError(null)
@@ -133,6 +138,15 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
+
+        // 학번 입력 필드: 숫자만 허용, 최대 8자리
+        if (name === 'student_id') {
+            const numbers = value.replace(/\D/g, '') // 숫자만 추출
+            const limited = numbers.slice(0, 8) // 최대 8자리
+            setFormData(prev => ({ ...prev, [name]: limited }))
+            return
+        }
+
         setFormData(prev => ({ ...prev, [name]: value }))
     }
 
@@ -160,13 +174,34 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         if (isAnonymousType) {
             // 익명 조사: 입력받는게 없으므로 유효성 검사 패스
         } else {
+            // 비회원 약관 동의 검증 (익명이 아닌 경우에만)
+            if (isNonMember && !nonMemberAgreed) {
+                return toast.error('비회원 처리 규정에 동의해주세요.')
+            }
+
             // 일반 행사 유효성 검사
             if (!formData.name) return toast.error('이름을 입력해주세요.')
-            if (!formData.student_id) return toast.error('학번을 입력해주세요.')
-            if (!formData.phone) return toast.error('연락처를 입력해주세요.')
-            if (activity.type === 'kakao_invite' && !formData.verification_image_url) return toast.error('학적 인증자료를 제출해주세요.')
-        }
 
+            // 학번 검증
+            if (!formData.student_id) {
+                return toast.error('학번을 입력해주세요.')
+            }
+            if (formData.student_id.length !== 8) {
+                return toast.error('학번 8자리를 정확히 입력해주세요.')
+            }
+
+            // 전화번호 검증
+            if (!formData.phone) {
+                return toast.error('연락처를 입력해주세요.')
+            }
+            if (formData.phone.length !== 11) {
+                return toast.error('전화번호를 정확히 입력해주세요.')
+            }
+
+            if (activity.type === 'kakao_invite' && !formData.verification_image_url) {
+                return toast.error('학적 인증자료를 제출해주세요.')
+            }
+        }
 
         setStep(2)
     }
@@ -191,14 +226,75 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         }
     }
 
+    // Footer 버튼 렌더링
+    const renderFooter = () => {
+        if (fetching || !detailActivity) return null
+
+        return (
+            <div className="flex gap-3">
+                {step === 1 ? (
+                    <>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                        >
+                            취소
+                        </button>
+                        {hasAdditionalFields ? (
+                            <button
+                                type="button"
+                                onClick={handleNext}
+                                className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
+                            >
+                                다음
+                            </button>
+                        ) : (
+                            <button
+                                type="submit"
+                                form="activity-registration-form"
+                                disabled={loading}
+                                className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
+                            >
+                                {loading ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : '신청하기'}
+                            </button>
+                        )}
+                    </>
+                ) : (
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setStep(1)}
+                            className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                        >
+                            이전
+                        </button>
+                        <button
+                            type="submit"
+                            form="activity-registration-form"
+                            disabled={loading}
+                            className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
+                        >
+                            {loading ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : '신청하기'}
+                        </button>
+                    </>
+                )}
+            </div>
+        )
+    }
+
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={getTitle()}>
+        <Modal isOpen={isOpen} onClose={onClose} title={getTitle()} footer={renderFooter()}>
             {fetching || !detailActivity ? (
                 <div className="flex justify-center py-10">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex flex-col gap-4">
+                <form id="activity-registration-form" onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex flex-col gap-4">
                     {/* Progress Indicators (Only if there are 2 steps) */}
                     {hasAdditionalFields && (
                         <div className="flex items-center gap-2 mb-4">
@@ -238,7 +334,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                 name="name"
                                                 value={formData.name}
                                                 onChange={handleChange}
-                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
                                                 placeholder="이름을 입력하세요"
                                                 autoFocus
                                             />
@@ -254,7 +350,10 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     name="student_id"
                                                     value={formData.student_id}
                                                     onChange={handleChange}
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    maxLength={8}
+                                                    inputMode="numeric"
+                                                    pattern="[0-9]*"
+                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
                                                     placeholder="예: 25101234"
                                                 />
                                             </div>
@@ -291,7 +390,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                         name="kakao_id"
                                                         value={formData.kakao_id}
                                                         onChange={handleChange}
-                                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
                                                         placeholder="카카오톡 ID를 입력하세요"
                                                     />
                                                 </div>
@@ -325,6 +424,37 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                         )}
                                     </>
                                 )}
+
+                                {/* 비회원 약관 동의 (익명이 아니고, 비회원인 경우) */}
+                                {!isAnonymousType && isNonMember && (
+                                    <div className="mt-6 pt-6 border-t border-gray-200">
+                                        <label className="flex items-start gap-3 cursor-pointer p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={nonMemberAgreed}
+                                                onChange={(e) => setNonMemberAgreed(e.target.checked)}
+                                                className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                            />
+                                            <div className="flex-1 text-sm">
+                                                <p className="font-semibold text-gray-900 mb-1">
+                                                    비회원 개인정보 수집 및 처리 규정에 동의합니다. <span className="text-red-500">*</span>
+                                                </p>
+                                                <p className="text-gray-600 text-xs">
+                                                    학생회비 미납부자 및 비회원의 경우, 행사 참가를 위해 개인정보 수집 및 이용에 동의가 필요합니다.{' '}
+                                                    <a
+                                                        href="/non-member-policy"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 underline hover:text-blue-800 font-medium"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        규정 전문 보기
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                )}
                             </motion.div>
                         )}
 
@@ -341,7 +471,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                     <p>활동에 필요한 추가 정보를 입력해주세요.</p>
                                 </div>
 
-                                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                                <div className="space-y-4">
                                     {detailActivity?.form_fields?.map((field) => (
                                         <div key={field.name}>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -381,7 +511,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     required={field.required}
                                                     placeholder={field.placeholder}
                                                     rows={3}
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 resize-none"
                                                 />
                                             ) : field.type === 'radio' ? (
                                                 <div className="space-y-2">
@@ -472,7 +602,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     }))}
                                                     required={field.required}
                                                     placeholder={field.placeholder}
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
                                                 />
                                             )
                                             }
@@ -485,59 +615,6 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                             </motion.div>
                         )}
                     </AnimatePresence>
-
-                    {/* Button Group (Outside AnimatePresence to prevent flickering) */}
-                    <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100">
-                        {step === 1 ? (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
-                                >
-                                    취소
-                                </button>
-                                {hasAdditionalFields ? (
-                                    <button
-                                        type="button"
-                                        onClick={handleNext}
-                                        className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
-                                    >
-                                        다음
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
-                                    >
-                                        {loading ? (
-                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        ) : '신청하기'}
-                                    </button>
-                                )}
-                            </>
-                        ) : (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={() => setStep(1)}
-                                    className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
-                                >
-                                    이전
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
-                                >
-                                    {loading ? (
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : '신청하기'}
-                                </button>
-                            </>
-                        )}
-                    </div>
                 </form>
             )}
         </Modal>

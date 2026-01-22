@@ -546,6 +546,24 @@ function ClubModal({
       onClose={onClose}
       title={isEditing ? '동아리 수정' : '동아리 추가'}
       maxWidth="max-w-3xl"
+      footer={
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            취소
+          </button>
+          <button
+            onClick={onSubmit}
+            disabled={isSubmitting || isUploading}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? (isEditing ? '수정 중...' : '추가 중...') : isEditing ? '수정하기' : '추가하기'}
+          </button>
+        </div>
+      }
     >
       <div className="space-y-6">
           {/* 썸네일 이미지 */}
@@ -713,23 +731,6 @@ function ClubModal({
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={isSubmitting}
             />
-          </div>
-
-          <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <button
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              취소
-            </button>
-            <button
-              onClick={onSubmit}
-              disabled={isSubmitting || isUploading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (isEditing ? '수정 중...' : '추가 중...') : isEditing ? '수정하기' : '추가하기'}
-            </button>
           </div>
         </div>
     </Modal>

@@ -7,9 +7,10 @@ type ModalProps = {
     title: string
     children: React.ReactNode
     maxWidth?: string
+    footer?: React.ReactNode
 }
 
-export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }: ModalProps) => {
+export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md', footer }: ModalProps) => {
     const modalRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -38,7 +39,7 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' 
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100">
+                <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100 flex-shrink-0">
                     <h3 className="text-xl font-bold text-gray-900">{title}</h3>
                     <button
                         onClick={onClose}
@@ -51,9 +52,16 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' 
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto custom-scrollbar">
+                <div className="p-6 overflow-y-auto custom-scrollbar flex-1 min-h-0">
                     {children}
                 </div>
+
+                {/* Footer (Optional) */}
+                {footer && (
+                    <div className="px-6 py-4 border-t border-gray-100 flex-shrink-0">
+                        {footer}
+                    </div>
+                )}
             </div>
 
             {/* Backdrop Click */}

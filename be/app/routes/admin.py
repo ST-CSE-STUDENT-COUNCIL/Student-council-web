@@ -79,6 +79,7 @@ async def get_pending_users():
         )
     
     except Exception as e:
+        print(f"[API ERROR] get_pending_users: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"승인 대기 목록 조회 실패: {str(e)}"
@@ -130,6 +131,7 @@ async def get_rejected_users(
         }
     
     except Exception as e:
+        print(f"[API ERROR] get_rejected_users: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"거절된 회원 목록 조회 실패: {str(e)}"
@@ -185,6 +187,7 @@ async def get_all_users(
         )
     
     except Exception as e:
+        print(f"[API ERROR] get_users: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"회원 목록 조회 실패: {str(e)}"
@@ -258,6 +261,7 @@ async def approve_user(user_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] approve_user: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"회원 승인 실패: {str(e)}"
@@ -346,6 +350,7 @@ async def reject_user(user_id: str, request: RejectUserRequest):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] reject: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"회원 거부 실패: {str(e)}"
@@ -427,6 +432,7 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] update_user_role: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"역할 변경 실패: {str(e)}"
@@ -499,6 +505,7 @@ async def update_membership_status(user_id: str, request: UpdateMembershipReques
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] update_membership_status: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"회비 상태 변경 실패: {str(e)}"
@@ -613,6 +620,7 @@ async def get_blocked_users():
         }
     
     except Exception as e:
+        print(f"[API ERROR] get_blocked_users: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"차단 목록 조회 실패: {str(e)}"
@@ -661,6 +669,7 @@ async def unblock_user_by_admin(student_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] unblock_user_login: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"차단 해제 실패: {str(e)}"

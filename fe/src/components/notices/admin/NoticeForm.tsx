@@ -147,8 +147,31 @@ export function NoticeForm({
             onClose={handleClose}
             title={isEditing ? "공지사항 수정" : "새 공지사항 작성"}
             maxWidth="max-w-3xl"
+            footer={
+                <button
+                    type="submit"
+                    form="notice-form"
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                    {isEditing ? (
+                        <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            수정 내용 저장
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            공지사항 등록
+                        </>
+                    )}
+                </button>
+            }
         >
-            <form onSubmit={onSubmit} className="flex flex-col gap-6">
+            <form id="notice-form" onSubmit={onSubmit} className="flex flex-col gap-6">
 
                 {/* Category Tabs - Redesigned */}
                 <div>
@@ -408,30 +431,6 @@ export function NoticeForm({
                             <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${formData.isPinned ? 'translate-x-7' : 'translate-x-0'} `} />
                         </div>
                     </div>
-                </div>
-
-                {/* Submit Button */}
-                <div className="pt-2">
-                    <button
-                        type="submit"
-                        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98] flex items-center justify-center gap-2"
-                    >
-                        {isEditing ? (
-                            <>
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                수정 내용 저장
-                            </>
-                        ) : (
-                            <>
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                공지사항 등록
-                            </>
-                        )}
-                    </button>
                 </div>
 
             </form>

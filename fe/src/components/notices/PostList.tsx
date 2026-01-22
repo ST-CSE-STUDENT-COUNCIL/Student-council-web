@@ -65,9 +65,14 @@ export const PostList = ({ posts }: PostListProps) => {
 
                         {/* Title */}
                         <div className="flex-1 w-full md:w-auto text-left md:px-4 mb-1 md:mb-0">
-                            <span className="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
-                                {post.title}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                                {post.is_pinned && (
+                                    <span className="md:hidden text-red-500 text-sm shrink-0">📌</span>
+                                )}
+                                <span className="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                                    {post.title}
+                                </span>
+                            </div>
                         </div>
 
                         {/* Mobile: Bottom Row with Author and Views */}
