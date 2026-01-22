@@ -16,6 +16,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NoticesRouteImport } from './routes/notices'
+import { Route as NonMemberPolicyRouteImport } from './routes/non-member-policy'
 import { Route as MypageRouteImport } from './routes/mypage'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IntroRouteImport } from './routes/intro'
@@ -66,6 +67,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const NoticesRoute = NoticesRouteImport.update({
   id: '/notices',
   path: '/notices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NonMemberPolicyRoute = NonMemberPolicyRouteImport.update({
+  id: '/non-member-policy',
+  path: '/non-member-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MypageRoute = MypageRouteImport.update({
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
+  '/non-member-policy': typeof NonMemberPolicyRoute
   '/notices': typeof NoticesRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
+  '/non-member-policy': typeof NonMemberPolicyRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
+  '/non-member-policy': typeof NonMemberPolicyRoute
   '/notices': typeof NoticesRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -232,6 +241,7 @@ export interface FileRouteTypes {
     | '/intro'
     | '/login'
     | '/mypage'
+    | '/non-member-policy'
     | '/notices'
     | '/privacy'
     | '/reset-password'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/intro'
     | '/login'
     | '/mypage'
+    | '/non-member-policy'
     | '/privacy'
     | '/reset-password'
     | '/signup'
@@ -280,6 +291,7 @@ export interface FileRouteTypes {
     | '/intro'
     | '/login'
     | '/mypage'
+    | '/non-member-policy'
     | '/notices'
     | '/privacy'
     | '/reset-password'
@@ -306,6 +318,7 @@ export interface RootRouteChildren {
   IntroRoute: typeof IntroRoute
   LoginRoute: typeof LoginRoute
   MypageRoute: typeof MypageRoute
+  NonMemberPolicyRoute: typeof NonMemberPolicyRoute
   NoticesRoute: typeof NoticesRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -365,6 +378,13 @@ declare module '@tanstack/react-router' {
       path: '/notices'
       fullPath: '/notices'
       preLoaderRoute: typeof NoticesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/non-member-policy': {
+      id: '/non-member-policy'
+      path: '/non-member-policy'
+      fullPath: '/non-member-policy'
+      preLoaderRoute: typeof NonMemberPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mypage': {
@@ -524,6 +544,7 @@ const rootRouteChildren: RootRouteChildren = {
   IntroRoute: IntroRoute,
   LoginRoute: LoginRoute,
   MypageRoute: MypageRoute,
+  NonMemberPolicyRoute: NonMemberPolicyRoute,
   NoticesRoute: NoticesRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,

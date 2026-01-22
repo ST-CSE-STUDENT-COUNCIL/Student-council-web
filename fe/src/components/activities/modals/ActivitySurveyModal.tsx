@@ -102,8 +102,33 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={getTitle()}>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Modal 
+            isOpen={isOpen} 
+            onClose={onClose} 
+            title={getTitle()}
+            footer={
+                <div className="flex gap-3">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                    >
+                        취소
+                    </button>
+                    <button
+                        type="submit"
+                        form="survey-form"
+                        disabled={loading}
+                        className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
+                    >
+                        {loading ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : '제출하기'}
+                    </button>
+                </div>
+            }
+        >
+            <form id="survey-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-800 mb-2">
                     <p className="font-bold mb-1">{activity.title}</p>
                     <p>여러분의 소중한 의견을 들려주세요. (철저한 익명 보장)</p>
@@ -270,25 +295,6 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
                         />
                     </motion.div>
                 )}
-
-                <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
-                    >
-                        취소
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
-                    >
-                        {loading ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : '제출하기'}
-                    </button>
-                </div>
             </form>
         </Modal>
     )

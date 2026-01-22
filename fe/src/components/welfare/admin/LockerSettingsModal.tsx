@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { Modal } from '../../common/Modal'
 import type { LockerFormState } from './LockerTypes'
 
 const inputBaseClass =
@@ -24,30 +25,36 @@ type LockerSettingsModalProps = {
 }
 
 export function LockerSettingsModal({ isOpen, formData, onChange, onClose, onSave, isSubmitting }: LockerSettingsModalProps) {
-    if (!isOpen) return null
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
-            <div className="w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-                <div className="flex items-start justify-between border-b border-gray-100 px-8 py-6">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">Locker Timeline</p>
-                        <h2 className="mt-1 text-2xl font-bold text-gray-900">기간 및 링크 설정</h2>
-                        <p className="mt-2 text-sm text-gray-500">기간이 저장되면 즉시 사용자 페이지와 공유됩니다.</p>
-                    </div>
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="기간 및 링크 설정"
+            maxWidth="max-w-3xl"
+            footer={
+                <div className="flex items-center justify-end gap-3">
                     <button
                         onClick={onClose}
-                        className="rounded-full border border-gray-200 p-2 text-gray-500 transition-colors hover:border-gray-300 hover:text-gray-700"
-                        aria-label="설정 닫기"
+                        className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-white"
                     >
-                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 6l12 12M18 6l-12 12" />
-                        </svg>
+                        취소
+                    </button>
+                    <button
+                        onClick={onSave}
+                        disabled={isSubmitting}
+                        className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-gray-900/20 transition-all hover:bg-gray-800 disabled:opacity-50"
+                    >
+                        {isSubmitting ? '저장 중...' : '변경사항 저장'}
                     </button>
                 </div>
-
-                <div className="max-h-[70vh] space-y-6 overflow-y-auto px-8 py-6">
-                    <div className={sectionWrapperClass}>
+            }
+        >
+            <div className="space-y-6">
+                <div className="mb-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">Locker Timeline</p>
+                    <p className="mt-2 text-sm text-gray-500">기간이 저장되면 즉시 사용자 페이지와 공유됩니다.</p>
+                </div>
+                <div className={sectionWrapperClass}>
                         <div className="mb-4 flex items-center gap-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-900 text-sm font-semibold tracking-tight text-white">URL</div>
                             <div>
@@ -126,24 +133,7 @@ export function LockerSettingsModal({ isOpen, formData, onChange, onClose, onSav
                             className={`${inputBaseClass} min-h-[110px] resize-none`}
                         />
                     </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 border-t border-gray-100 bg-gray-50 px-8 py-5">
-                    <button
-                        onClick={onClose}
-                        className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-white"
-                    >
-                        취소
-                    </button>
-                    <button
-                        onClick={onSave}
-                        disabled={isSubmitting}
-                        className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-gray-900/20 transition-all hover:bg-gray-800 disabled:opacity-50"
-                    >
-                        {isSubmitting ? '저장 중...' : '변경사항 저장'}
-                    </button>
-                </div>
             </div>
-        </div>
+        </Modal>
     )
 }
