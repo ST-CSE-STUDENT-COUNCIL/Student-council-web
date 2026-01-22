@@ -26,6 +26,7 @@ import type { ActivityListItem } from '../types/activities'
 import { getActivityStatus } from '../types/activities'
 import type { NoticeListItem } from '../types/posts'
 import { ActivityCard } from '../components/activities/ActivityCard'
+import { LoadingSpinner } from '../components/common/LoadingSpinner'
 
 export const Route = createFileRoute('/')({
     component: Index,
@@ -81,12 +82,7 @@ function Index() {
         fetchData()
     }, [])
 
-    if (loading) return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-500 font-medium">데이터를 불러오고 있습니다...</p>
-        </div>
-    )
+    if (loading) return <LoadingSpinner message="홈페이지를 불러오고 있습니다..." />
 
     return (
         <div className="pb-20 space-y-12">

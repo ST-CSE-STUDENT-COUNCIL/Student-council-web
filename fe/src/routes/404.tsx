@@ -8,7 +8,7 @@ export default function NotFound() {
         <div className="mb-8">
           <h1 className="text-9xl font-bold text-gray-200 select-none">404</h1>
           <div className="relative -mt-12">
-            <div className="text-6xl animate-bounce">🔍</div>
+            <div className="text-6xl ">🔍</div>
           </div>
         </div>
 

@@ -31,7 +31,7 @@ export default function Header() {
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Logo Area */}
                 <div className="flex items-center gap-8">
-                    <Link to="/" className="flex items-center gap-2.5 font-bold text-xl text-slate-900 hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-lg" aria-label="홈으로 이동">
+                    <Link to="/" className="flex items-center gap-2.5 font-bold text-xl text-slate-900 hover:opacity-80 transition-opacity rounded-lg" >
                         <div className="bg-slate-900 p-1.5 rounded-lg text-white shadow-sm">
                             <Code2 className="w-5 h-5" />
                         </div>
