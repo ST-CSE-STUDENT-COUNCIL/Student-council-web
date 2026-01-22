@@ -39,9 +39,10 @@ export default function Footer() {
                     <div>
                         <h4 className="text-white font-semibold mb-4">관련 사이트</h4>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="https://www.seoultech.ac.kr/index.jsp" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">서울과학기술대학교</a></li>
+                            <li><a href="https://www.seoultech.ac.kr/index.jsp" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">서울과학기술대학교 홈페이지</a></li>
                             <li><a href="https://computer.seoultech.ac.kr/" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">컴퓨터공학과 홈페이지</a></li>
-                            <li><a href="https://portal.seoultech.ac.kr" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">통합정보시스템</a></li>
+                            <li><a href="https://portal.seoultech.ac.kr" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">학생포탈</a></li>
+                            <li><a href="https://suis.seoultech.ac.kr/nxui/index.html#main" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">통합정보시스템</a></li>
                         </ul>
                     </div>
 
