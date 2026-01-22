@@ -57,6 +57,7 @@ async def get_introduction_images(
         )
     
     except Exception as e:
+        print(f"[API ERROR] get_introduction_images: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"이미지 목록 조회 실패: {str(e)}"
@@ -132,6 +133,7 @@ async def create_introduction_image(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] create_introduction_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"이미지 업로드 실패: {str(e)}"
@@ -193,6 +195,7 @@ async def update_introduction_image(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] update_introduction_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"이미지 수정 실패: {str(e)}"
@@ -242,6 +245,7 @@ async def delete_introduction_image(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] delete_introduction_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"이미지 삭제 실패: {str(e)}"
