@@ -56,11 +56,6 @@ export function SuggestionHero({ stats, statusFilter, onStatusFilterChange }: {
         <section className="text-center space-y-8 pt-6 sm:pt-10">
             <div className="space-y-3">
                 <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">건의함</h1>
-                <p className="text-base sm:text-lg text-slate-500 max-w-3xl mx-auto leading-relaxed">
-                    건의함을 통해 학생회에 대한 건의사항을 제출할 수 있습니다.
-                    <br />
-                    본인만 확인 가능합니다.
-                </p>
             </div>
 
             <div className="flex flex-wrap justify-center gap-3 sm:gap-4">

@@ -217,6 +217,7 @@ function MyPage() {
                 <InfoLine label="이름" value={currentUser.name} />
                 <InfoLine label="학번" value={currentUser.student_id} />
                 <InfoLine label="이메일" value={currentUser.email} />
+                <InfoLine label="전화번호" value={formatPhoneNumber(currentUser.phone)} />
                 <InfoLine label="학과" value={currentUser.department || '미등록'} />
                 <div className="flex items-center justify-between py-3 border-b border-gray-100">
                   <span className="text-gray-600 font-medium">학생회비</span>
@@ -313,4 +314,15 @@ function getStatusLabel(status: string) {
     case 'cancelled': return '취소됨'
     default: return status
   }
+}
+
+function formatPhoneNumber(phone: string) {
+  if (!phone) return '-'
+  // 숫자만 추출
+  const numbers = phone.replace(/\D/g, '')
+  // 010-1234-5678 형식으로 변환
+  if (numbers.length === 11) {
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`
+  }
+  return phone
 }
