@@ -217,15 +217,15 @@ function Index() {
                                     className="block group"
                                 >
                                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all duration-200">
-                                        <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center justify-between mb-2">
                                             <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-tight ${post.board.id === 1
                                                 ? 'bg-blue-50 text-blue-700'
                                                 : 'bg-green-50 text-green-700'
                                                 }`}>
                                                 {getSubCategoryLabel(post.subcategory || '')}
                                             </span>
-                                            <span className="text-xs text-gray-400 font-medium font-mono">
-                                                {post.created_at.split('T')[0]}
+                                            <span className="text-xs text-gray-400 font-medium">
+                                                {post.created_at.split('T')[0].replace(/-/g, '.')}
                                             </span>
                                         </div>
                                         <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
@@ -246,7 +246,7 @@ function Index() {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     )
 }
