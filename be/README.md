@@ -110,12 +110,12 @@ fly logs -a seoultech-cse-backend
 ## 6. 스토리지 (Storage)
 
 ### 1) Supabase Storage
-- 용도: 프로필 이미지, 학생증 인증 이미지 등 이미지 파일.
-- 버킷: `verification-images` (비공개), `public-images` (공개)
+- 용도: 학생증 인증 이미지 등 이미지 파일 저장
+- 버킷: `verification-images` (비공개)
 - 관리: Supabase 대시보드 또는 API
 
 ### 2) Cloudflare R2
-- 용도: 공지사항 첨부파일, 활동 내역 등 대용량 파일.
+- 용도: 공지사항 첨부파일, 활동 내역 등 대용량 파일
 - 특징: AWS S3 호환 API(`boto3`)를 사용하며 출력 대역폭 비용이 무료입니다.
 - 설정: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` 등의 환경변수 필요.
 
