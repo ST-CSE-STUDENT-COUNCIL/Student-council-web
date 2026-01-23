@@ -8,7 +8,9 @@
 - 카톡방 초대 신청 (kakao_invite)
 - 공지 (notice)
 """
-from fastapi import APIRouter, HTTPException, Depends, status, Query, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, status, Query, UploadFile, File, Form, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from typing import Optional
 from datetime import datetime
 import math
@@ -43,6 +45,7 @@ import os
 
 
 router = APIRouter(tags=["활동"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 # ============================================================================
@@ -257,9 +260,11 @@ async def get_activity(
     summary="활동 신청 첨부 이미지 업로드용 Presigned URL 발급",
     description="활동 신청 시 첨부 이미지 업로드를 위한 Presigned URL 발급 (모든 활동 유형에서 사용 가능)"
 )
+@limiter.limit("50/minute")
 async def get_activity_verification_presigned_url(
     activity_id: int,
-    filename: str
+    filename: str,
+    request: Request
 ):
     """활동 신청 첨부 이미지 업로드를 위한 Presigned URL 발급 (행사, 수요조사, 설문조사, 카톡방 초대 등 모든 유형)"""
     file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
@@ -294,9 +299,11 @@ async def get_activity_verification_presigned_url(
         401: {"model": ErrorResponse, "description": "인증 필요 (카톡방 초대는 회원만)"}
     }
 )
+@limiter.limit("100/minute")  # 공용 IP 고려하여 넉넉하게 설정
 async def register_for_activity(
     activity_id: int,
     body: ActivityRegistrationRequest,
+    request: Request,
     current_user: Optional[dict] = Depends(optional_current_user)
 ):
     """활동 신청 (회원/비회원, Presigned URL 사용)"""
