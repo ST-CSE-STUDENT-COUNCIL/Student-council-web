@@ -42,6 +42,7 @@ export type AttachmentFileInfo = {
  */
 export type NoticeListItem = {
     id: number;
+    no?: number; // 화면 표시용 번호 (추가됨)
     title: string;
     content: string;
     subcategory?: string | null;
@@ -57,6 +58,7 @@ export type NoticeListItem = {
  */
 export type NoticeDetailResponse = {
     id: number;
+    no?: number; // 화면 표시용 번호
     title: string;
     content: string;
     subcategory?: string | null;
