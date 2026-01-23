@@ -10,6 +10,10 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "overrides": {
+    "react": "$react",
+    "react-dom": "$react-dom"
+  },
   "dependencies": {
     "@tanstack/react-router": "^1.143.11",
     "@tanstack/react-table": "^8.21.3",
