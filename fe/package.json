@@ -12,8 +12,10 @@
   },
   "dependencies": {
     "@tanstack/react-router": "^1.143.11",
+    "@tanstack/react-table": "^8.21.3",
     "@tanstack/router-devtools": "^1.143.11",
     "@tanstack/router-plugin": "^1.143.11",
+    "@tremor/react": "^3.18.7",
     "axios": "^1.13.2",
     "framer-motion": "^12.24.0",
     "lucide-react": "^0.562.0",
@@ -21,6 +23,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-textarea-autosize": "^8.5.9",
+    "recharts": "^3.7.0",
     "sonner": "^2.0.7",
     "sweetalert2": "^11.26.17",
     "swiper": "^12.0.3",

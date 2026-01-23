@@ -22,6 +22,7 @@ type PostParams = {
 const mapToNotice = (data: any): NoticeDetailResponse => {
     return {
         id: data.id,
+        no: data.no,  // 추가됨
         title: data.title,
         content: data.content,
         subcategory: data.subcategory || null,

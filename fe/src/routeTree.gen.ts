@@ -33,6 +33,11 @@ import { Route as AdminNoticesRouteImport } from './routes/admin/notices'
 import { Route as AdminIntroRouteImport } from './routes/admin/intro'
 import { Route as AdminClubsRouteImport } from './routes/admin/clubs'
 import { Route as AdminActivitiesRouteImport } from './routes/admin/activities'
+import { Route as AdminSurveysIndexRouteImport } from './routes/admin/surveys/index'
+import { Route as AdminKakaotalkIndexRouteImport } from './routes/admin/kakaotalk/index'
+import { Route as AdminEventsIndexRouteImport } from './routes/admin/events/index'
+import { Route as AdminSurveysActivityIdRouteImport } from './routes/admin/surveys/$activityId'
+import { Route as AdminEventsEventIdRouteImport } from './routes/admin/events/$eventId'
 
 const WelfareRoute = WelfareRouteImport.update({
   id: '/welfare',
@@ -154,6 +159,31 @@ const AdminActivitiesRoute = AdminActivitiesRouteImport.update({
   path: '/activities',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSurveysIndexRoute = AdminSurveysIndexRouteImport.update({
+  id: '/surveys/',
+  path: '/surveys/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKakaotalkIndexRoute = AdminKakaotalkIndexRouteImport.update({
+  id: '/kakaotalk/',
+  path: '/kakaotalk/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEventsIndexRoute = AdminEventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSurveysActivityIdRoute = AdminSurveysActivityIdRouteImport.update({
+  id: '/surveys/$activityId',
+  path: '/surveys/$activityId',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEventsEventIdRoute = AdminEventsEventIdRouteImport.update({
+  id: '/events/$eventId',
+  path: '/events/$eventId',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -180,6 +210,11 @@ export interface FileRoutesByFullPath {
   '/activities': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/notices/': typeof NoticesIndexRoute
+  '/admin/events/$eventId': typeof AdminEventsEventIdRoute
+  '/admin/surveys/$activityId': typeof AdminSurveysActivityIdRoute
+  '/admin/events': typeof AdminEventsIndexRoute
+  '/admin/kakaotalk': typeof AdminKakaotalkIndexRoute
+  '/admin/surveys': typeof AdminSurveysIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -204,6 +239,11 @@ export interface FileRoutesByTo {
   '/activities': typeof ActivitiesIndexRoute
   '/admin': typeof AdminIndexRoute
   '/notices': typeof NoticesIndexRoute
+  '/admin/events/$eventId': typeof AdminEventsEventIdRoute
+  '/admin/surveys/$activityId': typeof AdminSurveysActivityIdRoute
+  '/admin/events': typeof AdminEventsIndexRoute
+  '/admin/kakaotalk': typeof AdminKakaotalkIndexRoute
+  '/admin/surveys': typeof AdminSurveysIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -231,6 +271,11 @@ export interface FileRoutesById {
   '/activities/': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/notices/': typeof NoticesIndexRoute
+  '/admin/events/$eventId': typeof AdminEventsEventIdRoute
+  '/admin/surveys/$activityId': typeof AdminSurveysActivityIdRoute
+  '/admin/events/': typeof AdminEventsIndexRoute
+  '/admin/kakaotalk/': typeof AdminKakaotalkIndexRoute
+  '/admin/surveys/': typeof AdminSurveysIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -259,6 +304,11 @@ export interface FileRouteTypes {
     | '/activities'
     | '/admin/'
     | '/notices/'
+    | '/admin/events/$eventId'
+    | '/admin/surveys/$activityId'
+    | '/admin/events'
+    | '/admin/kakaotalk'
+    | '/admin/surveys'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -283,6 +333,11 @@ export interface FileRouteTypes {
     | '/activities'
     | '/admin'
     | '/notices'
+    | '/admin/events/$eventId'
+    | '/admin/surveys/$activityId'
+    | '/admin/events'
+    | '/admin/kakaotalk'
+    | '/admin/surveys'
   id:
     | '__root__'
     | '/'
@@ -309,6 +364,11 @@ export interface FileRouteTypes {
     | '/activities/'
     | '/admin/'
     | '/notices/'
+    | '/admin/events/$eventId'
+    | '/admin/surveys/$activityId'
+    | '/admin/events/'
+    | '/admin/kakaotalk/'
+    | '/admin/surveys/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -499,6 +559,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminActivitiesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/surveys/': {
+      id: '/admin/surveys/'
+      path: '/surveys'
+      fullPath: '/admin/surveys'
+      preLoaderRoute: typeof AdminSurveysIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/kakaotalk/': {
+      id: '/admin/kakaotalk/'
+      path: '/kakaotalk'
+      fullPath: '/admin/kakaotalk'
+      preLoaderRoute: typeof AdminKakaotalkIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/events/': {
+      id: '/admin/events/'
+      path: '/events'
+      fullPath: '/admin/events'
+      preLoaderRoute: typeof AdminEventsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/surveys/$activityId': {
+      id: '/admin/surveys/$activityId'
+      path: '/surveys/$activityId'
+      fullPath: '/admin/surveys/$activityId'
+      preLoaderRoute: typeof AdminSurveysActivityIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/events/$eventId': {
+      id: '/admin/events/$eventId'
+      path: '/events/$eventId'
+      fullPath: '/admin/events/$eventId'
+      preLoaderRoute: typeof AdminEventsEventIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
@@ -510,6 +605,11 @@ interface AdminRouteChildren {
   AdminSuggestionsRoute: typeof AdminSuggestionsRoute
   AdminWelfareRoute: typeof AdminWelfareRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminEventsEventIdRoute: typeof AdminEventsEventIdRoute
+  AdminSurveysActivityIdRoute: typeof AdminSurveysActivityIdRoute
+  AdminEventsIndexRoute: typeof AdminEventsIndexRoute
+  AdminKakaotalkIndexRoute: typeof AdminKakaotalkIndexRoute
+  AdminSurveysIndexRoute: typeof AdminSurveysIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -520,6 +620,11 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSuggestionsRoute: AdminSuggestionsRoute,
   AdminWelfareRoute: AdminWelfareRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminEventsEventIdRoute: AdminEventsEventIdRoute,
+  AdminSurveysActivityIdRoute: AdminSurveysActivityIdRoute,
+  AdminEventsIndexRoute: AdminEventsIndexRoute,
+  AdminKakaotalkIndexRoute: AdminKakaotalkIndexRoute,
+  AdminSurveysIndexRoute: AdminSurveysIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

@@ -91,15 +91,15 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        // [중요] 1단계이고 추가 질문이 있다면, 어떤 이유로든 제출(Submit) 이벤트가 발생하면
+        // 1단계이고 추가 질문이 있다면, 어떤 이유로든 제출(Submit) 이벤트가 발생하면
         // 서버로 보내지 말고 '다음 단계'로 이동 처리 (엔터키 방지, 버튼 오작동 방지)
         if (step === 1 && hasAdditionalFields) {
             handleNext()
             return
         }
 
-        // 1단계에서 이미 검증이 완료되었으므로 중복 검증 제거
-        // (익명 타입은 제외)
+        // 제출 전 유효성 검사 (모든 케이스)
+        if (!validateStep1()) return
 
         setLoading(true)
         setError(null)
@@ -164,6 +164,47 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         }
     }
 
+    // 1단계 유효성 검사
+    const validateStep1 = () => {
+        if (isAnonymousType) return true
+
+        // 비회원 약관 동의 검증
+        if (isNonMember && !nonMemberAgreed) {
+            toast.error('비회원 처리 규정에 동의해주세요.')
+            return false
+        }
+
+        if (!formData.name) {
+            toast.error('이름을 입력해주세요.')
+            return false
+        }
+
+        if (!formData.student_id) {
+            toast.error('학번을 입력해주세요.')
+            return false
+        }
+        if (formData.student_id.length !== 8) {
+            toast.error('학번 8자리를 정확히 입력해주세요.')
+            return false
+        }
+
+        if (!formData.phone) {
+            toast.error('연락처를 입력해주세요.')
+            return false
+        }
+        if (formData.phone.length !== 11) {
+            toast.error('전화번호를 정확히 입력해주세요.')
+            return false
+        }
+
+        if (activity.type === 'kakao_invite' && !formData.verification_image_url) {
+            toast.error('학적 인증자료를 제출해주세요.')
+            return false
+        }
+
+        return true
+    }
+
     // 다음 단계로 이동 전 유효성 검사
     const handleNext = (e?: React.MouseEvent) => {
         // 버튼 클릭 등을 통한 기본 동작 차단
@@ -172,37 +213,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             e.stopPropagation()
         }
 
-        if (isAnonymousType) {
-            // 익명 조사: 입력받는게 없으므로 유효성 검사 패스
-        } else {
-            // 비회원 약관 동의 검증 (익명이 아닌 경우에만)
-            if (isNonMember && !nonMemberAgreed) {
-                return toast.error('비회원 처리 규정에 동의해주세요.')
-            }
-
-            // 일반 행사 유효성 검사
-            if (!formData.name) return toast.error('이름을 입력해주세요.')
-
-            // 학번 검증
-            if (!formData.student_id) {
-                return toast.error('학번을 입력해주세요.')
-            }
-            if (formData.student_id.length !== 8) {
-                return toast.error('학번 8자리를 정확히 입력해주세요.')
-            }
-
-            // 전화번호 검증
-            if (!formData.phone) {
-                return toast.error('연락처를 입력해주세요.')
-            }
-            if (formData.phone.length !== 11) {
-                return toast.error('전화번호를 정확히 입력해주세요.')
-            }
-
-            if (activity.type === 'kakao_invite' && !formData.verification_image_url) {
-                return toast.error('학적 인증자료를 제출해주세요.')
-            }
-        }
+        if (!validateStep1()) return
 
         setStep(2)
     }
@@ -317,6 +328,50 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                 exit={{ opacity: 0, x: -20 }}
                                 className="space-y-4"
                             >
+                                {/* 신청 기간 정보 */}
+                                {(activity.registration_start || activity.registration_end) && (
+                                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-xl border border-indigo-100">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <h3 className="font-bold text-indigo-900">신청 기간</h3>
+                                        </div>
+                                        <div className="space-y-1.5 text-sm">
+                                            {activity.registration_start && (
+                                                <div className="flex items-start gap-2">
+                                                    <span className="font-medium text-indigo-700 min-w-[60px]">시작:</span>
+                                                    <span className="text-indigo-900">
+                                                        {new Date(activity.registration_start).toLocaleString('ko-KR', {
+                                                            year: 'numeric',
+                                                            month: 'long',
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                            hour12: true
+                                                        })}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {activity.registration_end && (
+                                                <div className="flex items-start gap-2">
+                                                    <span className="font-medium text-indigo-700 min-w-[60px]">마감:</span>
+                                                    <span className="text-indigo-900">
+                                                        {new Date(activity.registration_end).toLocaleString('ko-KR', {
+                                                            year: 'numeric',
+                                                            month: 'long',
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                            hour12: true
+                                                        })}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-800">
                                     <p className="font-bold mb-1">{activity.title}</p>
                                     <p>{isAnonymousType

@@ -200,7 +200,7 @@ class ActivityRegistrationRequest(BaseModel):
     department: Optional[str] = Field(None, max_length=100, description="학과")
     phone: Optional[str] = Field(None, pattern=r'^010-?\d{4}-?\d{4}$', description="전화번호")
     email: Optional[str] = Field(None, description="이메일")
-    verification_image_url: Optional[str] = Field(None, description="인증 이미지 URL (Presigned URL로 업로드 후 받은 public_url)")
+    verification_image_url: Optional[str] = Field(None, description="첨부 이미지 URL (Presigned URL로 업로드 후 받은 public_url, 모든 활동 유형에서 사용 가능)")
     
     # 추가 정보 응답
     form_responses: Dict[str, Any] = Field(default_factory=dict, description="추가 정보 응답")

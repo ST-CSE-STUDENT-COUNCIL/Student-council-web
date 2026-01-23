@@ -254,14 +254,14 @@ async def get_activity(
 
 @router.post(
     "/activities/{activity_id}/register/presigned-url",
-    summary="활동 신청 인증 이미지 업로드용 Presigned URL 발급",
-    description="카톡방 초대 신청 시 인증 이미지 업로드를 위한 Presigned URL 발급"
+    summary="활동 신청 첨부 이미지 업로드용 Presigned URL 발급",
+    description="활동 신청 시 첨부 이미지 업로드를 위한 Presigned URL 발급 (모든 활동 유형에서 사용 가능)"
 )
 async def get_activity_verification_presigned_url(
     activity_id: int,
     filename: str
 ):
-    """활동 신청 인증 이미지 업로드를 위한 Presigned URL 발급"""
+    """활동 신청 첨부 이미지 업로드를 위한 Presigned URL 발급 (행사, 수요조사, 설문조사, 카톡방 초대 등 모든 유형)"""
     file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     file_key = f"activity-{activity_id}/verification/{unique_filename}"
@@ -287,7 +287,7 @@ async def get_activity_verification_presigned_url(
     response_model=ActivityRegistrationResponse,
     status_code=status.HTTP_201_CREATED,
     summary="활동 신청",
-    description="활동에 신청합니다. 회원/비회원 모두 가능합니다. 카톡방 초대 신청 시 verification_image_url 전달.",
+    description="활동에 신청합니다. 회원/비회원 모두 가능합니다. 모든 활동 유형에서 verification_image_url로 이미지 첨부 가능.",
     responses={
         201: {"description": "신청 완료"},
         400: {"model": ErrorResponse, "description": "신청 실패 (정원 마감, 중복 신청 등)"},

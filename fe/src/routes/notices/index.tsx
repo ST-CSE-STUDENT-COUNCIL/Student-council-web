@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { PostFilter } from '../../components/notices/PostFilter'
 import { PostList } from '../../components/notices/PostList'
 import type { NoticeListItem } from '../../types/posts'
@@ -32,6 +32,15 @@ function Notices() {
   const [posts, setPosts] = useState<NoticeListItem[]>([])
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
+
+  // 한글 입력 버그 수정: 로컬 검색 상태 분리
+  const [localSearch, setLocalSearch] = useState(search)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // URL search 파라미터가 변경되면 로컬 상태 동기화
+  useEffect(() => {
+    setLocalSearch(search)
+  }, [search])
 
   const itemsPerPage = 20
 
@@ -84,8 +93,20 @@ function Notices() {
     updateSearch({ subCategory: category, page: 1 })
   }
 
+  // 한글 입력 버그 수정: debounce 적용
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateSearch({ search: e.target.value, page: 1 })
+    const value = e.target.value
+    setLocalSearch(value)
+
+    // 이전 타이머 취소
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+    }
+
+    // 300ms 후에 URL 업데이트 (한글 조합 완료 대기)
+    debounceRef.current = setTimeout(() => {
+      updateSearch({ search: value, page: 1 })
+    }, 300)
   }
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -109,7 +130,7 @@ function Notices() {
         onBoardIdChange={handleBoardIdChange}
         subCategory={subCategory}
         onSubCategoryChange={handleSubCategoryChange}
-        search={search}
+        search={localSearch}
         onSearchChange={handleSearchChange}
         sort={sort}
         onSortChange={handleSortChange}
