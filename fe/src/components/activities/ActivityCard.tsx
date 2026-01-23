@@ -17,8 +17,17 @@ type ActivityCardProps = {
 
 export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
     const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false)
-
     const [status, setStatus] = useState<ActivityStatus>(() => getActivityStatus(activity))
+    const [currentTime, setCurrentTime] = useState(Date.now())
+
+    // 1분마다 현재 시간 업데이트 (남은 시간 실시간 표시용)
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(Date.now())
+        }, 60000) // 1분마다 업데이트
+
+        return () => clearInterval(timer)
+    }, [])
 
     // 신청 시작/종료 시간에 맞춰 상태 자동 업데이트
     useEffect(() => {
@@ -89,7 +98,25 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
         // API 호출은 모달 내부에서 처리
     }
 
+    // 남은 시간 계산 함수
+    const getTimeRemaining = (targetDate: string): string => {
+        const target = new Date(targetDate).getTime()
+        const diff = target - currentTime
 
+        if (diff <= 0) return ''
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+        if (days > 0) {
+            return `${days}일 ${hours}시간`
+        } else if (hours > 0) {
+            return `${hours}시간 ${minutes}분`
+        } else {
+            return `${minutes}분`
+        }
+    }
 
     const getButtonStyle = () => {
         if (status !== 'active') {
@@ -114,22 +141,42 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
     }
 
     const getButtonText = () => {
+        // 종료된 경우
         if (status === 'closed') return '종료되었습니다'
-        if (status === 'scheduled') return '오픈 예정입니다'
 
-        switch (activity.type) {
-            case 'notice':
-                return '공지 확인하기'
-            case 'kakao_invite':
-                return '카톡방 초대 신청'
-            case 'survey':
-                return '설문 참여하기'
-            case 'demand_survey':
-                return '수요조사 참여하기'
-            case 'event':
-            default:
-                return isFull ? '마감되었습니다' : '참여 신청하기'
+        // 오픈 예정인 경우 - 남은 시간 표시
+        if (status === 'scheduled' && activity.registration_start) {
+            const remaining = getTimeRemaining(activity.registration_start)
+            return remaining ? `오픈까지 ${remaining}` : '오픈 예정입니다'
         }
+
+        // 진행중인 경우
+        if (status === 'active') {
+            // 공지사항
+            if (activity.type === 'notice') {
+                return '공지 확인하기'
+            }
+
+            // 정원 마감
+            if (activity.type === 'event' && isFull) {
+                return '마감되었습니다'
+            }
+
+            // 타입별 기본 텍스트
+            switch (activity.type) {
+                case 'kakao_invite':
+                    return '카톡방 초대 신청'
+                case 'survey':
+                    return '설문 참여하기'
+                case 'demand_survey':
+                    return '수요조사 참여하기'
+                case 'event':
+                default:
+                    return '참여 신청하기'
+            }
+        }
+
+        return '참여 신청하기'
     }
 
     const handleButtonClick = (e: React.MouseEvent) => {
@@ -214,6 +261,48 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
                     </div>
 
                     <div className="bg-gray-50 rounded-xl p-5 mt-auto">
+                        {/* 신청 기간 정보 */}
+                        {(activity.registration_start || activity.registration_end) && (
+                            <div className="mb-4 pb-4 border-b border-gray-200">
+                                <div className="flex items-center gap-1.5 mb-2">
+                                    <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span className="text-xs font-bold text-gray-700">신청 기간</span>
+                                </div>
+                                <div className="space-y-1">
+                                    {activity.registration_start && (
+                                        <div className="flex items-start gap-2 text-xs">
+                                            <span className="font-medium text-gray-500 min-w-[32px]">시작</span>
+                                            <span className="text-gray-700 font-medium">
+                                                {new Date(activity.registration_start).toLocaleString('ko-KR', {
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                    hour12: true
+                                                })}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {activity.registration_end && (
+                                        <div className="flex items-start gap-2 text-xs">
+                                            <span className="font-medium text-gray-500 min-w-[32px]">마감</span>
+                                            <span className="text-gray-700 font-medium">
+                                                {new Date(activity.registration_end).toLocaleString('ko-KR', {
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                    hour12: true
+                                                })}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* 정원 표시 (notice, survey 제외) */}
                         {activity.max_capacity && !['notice', 'survey', 'demand_survey'].includes(activity.type) && (
                             <>

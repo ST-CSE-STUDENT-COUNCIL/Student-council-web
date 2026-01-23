@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { X, User, Phone, Calendar, MessageCircle, CheckCircle, XCircle } from 'lucide-react'
+import { X, User, Phone, Calendar, MessageCircle, CheckCircle, XCircle, FileText, Image as ImageIcon } from 'lucide-react'
 import type { ActivityRegistrationResponse, Activity } from '../../../types/activities'
 
 type RegistrationDetailModalProps = {
@@ -41,8 +41,14 @@ export function RegistrationDetailModal({
                             <User size={20} className="text-purple-600" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900">{registration.name || '이름 없음'}</h3>
-                            <p className="text-sm text-gray-500">{registration.student_id} · {registration.department}</p>
+                            <h3 className="text-lg font-bold text-gray-900">
+                                {['survey', 'demand_survey'].includes(activityDetail?.type || '')
+                                    ? '익명 참여자'
+                                    : (registration.name || '이름 없음')}
+                            </h3>
+                            {!['survey', 'demand_survey'].includes(activityDetail?.type || '') && (
+                                <p className="text-sm text-gray-500">{registration.student_id} · {registration.department}</p>
+                            )}
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600">
@@ -54,19 +60,21 @@ export function RegistrationDetailModal({
                 <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)] space-y-6">
                     {/* Basic Info */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-gray-50 rounded-xl">
-                            <div className="flex items-center gap-2 text-gray-500 text-xs font-medium mb-1">
-                                <Phone size={12} />연락처
+                        {!['survey', 'demand_survey'].includes(activityDetail?.type || '') && (
+                            <div className="p-4 bg-gray-50 rounded-xl">
+                                <div className="flex items-center gap-2 text-gray-500 text-xs font-medium mb-1">
+                                    <Phone size={12} />연락처
+                                </div>
+                                <p className="font-medium text-gray-900">{registration.phone || '-'}</p>
                             </div>
-                            <p className="font-medium text-gray-900">{registration.phone || '-'}</p>
-                        </div>
+                        )}
                         <div className="p-4 bg-gray-50 rounded-xl">
                             <div className="flex items-center gap-2 text-gray-500 text-xs font-medium mb-1">
                                 <Calendar size={12} />신청일시
                             </div>
                             <p className="font-medium text-gray-900">{new Date(registration.created_at).toLocaleString()}</p>
                         </div>
-                        {registration.kakao_id && (
+                        {registration.kakao_id && !['survey', 'demand_survey'].includes(activityDetail?.type || '') && (
                             <div className="p-4 bg-gray-50 rounded-xl">
                                 <div className="flex items-center gap-2 text-gray-500 text-xs font-medium mb-1">
                                     <MessageCircle size={12} />카카오톡 ID
@@ -103,9 +111,41 @@ export function RegistrationDetailModal({
                                         return (
                                             <div key={field.name} className="p-3 bg-white rounded-lg">
                                                 <label className="text-xs font-medium text-purple-600">{field.label}</label>
-                                                <p className="text-sm mt-1 text-gray-900">
-                                                    {Array.isArray(value) ? value.join(', ') : String(value)}
-                                                </p>
+                                                <div className="text-sm mt-1 text-gray-900 break-words">
+                                                    {field.type === 'file' ? (
+                                                        <div className="flex flex-col gap-1 mt-1">
+                                                            {(Array.isArray(value) ? value : [value]).map((url: string, idx: number) => {
+                                                                const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url)
+                                                                return (
+                                                                    <div key={idx} className="flex items-center gap-2">
+                                                                        {isImage ? (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => onImagePreview(url)}
+                                                                                className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-800 font-medium hover:underline cursor-pointer"
+                                                                            >
+                                                                                <ImageIcon size={14} />
+                                                                                {Array.isArray(value) ? `이미지 ${idx + 1} 미리보기` : '이미지 미리보기'}
+                                                                            </button>
+                                                                        ) : (
+                                                                            <a
+                                                                                href={url}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-800 font-medium hover:underline"
+                                                                            >
+                                                                                <FileText size={14} />
+                                                                                {Array.isArray(value) ? `파일 ${idx + 1} 다운로드` : '파일 다운로드'}
+                                                                            </a>
+                                                                        )}
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    ) : (
+                                                        (Array.isArray(value) ? value.join(', ') : String(value))
+                                                    )}
+                                                </div>
                                             </div>
                                         )
                                     })

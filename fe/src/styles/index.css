@@ -1,5 +1,33 @@
 @import "tailwindcss";
+@source "../../node_modules/@tremor/react/dist";
 
 @theme {
     --font-sans: "Pretendard", ui-sans-serif, system-ui, sans-serif;
+
+    /* Tremor Colors - Brand (Indigo) */
+    --color-tremor-brand-faint: #eff6ff;
+    --color-tremor-brand-muted: #bfdbfe;
+    --color-tremor-brand-subtle: #60a5fa;
+    --color-tremor-brand: #3b82f6;
+    --color-tremor-brand-emphasis: #1d4ed8;
+    --color-tremor-brand-inverted: #ffffff;
+
+    /* Tremor Colors - Background */
+    --color-tremor-background: #ffffff;
+    --color-tremor-background-muted: #f9fafb;
+    --color-tremor-background-subtle: #f3f4f6;
+    --color-tremor-background-emphasis: #374151;
+    --color-tremor-background-inverted: #111827;
+
+    /* Tremor Colors - Content */
+    --color-tremor-content: #374151;
+    --color-tremor-content-muted: #6b7280;
+    --color-tremor-content-subtle: #9ca3af;
+    --color-tremor-content-emphasis: #111827;
+    --color-tremor-content-inverted: #ffffff;
+    --color-tremor-content-strong: #111827;
+
+    /* Tremor Colors - Border */
+    --color-tremor-border: #e5e7eb;
+    --color-tremor-ring: #e5e7eb;
 }
