@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
-import { User, Lock } from 'lucide-react'
+import { User, Lock, AlertCircle } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { authApi } from '../lib/api/auth'
 import { Turnstile } from '../components/common/Turnstile'
@@ -19,9 +19,16 @@ function Login() {
   const [rememberMe, setRememberMe] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErrorMessage(null)
+
+    if (studentId.length < 8) {
+      setErrorMessage('학번은 8자리 이상이어야 합니다.')
+      return
+    }
 
     if (!turnstileToken) {
       toast.error('보안 검증을 완료해주세요.')
@@ -45,17 +52,17 @@ function Login() {
 
         if (status === 403) {
           // 거절된 사용자 또는 로그인 차단
-          toast.error(detail || '접근이 거부되었습니다.')
+          setErrorMessage(detail || '접근이 거부되었습니다.')
         } else if (status === 401) {
-          toast.error(detail || '학번 또는 비밀번호가 일치하지 않습니다.')
+          setErrorMessage(detail || '학번 또는 비밀번호가 일치하지 않습니다.')
         } else if (status === 404) {
-          toast.error(detail || '등록되지 않은 학번입니다.')
+          setErrorMessage(detail || '등록되지 않은 학번입니다.')
         } else {
-          toast.error(detail || '로그인 중 오류가 발생했습니다.')
+          navigate({ to: '/error' })
         }
       } else {
         console.error('Login failed:', error)
-        toast.error('로그인 중 오류가 발생했습니다.')
+        navigate({ to: '/error' })
       }
     } finally {
       setIsLoading(false)
@@ -93,6 +100,21 @@ function Login() {
             </p>
           </div>
 
+          {errorMessage && (
+            <div className="rounded-xl bg-red-50 p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    {errorMessage}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-5">
               <div>
@@ -104,6 +126,7 @@ function Login() {
                   <input
                     type="text"
                     required
+                    maxLength={20}
                     className="block w-full pl-10 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white"
                     placeholder="학번을 입력해주세요"
                     value={studentId}

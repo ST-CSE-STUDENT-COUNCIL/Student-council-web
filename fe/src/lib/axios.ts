@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/useAuthStore'
+import { router } from './router'
 
 // 커스텀 Axios 인스턴스 생성
 export const api = axios.create({
@@ -23,14 +24,27 @@ api.interceptors.request.use(
     }
 )
 
-// 401 오류를 처리하기 위한 응답 인터셉터
+// 응답 인터셉터
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            // 무단 액세스 처리 (예: 사용자 로그아웃)
-            useAuthStore.getState().logout()
+        if (error.code === 'ERR_NETWORK') {
+            router.navigate({ to: '/maintenance' })
+            return Promise.reject(error)
         }
+
+        if (error.response) {
+            const status = error.response.status
+
+            if (status === 401) {
+                useAuthStore.getState().logout()
+            } else if (status === 502 || status === 503) {
+                router.navigate({ to: '/maintenance' })
+            } else if (status >= 500) {
+                router.navigate({ to: '/error' })
+            }
+        }
+
         return Promise.reject(error)
     }
 )

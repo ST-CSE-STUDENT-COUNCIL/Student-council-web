@@ -18,8 +18,10 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as NonMemberPolicyRouteImport } from './routes/non-member-policy'
 import { Route as MypageRouteImport } from './routes/mypage'
+import { Route as MaintenanceRouteImport } from './routes/maintenance'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IntroRouteImport } from './routes/intro'
+import { Route as ErrorRouteImport } from './routes/error'
 import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -84,6 +86,11 @@ const MypageRoute = MypageRouteImport.update({
   path: '/mypage',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MaintenanceRoute = MaintenanceRouteImport.update({
+  id: '/maintenance',
+  path: '/maintenance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -92,6 +99,11 @@ const LoginRoute = LoginRouteImport.update({
 const IntroRoute = IntroRouteImport.update({
   id: '/intro',
   path: '/intro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ErrorRoute = ErrorRouteImport.update({
+  id: '/error',
+  path: '/error',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClubsRoute = ClubsRouteImport.update({
@@ -189,8 +201,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/clubs': typeof ClubsRoute
+  '/error': typeof ErrorRoute
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
+  '/maintenance': typeof MaintenanceRoute
   '/mypage': typeof MypageRoute
   '/non-member-policy': typeof NonMemberPolicyRoute
   '/notices': typeof NoticesRouteWithChildren
@@ -219,8 +233,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
+  '/error': typeof ErrorRoute
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
+  '/maintenance': typeof MaintenanceRoute
   '/mypage': typeof MypageRoute
   '/non-member-policy': typeof NonMemberPolicyRoute
   '/privacy': typeof PrivacyRoute
@@ -250,8 +266,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/clubs': typeof ClubsRoute
+  '/error': typeof ErrorRoute
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
+  '/maintenance': typeof MaintenanceRoute
   '/mypage': typeof MypageRoute
   '/non-member-policy': typeof NonMemberPolicyRoute
   '/notices': typeof NoticesRouteWithChildren
@@ -283,8 +301,10 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/clubs'
+    | '/error'
     | '/intro'
     | '/login'
+    | '/maintenance'
     | '/mypage'
     | '/non-member-policy'
     | '/notices'
@@ -313,8 +333,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/clubs'
+    | '/error'
     | '/intro'
     | '/login'
+    | '/maintenance'
     | '/mypage'
     | '/non-member-policy'
     | '/privacy'
@@ -343,8 +365,10 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/clubs'
+    | '/error'
     | '/intro'
     | '/login'
+    | '/maintenance'
     | '/mypage'
     | '/non-member-policy'
     | '/notices'
@@ -375,8 +399,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   ClubsRoute: typeof ClubsRoute
+  ErrorRoute: typeof ErrorRoute
   IntroRoute: typeof IntroRoute
   LoginRoute: typeof LoginRoute
+  MaintenanceRoute: typeof MaintenanceRoute
   MypageRoute: typeof MypageRoute
   NonMemberPolicyRoute: typeof NonMemberPolicyRoute
   NoticesRoute: typeof NoticesRouteWithChildren
@@ -454,6 +480,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MypageRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/maintenance': {
+      id: '/maintenance'
+      path: '/maintenance'
+      fullPath: '/maintenance'
+      preLoaderRoute: typeof MaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -466,6 +499,13 @@ declare module '@tanstack/react-router' {
       path: '/intro'
       fullPath: '/intro'
       preLoaderRoute: typeof IntroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/error': {
+      id: '/error'
+      path: '/error'
+      fullPath: '/error'
+      preLoaderRoute: typeof ErrorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clubs': {
@@ -646,8 +686,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   ClubsRoute: ClubsRoute,
+  ErrorRoute: ErrorRoute,
   IntroRoute: IntroRoute,
   LoginRoute: LoginRoute,
+  MaintenanceRoute: MaintenanceRoute,
   MypageRoute: MypageRoute,
   NonMemberPolicyRoute: NonMemberPolicyRoute,
   NoticesRoute: NoticesRouteWithChildren,
