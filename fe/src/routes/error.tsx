@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { Home, RefreshCw, AlertTriangle } from 'lucide-react'
 
 export const Route = createFileRoute('/error')({
@@ -6,7 +6,7 @@ export const Route = createFileRoute('/error')({
 })
 
 function ErrorPage() {
-  const navigate = useNavigate()
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white px-4">
