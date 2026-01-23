@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { X, User, Phone, Calendar, MessageCircle, CheckCircle, XCircle, Eye, FileText, Image as ImageIcon } from 'lucide-react'
+import { X, User, Phone, Calendar, MessageCircle, CheckCircle, XCircle, FileText, Image as ImageIcon } from 'lucide-react'
 import type { ActivityRegistrationResponse, Activity } from '../../../types/activities'
 
 type RegistrationDetailModalProps = {
