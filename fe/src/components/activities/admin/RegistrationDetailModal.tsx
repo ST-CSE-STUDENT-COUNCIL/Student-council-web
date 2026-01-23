@@ -41,8 +41,14 @@ export function RegistrationDetailModal({
                             <User size={20} className="text-purple-600" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900">{registration.name || '이름 없음'}</h3>
-                            <p className="text-sm text-gray-500">{registration.student_id} · {registration.department}</p>
+                            <h3 className="text-lg font-bold text-gray-900">
+                                {['survey', 'demand_survey'].includes(activityDetail?.type || '')
+                                    ? '익명 참여자'
+                                    : (registration.name || '이름 없음')}
+                            </h3>
+                            {!['survey', 'demand_survey'].includes(activityDetail?.type || '') && (
+                                <p className="text-sm text-gray-500">{registration.student_id} · {registration.department}</p>
+                            )}
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600">
@@ -54,19 +60,21 @@ export function RegistrationDetailModal({
                 <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)] space-y-6">
                     {/* Basic Info */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-gray-50 rounded-xl">
-                            <div className="flex items-center gap-2 text-gray-500 text-xs font-medium mb-1">
-                                <Phone size={12} />연락처
+                        {!['survey', 'demand_survey'].includes(activityDetail?.type || '') && (
+                            <div className="p-4 bg-gray-50 rounded-xl">
+                                <div className="flex items-center gap-2 text-gray-500 text-xs font-medium mb-1">
+                                    <Phone size={12} />연락처
+                                </div>
+                                <p className="font-medium text-gray-900">{registration.phone || '-'}</p>
                             </div>
-                            <p className="font-medium text-gray-900">{registration.phone || '-'}</p>
-                        </div>
+                        )}
                         <div className="p-4 bg-gray-50 rounded-xl">
                             <div className="flex items-center gap-2 text-gray-500 text-xs font-medium mb-1">
                                 <Calendar size={12} />신청일시
                             </div>
                             <p className="font-medium text-gray-900">{new Date(registration.created_at).toLocaleString()}</p>
                         </div>
-                        {registration.kakao_id && (
+                        {registration.kakao_id && !['survey', 'demand_survey'].includes(activityDetail?.type || '') && (
                             <div className="p-4 bg-gray-50 rounded-xl">
                                 <div className="flex items-center gap-2 text-gray-500 text-xs font-medium mb-1">
                                     <MessageCircle size={12} />카카오톡 ID
