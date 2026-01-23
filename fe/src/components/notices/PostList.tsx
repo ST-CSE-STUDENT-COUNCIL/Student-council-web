@@ -61,7 +61,7 @@ export const PostList = ({ posts }: PostListProps) => {
 
                         {/* Desktop Columns */}
                         <div className="hidden md:block w-20 text-center text-gray-400 text-sm font-medium shrink-0">
-                            {post.is_pinned ? <span className="text-red-500">📌</span> : post.id}
+                            {post.is_pinned ? <span className="text-red-500">📌</span> : (post.no ?? post.id)}
                         </div>
                         <div className="hidden md:block w-24 text-center shrink-0">
                             <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold

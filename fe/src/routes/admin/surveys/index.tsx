@@ -3,14 +3,14 @@ import { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } fr
 import TextareaAutosize from 'react-textarea-autosize'
 import { activityApi, activityAdminApi } from '../../../lib/api/activities'
 import type { ActivityListItem, Activity, ActivityCreateRequest, ActivityType } from '../../../types/activities'
-import { activityTypeLabels, getActivityStatus } from '../../../types/activities'
+import { getActivityStatus } from '../../../types/activities'
 import { FormFieldsManager, ImageUploader, type UploadImage } from '../../../components/activities/admin'
 import { toast } from 'sonner'
 import Swal from 'sweetalert2'
 import {
   Plus, Search, Filter, LayoutGrid, List, Calendar, Users, Clock, Edit2, Trash2, Eye,
-  CheckCircle, XCircle, Pause, ChevronLeft, ChevronRight, ClipboardList, Image as ImageIcon,
-  X, ChevronDown, TrendingUp, BarChart3
+  CheckCircle, XCircle, Pause, ChevronLeft, ChevronRight, ClipboardList,
+  X, ChevronDown, BarChart3
 } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/surveys/')({

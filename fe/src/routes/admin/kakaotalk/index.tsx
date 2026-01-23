@@ -1,8 +1,8 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from 'react'
 import { activityAdminApi, activityApi } from '../../../lib/api/activities'
-import type { ActivityListItem, ActivityRegistrationResponse, Activity, ActivityCreateRequest, ActivityType } from '../../../types/activities'
-import { activityTypeLabels } from '../../../types/activities'
+import type { ActivityListItem, ActivityRegistrationResponse, Activity, ActivityCreateRequest } from '../../../types/activities'
+
 import { FormFieldsManager, ImageUploader, type UploadImage } from '../../../components/activities/admin'
 import { toast } from 'sonner'
 import Swal from 'sweetalert2'
@@ -10,7 +10,7 @@ import TextareaAutosize from 'react-textarea-autosize'
 import {
     Search, CheckCircle, XCircle, Clock, User, Phone, Building,
     Hash, Calendar, Eye, ChevronLeft, ChevronRight, Users,
-    MessageCircle, Image as ImageIcon, Check, Loader2, ArrowLeft, Ban,
+    MessageCircle, Image as ImageIcon, Check, Loader2, Ban,
     Plus, Edit2, Trash2
 } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
@@ -33,7 +33,6 @@ const STATUS_CONFIG: Record<StatusFilterType, { label: string; icon: React.React
 }
 
 function AdminKakaoTalkPage() {
-    const navigate = useNavigate()
 
     // Activity state
     const [activities, setActivities] = useState<ActivityListItem[]>([])

@@ -10,7 +10,7 @@ import Swal from 'sweetalert2'
 import {
     Plus, Search, Filter, LayoutGrid, List, Calendar, Users, Clock, Edit2, Trash2, Eye,
     CheckCircle, XCircle, Pause, ChevronLeft, ChevronRight, ClipboardList, Image as ImageIcon,
-    X, ChevronDown, TrendingUp
+    X, ChevronDown
 } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/events/')({
