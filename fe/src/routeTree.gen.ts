@@ -20,6 +20,7 @@ import { Route as NonMemberPolicyRouteImport } from './routes/non-member-policy'
 import { Route as MypageRouteImport } from './routes/mypage'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IntroRouteImport } from './routes/intro'
+import { Route as ErrorRouteImport } from './routes/error'
 import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -92,6 +93,11 @@ const LoginRoute = LoginRouteImport.update({
 const IntroRoute = IntroRouteImport.update({
   id: '/intro',
   path: '/intro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ErrorRoute = ErrorRouteImport.update({
+  id: '/error',
+  path: '/error',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClubsRoute = ClubsRouteImport.update({
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/clubs': typeof ClubsRoute
+  '/error': typeof ErrorRoute
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clubs': typeof ClubsRoute
+  '/error': typeof ErrorRoute
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/clubs': typeof ClubsRoute
+  '/error': typeof ErrorRoute
   '/intro': typeof IntroRoute
   '/login': typeof LoginRoute
   '/mypage': typeof MypageRoute
@@ -283,6 +292,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/clubs'
+    | '/error'
     | '/intro'
     | '/login'
     | '/mypage'
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/clubs'
+    | '/error'
     | '/intro'
     | '/login'
     | '/mypage'
@@ -343,6 +354,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/clubs'
+    | '/error'
     | '/intro'
     | '/login'
     | '/mypage'
@@ -375,6 +387,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   ClubsRoute: typeof ClubsRoute
+  ErrorRoute: typeof ErrorRoute
   IntroRoute: typeof IntroRoute
   LoginRoute: typeof LoginRoute
   MypageRoute: typeof MypageRoute
@@ -466,6 +479,13 @@ declare module '@tanstack/react-router' {
       path: '/intro'
       fullPath: '/intro'
       preLoaderRoute: typeof IntroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/error': {
+      id: '/error'
+      path: '/error'
+      fullPath: '/error'
+      preLoaderRoute: typeof ErrorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clubs': {
@@ -646,6 +666,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   ClubsRoute: ClubsRoute,
+  ErrorRoute: ErrorRoute,
   IntroRoute: IntroRoute,
   LoginRoute: LoginRoute,
   MypageRoute: MypageRoute,
