@@ -417,12 +417,6 @@ function AdminKakaoTalkPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => navigate({ to: '/admin' })}
-                        className="p-2 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 transition-all"
-                    >
-                        <ArrowLeft size={20} className="text-gray-600" />
-                    </button>
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg">
                         <MessageCircle size={24} className="text-white" />
                     </div>

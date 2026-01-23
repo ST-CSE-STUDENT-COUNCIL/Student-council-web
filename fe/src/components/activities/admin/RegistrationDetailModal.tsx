@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { X, User, Phone, Calendar, MessageCircle, CheckCircle, XCircle } from 'lucide-react'
+import { X, User, Phone, Calendar, MessageCircle, CheckCircle, XCircle, Eye, FileText, Image as ImageIcon } from 'lucide-react'
 import type { ActivityRegistrationResponse, Activity } from '../../../types/activities'
 
 type RegistrationDetailModalProps = {
@@ -111,9 +111,41 @@ export function RegistrationDetailModal({
                                         return (
                                             <div key={field.name} className="p-3 bg-white rounded-lg">
                                                 <label className="text-xs font-medium text-purple-600">{field.label}</label>
-                                                <p className="text-sm mt-1 text-gray-900">
-                                                    {Array.isArray(value) ? value.join(', ') : String(value)}
-                                                </p>
+                                                <div className="text-sm mt-1 text-gray-900 break-words">
+                                                    {field.type === 'file' ? (
+                                                        <div className="flex flex-col gap-1 mt-1">
+                                                            {(Array.isArray(value) ? value : [value]).map((url: string, idx: number) => {
+                                                                const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url)
+                                                                return (
+                                                                    <div key={idx} className="flex items-center gap-2">
+                                                                        {isImage ? (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => onImagePreview(url)}
+                                                                                className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-800 font-medium hover:underline cursor-pointer"
+                                                                            >
+                                                                                <ImageIcon size={14} />
+                                                                                {Array.isArray(value) ? `이미지 ${idx + 1} 미리보기` : '이미지 미리보기'}
+                                                                            </button>
+                                                                        ) : (
+                                                                            <a
+                                                                                href={url}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-800 font-medium hover:underline"
+                                                                            >
+                                                                                <FileText size={14} />
+                                                                                {Array.isArray(value) ? `파일 ${idx + 1} 다운로드` : '파일 다운로드'}
+                                                                            </a>
+                                                                        )}
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    ) : (
+                                                        (Array.isArray(value) ? value.join(', ') : String(value))
+                                                    )}
+                                                </div>
                                             </div>
                                         )
                                     })

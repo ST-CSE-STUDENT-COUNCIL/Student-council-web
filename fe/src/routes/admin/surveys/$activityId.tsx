@@ -6,7 +6,7 @@ import {
     Search, CheckCircle, XCircle, Clock, User, Phone, Building,
     Hash, Calendar, Eye, ChevronLeft, ChevronRight, Users,
     BarChart3, Check, Loader2, ArrowLeft,
-    PieChart, LayoutGrid, List
+    PieChart, LayoutGrid, List, Image as ImageIcon, FileText
 } from 'lucide-react'
 import { Card, Title, BarList, DonutChart } from '@tremor/react'
 import {
@@ -245,12 +245,49 @@ function SurveyActivityDetailPage() {
                 header: field.label,
                 cell: info => {
                     const value = info.getValue()
+                    if (value === undefined || value === null || value === '') return <span className="text-gray-300">-</span>
+
+                    if (field.type === 'file') {
+                        const urls = Array.isArray(value) ? value : [value]
+                        return (
+                            <div className="flex flex-col gap-1">
+                                {urls.map((url: string, idx: number) => {
+                                    const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url)
+                                    return (
+                                        <div key={idx} className="flex items-center gap-1">
+                                            {isImage ? (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setPreviewImageUrl(url)
+                                                    }}
+                                                    className="text-indigo-600 hover:underline text-xs flex items-center gap-1"
+                                                >
+                                                    <ImageIcon size={12} />
+                                                    {urls.length > 1 ? `이미지 ${idx + 1}` : '미리보기'}
+                                                </button>
+                                            ) : (
+                                                <a
+                                                    href={url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-gray-600 hover:underline text-xs flex items-center gap-1"
+                                                    onClick={e => e.stopPropagation()}
+                                                >
+                                                    <FileText size={12} />
+                                                    {urls.length > 1 ? `파일 ${idx + 1}` : '다운로드'}
+                                                </a>
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        )
+                    }
+
                     return (
                         <div className="max-w-[200px] truncate" title={Array.isArray(value) ? value.join(', ') : String(value || '')}>
-                            {value === undefined || value === null || value === ''
-                                ? <span className="text-gray-300">-</span>
-                                : (Array.isArray(value) ? value.join(', ') : String(value))
-                            }
+                            {(Array.isArray(value) ? value.join(', ') : String(value))}
                         </div>
                     )
                 },
@@ -601,7 +638,42 @@ function SurveyActivityDetailPage() {
                                                                     {field.label}
                                                                 </div>
                                                                 <div className="text-sm text-gray-800 break-words leading-relaxed">
-                                                                    {(Array.isArray(value) ? value.join(', ') : String(value))}
+                                                                    {field.type === 'file' ? (
+                                                                        <div className="flex flex-col gap-1 mt-1">
+                                                                            {(Array.isArray(value) ? value : [value]).map((url: string, idx: number) => {
+                                                                                const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url)
+                                                                                return (
+                                                                                    <div key={idx} className="flex items-center gap-2">
+                                                                                        {isImage ? (
+                                                                                            <button
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation()
+                                                                                                    setPreviewImageUrl(url)
+                                                                                                }}
+                                                                                                className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium hover:underline"
+                                                                                            >
+                                                                                                <ImageIcon size={14} />
+                                                                                                {Array.isArray(value) ? `이미지 ${idx + 1} 미리보기` : '미리보기'}
+                                                                                            </button>
+                                                                                        ) : (
+                                                                                            <a
+                                                                                                href={url}
+                                                                                                target="_blank"
+                                                                                                rel="noopener noreferrer"
+                                                                                                className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-800 font-medium hover:underline"
+                                                                                                onClick={e => e.stopPropagation()}
+                                                                                            >
+                                                                                                <FileText size={14} />
+                                                                                                {Array.isArray(value) ? `파일 ${idx + 1} 다운로드` : '다운로드'}
+                                                                                            </a>
+                                                                                        )}
+                                                                                    </div>
+                                                                                )
+                                                                            })}
+                                                                        </div>
+                                                                    ) : (
+                                                                        (Array.isArray(value) ? value.join(', ') : String(value))
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         )
