@@ -198,7 +198,34 @@ export const activityAdminApi = {
         total_responses: number
         question_stats: any[]
     }> => {
-        const response = await api.get(`/admin/activities/${activityId}/survey-stats`)
+        const response = await api.get(`/activities/${activityId}/survey/results`)
         return response.data
-    }
+    },
+
+    /**
+     * 수요조사 통계 조회 (관리자)
+     */
+    getDemandSurveyStats: async (activityId: number): Promise<{
+        activity_id: number
+        title?: string
+        total_responses: number
+        objective_questions: Array<{
+            field_name: string
+            label: string
+            type: string
+            options: string[]
+            counts: Record<string, number>
+            other_count: number
+        }>
+        subjective_questions: Array<{
+            field_name: string
+            label: string
+            type: string
+            response_count: number
+            responses: Array<{ answer: unknown }>
+        }>
+    }> => {
+        const response = await api.get(`/activities/${activityId}/demand-survey/stats`)
+        return response.data
+    },
 }

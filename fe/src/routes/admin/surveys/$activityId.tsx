@@ -6,9 +6,10 @@ import {
     Search, CheckCircle, XCircle, Clock, User, Phone, Building,
     Hash, Calendar, Eye, ChevronLeft, ChevronRight, Users,
     BarChart3, Check, Loader2, ArrowLeft,
-    PieChart, LayoutGrid, List, Image as ImageIcon, FileText
+    PieChart as PieChartIcon, LayoutGrid, List, Image as ImageIcon, FileText
 } from 'lucide-react'
-import { Card, Title, BarList, DonutChart } from '@tremor/react'
+import { Card } from '@tremor/react'
+import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import {
     useReactTable,
     getCoreRowModel,
@@ -34,6 +35,43 @@ const STATUS_CONFIG: Record<StatusFilterType, { label: string; icon: React.React
     pending: { label: '대기', icon: <Clock size={14} />, bgClass: 'bg-amber-100', textClass: 'text-amber-700' },
     approved: { label: '승인', icon: <CheckCircle size={14} />, bgClass: 'bg-emerald-100', textClass: 'text-emerald-700' },
     rejected: { label: '거절', icon: <XCircle size={14} />, bgClass: 'bg-red-100', textClass: 'text-red-700' },
+}
+
+const OBJECTIVE_TYPES = new Set(['multiple_choice', 'radio', 'checkbox'])
+const QUESTION_TYPE_LABELS: Record<string, string> = {
+    multiple_choice: '객관식',
+    radio: '단일 선택',
+    checkbox: '다중 선택',
+    text: '주관식',
+    textarea: '장문형',
+    number: '숫자형',
+    date: '날짜형'
+}
+const STATS_CHART_COLORS = [
+    '#3b82f6',
+    '#06b6d4',
+    '#6366f1',
+    '#8b5cf6',
+    '#d946ef',
+    '#10b981',
+    '#f43f5e',
+    '#f59e0b',
+    '#84cc16',
+    '#14b8a6',
+    '#0ea5e9',
+    '#a855f7'
+]
+
+type SurveyQuestionStat = {
+    question_id: number | string
+    question: string
+    type: string
+    responses: Record<string, number> | string[] | null
+}
+
+type SubjectiveSummaryItem = {
+    answer: string
+    count: number
 }
 
 function SurveyActivityDetailPage() {
@@ -101,15 +139,42 @@ function SurveyActivityDetailPage() {
     // Fetch survey stats
     const fetchSurveyStats = useCallback(async () => {
         try {
+            if (!activityDetail) return
             setLoadingStats(true)
-            const stats = await activityAdminApi.getSurveyStats(id)
-            setSurveyStats(stats)
+            if (activityDetail.type === 'demand_survey') {
+                const stats = await activityAdminApi.getDemandSurveyStats(id)
+                const questionStats = [
+                    ...stats.objective_questions.map(question => ({
+                        question_id: question.field_name,
+                        question: question.label,
+                        type: question.type === 'select' ? 'multiple_choice' : question.type,
+                        responses: {
+                            ...question.counts,
+                            ...(question.other_count ? { 기타: question.other_count } : {})
+                        }
+                    })),
+                    ...stats.subjective_questions.map(question => ({
+                        question_id: question.field_name,
+                        question: question.label,
+                        type: question.type,
+                        responses: (question.responses || []).map(response => String(response.answer))
+                    }))
+                ]
+                setSurveyStats({
+                    activity_id: stats.activity_id,
+                    total_responses: stats.total_responses,
+                    question_stats: questionStats
+                })
+            } else {
+                const stats = await activityAdminApi.getSurveyStats(id)
+                setSurveyStats(stats)
+            }
         } catch (error) {
             console.error('Failed to fetch survey stats', error)
         } finally {
             setLoadingStats(false)
         }
-    }, [id])
+    }, [activityDetail, id])
 
     // Handle single row selection
     const handleSelectOne = (registrationId: number) => {
@@ -157,8 +222,11 @@ function SurveyActivityDetailPage() {
     useEffect(() => {
         fetchActivityDetail()
         fetchRegistrations(page)
+    }, [fetchActivityDetail, fetchRegistrations, page])
+
+    useEffect(() => {
         fetchSurveyStats()
-    }, [fetchActivityDetail, fetchRegistrations, fetchSurveyStats, page])
+    }, [fetchSurveyStats])
 
     // Filter registrations client-side
     const filteredRegistrations = useMemo(() => {
@@ -351,6 +419,75 @@ function SurveyActivityDetailPage() {
         return acc
     }, {} as Record<string, number>)
 
+    const surveyQuestionStats: SurveyQuestionStat[] = surveyStats?.question_stats ?? []
+    const fallbackQuestionStats = useMemo(() => {
+        if (!activityDetail || activityDetail.type !== 'survey' || registrations.length === 0) {
+            return [] as SurveyQuestionStat[]
+        }
+
+        const formFields = activityDetail.form_fields?.length
+            ? activityDetail.form_fields
+            : (activityDetail.config?.questions || []).map((q: any) => ({
+                name: String(q.id),
+                label: q.question,
+                type: q.type === 'multiple_choice' ? 'radio' : q.type,
+                options: q.options || []
+            }))
+
+        return formFields.map((field: any) => {
+            const fieldName = field.name
+            const fieldType = field.type
+            const isObjective = ['select', 'radio', 'checkbox', 'multiple_choice'].includes(fieldType)
+
+            if (isObjective) {
+                const counts: Record<string, number> = {}
+                const options = field.options || []
+                options.forEach((option: string) => {
+                    counts[option] = 0
+                })
+
+                registrations.forEach(reg => {
+                    const rawResponses = (reg as any).form_responses || (reg as any).survey_responses || {}
+                    const answer = rawResponses[fieldName]
+                    if (!answer) return
+                    if (Array.isArray(answer)) {
+                        answer.forEach((item) => {
+                            counts[item] = (counts[item] || 0) + 1
+                        })
+                    } else {
+                        counts[answer] = (counts[answer] || 0) + 1
+                    }
+                })
+
+                return {
+                    question_id: fieldName,
+                    question: field.label,
+                    type: fieldType === 'select' ? 'multiple_choice' : fieldType,
+                    responses: counts
+                }
+            }
+
+            const answers: string[] = []
+            registrations.forEach(reg => {
+                const rawResponses = (reg as any).form_responses || (reg as any).survey_responses || {}
+                const answer = rawResponses[fieldName]
+                if (answer === undefined || answer === null || answer === '') return
+                answers.push(String(answer))
+            })
+
+            return {
+                question_id: fieldName,
+                question: field.label,
+                type: fieldType,
+                responses: answers
+            }
+        })
+    }, [activityDetail, registrations, totalCount])
+
+    const resolvedQuestionStats = surveyQuestionStats.length > 0 ? surveyQuestionStats : fallbackQuestionStats
+    const objectiveQuestionCount = resolvedQuestionStats.filter((stat: SurveyQuestionStat) => OBJECTIVE_TYPES.has(stat.type)).length
+    const subjectiveQuestionCount = resolvedQuestionStats.length - objectiveQuestionCount
+
     if (!activityDetail) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen">
@@ -402,7 +539,7 @@ function SurveyActivityDetailPage() {
                         : 'text-gray-500 hover:bg-white hover:text-gray-700'
                         }`}
                 >
-                    <PieChart size={18} />
+                    <PieChartIcon size={18} />
                     통계 및 분석
                 </button>
             </div>
@@ -754,54 +891,167 @@ function SurveyActivityDetailPage() {
                             <Loader2 size={32} className="text-indigo-600 animate-spin mb-4" />
                             <p className="text-gray-500">통계 데이터를 불러오는 중...</p>
                         </div>
-                    ) : surveyStats && surveyStats.question_stats && surveyStats.question_stats.length > 0 ? (
-                        <div className="max-w-4xl mx-auto space-y-8">
-                            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-6 rounded-2xl mb-8 flex items-center justify-center">
-                                <div className="text-center">
-                                    <p className="text-gray-500 mb-1">총 응답자 수</p>
-                                    <p className="text-4xl font-bold text-gray-900">{surveyStats.total_responses}명</p>
+                    ) : surveyStats ? (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex flex-col gap-1">
+                                    <p className="text-xs uppercase text-gray-500 tracking-wide">총 응답자</p>
+                                    <p className="text-3xl font-semibold text-gray-900">{surveyStats.total_responses}</p>
+                                    <p className="text-xs text-gray-400">제출된 응답자 수</p>
+                                </div>
+                                <div className="p-4 bg-white border border-gray-100 rounded-2xl flex flex-col gap-1">
+                                    <p className="text-xs uppercase text-gray-500 tracking-wide">객관식 문항</p>
+                                    <p className="text-2xl font-semibold text-gray-900">{objectiveQuestionCount}</p>
+                                    <p className="text-xs text-gray-400">선택형 문항 수</p>
+                                </div>
+                                <div className="p-4 bg-white border border-gray-100 rounded-2xl flex flex-col gap-1">
+                                    <p className="text-xs uppercase text-gray-500 tracking-wide">주관식 문항</p>
+                                    <p className="text-2xl font-semibold text-gray-900">{subjectiveQuestionCount}</p>
+                                    <p className="text-xs text-gray-400">텍스트형 문항 수</p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {surveyStats.question_stats.map((stat: any, index: number) => {
-                                    const data = Object.entries(stat.responses || {}).map(([name, value]) => ({
-                                        name,
-                                        value: Number(value)
-                                    })).sort((a, b) => b.value - a.value)
+                            {resolvedQuestionStats.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                                    <BarChart3 size={48} className="text-gray-300 mb-4" />
+                                    <p className="text-lg font-semibold text-gray-900 mb-1">분석 중입니다</p>
+                                    <p className="text-xs text-gray-400 text-center max-w-xs">
+                                        아직 문항 정보가 준비되지 않았거나 응답 정리 중입니다. 총 {surveyStats.total_responses}명 응답이 접수되었습니다.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    {resolvedQuestionStats.map((stat: SurveyQuestionStat, index: number) => {
+                                        const isChoice = OBJECTIVE_TYPES.has(stat.type)
+                                        const chartData = Object.entries(stat.responses || {})
+                                            .map(([name, value], idx) => ({
+                                                name,
+                                                value: Number(value),
+                                                color: STATS_CHART_COLORS[idx % STATS_CHART_COLORS.length]
+                                            }))
 
-                                    const isChoice = stat.type === 'multiple_choice' || stat.type === 'radio' || stat.type === 'checkbox'
+                                        const totalForQuestion = chartData.reduce((sum, entry) => sum + entry.value, 0)
+                                        const maxItem = chartData.reduce(
+                                            (max, item) => (item.value > max.value ? item : max),
+                                            { name: '', value: 0, color: STATS_CHART_COLORS[0] }
+                                        )
+                                        const subjectiveAnswers = Array.isArray(stat.responses) ? stat.responses : []
+                                        const subjectiveSummary: SubjectiveSummaryItem[] = Object.entries(
+                                            subjectiveAnswers.reduce((acc: Record<string, number>, answer: unknown) => {
+                                                const key = String(answer).trim()
+                                                if (!key) return acc
+                                                acc[key] = (acc[key] || 0) + 1
+                                                return acc
+                                            }, {} as Record<string, number>)
+                                        )
+                                            .map(([answer, count]) => ({ answer, count: Number(count) }))
+                                            .sort((a, b) => b.count - a.count)
+                                            .slice(0, 3)
 
-                                    return (
-                                        <Card key={index} className="h-full">
-                                            <div className="flex items-start gap-2 mb-4">
-                                                <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-sm font-bold">Q{index + 1}</span>
-                                                <Title>{stat.question}</Title>
-                                            </div>
+                                        return (
+                                            <Card key={index} className="space-y-4">
+                                                <div className="flex flex-wrap items-center gap-3">
+                                                    <span className="text-xs font-semibold text-indigo-600 bg-indigo-100 rounded-full px-2 py-1">Q{index + 1}</span>
+                                                    <span className="text-xs px-2 py-1 rounded-full border border-gray-200 text-gray-500">
+                                                        {QUESTION_TYPE_LABELS[stat.type] || '응답'}
+                                                    </span>
+                                                    <span className="text-xs text-gray-400">
+                                                        응답 {isChoice ? totalForQuestion : subjectiveAnswers.length}건
+                                                    </span>
+                                                </div>
+                                                <h4 className="text-lg font-semibold text-gray-900">{stat.question}</h4>
 
-                                            {isChoice ? (
-                                                <div className="mt-4 space-y-6">
-                                                    <div className="flex justify-center">
-                                                        <DonutChart
-                                                            className="mt-6"
-                                                            data={data}
-                                                            category="value"
-                                                            index="name"
-                                                            colors={["blue", "cyan", "indigo", "violet", "fuchsia"]}
-                                                        />
+                                                {isChoice ? (
+                                                    <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+                                                        <div className="flex items-center justify-center">
+                                                            {chartData.length > 0 ? (
+                                                                <div className="relative w-full h-40">
+                                                                    <ResponsiveContainer>
+                                                                        <PieChart>
+                                                                            <Pie
+                                                                                data={chartData}
+                                                                                dataKey="value"
+                                                                                nameKey="name"
+                                                                                innerRadius="75%"
+                                                                                outerRadius="100%"
+                                                                                startAngle={90}
+                                                                                endAngle={-270}
+                                                                                stroke="#ffffff"
+                                                                                strokeWidth={2}
+                                                                            >
+                                                                                {chartData.map(item => (
+                                                                                    <Cell key={item.name} fill={item.color} />
+                                                                                ))}
+                                                                            </Pie>
+                                                                        </PieChart>
+                                                                    </ResponsiveContainer>
+                                                                    <div className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-gray-900 pointer-events-none">
+                                                                        {totalForQuestion}
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-sm text-gray-400">응답이 없습니다.</p>
+                                                            )}
+                                                        </div>
+                                                    <div className="space-y-3">
+                                                        {chartData.length > 0 ? (
+                                                            <>
+                                                                <div className="text-sm text-gray-500 flex justify-between">
+                                                                    <span>가장 많은 응답</span>
+                                                                    <span className="font-semibold text-gray-900">{maxItem.name} ({maxItem.value}명)</span>
+                                                                </div>
+                                                                <div className="mt-2 space-y-3">
+                                                                    {chartData.map(item => {
+                                                                        const maxValue = maxItem.value ?? 0
+                                                                        const percentage = maxValue > 0 ? (item.value / maxValue) * 100 : 0
+                                                                        return (
+                                                                            <div key={item.name} className="space-y-1">
+                                                                                <div className="flex items-center justify-between text-sm text-gray-600">
+                                                                                    <span className="font-medium text-gray-900">{item.name}</span>
+                                                                                    <span>{item.value}명</span>
+                                                                                </div>
+                                                                                <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
+                                                                                    <div
+                                                                                        className="h-full rounded-full"
+                                                                                        style={{ width: `${percentage}%`, backgroundColor: item.color }}
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
+                                                                        )
+                                                                    })}
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <p className="text-sm text-gray-400">옵션 응답이 없습니다.</p>
+                                                        )}
                                                     </div>
-                                                    <BarList data={data} className="mt-2" />
-                                                </div>
-                                            ) : (
-                                                <div className="bg-gray-50 p-4 rounded-lg text-center text-gray-500 text-sm">
-                                                    주관식 항목은 개별 확인이 필요합니다.
-                                                </div>
-                                            )}
-                                        </Card>
-                                    )
-                                })}
-                            </div>
-                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-3 bg-gray-50/60 p-4 rounded-2xl">
+                                                        <p className="text-sm text-gray-500">{`주관식 응답 ${subjectiveAnswers.length}건`}</p>
+                                                        {subjectiveSummary.length > 0 ? (
+                                                            <ul className="space-y-2 text-sm text-gray-700">
+                                                            {subjectiveSummary.map((item: SubjectiveSummaryItem, idx) => (
+                                                                    <li key={idx} className="flex items-center justify-between gap-3">
+                                                                        <span className="truncate">{item.answer}</span>
+                                                                        <span className="text-indigo-600 font-semibold text-xs">{item.count}회</span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        ) : (
+                                                            <p className="text-sm text-gray-400">응답이 아직 없습니다.</p>
+                                                        )}
+                                                        <p className="text-xs text-gray-400">
+                                                            추가 답변은 신청자 상세 정보를 확인하세요.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </Card>
+                                        )
+                                    })}
+                                </div>
+                            )}
+                        </>
                     ) : (
                         <div className="flex flex-col items-center justify-center h-64 text-gray-500">
                             <BarChart3 size={48} className="text-gray-300 mb-4" />
