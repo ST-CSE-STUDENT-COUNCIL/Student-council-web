@@ -17,9 +17,13 @@ from app.schemas.suggestions import (
 from app.utils.auth import require_verified_user, require_admin
 from app.utils.turnstile import verify_turnstile
 from app.database import supabase, get_supabase_admin
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from fastapi import Request
 
 
 router = APIRouter(tags=["건의함"])
+limiter = Limiter(key_func=get_remote_address)
 
 ALLOWED_STATUSES = {"received", "in_progress", "rejected", "approved"}
 
@@ -50,6 +54,7 @@ def _get_author_name(author_id: str) -> str:
 )
 async def create_suggestion(
     body: SuggestionCreateRequest,
+    request: Request,
     current_user: dict = Depends(require_verified_user)
 ):
     """건의함 작성 (승인된 사용자만 가능)"""

@@ -50,7 +50,7 @@ class VerifyEmailResponse(BaseModel):
 
 class CheckStudentIdRequest(BaseModel):
     """학번 중복 확인 요청"""
-    student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
+    student_id: str = Field(..., pattern=r'^\d{8,20}$', description="학번/수험번호 (8~20자리)")
 
 
 class CheckStudentIdResponse(BaseModel):
@@ -69,7 +69,7 @@ class SignupRequest(BaseModel):
         description="비밀번호 (최소 8자, 영문+숫자+특수문자 조합)"
     )
     name: str = Field(..., min_length=2, max_length=50, description="이름")
-    student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
+    student_id: str = Field(..., pattern=r'^\d{8,20}$', description="학번/수험번호 (8~20자리)")
     phone: str = Field(..., pattern=r'^010-?\d{4}-?\d{4}$', description="전화번호")
     department: str = Field(..., description="학과")
     turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile 토큰")
@@ -110,7 +110,7 @@ class SignupResponse(BaseModel):
 
 class LoginRequest(BaseModel):
     """로그인 요청"""
-    student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
+    student_id: str = Field(..., pattern=r'^\d{8,20}$', description="학번/수험번호 (8~20자리)")
     password: str
     turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile 토큰")
 
@@ -129,7 +129,7 @@ class LogoutResponse(BaseModel):
 
 class ForgotPasswordRequest(BaseModel):
     """비밀번호 찾기 요청"""
-    student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
+    student_id: str = Field(..., pattern=r'^\d{8,20}$', description="학번/수험번호 (8~20자리)")
 
 
 class ForgotPasswordResponse(BaseModel):
@@ -140,7 +140,7 @@ class ForgotPasswordResponse(BaseModel):
 
 class VerifyResetCodeRequest(BaseModel):
     """비밀번호 재설정 인증 코드 확인 요청"""
-    student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
+    student_id: str = Field(..., pattern=r'^\d{8,20}$', description="학번/수험번호 (8~20자리)")
     code: str = Field(..., min_length=6, max_length=6, description="6자리 인증번호")
 
 
@@ -152,7 +152,7 @@ class VerifyResetCodeResponse(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     """비밀번호 재설정 요청"""
-    student_id: str = Field(..., pattern=r'^\d{8}$', description="학번 (8자리)")
+    student_id: str = Field(..., pattern=r'^\d{8,20}$', description="학번/수험번호 (8~20자리)")
     new_password: str = Field(..., min_length=8, description="새 비밀번호 (8자 이상)")
 
 
