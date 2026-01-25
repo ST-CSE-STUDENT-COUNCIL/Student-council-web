@@ -341,8 +341,10 @@ async def get_notice_attachment_presigned_url(
     summary="Draft 게시글 생성 (관리자)",
     description="파일 업로드를 위한 post_id를 미리 획득"
 )
+@limiter.limit("1/3second")  # Draft 생성 연타 방지
 async def create_draft_notice(
     body: DraftCreateRequest,
+    request: Request,
     current_user: dict = Depends(require_admin)
 ):
     """
