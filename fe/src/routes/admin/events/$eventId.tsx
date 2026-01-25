@@ -8,7 +8,8 @@ import {
   BarChart3, Check, Loader2, ArrowLeft,
   PieChart, LayoutGrid, List, ClipboardList, Image as ImageIcon, FileText
 } from 'lucide-react'
-import { Card, Title, BarList, DonutChart } from '@tremor/react'
+import { Card, Title } from '@tremor/react'
+import { ResponsiveContainer, PieChart as RechartPieChart, Pie, Cell } from 'recharts'
 import {
   useReactTable,
   getCoreRowModel,
@@ -36,6 +37,117 @@ const STATUS_CONFIG: Record<StatusFilterType, { label: string; icon: React.React
   rejected: { label: '거절', icon: <XCircle size={14} />, bgClass: 'bg-red-100', textClass: 'text-red-700' },
 }
 
+const CHART_COLORS = [
+  '#3b82f6',
+  '#06b6d4',
+  '#6366f1',
+  '#8b5cf6',
+  '#d946ef',
+  '#10b981',
+  '#f43f5e',
+  '#f59e0b',
+  '#84cc16',
+  '#14b8a6',
+  '#0ea5e9',
+  '#a855f7'
+]
+
+type StatsField = {
+  name: string
+  label: string
+  type: string
+  options?: string[]
+}
+
+const IMAGE_EXT_REGEX = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i
+
+const getFileName = (value: string) => {
+  try {
+    const url = new URL(value)
+    const lastSegment = url.pathname.split('/').pop()
+    return lastSegment || value
+  } catch {
+    const parts = value.split('/')
+    return parts[parts.length - 1] || value
+  }
+}
+
+const getStatsFields = (activity: Activity): StatsField[] => {
+  if (activity.form_fields?.length) {
+    return activity.form_fields
+  }
+
+  const questions = activity.config?.questions
+  if (!Array.isArray(questions)) return []
+
+  return questions.map((question: any) => ({
+    name: String(question.id),
+    label: question.question,
+    type: question.type === 'multiple_choice' ? 'radio' : question.type,
+    options: question.options || []
+  }))
+}
+
+const buildLocalStats = (activity: Activity, registrations: ActivityRegistrationResponse[]) => {
+  const fields = getStatsFields(activity)
+  if (fields.length === 0) return null
+
+  const questionStats = fields.map(field => {
+    const normalizedType = field.type === 'select' ? 'multiple_choice' : field.type
+    const isObjective = ['multiple_choice', 'radio', 'checkbox'].includes(normalizedType)
+
+    if (isObjective) {
+      const counts: Record<string, number> = {}
+      const options = field.options || []
+      options.forEach(option => {
+        counts[option] = 0
+      })
+
+      registrations.forEach(reg => {
+        const rawResponses = (reg as any).form_responses || (reg as any).survey_responses || {}
+        const answer = rawResponses[field.name]
+        if (answer === undefined || answer === null || answer === '') return
+
+        if (Array.isArray(answer)) {
+          answer.forEach((item) => {
+            counts[item] = (counts[item] || 0) + 1
+          })
+        } else {
+          counts[answer] = (counts[answer] || 0) + 1
+        }
+      })
+
+      return {
+        question_id: field.name,
+        question: field.label,
+        type: normalizedType,
+        responses: counts
+      }
+    }
+
+    return {
+      question_id: field.name,
+      question: field.label,
+      type: normalizedType,
+      responses: registrations
+        .map(reg => {
+          const rawResponses = (reg as any).form_responses || (reg as any).survey_responses || {}
+          return rawResponses[field.name]
+        })
+        .flatMap(answer => {
+          if (answer === undefined || answer === null || answer === '') return []
+          return Array.isArray(answer) ? answer.map(item => String(item)) : [String(answer)]
+        })
+    }
+  })
+
+  return {
+    activity_id: activity.id,
+    total_responses: registrations.length,
+    question_stats: questionStats
+  }
+}
+
 function EventActivityDetailPage() {
   const navigate = useNavigate()
   const { eventId } = Route.useParams()
@@ -56,6 +168,7 @@ function EventActivityDetailPage() {
   const [loadingStats, setLoadingStats] = useState(false)
   const [currentTab, setCurrentTab] = useState<Tab>('list')
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table')
+  const [expandedSubjective, setExpandedSubjective] = useState<Record<string, boolean>>({})
 
   // Filter & Search
   const [searchQuery, setSearchQuery] = useState('')
@@ -100,16 +213,33 @@ function EventActivityDetailPage() {
 
   // Fetch stats
   const fetchStats = useCallback(async () => {
+    if (!activityDetail) return
+
     try {
       setLoadingStats(true)
-      const stats = await activityAdminApi.getSurveyStats(id)
-      setStats(stats)
+      if (activityDetail.type === 'survey') {
+        const stats = await activityAdminApi.getSurveyStats(id)
+        setStats(stats)
+        return
+      }
+
+      const pageSize = 200
+      const firstPage = await activityAdminApi.getRegistrations(id, { page: 1, page_size: pageSize })
+      const pages = firstPage.pagination.total_pages
+      const allRegistrations = [...firstPage.registrations]
+
+      for (let currentPage = 2; currentPage <= pages; currentPage += 1) {
+        const nextPage = await activityAdminApi.getRegistrations(id, { page: currentPage, page_size: pageSize })
+        allRegistrations.push(...nextPage.registrations)
+      }
+
+      setStats(buildLocalStats(activityDetail, allRegistrations))
     } catch (error) {
       console.error('Failed to fetch stats', error)
     } finally {
       setLoadingStats(false)
     }
-  }, [id])
+  }, [activityDetail, id])
 
   // Handle single row selection
   const handleSelectOne = (registrationId: number) => {
@@ -157,8 +287,12 @@ function EventActivityDetailPage() {
   useEffect(() => {
     fetchActivityDetail()
     fetchRegistrations(page)
+  }, [fetchActivityDetail, fetchRegistrations, page])
+
+  useEffect(() => {
+    if (!activityDetail || currentTab !== 'stats') return
     fetchStats()
-  }, [fetchActivityDetail, fetchRegistrations, fetchStats, page])
+  }, [activityDetail, currentTab, fetchStats])
 
   // Filter registrations client-side
   const filteredRegistrations = useMemo(() => {
@@ -753,9 +887,29 @@ function EventActivityDetailPage() {
                   const data = Object.entries(stat.responses || {}).map(([name, value]) => ({
                     name,
                     value: Number(value)
-                  })).sort((a, b) => b.value - a.value)
+                  }))
+                    .map((item, idx) => ({
+                      ...item,
+                      color: CHART_COLORS[idx % CHART_COLORS.length]
+                    }))
+                    .sort((a, b) => b.value - a.value)
 
                   const isChoice = stat.type === 'multiple_choice' || stat.type === 'radio' || stat.type === 'checkbox'
+                  const totalResponses = data.reduce((sum, item) => sum + item.value, 0)
+                  const subjectiveAnswers = Array.isArray(stat.responses) ? stat.responses : []
+                  const subjectiveSummary = Object.entries(
+                    subjectiveAnswers.reduce((acc: Record<string, number>, answer: unknown) => {
+                      const key = String(answer).trim()
+                      if (!key) return acc
+                      acc[key] = (acc[key] || 0) + 1
+                      return acc
+                    }, {} as Record<string, number>)
+                  )
+                    .map(([answer, count]) => ({ answer, count: Number(count) }))
+                    .sort((a, b) => b.count - a.count)
+                  const questionKey = String(stat.question_id ?? index)
+                  const isExpanded = expandedSubjective[questionKey]
+                  const visibleSubjective = isExpanded ? subjectiveSummary : subjectiveSummary.slice(0, 5)
 
                   return (
                     <Card key={index} className="h-full">
@@ -767,19 +921,119 @@ function EventActivityDetailPage() {
                       {isChoice ? (
                         <div className="mt-4 space-y-6">
                           <div className="flex justify-center">
-                            <DonutChart
-                              className="mt-6"
-                              data={data}
-                              category="value"
-                              index="name"
-                              colors={["purple", "violet", "indigo", "blue", "cyan"]}
-                            />
+                            <div className="relative w-full max-w-[220px] h-40">
+                              <ResponsiveContainer>
+                                <RechartPieChart>
+                                  <Pie
+                                    data={data}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    innerRadius="70%"
+                                    outerRadius="100%"
+                                    startAngle={90}
+                                    endAngle={-270}
+                                    stroke="#ffffff"
+                                    strokeWidth={2}
+                                  >
+                                    {data.map(item => (
+                                      <Cell key={item.name} fill={item.color} />
+                                    ))}
+                                  </Pie>
+                                </RechartPieChart>
+                              </ResponsiveContainer>
+                              <div className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-gray-900 pointer-events-none">
+                                {totalResponses}
+                              </div>
+                            </div>
                           </div>
-                          <BarList data={data} className="mt-2" />
+                          <div className="space-y-3">
+                            {data.map(item => {
+                              const percentValue = totalResponses > 0 ? (item.value / totalResponses) * 100 : 0
+                              const percentLabel = percentValue % 1 === 0 ? `${percentValue.toFixed(0)}%` : `${percentValue.toFixed(1)}%`
+
+                              return (
+                                <div key={item.name} className="space-y-1">
+                                  <div className="flex items-center justify-between text-sm text-gray-600">
+                                    <span className="font-medium text-gray-900">{item.name}</span>
+                                    <span>{item.value}명 · {percentLabel}</span>
+                                  </div>
+                                  <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
+                                    <div
+                                      className="h-full rounded-full"
+                                      style={{ width: `${percentValue}%`, backgroundColor: item.color }}
+                                    />
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
                         </div>
                       ) : (
-                        <div className="bg-gray-50 p-4 rounded-lg text-center text-gray-500 text-sm">
-                          주관식 항목은 개별 확인이 필요합니다.
+                        <div className="bg-gray-50 p-4 rounded-lg text-gray-600 text-sm space-y-3">
+                          {subjectiveSummary.length === 0 ? (
+                            <p className="text-center text-gray-400">응답이 없습니다.</p>
+                          ) : (
+                            <>
+                              <ul className="space-y-2">
+                                {visibleSubjective.map((item, idx) => (
+                                  <li key={idx} className="flex items-center justify-between gap-3">
+                                    {/^https?:\/\//i.test(item.answer) ? (
+                                      <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-10 h-10 rounded-lg border border-gray-200 bg-white overflow-hidden flex items-center justify-center">
+                                          {IMAGE_EXT_REGEX.test(item.answer) ? (
+                                            <img
+                                              src={item.answer}
+                                              alt=""
+                                              className="w-full h-full object-cover"
+                                              loading="lazy"
+                                            />
+                                          ) : (
+                                            <FileText size={18} className="text-gray-400" />
+                                          )}
+                                        </div>
+                                        <div className="min-w-0">
+                                          <p className="text-sm text-gray-800 truncate">{getFileName(item.answer)}</p>
+                                          {IMAGE_EXT_REGEX.test(item.answer) ? (
+                                            <button
+                                              type="button"
+                                              onClick={() => setPreviewImageUrl(item.answer)}
+                                              className="text-xs text-purple-600 hover:text-purple-700 font-semibold"
+                                            >
+                                              크게 보기
+                                            </button>
+                                          ) : (
+                                            <a
+                                              href={item.answer}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-xs text-purple-600 hover:text-purple-700 font-semibold"
+                                            >
+                                              다운로드
+                                            </a>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <span className="truncate">{item.answer}</span>
+                                    )}
+                                    <span className="text-purple-600 font-semibold text-xs">{item.count}회</span>
+                                  </li>
+                                ))}
+                              </ul>
+                              {subjectiveSummary.length > 5 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedSubjective(prev => ({
+                                    ...prev,
+                                    [questionKey]: !isExpanded
+                                  }))}
+                                  className="text-xs font-semibold text-purple-600 hover:text-purple-700"
+                                >
+                                  {isExpanded ? '접기' : `더 보기 (+${subjectiveSummary.length - 5})`}
+                                </button>
+                              )}
+                            </>
+                          )}
                         </div>
                       )}
                     </Card>
