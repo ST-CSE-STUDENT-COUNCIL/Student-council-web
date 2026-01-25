@@ -9,4 +9,5 @@ export { StatusDropdown } from './StatusDropdown'
 export { RegistrationDetailModal } from './RegistrationDetailModal'
 export { SurveyStatsModal } from './SurveyStatsModal'
 export { ImagePreviewModal } from './ImagePreviewModal'
-
+export { SurveyStatsPanel } from './SurveyStatsPanel'
+export { SurveyRegistrationsPanel } from './SurveyRegistrationsPanel'
