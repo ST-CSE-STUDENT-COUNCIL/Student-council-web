@@ -5,10 +5,10 @@ import type { ActivityRegistrationResponse, Activity } from '../../../types/acti
 import {
   Search, CheckCircle, XCircle, Clock, User, Phone, Building,
   Hash, Calendar, Eye, ChevronLeft, ChevronRight, Users,
-  BarChart3, Check, Loader2, ArrowLeft,
+  Check, Loader2, ArrowLeft,
   PieChart, LayoutGrid, List, ClipboardList, Image as ImageIcon, FileText
 } from 'lucide-react'
-import { Card, Title, BarList, DonutChart } from '@tremor/react'
+import { EventStatsPanel } from '../../../components/activities/admin/EventStatsPanel'
 import {
   useReactTable,
   getCoreRowModel,
@@ -34,6 +34,89 @@ const STATUS_CONFIG: Record<StatusFilterType, { label: string; icon: React.React
   pending: { label: '대기', icon: <Clock size={14} />, bgClass: 'bg-amber-100', textClass: 'text-amber-700' },
   approved: { label: '승인', icon: <CheckCircle size={14} />, bgClass: 'bg-emerald-100', textClass: 'text-emerald-700' },
   rejected: { label: '거절', icon: <XCircle size={14} />, bgClass: 'bg-red-100', textClass: 'text-red-700' },
+}
+
+type StatsField = {
+  name: string
+  label: string
+  type: string
+  options?: string[]
+}
+
+const getStatsFields = (activity: Activity): StatsField[] => {
+  if (activity.form_fields?.length) {
+    return activity.form_fields
+  }
+
+  const questions = activity.config?.questions
+  if (!Array.isArray(questions)) return []
+
+  return questions.map((question: any) => ({
+    name: String(question.id),
+    label: question.question,
+    type: question.type === 'multiple_choice' ? 'radio' : question.type,
+    options: question.options || []
+  }))
+}
+
+const buildLocalStats = (activity: Activity, registrations: ActivityRegistrationResponse[]) => {
+  const fields = getStatsFields(activity)
+  if (fields.length === 0) return null
+
+  const questionStats = fields.map(field => {
+    const normalizedType = field.type === 'select' ? 'multiple_choice' : field.type
+    const isObjective = ['multiple_choice', 'radio', 'checkbox'].includes(normalizedType)
+
+    if (isObjective) {
+      const counts: Record<string, number> = {}
+      const options = field.options || []
+      options.forEach(option => {
+        counts[option] = 0
+      })
+
+      registrations.forEach(reg => {
+        const rawResponses = (reg as any).form_responses || (reg as any).survey_responses || {}
+        const answer = rawResponses[field.name]
+        if (answer === undefined || answer === null || answer === '') return
+
+        if (Array.isArray(answer)) {
+          answer.forEach((item) => {
+            counts[item] = (counts[item] || 0) + 1
+          })
+        } else {
+          counts[answer] = (counts[answer] || 0) + 1
+        }
+      })
+
+      return {
+        question_id: field.name,
+        question: field.label,
+        type: normalizedType,
+        responses: counts
+      }
+    }
+
+    return {
+      question_id: field.name,
+      question: field.label,
+      type: normalizedType,
+      responses: registrations
+        .map(reg => {
+          const rawResponses = (reg as any).form_responses || (reg as any).survey_responses || {}
+          return rawResponses[field.name]
+        })
+        .flatMap(answer => {
+          if (answer === undefined || answer === null || answer === '') return []
+          return Array.isArray(answer) ? answer.map(item => String(item)) : [String(answer)]
+        })
+    }
+  })
+
+  return {
+    activity_id: activity.id,
+    total_responses: registrations.length,
+    question_stats: questionStats
+  }
 }
 
 function EventActivityDetailPage() {
@@ -100,16 +183,33 @@ function EventActivityDetailPage() {
 
   // Fetch stats
   const fetchStats = useCallback(async () => {
+    if (!activityDetail) return
+
     try {
       setLoadingStats(true)
-      const stats = await activityAdminApi.getSurveyStats(id)
-      setStats(stats)
+      if (activityDetail.type === 'survey') {
+        const stats = await activityAdminApi.getSurveyStats(id)
+        setStats(stats)
+        return
+      }
+
+      const pageSize = 200
+      const firstPage = await activityAdminApi.getRegistrations(id, { page: 1, page_size: pageSize })
+      const pages = firstPage.pagination.total_pages
+      const allRegistrations = [...firstPage.registrations]
+
+      for (let currentPage = 2; currentPage <= pages; currentPage += 1) {
+        const nextPage = await activityAdminApi.getRegistrations(id, { page: currentPage, page_size: pageSize })
+        allRegistrations.push(...nextPage.registrations)
+      }
+
+      setStats(buildLocalStats(activityDetail, allRegistrations))
     } catch (error) {
       console.error('Failed to fetch stats', error)
     } finally {
       setLoadingStats(false)
     }
-  }, [id])
+  }, [activityDetail, id])
 
   // Handle single row selection
   const handleSelectOne = (registrationId: number) => {
@@ -157,8 +257,12 @@ function EventActivityDetailPage() {
   useEffect(() => {
     fetchActivityDetail()
     fetchRegistrations(page)
+  }, [fetchActivityDetail, fetchRegistrations, page])
+
+  useEffect(() => {
+    if (!activityDetail || currentTab !== 'stats') return
     fetchStats()
-  }, [fetchActivityDetail, fetchRegistrations, fetchStats, page])
+  }, [activityDetail, currentTab, fetchStats])
 
   // Filter registrations client-side
   const filteredRegistrations = useMemo(() => {
@@ -732,68 +836,11 @@ function EventActivityDetailPage() {
           </div>
         </>
       ) : (
-        // Stats Tab
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[400px]">
-          {loadingStats ? (
-            <div className="flex flex-col items-center justify-center h-64">
-              <Loader2 size={32} className="text-purple-600 animate-spin mb-4" />
-              <p className="text-gray-500">통계 데이터를 불러오는 중...</p>
-            </div>
-          ) : stats && stats.question_stats && stats.question_stats.length > 0 ? (
-            <div className="max-w-4xl mx-auto space-y-8">
-              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-6 rounded-2xl mb-8 flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-gray-500 mb-1">총 응답자 수</p>
-                  <p className="text-4xl font-bold text-gray-900">{stats.total_responses}명</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {stats.question_stats.map((stat: any, index: number) => {
-                  const data = Object.entries(stat.responses || {}).map(([name, value]) => ({
-                    name,
-                    value: Number(value)
-                  })).sort((a, b) => b.value - a.value)
-
-                  const isChoice = stat.type === 'multiple_choice' || stat.type === 'radio' || stat.type === 'checkbox'
-
-                  return (
-                    <Card key={index} className="h-full">
-                      <div className="flex items-start gap-2 mb-4">
-                        <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-sm font-bold">Q{index + 1}</span>
-                        <Title>{stat.question}</Title>
-                      </div>
-
-                      {isChoice ? (
-                        <div className="mt-4 space-y-6">
-                          <div className="flex justify-center">
-                            <DonutChart
-                              className="mt-6"
-                              data={data}
-                              category="value"
-                              index="name"
-                              colors={["purple", "violet", "indigo", "blue", "cyan"]}
-                            />
-                          </div>
-                          <BarList data={data} className="mt-2" />
-                        </div>
-                      ) : (
-                        <div className="bg-gray-50 p-4 rounded-lg text-center text-gray-500 text-sm">
-                          주관식 항목은 개별 확인이 필요합니다.
-                        </div>
-                      )}
-                    </Card>
-                  )
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-              <BarChart3 size={48} className="text-gray-300 mb-4" />
-              <p>표시할 통계 데이터가 없습니다.</p>
-            </div>
-          )}
-        </div>
+        <EventStatsPanel
+          loading={loadingStats}
+          stats={stats}
+          onPreviewImage={setPreviewImageUrl}
+        />
       )}
 
       {/* Sub-modals */}
