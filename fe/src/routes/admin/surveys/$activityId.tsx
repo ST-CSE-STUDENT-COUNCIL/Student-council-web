@@ -94,6 +94,8 @@ function SurveyActivityDetailPage() {
     const [loadingStats, setLoadingStats] = useState(false)
     const [currentTab, setCurrentTab] = useState<Tab>('list')
     const [viewMode, setViewMode] = useState<'table' | 'card'>('table')
+    const [statsFilter, setStatsFilter] = useState<'all' | 'objective' | 'subjective'>('all')
+    const [expandedSubjective, setExpandedSubjective] = useState<Record<string, boolean>>({})
 
     // Filter & Search
     const [searchQuery, setSearchQuery] = useState('')
@@ -487,6 +489,11 @@ function SurveyActivityDetailPage() {
     const resolvedQuestionStats = surveyQuestionStats.length > 0 ? surveyQuestionStats : fallbackQuestionStats
     const objectiveQuestionCount = resolvedQuestionStats.filter((stat: SurveyQuestionStat) => OBJECTIVE_TYPES.has(stat.type)).length
     const subjectiveQuestionCount = resolvedQuestionStats.length - objectiveQuestionCount
+    const filteredQuestionStats = resolvedQuestionStats.filter((stat: SurveyQuestionStat) => {
+        if (statsFilter === 'objective') return OBJECTIVE_TYPES.has(stat.type)
+        if (statsFilter === 'subjective') return !OBJECTIVE_TYPES.has(stat.type)
+        return true
+    })
 
     if (!activityDetail) {
         return (
@@ -894,24 +901,45 @@ function SurveyActivityDetailPage() {
                     ) : surveyStats ? (
                         <>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex flex-col gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setStatsFilter('all')}
+                                    className={`p-4 rounded-2xl border flex flex-col gap-1 text-left transition-all ${statsFilter === 'all'
+                                        ? 'bg-indigo-50 border-indigo-200 ring-2 ring-indigo-100'
+                                        : 'bg-white border-gray-100 hover:border-gray-200'
+                                        }`}
+                                >
                                     <p className="text-xs uppercase text-gray-500 tracking-wide">총 응답자</p>
                                     <p className="text-3xl font-semibold text-gray-900">{surveyStats.total_responses}</p>
                                     <p className="text-xs text-gray-400">제출된 응답자 수</p>
-                                </div>
-                                <div className="p-4 bg-white border border-gray-100 rounded-2xl flex flex-col gap-1">
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setStatsFilter('objective')}
+                                    className={`p-4 rounded-2xl border flex flex-col gap-1 text-left transition-all ${statsFilter === 'objective'
+                                        ? 'bg-indigo-50 border-indigo-200 ring-2 ring-indigo-100'
+                                        : 'bg-white border-gray-100 hover:border-gray-200'
+                                        }`}
+                                >
                                     <p className="text-xs uppercase text-gray-500 tracking-wide">객관식 문항</p>
                                     <p className="text-2xl font-semibold text-gray-900">{objectiveQuestionCount}</p>
                                     <p className="text-xs text-gray-400">선택형 문항 수</p>
-                                </div>
-                                <div className="p-4 bg-white border border-gray-100 rounded-2xl flex flex-col gap-1">
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setStatsFilter('subjective')}
+                                    className={`p-4 rounded-2xl border flex flex-col gap-1 text-left transition-all ${statsFilter === 'subjective'
+                                        ? 'bg-indigo-50 border-indigo-200 ring-2 ring-indigo-100'
+                                        : 'bg-white border-gray-100 hover:border-gray-200'
+                                        }`}
+                                >
                                     <p className="text-xs uppercase text-gray-500 tracking-wide">주관식 문항</p>
                                     <p className="text-2xl font-semibold text-gray-900">{subjectiveQuestionCount}</p>
                                     <p className="text-xs text-gray-400">텍스트형 문항 수</p>
-                                </div>
+                                </button>
                             </div>
 
-                            {resolvedQuestionStats.length === 0 ? (
+                            {filteredQuestionStats.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-20 text-gray-500">
                                     <BarChart3 size={48} className="text-gray-300 mb-4" />
                                     <p className="text-lg font-semibold text-gray-900 mb-1">분석 중입니다</p>
@@ -921,7 +949,7 @@ function SurveyActivityDetailPage() {
                                 </div>
                             ) : (
                                 <div className="space-y-6">
-                                    {resolvedQuestionStats.map((stat: SurveyQuestionStat, index: number) => {
+                                    {filteredQuestionStats.map((stat: SurveyQuestionStat, index: number) => {
                                         const isChoice = OBJECTIVE_TYPES.has(stat.type)
                                         const chartData = Object.entries(stat.responses || {})
                                             .map(([name, value], idx) => ({
@@ -945,8 +973,22 @@ function SurveyActivityDetailPage() {
                                             }, {} as Record<string, number>)
                                         )
                                             .map(([answer, count]) => ({ answer, count: Number(count) }))
-                                            .sort((a, b) => b.count - a.count)
-                                            .slice(0, 3)
+                                            .sort((a, b) => {
+                                                if (stat.type === 'number') {
+                                                    const aNum = Number(a.answer)
+                                                    const bNum = Number(b.answer)
+                                                    if (Number.isFinite(aNum) && Number.isFinite(bNum)) return aNum - bNum
+                                                }
+                                                if (stat.type === 'date') {
+                                                    const aTime = Date.parse(a.answer)
+                                                    const bTime = Date.parse(b.answer)
+                                                    if (!Number.isNaN(aTime) && !Number.isNaN(bTime)) return aTime - bTime
+                                                }
+                                                return b.count - a.count
+                                            })
+                                        const questionKey = String(stat.question_id)
+                                        const isExpanded = expandedSubjective[questionKey]
+                                        const visibleSubjective = isExpanded ? subjectiveSummary : subjectiveSummary.slice(0, 5)
 
                                         return (
                                             <Card key={index} className="space-y-4">
@@ -1030,14 +1072,28 @@ function SurveyActivityDetailPage() {
                                                     <div className="space-y-3 bg-gray-50/60 p-4 rounded-2xl">
                                                         <p className="text-sm text-gray-500">{`주관식 응답 ${subjectiveAnswers.length}건`}</p>
                                                         {subjectiveSummary.length > 0 ? (
-                                                            <ul className="space-y-2 text-sm text-gray-700">
-                                                            {subjectiveSummary.map((item: SubjectiveSummaryItem, idx) => (
+                                                            <div className="space-y-3">
+                                                                <ul className="space-y-2 text-sm text-gray-700">
+                                                                    {visibleSubjective.map((item: SubjectiveSummaryItem, idx) => (
                                                                     <li key={idx} className="flex items-center justify-between gap-3">
                                                                         <span className="truncate">{item.answer}</span>
                                                                         <span className="text-indigo-600 font-semibold text-xs">{item.count}회</span>
                                                                     </li>
-                                                                ))}
-                                                            </ul>
+                                                                    ))}
+                                                                </ul>
+                                                                {subjectiveSummary.length > 5 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setExpandedSubjective(prev => ({
+                                                                            ...prev,
+                                                                            [questionKey]: !isExpanded
+                                                                        }))}
+                                                                        className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                                                                    >
+                                                                        {isExpanded ? '접기' : `더 보기 (+${subjectiveSummary.length - 5})`}
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         ) : (
                                                             <p className="text-sm text-gray-400">응답이 아직 없습니다.</p>
                                                         )}
