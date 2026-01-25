@@ -299,7 +299,7 @@ async def get_activity_verification_presigned_url(
         401: {"model": ErrorResponse, "description": "인증 필요 (카톡방 초대는 회원만)"}
     }
 )
-@limiter.limit("100/minute")  # 공용 IP 고려하여 넉넉하게 설정
+@limiter.limit("600/minute")  # DoS 방지용 (공용 IP 고려하여 넉넉하게)
 async def register_for_activity(
     activity_id: int,
     body: ActivityRegistrationRequest,

@@ -28,9 +28,13 @@ from app.utils.r2_storage import (
 from app.database import supabase, get_supabase_admin
 import uuid
 import os
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from fastapi import Request
 
 
 router = APIRouter(tags=["공지사항"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 # 영어-한글 매핑
@@ -392,8 +396,10 @@ async def create_draft_notice(
         403: {"model": ErrorResponse, "description": "권한 없음"}
     }
 )
+@limiter.limit("1/3second")  # 더블 클릭 방지
 async def create_notice(
     body: NoticeCreateRequest,
+    request: Request,
     current_user: dict = Depends(require_admin)
 ):
     """
