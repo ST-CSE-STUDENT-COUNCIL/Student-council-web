@@ -5,11 +5,10 @@ import type { ActivityRegistrationResponse, Activity } from '../../../types/acti
 import {
   Search, CheckCircle, XCircle, Clock, User, Phone, Building,
   Hash, Calendar, Eye, ChevronLeft, ChevronRight, Users,
-  BarChart3, Check, Loader2, ArrowLeft,
+  Check, Loader2, ArrowLeft,
   PieChart, LayoutGrid, List, ClipboardList, Image as ImageIcon, FileText
 } from 'lucide-react'
-import { Card, Title } from '@tremor/react'
-import { ResponsiveContainer, PieChart as RechartPieChart, Pie, Cell } from 'recharts'
+import { EventStatsPanel } from '../../../components/activities/admin/EventStatsPanel'
 import {
   useReactTable,
   getCoreRowModel,
@@ -37,39 +36,11 @@ const STATUS_CONFIG: Record<StatusFilterType, { label: string; icon: React.React
   rejected: { label: '거절', icon: <XCircle size={14} />, bgClass: 'bg-red-100', textClass: 'text-red-700' },
 }
 
-const CHART_COLORS = [
-  '#3b82f6',
-  '#06b6d4',
-  '#6366f1',
-  '#8b5cf6',
-  '#d946ef',
-  '#10b981',
-  '#f43f5e',
-  '#f59e0b',
-  '#84cc16',
-  '#14b8a6',
-  '#0ea5e9',
-  '#a855f7'
-]
-
 type StatsField = {
   name: string
   label: string
   type: string
   options?: string[]
-}
-
-const IMAGE_EXT_REGEX = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i
-
-const getFileName = (value: string) => {
-  try {
-    const url = new URL(value)
-    const lastSegment = url.pathname.split('/').pop()
-    return lastSegment || value
-  } catch {
-    const parts = value.split('/')
-    return parts[parts.length - 1] || value
-  }
 }
 
 const getStatsFields = (activity: Activity): StatsField[] => {
@@ -168,7 +139,6 @@ function EventActivityDetailPage() {
   const [loadingStats, setLoadingStats] = useState(false)
   const [currentTab, setCurrentTab] = useState<Tab>('list')
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table')
-  const [expandedSubjective, setExpandedSubjective] = useState<Record<string, boolean>>({})
 
   // Filter & Search
   const [searchQuery, setSearchQuery] = useState('')
@@ -866,188 +836,11 @@ function EventActivityDetailPage() {
           </div>
         </>
       ) : (
-        // Stats Tab
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[400px]">
-          {loadingStats ? (
-            <div className="flex flex-col items-center justify-center h-64">
-              <Loader2 size={32} className="text-purple-600 animate-spin mb-4" />
-              <p className="text-gray-500">통계 데이터를 불러오는 중...</p>
-            </div>
-          ) : stats && stats.question_stats && stats.question_stats.length > 0 ? (
-            <div className="max-w-4xl mx-auto space-y-8">
-              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-6 rounded-2xl mb-8 flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-gray-500 mb-1">총 응답자 수</p>
-                  <p className="text-4xl font-bold text-gray-900">{stats.total_responses}명</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {stats.question_stats.map((stat: any, index: number) => {
-                  const data = Object.entries(stat.responses || {}).map(([name, value]) => ({
-                    name,
-                    value: Number(value)
-                  }))
-                    .map((item, idx) => ({
-                      ...item,
-                      color: CHART_COLORS[idx % CHART_COLORS.length]
-                    }))
-                    .sort((a, b) => b.value - a.value)
-
-                  const isChoice = stat.type === 'multiple_choice' || stat.type === 'radio' || stat.type === 'checkbox'
-                  const totalResponses = data.reduce((sum, item) => sum + item.value, 0)
-                  const subjectiveAnswers = Array.isArray(stat.responses) ? stat.responses : []
-                  const subjectiveSummary = Object.entries(
-                    subjectiveAnswers.reduce((acc: Record<string, number>, answer: unknown) => {
-                      const key = String(answer).trim()
-                      if (!key) return acc
-                      acc[key] = (acc[key] || 0) + 1
-                      return acc
-                    }, {} as Record<string, number>)
-                  )
-                    .map(([answer, count]) => ({ answer, count: Number(count) }))
-                    .sort((a, b) => b.count - a.count)
-                  const questionKey = String(stat.question_id ?? index)
-                  const isExpanded = expandedSubjective[questionKey]
-                  const visibleSubjective = isExpanded ? subjectiveSummary : subjectiveSummary.slice(0, 5)
-
-                  return (
-                    <Card key={index} className="h-full">
-                      <div className="flex items-start gap-2 mb-4">
-                        <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-sm font-bold">Q{index + 1}</span>
-                        <Title>{stat.question}</Title>
-                      </div>
-
-                      {isChoice ? (
-                        <div className="mt-4 space-y-6">
-                          <div className="flex justify-center">
-                            <div className="relative w-full max-w-[220px] h-40">
-                              <ResponsiveContainer>
-                                <RechartPieChart>
-                                  <Pie
-                                    data={data}
-                                    dataKey="value"
-                                    nameKey="name"
-                                    innerRadius="70%"
-                                    outerRadius="100%"
-                                    startAngle={90}
-                                    endAngle={-270}
-                                    stroke="#ffffff"
-                                    strokeWidth={2}
-                                  >
-                                    {data.map(item => (
-                                      <Cell key={item.name} fill={item.color} />
-                                    ))}
-                                  </Pie>
-                                </RechartPieChart>
-                              </ResponsiveContainer>
-                              <div className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-gray-900 pointer-events-none">
-                                {totalResponses}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="space-y-3">
-                            {data.map(item => {
-                              const percentValue = totalResponses > 0 ? (item.value / totalResponses) * 100 : 0
-                              const percentLabel = percentValue % 1 === 0 ? `${percentValue.toFixed(0)}%` : `${percentValue.toFixed(1)}%`
-
-                              return (
-                                <div key={item.name} className="space-y-1">
-                                  <div className="flex items-center justify-between text-sm text-gray-600">
-                                    <span className="font-medium text-gray-900">{item.name}</span>
-                                    <span>{item.value}명 · {percentLabel}</span>
-                                  </div>
-                                  <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden">
-                                    <div
-                                      className="h-full rounded-full"
-                                      style={{ width: `${percentValue}%`, backgroundColor: item.color }}
-                                    />
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="bg-gray-50 p-4 rounded-lg text-gray-600 text-sm space-y-3">
-                          {subjectiveSummary.length === 0 ? (
-                            <p className="text-center text-gray-400">응답이 없습니다.</p>
-                          ) : (
-                            <>
-                              <ul className="space-y-2">
-                                {visibleSubjective.map((item, idx) => (
-                                  <li key={idx} className="flex items-center justify-between gap-3">
-                                    {/^https?:\/\//i.test(item.answer) ? (
-                                      <div className="flex items-center gap-3 min-w-0">
-                                        <div className="w-10 h-10 rounded-lg border border-gray-200 bg-white overflow-hidden flex items-center justify-center">
-                                          {IMAGE_EXT_REGEX.test(item.answer) ? (
-                                            <img
-                                              src={item.answer}
-                                              alt=""
-                                              className="w-full h-full object-cover"
-                                              loading="lazy"
-                                            />
-                                          ) : (
-                                            <FileText size={18} className="text-gray-400" />
-                                          )}
-                                        </div>
-                                        <div className="min-w-0">
-                                          <p className="text-sm text-gray-800 truncate">{getFileName(item.answer)}</p>
-                                          {IMAGE_EXT_REGEX.test(item.answer) ? (
-                                            <button
-                                              type="button"
-                                              onClick={() => setPreviewImageUrl(item.answer)}
-                                              className="text-xs text-purple-600 hover:text-purple-700 font-semibold"
-                                            >
-                                              크게 보기
-                                            </button>
-                                          ) : (
-                                            <a
-                                              href={item.answer}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-xs text-purple-600 hover:text-purple-700 font-semibold"
-                                            >
-                                              다운로드
-                                            </a>
-                                          )}
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <span className="truncate">{item.answer}</span>
-                                    )}
-                                    <span className="text-purple-600 font-semibold text-xs">{item.count}회</span>
-                                  </li>
-                                ))}
-                              </ul>
-                              {subjectiveSummary.length > 5 && (
-                                <button
-                                  type="button"
-                                  onClick={() => setExpandedSubjective(prev => ({
-                                    ...prev,
-                                    [questionKey]: !isExpanded
-                                  }))}
-                                  className="text-xs font-semibold text-purple-600 hover:text-purple-700"
-                                >
-                                  {isExpanded ? '접기' : `더 보기 (+${subjectiveSummary.length - 5})`}
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </Card>
-                  )
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-              <BarChart3 size={48} className="text-gray-300 mb-4" />
-              <p>표시할 통계 데이터가 없습니다.</p>
-            </div>
-          )}
-        </div>
+        <EventStatsPanel
+          loading={loadingStats}
+          stats={stats}
+          onPreviewImage={setPreviewImageUrl}
+        />
       )}
 
       {/* Sub-modals */}
