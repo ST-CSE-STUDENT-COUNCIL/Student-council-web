@@ -4,7 +4,7 @@ import Header from '../components/layout/Header'
 import Footer from '../components/layout/Footer'
 import { VerificationPromptModal } from '../components/auth/VerificationPromptModal'
 import { Toaster } from 'sonner'
-import NotFound from './404'
+import NotFound from './-404'
 
 // DevTools는 개발 환경에서만 로드
 const TanStackRouterDevtools = import.meta.env.DEV
