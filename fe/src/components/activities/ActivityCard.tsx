@@ -249,7 +249,7 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
                 </div>
 
                 {/* Content Section */}
-                <div className="relative w-full md:absolute md:top-0 md:right-0 md:bottom-0 md:w-5/12 p-6 flex flex-col bg-white dark:bg-slate-900">
+                <div className="relative w-full md:absolute md:top-0 md:right-0 md:bottom-0 rounded-2xl md:w-5/12 p-6 flex flex-col bg-white dark:bg-slate-900">
                     <div className="flex justify-between items-start mb-2 shrink-0">
                         <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight">{activity.title}</h2>
                     </div>

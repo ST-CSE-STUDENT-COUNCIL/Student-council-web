@@ -3,6 +3,7 @@ import { SearchIcon } from 'lucide-react'
 
 export type SortOption = 'newest' | 'oldest'
 export type StatusOption = 'all' | ActivityStatus
+export type TypeOption = 'all' | 'event' | 'demand_survey' | 'kakao_invite' | 'notice' | 'survey'
 
 type ActivityFilterProps = {
     search: string
@@ -11,6 +12,8 @@ type ActivityFilterProps = {
     onSortChange: (value: SortOption) => void
     status: StatusOption
     onStatusChange: (value: StatusOption) => void
+    type: TypeOption
+    onTypeChange: (value: TypeOption) => void
 }
 
 export const ActivityFilter = ({
@@ -19,7 +22,9 @@ export const ActivityFilter = ({
     sort,
     onSortChange,
     status,
-    onStatusChange
+    onStatusChange,
+    type,
+    onTypeChange
 }: ActivityFilterProps) => {
     return (
         <div className="flex flex-col gap-3">
@@ -64,7 +69,30 @@ export const ActivityFilter = ({
                     <option value="oldest">오래된순</option>
                 </select>
             </div>
-
+            <div>
+                <div className="flex-1 flex p-1 bg-gray-100 dark:bg-slate-800 rounded-lg overflow-x-auto no-scrollbar">
+                    {/* 행사, 수요조사, 카톡방초대, 공지, 설문조사 필터*/}
+                    {
+                        ['all', 'event', 'demand_survey', 'kakao_invite', 'notice', 'survey'].map((k) => (
+                            <button
+                                key={k}
+                                onClick={() => onTypeChange(k as TypeOption)}
+                                className={`flex-1 min-w-[3rem] py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap ${type === k
+                                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                                    }`}
+                            >
+                                {k === 'all' ? '전체' :
+                                    k === 'event' ? '행사' :
+                                        k === 'demand_survey' ? '수요조사' :
+                                            k === 'kakao_invite' ? '카톡방초대' :
+                                                k === 'notice' ? '공지' :
+                                                    k === 'survey' ? '설문조사' : '전체'}
+                            </button>
+                        ))
+                    }
+                </div>
+            </div>
         </div>
     )
 }
