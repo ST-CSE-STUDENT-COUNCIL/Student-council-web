@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState, useMemo } from 'react'
-import { ActivityFilter, type SortOption, type StatusOption } from '../../components/activities/ActivityFilter'
+import { ActivityFilter, type SortOption, type StatusOption, type TypeOption } from '../../components/activities/ActivityFilter'
 import { ActivityList } from '../../components/activities/ActivityList'
 import { ActivityCard } from '../../components/activities/ActivityCard'
 import { activityApi } from '../../lib/api/activities'
@@ -20,10 +20,11 @@ function ActivitiesPage() {
     const [search, setSearch] = useState('')
     const [sort, setSort] = useState<SortOption>('newest')
     const [status, setStatus] = useState<StatusOption>('all')
+    const [type, setType] = useState<TypeOption>('all')
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1)
-    const ITEMS_PER_PAGE = 6
+    const ITEMS_PER_PAGE = 5
 
     const fetchActivities = async () => {
         try {
@@ -61,7 +62,7 @@ function ActivitiesPage() {
 
     useEffect(() => {
         setCurrentPage(1)
-    }, [search, sort, status])
+    }, [search, sort, status, type])
 
     const filteredActivities = useMemo(() => {
         return activities
@@ -80,6 +81,12 @@ function ActivitiesPage() {
                 }
                 return true
             })
+            .filter((activity) => {
+                if (type !== 'all') {
+                    if (activity.type !== type) return false
+                }
+                return true
+            })
             .sort((a, b) => {
                 const statusOrder = { active: 0, scheduled: 1, closed: 2 }
                 const aStatus = getActivityStatus(a)
@@ -90,7 +97,7 @@ function ActivitiesPage() {
                 if (sort === 'newest') return b.id - a.id
                 return a.id - b.id
             })
-    }, [activities, status, search, sort])
+    }, [activities, status, search, sort, type])
 
     const totalPages = Math.ceil(filteredActivities.length / ITEMS_PER_PAGE)
     const paginatedActivities = useMemo(() => {
@@ -132,6 +139,8 @@ function ActivitiesPage() {
                                     onSortChange={setSort}
                                     status={status}
                                     onStatusChange={setStatus}
+                                    type={type}
+                                    onTypeChange={setType}
                                 />
                             </div>
 

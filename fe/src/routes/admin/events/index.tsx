@@ -1,10 +1,8 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } from 'react'
-import TextareaAutosize from 'react-textarea-autosize'
+import { useState, useEffect, useMemo } from 'react'
 import { activityApi, activityAdminApi } from '../../../lib/api/activities'
-import type { ActivityListItem, Activity, ActivityCreateRequest, ActivityType } from '../../../types/activities'
+import type { ActivityListItem } from '../../../types/activities'
 import { activityTypeLabels, getActivityStatus } from '../../../types/activities'
-import { FormFieldsManager, ImageUploader, type UploadImage } from '../../../components/activities/admin'
 import { toast } from 'sonner'
 import Swal from 'sweetalert2'
 import {
@@ -77,10 +75,6 @@ function AdminEventsPage() {
     const navigate = useNavigate()
     const [activities, setActivities] = useState<ActivityListItem[]>([])
     const [loading, setLoading] = useState(true)
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
-
-    const [saving, setSaving] = useState(false)
 
     // View & Filter State
     const [viewMode, setViewMode] = useState<ViewMode>('table')
@@ -92,26 +86,6 @@ function AdminEventsPage() {
     // Pagination
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = viewMode === 'card' ? 9 : 10
-
-    // Image State
-    const [images, setImages] = useState<UploadImage[]>([])
-    const [isDragging, setIsDragging] = useState(false)
-
-    const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-    const [formData, setFormData] = useState<ActivityCreateRequest>({
-        type: 'event',
-        title: '',
-        description: '',
-        registration_start: '',
-        registration_end: '',
-        max_capacity: undefined,
-        require_membership: false,
-        is_active: true,
-        thumbnail_url: '',
-        form_fields: [],
-        config: {}
-    })
 
     const fetchActivities = async () => {
         try {
@@ -131,41 +105,6 @@ function AdminEventsPage() {
     useEffect(() => {
         fetchActivities()
     }, [])
-
-    // Scroll to center logic
-    const adjustScrollToCenter = useCallback(() => {
-        if (!textareaRef.current) return;
-
-        const textarea = textareaRef.current;
-        // Find the closest parent with overflow-y-auto. 
-        // In the modal form, the direct parent form usually has overflow-y-auto (see line 774 in view_file output: <form ... className="p-6 overflow-y-auto ...">)
-        const scrollParent = textarea.closest('.overflow-y-auto') as HTMLElement;
-
-        if (scrollParent) {
-            const caret = getCaretCoordinates(textarea, textarea.selectionEnd);
-            // Calculate absolute top of caret relative to the scroll parent
-            const textareaRect = textarea.getBoundingClientRect();
-            const parentRect = scrollParent.getBoundingClientRect();
-            const relativeTop = textareaRect.top - parentRect.top + scrollParent.scrollTop;
-
-            const caretAbsoluteTop = relativeTop + caret.top;
-
-            // We want caretAbsoluteTop to be in the middle of scrollParent visible height
-            const targetScrollTop = caretAbsoluteTop - (scrollParent.clientHeight / 2);
-
-            scrollParent.scrollTo({
-                top: targetScrollTop,
-                behavior: 'smooth'
-            });
-        }
-    }, [])
-
-    // Ensure scroll to center happens when content changes
-    useLayoutEffect(() => {
-        if (isModalOpen) {
-            adjustScrollToCenter()
-        }
-    }, [formData.description, adjustScrollToCenter, isModalOpen])
 
     // Filtered and sorted activities
     const filteredActivities = useMemo(() => {
@@ -217,97 +156,12 @@ function AdminEventsPage() {
         return { activeCount, scheduledCount, closedCount, totalRegistrations }
     }, [activities])
 
-    // Image upload
-    const uploadImages = async (): Promise<string[]> => {
-        const uploadedUrls: string[] = []
-        for (const img of images) {
-            // 이미 업로드된 이미지는 URL만 추가
-            if (img.uploaded && img.url) {
-                uploadedUrls.push(img.url)
-                continue
-            }
-            // 현재 업로드 중인 이미지는 건너뛰기
-            if (img.uploading) {
-                continue
-            }
-            try {
-                setImages(prev => prev.map(i => i.id === img.id ? { ...i, uploading: true } : i))
-                const { presigned_url, public_url } = await activityAdminApi.getPresignedUrl(img.file.name)
-                await activityAdminApi.uploadImage(presigned_url, img.file)
-                setImages(prev => prev.map(i => i.id === img.id ? { ...i, uploading: false, uploaded: true, url: public_url } : i))
-                uploadedUrls.push(public_url)
-            } catch (error) {
-                console.error('Image upload error:', error)
-                setImages(prev => prev.map(i => i.id === img.id ? { ...i, uploading: false, error: '업로드 실패' } : i))
-            }
-        }
-        return uploadedUrls
-    }
-
     const handleCreate = () => {
-        setEditingActivity(null)
-        setFormData({
-            type: 'event',
-            title: '',
-            description: '',
-            registration_start: '',
-            registration_end: '',
-            max_capacity: undefined,
-            require_membership: false,
-            is_active: true,
-            thumbnail_url: '',
-            form_fields: [],
-            config: {}
-        })
-        setImages([])
-        setIsModalOpen(true)
+        navigate({ to: '/admin/events/create' })
     }
 
-    const handleEdit = async (activity: ActivityListItem) => {
-        try {
-            const detail = await activityApi.getById(activity.id)
-            setEditingActivity(detail)
-            setFormData({
-                type: detail.type,
-                title: detail.title,
-                description: detail.description || '',
-                registration_start: toLocalISOString(detail.registration_start),
-                registration_end: toLocalISOString(detail.registration_end),
-                max_capacity: detail.max_capacity || undefined,
-                require_membership: detail.require_membership,
-                is_active: detail.is_active,
-                thumbnail_url: detail.thumbnail_url || '',
-                form_fields: detail.form_fields || [],
-                config: detail.config || {}
-            })
-            const existingImages: UploadImage[] = []
-            if (detail.images && detail.images.length > 0) {
-                detail.images.forEach((img, idx) => {
-                    existingImages.push({
-                        id: `existing-${idx}`,
-                        file: new File([], 'existing'),
-                        preview: img.image_url,
-                        uploading: false,
-                        uploaded: true,
-                        url: img.image_url
-                    })
-                })
-            } else if (detail.thumbnail_url) {
-                existingImages.push({
-                    id: 'existing-thumbnail',
-                    file: new File([], 'existing'),
-                    preview: detail.thumbnail_url,
-                    uploading: false,
-                    uploaded: true,
-                    url: detail.thumbnail_url
-                })
-            }
-            setImages(existingImages)
-            setIsModalOpen(true)
-        } catch (error) {
-            console.error('Failed to fetch activity detail', error)
-            toast.error('상세 정보를 불러오는데 실패했습니다.')
-        }
+    const handleEdit = (activity: ActivityListItem) => {
+        navigate({ to: `/admin/events/${activity.id}/edit` })
     }
 
     const handleDelete = async (id: number) => {
@@ -332,59 +186,6 @@ function AdminEventsPage() {
             console.error('Failed to delete activity', error)
             toast.error('삭제에 실패했습니다.')
         }
-    }
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-
-        // 중복 제출 방지
-        if (saving) return
-
-        try {
-            setSaving(true)
-            const uploadedUrls = await uploadImages()
-            const thumbnailUrl = uploadedUrls[0] || formData.thumbnail_url
-            const imageUrls = uploadedUrls.map(url => ({ public_url: url }))
-
-            if (editingActivity) {
-                await activityAdminApi.update(editingActivity.id, {
-                    title: formData.title,
-                    description: formData.description,
-                    registration_start: formData.registration_start ? new Date(formData.registration_start).toISOString() : undefined,
-                    registration_end: formData.registration_end ? new Date(formData.registration_end).toISOString() : undefined,
-                    max_capacity: formData.max_capacity,
-                    require_membership: formData.require_membership,
-                    is_active: formData.is_active,
-                    thumbnail_url: thumbnailUrl || undefined,
-                    form_fields: formData.form_fields,
-                    image_urls: imageUrls.length > 0 ? imageUrls : undefined
-                })
-                toast.success('수정되었습니다.')
-            } else {
-                await activityAdminApi.create({
-                    ...formData,
-                    registration_start: formData.registration_start ? new Date(formData.registration_start).toISOString() : undefined,
-                    registration_end: formData.registration_end ? new Date(formData.registration_end).toISOString() : undefined,
-                    thumbnail_url: thumbnailUrl,
-                    image_urls: imageUrls
-                })
-                toast.success('새 신청이 생성되었습니다.')
-            }
-            setIsModalOpen(false)
-            fetchActivities()
-        } catch (error) {
-            console.error('Failed to save activity', error)
-            toast.error('저장에 실패했습니다.')
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const toLocalISOString = (dateStr?: string) => {
-        if (!dateStr) return ''
-        const date = new Date(dateStr)
-        const offset = date.getTimezoneOffset() * 60000
-        return new Date(date.getTime() - offset).toISOString().slice(0, 16)
     }
 
     const getStatusInfo = (activity: ActivityListItem) => {
@@ -781,218 +582,6 @@ function AdminEventsPage() {
                     )}
                 </>
             )}
-
-            {/* Create/Edit Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-gray-900">
-                                {editingActivity ? '신청 수정' : '새 신청 만들기'}
-                            </h2>
-                            <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6">
-                            {/* Image Upload */}
-                            <ImageUploader
-                                images={images}
-                                onImagesChange={setImages}
-                                isDragging={isDragging}
-                                onDraggingChange={setIsDragging}
-                                maxImages={10}
-                            />
-
-                            {/* Basic Info */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-900 mb-2">신청 타입</label>
-                                    <select
-                                        value={formData.type}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as ActivityType }))}
-                                        disabled={!!editingActivity}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 disabled:bg-gray-100"
-                                    >
-                                        {Object.entries(activityTypeLabels).map(([value, label]) => (
-                                            <option key={value} value={value}>{label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-900 mb-2">최대 정원</label>
-                                    <input
-                                        type="number"
-                                        value={formData.max_capacity || ''}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, max_capacity: e.target.value ? parseInt(e.target.value) : undefined }))}
-                                        min={1}
-                                        placeholder="무제한"
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold text-gray-900 mb-2">제목</label>
-                                <input
-                                    type="text"
-                                    value={formData.title}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                                    required
-                                    placeholder="신청 제목을 입력하세요"
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold text-gray-900 mb-2">설명</label>
-                                <TextareaAutosize
-                                    ref={textareaRef}
-                                    value={formData.description}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                    minRows={4}
-                                    onFocus={adjustScrollToCenter}
-                                    onClick={adjustScrollToCenter}
-                                    onKeyUp={(e) => {
-                                        if (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                                            adjustScrollToCenter();
-                                        }
-                                    }}
-                                    placeholder="신청에 대한 설명을 입력하세요"
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 resize-none"
-                                />
-                            </div>
-
-                            {formData.type === 'notice' && (
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-900 mb-2">외부 링크</label>
-                                    <input
-                                        type="text"
-                                        value={formData.config?.external_link || ''}
-                                        onChange={(e) => setFormData(prev => ({
-                                            ...prev,
-                                            config: { ...prev.config, external_link: e.target.value }
-                                        }))}
-                                        placeholder="https://example.com"
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                                    />
-                                    <p className="mt-1 text-xs text-gray-500">배너 클릭 시 이동할 외부 링크를 입력하세요.</p>
-                                </div>
-                            )}
-
-                            <FormFieldsManager
-                                fields={formData.form_fields || []}
-                                onChange={(fields) => setFormData(prev => ({ ...prev, form_fields: fields }))}
-                            />
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-900 mb-2">신청 시작</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={formData.registration_start}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, registration_start: e.target.value }))}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-900 mb-2">신청 종료</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={formData.registration_end}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, registration_end: e.target.value }))}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-6 p-4 bg-gray-50 rounded-xl">
-                                <label className="flex items-center gap-3 cursor-pointer">
-                                    <div
-                                        onClick={() => setFormData(prev => ({ ...prev, require_membership: !prev.require_membership }))}
-                                        className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-all ${formData.require_membership ? 'bg-purple-500' : 'bg-gray-300'}`}
-                                    >
-                                        <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${formData.require_membership ? 'translate-x-6' : 'translate-x-0'}`} />
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-700">회비 납부자만</span>
-                                </label>
-                                <label className="flex items-center gap-3 cursor-pointer">
-                                    <div
-                                        onClick={() => setFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
-                                        className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-all ${formData.is_active ? 'bg-emerald-500' : 'bg-gray-300'}`}
-                                    >
-                                        <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${formData.is_active ? 'translate-x-6' : 'translate-x-0'}`} />
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-700">활성화</span>
-                                </label>
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 py-3 px-4 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-all"
-                                >
-                                    취소
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={saving}
-                                    className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                >
-                                    {saving ? '저장 중...' : (editingActivity ? '수정 완료' : '생성하기')}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }
-const getCaretCoordinates = (element: HTMLTextAreaElement, position: number) => {
-    const { value } = element;
-    const properties = [
-        'direction', 'boxSizing', 'width', 'height', 'overflowX', 'overflowY',
-        'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
-        'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-        'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch', 'fontSize',
-        'fontSizeAdjust', 'lineHeight', 'fontFamily', 'textAlign', 'textTransform',
-        'textIndent', 'textDecoration', 'letterSpacing', 'wordSpacing',
-    ];
-
-    const computed = window.getComputedStyle(element);
-    const div = document.createElement('div');
-    div.id = 'input-textarea-caret-position-mirror-div';
-    document.body.appendChild(div);
-
-    div.style.whiteSpace = 'pre-wrap';
-    div.style.wordWrap = 'break-word';
-    div.style.position = 'absolute';
-    div.style.visibility = 'hidden';
-
-    properties.forEach(prop => {
-        div.style.setProperty(prop, computed.getPropertyValue(prop));
-    });
-
-    if (element.scrollHeight > parseInt(computed.height)) {
-        div.style.overflowY = 'scroll';
-    } else {
-        div.style.overflow = 'hidden';
-    }
-
-    div.textContent = value.substring(0, position);
-
-    const span = document.createElement('span');
-    span.textContent = value.substring(position) || '.';
-    div.appendChild(span);
-
-    const coordinates = {
-        top: span.offsetTop + parseInt(computed.borderTopWidth),
-        left: span.offsetLeft + parseInt(computed.borderLeftWidth)
-    };
-
-    document.body.removeChild(div);
-    return coordinates;
-};
