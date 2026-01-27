@@ -48,7 +48,7 @@ export const PostFilter = ({
     return (
         <div className="flex flex-col items-center w-full mb-10">
             {/* Main Category Buttons */}
-            <div className="flex gap-4 mb-6 bg-gray-50 p-2 rounded-2xl">
+            <div className="flex gap-4 mb-6 bg-gray-50 dark:bg-slate-800 p-2 rounded-2xl">
                 {mainCategories.map((cat) => (
                     <button
                         key={cat.value}
@@ -58,7 +58,7 @@ export const PostFilter = ({
                         }}
                         className={`px-8 py-3 rounded-xl font-bold transition-all duration-200 text-lg ${board_id === cat.value
                             ? 'bg-blue-600 text-white shadow-lg scale-105'
-                            : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                            : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-slate-700'
                             }`}
                     >
                         {cat.label}
@@ -73,13 +73,13 @@ export const PostFilter = ({
                         key={sub.value}
                         onClick={() => onSubCategoryChange(sub.value)}
                         className={`text-base font-medium transition-colors relative py-1 ${subCategory === sub.value
-                            ? 'text-blue-600'
-                            : 'text-gray-500 hover:text-gray-800'
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
                             }`}
                     >
                         {sub.label}
                         {subCategory === sub.value && (
-                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-full"></div>
+                            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400 rounded-full"></div>
                         )}
                     </button>
                 ))}
@@ -95,7 +95,7 @@ export const PostFilter = ({
                     </div>
                     <input
                         type="text"
-                        className="block w-full pl-11 pr-4 py-3 border border-gray-200 rounded-full leading-5 bg-white shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        className="block w-full pl-11 pr-4 py-3 border border-gray-200 dark:border-slate-700 rounded-full leading-5 bg-white dark:bg-slate-900 shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white"
                         placeholder="검색어를 입력하세요 (예: 장학금, 행사)"
                         value={search}
                         onChange={onSearchChange}
@@ -106,7 +106,7 @@ export const PostFilter = ({
                     <select
                         value={sort}
                         onChange={onSortChange}
-                        className="appearance-none block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-full text-base font-medium text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer hover:border-blue-400 transition-colors"
+                        className="appearance-none block w-full pl-4 pr-10 py-3 border border-gray-200 dark:border-slate-700 rounded-full text-base font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer hover:border-blue-400 transition-colors"
                     >
                         <option value="newest">최신순</option>
                         <option value="oldest">오래된순</option>

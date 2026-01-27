@@ -121,92 +121,86 @@ function SuggestionPage() {
     }, [filteredSuggestions, page, pageSize])
 
     // 비로그인 사용자 안내 화면
-    if (!user) {
-        return (
-            <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-16">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-                    <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
-                        <div className="mb-6 flex justify-center">
-                            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                                <LockKeyhole className="w-10 h-10 text-blue-600" />
-                            </div>
-                        </div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                            로그인이 필요합니다
-                        </h2>
-                        <p className="text-gray-600 mb-8 leading-relaxed">
-                            건의함을 이용하시려면 로그인이 필요합니다.<br />
-                            학생회에 건의사항을 전달하고 답변을 받아보세요.
-                        </p>
-                        <Link
-                            to="/login"
-                            className="inline-flex items-center justify-center w-full py-3 px-6 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
-                        >
-                            로그인하러 가기
-                        </Link>
-                        <p className="mt-4 text-sm text-gray-500">
-                            계정이 없으신가요?{' '}
-                            <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
-                                회원가입하기
-                            </Link>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 pb-16">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-24 space-y-10">
                 <SuggestionHero
                     stats={stats}
                     statusFilter={statusFilter}
-                    onStatusFilterChange={setStatusFilter}
+                    onStatusFilterChange={(st) => {
+                        setStatusFilter(st)
+                        setPage(1)
+                    }}
                 />
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-                    <div className="flex-1">
-                        <SuggestionFilters search={search} onSearchChange={setSearch} />
-                    </div>
-                    <div className="flex items-center gap-3 sm:gap-4">
-                        <SuggestionPageSizeSelect value={pageSize} onChange={setPageSize} />
-                        <button
-                            type="button"
-                            className="shrink-0 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                            onClick={() => {
-                                if (user?.verification_status !== 'approved') {
-                                    toast.error('학적 인증이 완료된 사용자만 건의사항을 작성할 수 있습니다.')
-                                    return
-                                }
-                                setIsCreateOpen(true)
-                            }}
+
+                {!user ? (
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 text-center shadow-lg transition-transform hover:scale-[1.01]">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30 text-3xl">
+                            <LockKeyhole className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">로그인이 필요합니다</h2>
+                        <p className="mt-2 text-slate-600 dark:text-slate-400">
+                            건의사항을 조회하거나 작성하려면 로그인이 필요합니다.
+                        </p>
+                        <Link
+                            to="/login"
+                            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg"
                         >
-                            새 건의 작성
-                        </button>
+                            로그인하러 가기
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </Link>
                     </div>
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-[1.2fr,0.8fr] gap-6 lg:gap-8">
-                    <div className="space-y-4">
-                        <SuggestionList
-                            items={visibleSuggestions}
-                            onSelect={async (item) => {
-                                try {
-                                    const detail = await suggestionApi.getById(item.id)
-                                    setSelected(detail)
-                                    setIsOpen(true)
-                                } catch (error) {
-                                    console.error('failed to fetch suggestion detail', error)
-                                    toast.error('건의 상세를 불러오지 못했습니다. 다시 시도해주세요.')
-                                }
-                            }}
-                        />
-                        <SuggestionPagination
-                            page={page}
-                            totalPages={totalPages}
-                            onPageChange={setPage}
-                        />
-                    </div>
-                </div>
+                ) : (
+                    <>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                            <div className="flex-1">
+                                <SuggestionFilters search={search} onSearchChange={setSearch} />
+                            </div>
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <SuggestionPageSizeSelect value={pageSize} onChange={setPageSize} />
+                                <button
+                                    type="button"
+                                    className="shrink-0 rounded-xl bg-slate-900 dark:bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                                    onClick={() => {
+                                        if (user?.verification_status !== 'approved') {
+                                            toast.error('학적 인증이 완료된 사용자만 건의사항을 작성할 수 있습니다.')
+                                            return
+                                        }
+                                        setIsCreateOpen(true)
+                                    }}
+                                >
+                                    새 건의 작성
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr,0.8fr] gap-6 lg:gap-8">
+                            <div className="space-y-4">
+                                <SuggestionList
+                                    items={visibleSuggestions}
+                                    onSelect={async (item) => {
+                                        try {
+                                            const detail = await suggestionApi.getById(item.id)
+                                            setSelected(detail)
+                                            setIsOpen(true)
+                                        } catch (error) {
+                                            console.error('failed to fetch suggestion detail', error)
+                                            toast.error('건의 상세를 불러오지 못했습니다. 다시 시도해주세요.')
+                                        }
+                                    }}
+                                />
+                                <SuggestionPagination
+                                    page={page}
+                                    totalPages={totalPages}
+                                    onPageChange={setPage}
+                                />
+                            </div>
+                        </div>
+                    </>
+                )}
+
                 <SuggestionDetailModal
                     isOpen={isOpen && !!selected}
                     suggestion={selected}

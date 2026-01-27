@@ -121,8 +121,8 @@ function Notices() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Page Title */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-4">공지사항</h1>
-        <p className="text-gray-500">학생회의 주요 소식과 공고를 확인하세요.</p>
+        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">공지사항</h1>
+        <p className="text-gray-500 dark:text-gray-400">학생회의 주요 소식과 공고를 확인하세요.</p>
       </div>
 
       <PostFilter
@@ -150,7 +150,7 @@ function Notices() {
           <button
             onClick={() => handlePageChange(Math.max(page - 1, 1))}
             disabled={page === 1}
-            className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600 dark:text-gray-400"
           >
             &lt;
           </button>
@@ -160,7 +160,7 @@ function Notices() {
               onClick={() => handlePageChange(p)}
               className={`w-10 h-10 rounded-lg font-medium transition-colors ${page === p
                 ? 'bg-blue-600 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-800'
                 }`}
             >
               {p}
@@ -169,7 +169,7 @@ function Notices() {
           <button
             onClick={() => handlePageChange(Math.min(page + 1, totalPages))}
             disabled={page === totalPages}
-            className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-gray-600 dark:text-gray-400"
           >
             &gt;
           </button>

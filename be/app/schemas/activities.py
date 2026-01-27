@@ -196,7 +196,7 @@ class ActivityRegistrationRequest(BaseModel):
     """활동 신청 요청"""
     # 비회원 정보 (회원은 선택사항, 비회원은 필수)
     name: Optional[str] = Field(None, max_length=100, description="이름")
-    student_id: Optional[str] = Field(None, pattern=r'^\d{8}$', description="학번")
+    student_id: Optional[str] = Field(None, pattern=r'^\d{8,20}$', description="학번/수험번호")
     department: Optional[str] = Field(None, max_length=100, description="학과")
     phone: Optional[str] = Field(None, pattern=r'^010-?\d{4}-?\d{4}$', description="전화번호")
     email: Optional[str] = Field(None, description="이메일")
