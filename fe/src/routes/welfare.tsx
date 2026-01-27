@@ -120,20 +120,20 @@ function Welfare() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Page Title */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-4">복지사업</h1>
-        <p className="text-gray-500">학생회의 복지사업을 확인하세요.</p>
+        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">복지사업</h1>
+        <p className="text-gray-500 dark:text-gray-400">학생회의 복지사업을 확인하세요.</p>
       </div>
 
       <CategoryFilter selectedCategory={selectedCategory} onSelect={setSelectedCategory} />
 
       {/* Content */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 transition-colors">
         {selectedCategory === '대여사업' ? (
           <div>
-            <h2 className="text-2xl font-bold mb-6">대여사업</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">대여사업</h2>
             {loading ? (
               <div className="text-center py-12">
-                <p className="text-gray-500">로딩 중...</p>
+                <p className="text-gray-500 dark:text-gray-400">로딩 중...</p>
               </div>
             ) : error ? (
               <div className="text-center py-12">
@@ -141,7 +141,7 @@ function Welfare() {
               </div>
             ) : rentalItems.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500">대여 가능한 물품이 없습니다.</p>
+                <p className="text-gray-500 dark:text-gray-400">대여 가능한 물품이 없습니다.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -155,8 +155,8 @@ function Welfare() {
           <div className="space-y-6">
             <div className="flex items-start justify-between gap-6 flex-col lg:flex-row lg:items-center">
               <div>
-                <h2 className="text-2xl font-bold mb-2">사물함</h2>
-                <p className="text-gray-600">사물함 대여/연장/반납을 신청하세요.</p>
+                <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">사물함</h2>
+                <p className="text-gray-600 dark:text-gray-400">사물함 대여/연장/반납을 신청하세요.</p>
               </div>
               <LockerActions
                 rentalPeriodLabel={rentalPeriodLabel}
@@ -171,14 +171,14 @@ function Welfare() {
               />
             </div>
 
-            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">사물함 배치도</h3>
+            <div className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 bg-gray-50 dark:bg-slate-800 transition-colors">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">사물함 배치도</h3>
               {lockerLoading ? (
-                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 bg-white flex items-center justify-center text-gray-400 text-sm">
+                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
                   배치도 불러오는 중...
                 </div>
               ) : lockerError ? (
-                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 bg-white flex items-center justify-center text-red-500 text-sm">
+                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-red-500 text-sm">
                   {lockerError}
                 </div>
               ) : lockerInfo?.layout_image_url ? (
@@ -186,11 +186,11 @@ function Welfare() {
                   <img
                     src={lockerInfo.layout_image_url}
                     alt="사물함 배치도"
-                    className="w-full rounded-md border border-gray-200"
+                    className="w-full rounded-md border border-gray-200 dark:border-slate-700"
                   />
                 </div>
               ) : (
-                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 bg-white flex items-center justify-center text-gray-400 text-sm">
+                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
                   배치도 정보가 없습니다.
                 </div>
               )}

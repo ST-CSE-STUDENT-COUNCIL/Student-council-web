@@ -111,10 +111,10 @@ function MyPage() {
       <div className="flex min-h-[calc(100vh-300px)] items-center justify-center px-4 py-12">
         <div className="text-center">
           <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             로그인이 필요한 페이지입니다
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             마이페이지를 이용하려면 로그인해주세요.
           </p>
           <Link
@@ -139,25 +139,25 @@ function MyPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">마이페이지</h1>
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">마이페이지</h1>
 
       <div className="flex flex-col lg:flex-row gap-6">
         <aside className="w-full lg:w-64 flex-shrink-0">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700 mb-6">
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-3xl mb-3">
+              <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-3xl mb-3">
                 🧑‍🎓
               </div>
-              <h2 className="text-lg font-bold text-gray-900">{currentUser.name}</h2>
-              <p className="text-sm text-gray-500 mb-4">{currentUser.student_id}</p>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{currentUser.name}</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{currentUser.student_id}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6 space-y-3 text-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-slate-700 mb-6 space-y-3 text-sm">
             <InfoRow label="학생회비" value={getMembershipStatus(currentUser)} />
             {shouldShowVerificationButton ? (
-              <div className="flex justify-between items-center text-sm bg-white border border-gray-200 rounded-lg px-3 py-2">
-                <span className="text-gray-600">학적 인증</span>
+              <div className="flex justify-between items-center text-sm bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2">
+                <span className="text-gray-600 dark:text-gray-400">학적 인증</span>
                 <button
                   type="button"
                   onClick={() => setShowVerifyModal(true)}
@@ -176,14 +176,14 @@ function MyPage() {
             <SummaryCard title="완료 행사" value={completedEvents.length} tone="gray" />
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 divide-y divide-gray-200">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 divide-y divide-gray-200 dark:divide-slate-700">
             {sidebarItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as typeof activeTab)}
                 className={`w-full px-4 py-3 text-left font-medium text-sm transition ${activeTab === item.id
-                  ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-l-4 border-blue-600'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'
                   }`}
               >
                 {item.label}
@@ -194,14 +194,14 @@ function MyPage() {
           <div className="mt-6 space-y-2">
             <button
               onClick={() => setShowPasswordModal(true)}
-              className="w-full py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-medium text-sm flex items-center justify-center gap-2"
+              className="w-full py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition font-medium text-sm flex items-center justify-center gap-2"
             >
               <Key size={16} />
               비밀번호 변경
             </button>
             <button
               onClick={handleWithdraw}
-              className="w-full py-2 border border-red-300 rounded-lg text-red-600 hover:bg-red-50 transition font-medium text-sm flex items-center justify-center gap-2"
+              className="w-full py-2 border border-red-300 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition font-medium text-sm flex items-center justify-center gap-2"
             >
               <UserX size={16} />
               회원 탈퇴
@@ -211,16 +211,16 @@ function MyPage() {
 
         <main className="flex-1 space-y-6">
           {activeTab === 'info' && (
-            <section className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">내 정보</h2>
+            <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">내 정보</h2>
               <div className="space-y-4">
                 <InfoLine label="이름" value={currentUser.name} />
                 <InfoLine label="학번" value={currentUser.student_id} />
                 <InfoLine label="이메일" value={currentUser.email} />
                 <InfoLine label="전화번호" value={formatPhoneNumber(currentUser.phone)} />
                 <InfoLine label="학과" value={currentUser.department || '미등록'} />
-                <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                  <span className="text-gray-600 font-medium">학생회비</span>
+                <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-slate-700">
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">학생회비</span>
                   <Badge tone={getMembershipStatus(currentUser)} />
                 </div>
               </div>
@@ -229,44 +229,44 @@ function MyPage() {
 
           {activeTab === 'events' && (
             <>
-              <section className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">신청한 행사</h2>
-                  <Link to="/activities" className="text-sm text-blue-600 hover:underline">행사 보기</Link>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">신청한 행사</h2>
+                  <Link to="/activities" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">행사 보기</Link>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   {upcomingEvents.map((event) => (
-                    <div key={event.title} className="border border-gray-100 rounded-lg p-4">
+                    <div key={event.title} className="border border-gray-100 dark:border-slate-700 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm text-gray-500">{event.date}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{event.date}</p>
                         <StatusPill status={event.status} />
                       </div>
-                      <p className="font-semibold text-gray-900">{event.title}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{event.title}</p>
                     </div>
                   ))}
                   {upcomingEvents.length === 0 && (
-                    <p className="text-gray-400 text-center py-4 md:col-span-2">신청한 예정 행사가 없습니다.</p>
+                    <p className="text-gray-400 dark:text-gray-500 text-center py-4 md:col-span-2">신청한 예정 행사가 없습니다.</p>
                   )}
                 </div>
               </section>
 
-              <section className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">참여 완료 행사</h2>
-                  <Link to="/activities" className="text-sm text-blue-600 hover:underline">지난 행사 보기</Link>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">참여 완료 행사</h2>
+                  <Link to="/activities" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">지난 행사 보기</Link>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   {completedEvents.map((event) => (
-                    <div key={event.title} className="border border-gray-100 rounded-lg p-4">
+                    <div key={event.title} className="border border-gray-100 dark:border-slate-700 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm text-gray-500">{event.date}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{event.date}</p>
                         <StatusPill status="마감" />
                       </div>
-                      <p className="font-semibold text-gray-900">{event.title}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{event.title}</p>
                     </div>
                   ))}
                   {completedEvents.length === 0 && (
-                    <p className="text-gray-400 text-center py-4 md:col-span-2">참여 완료한 행사가 없습니다.</p>
+                    <p className="text-gray-400 dark:text-gray-500 text-center py-4 md:col-span-2">참여 완료한 행사가 없습니다.</p>
                   )}
                 </div>
               </section>

@@ -23,24 +23,24 @@ export function SuggestionHero({ stats, statusFilter, onStatusFilterChange }: {
 
     const tone: Record<'all' | Suggestion['status'], { active: string; idle: string }> = {
         all: {
-            active: 'bg-slate-100 text-slate-900 border-slate-300',
-            idle: 'bg-transparent text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-800',
+            active: 'bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-600',
+            idle: 'bg-transparent text-slate-600 border-slate-200 hover:border-slate-400 hover:text-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:border-slate-500 dark:hover:text-slate-200',
         },
         received: {
-            active: 'bg-sky-100 text-sky-800 border-sky-200',
-            idle: 'bg-transparent text-slate-600 border-sky-200 hover:border-sky-400 hover:text-sky-700',
+            active: 'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/40 dark:text-sky-300 dark:border-sky-800',
+            idle: 'bg-transparent text-slate-600 border-sky-200 hover:border-sky-400 hover:text-sky-700 dark:text-slate-400 dark:border-sky-800 dark:hover:border-sky-600 dark:hover:text-sky-300',
         },
         in_progress: {
-            active: 'bg-amber-100 text-amber-800 border-amber-200',
-            idle: 'bg-transparent text-slate-600 border-amber-200 hover:border-amber-400 hover:text-amber-700',
+            active: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800',
+            idle: 'bg-transparent text-slate-600 border-amber-200 hover:border-amber-400 hover:text-amber-700 dark:text-slate-400 dark:border-amber-800 dark:hover:border-amber-600 dark:hover:text-amber-300',
         },
         approved: {
-            active: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-            idle: 'bg-transparent text-slate-600 border-emerald-200 hover:border-emerald-400 hover:text-emerald-700',
+            active: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800',
+            idle: 'bg-transparent text-slate-600 border-emerald-200 hover:border-emerald-400 hover:text-emerald-700 dark:text-slate-400 dark:border-emerald-800 dark:hover:border-emerald-600 dark:hover:text-emerald-300',
         },
         rejected: {
-            active: 'bg-rose-100 text-rose-800 border-rose-200',
-            idle: 'bg-transparent text-slate-600 border-rose-200 hover:border-rose-400 hover:text-rose-700',
+            active: 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800',
+            idle: 'bg-transparent text-slate-600 border-rose-200 hover:border-rose-400 hover:text-rose-700 dark:text-slate-400 dark:border-rose-800 dark:hover:border-rose-600 dark:hover:text-rose-300',
         },
     }
 
@@ -55,7 +55,7 @@ export function SuggestionHero({ stats, statusFilter, onStatusFilterChange }: {
     return (
         <section className="text-center space-y-8 pt-6 sm:pt-10">
             <div className="space-y-3">
-                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">건의함</h1>
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">건의함</h1>
             </div>
 
             <div className="flex flex-wrap justify-center gap-3 sm:gap-4">

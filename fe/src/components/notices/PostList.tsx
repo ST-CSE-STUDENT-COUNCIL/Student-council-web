@@ -32,9 +32,9 @@ export const PostList = ({ posts }: PostListProps) => {
     };
 
     return (
-        <div className="w-full max-w-5xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="w-full max-w-5xl mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
             {/* Header for Desktop */}
-            <div className="hidden md:flex bg-gray-50 border-b border-gray-100 text-gray-500 font-medium text-sm py-3 px-6 text-center">
+            <div className="hidden md:flex bg-gray-50 dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 text-gray-500 dark:text-gray-400 font-medium text-sm py-3 px-6 text-center">
                 <div className="w-20 shrink-0">번호</div>
                 <div className="w-24 shrink-0">분류</div>
                 <div className="flex-1 text-left px-4">제목</div>
@@ -43,17 +43,19 @@ export const PostList = ({ posts }: PostListProps) => {
             </div>
 
             {/* List Items */}
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-slate-800">
                 {posts.map((post) => (
                     <Link
                         key={post.id}
                         to="/notices/$noticeId"
                         params={{ noticeId: post.id.toString() }}
-                        className="flex flex-col md:flex-row items-start md:items-center py-4 px-6 hover:bg-gray-50 transition-colors group cursor-pointer"
+                        className="flex flex-col md:flex-row items-start md:items-center py-4 px-6 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors group cursor-pointer"
                     >
                         {/* Mobile: Top Row with Category and Date */}
                         <div className="flex items-center justify-between w-full md:w-auto md:hidden mb-2">
-                            <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                            <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${post.board.id === 1
+                                ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                : 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}>
                                 {getSubCategoryLabel(post.subcategory)}
                             </span>
                             <span className="text-xs text-gray-400">{formatDate(post.created_at)}</span>
@@ -66,8 +68,8 @@ export const PostList = ({ posts }: PostListProps) => {
                         <div className="hidden md:block w-24 text-center shrink-0">
                             <span className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold
                                 ${post.board.id === 1
-                                    ? 'bg-blue-50 text-blue-700'
-                                    : 'bg-green-50 text-green-700'}`}>
+                                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                    : 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}>
                                 {getSubCategoryLabel(post.subcategory)}
                             </span>
                         </div>
@@ -78,7 +80,7 @@ export const PostList = ({ posts }: PostListProps) => {
                                 {post.is_pinned && (
                                     <span className="md:hidden text-red-500 text-sm shrink-0">📌</span>
                                 )}
-                                <span className="text-base font-medium text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                                <span className="text-base font-medium text-gray-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
                                     {post.title}
                                 </span>
                             </div>
@@ -89,7 +91,7 @@ export const PostList = ({ posts }: PostListProps) => {
                         </div>
 
                         {/* Desktop: Author, Date, Views */}
-                        <div className="hidden md:block w-28 text-center text-gray-500 text-sm shrink-0">
+                        <div className="hidden md:block w-28 text-center text-gray-500 dark:text-slate-500 text-sm shrink-0">
                             {formatDate(post.created_at)}
                         </div>
 
@@ -97,7 +99,7 @@ export const PostList = ({ posts }: PostListProps) => {
                 ))}
 
                 {posts.length === 0 && (
-                    <div className="py-20 text-center text-gray-500">
+                    <div className="py-20 text-center text-gray-500 dark:text-slate-500">
                         등록된 공지사항이 없습니다.
                     </div>
                 )}

@@ -76,7 +76,7 @@ export function Turnstile({ onVerify, onError, onExpire }: TurnstileProps) {
                     callback: handleVerify,
                     'error-callback': handleError,
                     'expired-callback': handleExpire,
-                    theme: 'light',
+                    theme: 'auto',
                     size: 'normal',
                 })
                 setIsLoaded(true)

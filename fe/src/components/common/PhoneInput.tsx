@@ -90,7 +90,7 @@ export const PhoneInput = ({
             <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                 <Phone
                     size={18}
-                    className={`transition-colors duration-200 ${isFocused ? 'text-blue-500' : 'text-gray-400'
+                    className={`transition-colors duration-200 ${isFocused ? 'text-blue-500' : 'text-gray-400 dark:text-gray-500'
                         }`}
                 />
             </div>
@@ -113,12 +113,12 @@ export const PhoneInput = ({
                 className={`
                     w-full pl-11 pr-10 py-3 
                     border rounded-xl 
-                    text-gray-900 placeholder-gray-400 
+                    text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500
                     transition-all duration-200
                     focus:outline-none focus:ring-2
                     ${isFocused
-                        ? 'border-blue-500 ring-blue-200 bg-white'
-                        : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                        ? 'border-blue-500 ring-blue-200 dark:ring-blue-900/30 bg-white dark:bg-slate-800'
+                        : 'border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600'
                     }
                 `}
             />
@@ -126,13 +126,13 @@ export const PhoneInput = ({
             {/* 완료 체크 아이콘 (유효할 때만 표시) */}
             {showStatus && (
                 <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                    <Check size={18} className="text-gray-400" />
+                    <Check size={18} className="text-gray-400 dark:text-gray-500" />
                 </div>
             )}
 
             {/* 포커스 시 힌트 메시지 */}
             {isFocused && (
-                <div className="absolute -bottom-6 left-0 text-xs text-gray-500 animate-fade-in">
+                <div className="absolute -bottom-6 left-0 text-xs text-gray-500 dark:text-gray-400 animate-fade-in">
                     숫자만 입력하면 자동으로 형식이 적용됩니다
                 </div>
             )}

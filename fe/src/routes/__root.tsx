@@ -19,7 +19,7 @@ export const Route = createRootRoute({
     notFoundComponent: NotFound,
     component: () => (
         <>
-            <div className="flex flex-col min-h-screen bg-slate-50 font-sans selection:bg-blue-100 selection:text-blue-900">
+            <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#020617] font-sans selection:bg-blue-100 dark:selection:bg-indigo-900/50 selection:text-blue-900 dark:selection:text-indigo-100 transition-colors">
                 <Header />
                 <main className="flex-1 w-full">
                     <Outlet />

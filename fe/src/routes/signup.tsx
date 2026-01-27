@@ -126,7 +126,7 @@ function SignUp() {
     }
 
     return (
-        <div className="min-h-screen flex bg-white">
+        <div className="min-h-screen flex bg-white dark:bg-slate-900">
             {/* Left Section - Branding */}
             <div className="hidden lg:flex w-5/12 bg-[#0F172A] relative overflow-hidden items-center justify-center sticky top-0 h-screen">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-600/40 z-10" />
@@ -144,7 +144,7 @@ function SignUp() {
             </div>
 
             {/* Right Section - Form */}
-            <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-12 lg:p-24 bg-white overflow-y-auto">
+            <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-12 lg:p-24 bg-white dark:bg-slate-900 overflow-y-auto">
                 <div className="w-full max-w-xl space-y-10">
                     {step === 'agreement' ? (
                         <AgreementStep
@@ -157,12 +157,12 @@ function SignUp() {
                             <div className="mb-8">
                                 <button
                                     onClick={() => setStep('agreement')}
-                                    className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1 mb-4"
+                                    className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 flex items-center gap-1 mb-4"
                                 >
                                     ← 약관 동의로 돌아가기
                                 </button>
-                                <h2 className="text-3xl font-bold tracking-tight text-gray-900">회원정보 입력</h2>
-                                <p className="mt-2 text-sm text-gray-500">
+                                <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">회원정보 입력</h2>
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                     학생회 서비스를 이용하기 위한 정보를 입력해주세요.
                                 </p>
                             </div>
@@ -171,30 +171,30 @@ function SignUp() {
                                 <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
                                     {/* Name */}
                                     <div className="sm:col-span-1">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">이름</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">이름</label>
                                         <input
                                             type="text"
                                             {...register('name')}
-                                            className="block w-full px-4 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white"
+                                            className="block w-full px-4 py-3 border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800"
                                             placeholder="홍길동"
                                         />
-                                        {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+                                        {errors.name && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name.message}</p>}
                                     </div>
 
                                     {/* Department */}
                                     <div className="sm:col-span-1">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">학과</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">학과</label>
                                         <input
                                             type="text"
                                             {...register('department')}
-                                            className="block w-full px-4 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white"
+                                            className="block w-full px-4 py-3 border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800"
                                             placeholder="컴퓨터공학과"
                                         />
                                     </div>
 
                                     {/* Student ID */}
                                     <div className="sm:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">학번</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">학번</label>
                                         <div className="flex gap-3">
                                             <div className="relative flex-1">
                                                 <input
@@ -204,9 +204,9 @@ function SignUp() {
                                                     maxLength={8}
                                                     inputMode="numeric"
                                                     pattern="[0-9]*"
-                                                    className={`block w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${studentIdCheck.isAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-200' :
-                                                        studentIdCheck.isAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-200' :
-                                                            'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                                                    className={`block w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${studentIdCheck.isAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30' :
+                                                        studentIdCheck.isAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-900/30' :
+                                                            'border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30'
                                                         }`}
                                                     placeholder="8자리 학번 입력"
                                                 />
@@ -220,19 +220,19 @@ function SignUp() {
                                                 type="button"
                                                 onClick={() => studentIdCheck.check(watchedStudentId)}
                                                 disabled={watchedStudentId.length < 8 || studentIdCheck.isChecking}
-                                                className="whitespace-nowrap px-6 py-3 border border-transparent rounded-xl text-sm font-semibold text-white bg-slate-800 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                                className="whitespace-nowrap px-6 py-3 border border-transparent rounded-xl text-sm font-semibold text-white bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 dark:focus:ring-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                             >
                                                 {studentIdCheck.isChecking ? '확인중' : '중복확인'}
                                             </button>
                                         </div>
                                         {studentIdCheck.isAvailable === false && (
-                                            <p className="mt-2 text-sm text-red-600">🚫 이미 가입된 학번입니다.</p>
+                                            <p className="mt-2 text-sm text-red-600 dark:text-red-400">🚫 이미 가입된 학번입니다.</p>
                                         )}
                                     </div>
 
                                     {/* Email */}
                                     <div className="sm:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">이메일</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">이메일</label>
                                         <div className="flex gap-3 items-center">
                                             <div className="flex items-center gap-2 flex-1">
                                                 <input
@@ -240,10 +240,10 @@ function SignUp() {
                                                     value={watchedEmailPrefix}
                                                     onChange={handleEmailPrefixChange}
                                                     disabled={emailVerification.isVerified}
-                                                    className="block w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white disabled:bg-gray-100 disabled:text-gray-500 border-gray-200 focus:border-blue-500 focus:ring-blue-200"
+                                                    className="block w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 disabled:bg-gray-100 dark:disabled:bg-slate-900 disabled:text-gray-500 border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30"
                                                     placeholder="example"
                                                 />
-                                                <span className="text-gray-700 text-md whitespace-nowrap">@seoultech.ac.kr</span>
+                                                <span className="text-gray-700 dark:text-gray-300 text-md whitespace-nowrap">@seoultech.ac.kr</span>
                                             </div>
                                             <button
                                                 type="button"
@@ -259,10 +259,10 @@ function SignUp() {
 
                                     {/* Verification Code */}
                                     {emailVerification.step === 'sent' && (
-                                        <div className="sm:col-span-2 bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                                        <div className="sm:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl border border-blue-100 dark:border-blue-800">
                                             <div className="flex items-center justify-between mb-3">
-                                                <label className="block text-sm font-medium text-blue-900">인증번호 확인</label>
-                                                <div className={`flex items-center gap-2 text-sm font-mono font-bold ${emailVerification.timer.timeLeft <= 60 ? 'text-red-600' : 'text-blue-600'}`}>
+                                                <label className="block text-sm font-medium text-blue-900 dark:text-blue-200">인증번호 확인</label>
+                                                <div className={`flex items-center gap-2 text-sm font-mono font-bold ${emailVerification.timer.timeLeft <= 60 ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
@@ -273,7 +273,7 @@ function SignUp() {
                                                 <input
                                                     type="text"
                                                     maxLength={6}
-                                                    className="block w-full px-4 py-3 border-blue-200 rounded-xl text-blue-900 placeholder-blue-300 focus:ring-blue-500 focus:border-blue-500 sm:text-lg tracking-widest transition-all bg-white"
+                                                    className="block w-full px-4 py-3 border-blue-200 dark:border-blue-800 rounded-xl text-blue-900 dark:text-blue-100 placeholder-blue-300 dark:placeholder-blue-600 focus:ring-blue-500 focus:border-blue-500 sm:text-lg tracking-widest transition-all bg-white dark:bg-slate-800"
                                                     value={verificationCode}
                                                     onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                                                     placeholder="000000"
@@ -288,7 +288,7 @@ function SignUp() {
                                                 </button>
                                             </div>
                                             <div className="mt-3 flex items-center justify-between">
-                                                <p className="text-sm text-blue-600">
+                                                <p className="text-sm text-blue-600 dark:text-blue-400">
                                                     {!emailVerification.timer.isExpired
                                                         ? '이메일로 전송된 6자리 인증번호를 입력해주세요.'
                                                         : '⏰ 인증 시간이 만료되었습니다.'}
@@ -298,7 +298,7 @@ function SignUp() {
                                                         type="button"
                                                         onClick={emailVerification.resendVerification}
                                                         disabled={emailVerification.isSending}
-                                                        className="text-sm font-semibold text-blue-700 hover:text-blue-800 underline underline-offset-2 disabled:opacity-50"
+                                                        className="text-sm font-semibold text-blue-700 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline underline-offset-2 disabled:opacity-50"
                                                     >
                                                         {emailVerification.isSending ? '발송중...' : '재전송'}
                                                     </button>
@@ -309,7 +309,7 @@ function SignUp() {
 
                                     {/* Phone */}
                                     <div className="sm:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">전화번호</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">전화번호</label>
                                         <div className="pb-6">
                                             <PhoneInput
                                                 value={watch('phone')}
@@ -323,44 +323,44 @@ function SignUp() {
                                     {/* Password */}
                                     <div className="sm:col-span-2 grid grid-cols-1 gap-6 sm:grid-cols-2">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">비밀번호</label>
                                             <input
                                                 type="password"
                                                 {...register('password')}
-                                                className={`block w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${watchedPassword?.length > 0 && Object.values(passwordValidation).every(Boolean)
-                                                    ? 'border-green-500 focus:border-green-500 focus:ring-green-200'
+                                                className={`block w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${watchedPassword?.length > 0 && Object.values(passwordValidation).every(Boolean)
+                                                    ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30'
                                                     : watchedPassword?.length > 0
-                                                        ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200'
-                                                        : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                                                        ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200 dark:focus:ring-amber-900/30'
+                                                        : 'border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30'
                                                     }`}
                                                 placeholder="8자 이상, 영문+숫자+특수문자"
                                             />
                                             {watchedPassword?.length > 0 && (
                                                 <div className="mt-3 grid grid-cols-2 gap-2">
-                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.minLength ? 'text-green-600' : 'text-gray-400'}`}>
+                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.minLength ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                                         <CheckCircle size={12} /> 8자 이상
                                                     </div>
-                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasLetter ? 'text-green-600' : 'text-gray-400'}`}>
+                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasLetter ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                                         <CheckCircle size={12} /> 영문 포함
                                                     </div>
-                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-400'}`}>
+                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasNumber ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                                         <CheckCircle size={12} /> 숫자 포함
                                                     </div>
-                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-gray-400'}`}>
+                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                                         <CheckCircle size={12} /> 특수문자 포함
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호 확인</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">비밀번호 확인</label>
                                             <div className="relative">
                                                 <input
                                                     type="password"
                                                     {...register('password_confirm')}
-                                                    className={`block w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${showPasswordError ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                                                        : watchedPasswordConfirm && passwordsMatch ? 'border-green-500 focus:border-green-500 focus:ring-green-200'
-                                                            : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                                                    className={`block w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${showPasswordError ? 'border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-900/30'
+                                                        : watchedPasswordConfirm && passwordsMatch ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30'
+                                                            : 'border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30'
                                                         }`}
                                                     placeholder="비밀번호 재입력"
                                                 />
@@ -371,7 +371,7 @@ function SignUp() {
                                                 )}
                                             </div>
                                             {showPasswordError && (
-                                                <p className="mt-2 text-sm text-red-600">비밀번호가 일치하지 않습니다</p>
+                                                <p className="mt-2 text-sm text-red-600 dark:text-red-400">비밀번호가 일치하지 않습니다</p>
                                             )}
                                         </div>
                                     </div>
@@ -389,7 +389,7 @@ function SignUp() {
                                     <button
                                         type="submit"
                                         disabled={!emailVerification.isVerified || studentIdCheck.isAvailable !== true || showPasswordError || !turnstileToken}
-                                        className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.99]"
+                                        className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-gray-900 dark:bg-blue-600 hover:bg-gray-800 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.99]"
                                     >
                                         가입하기
                                     </button>
@@ -416,32 +416,32 @@ function AgreementStep({
     return (
         <div className="space-y-8">
             <div>
-                <h2 className="text-3xl font-bold tracking-tight text-gray-900">약관 동의</h2>
-                <p className="mt-2 text-sm text-gray-500">
+                <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">약관 동의</h2>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     서비스 이용을 위해 약관 및 개인정보 수집에 동의해주세요.
                 </p>
             </div>
 
             <div className="space-y-6">
                 {/* Terms */}
-                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                <div className="bg-gray-50 dark:bg-slate-800 p-6 rounded-2xl border border-gray-100 dark:border-slate-700">
                     <div className="flex items-start">
                         <div className="flex h-6 items-center">
                             <input
                                 id="terms"
                                 type="checkbox"
-                                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                                className="h-5 w-5 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-600 bg-white dark:bg-slate-700 cursor-pointer"
                                 checked={agreements.terms}
                                 onChange={(e) => setAgreements(prev => ({ ...prev, terms: e.target.checked }))}
                             />
                         </div>
                         <div className="ml-3 text-sm leading-6">
-                            <label htmlFor="terms" className="font-medium text-gray-900 cursor-pointer">
+                            <label htmlFor="terms" className="font-medium text-gray-900 dark:text-gray-200 cursor-pointer">
                                 이용약관 동의 (필수)
                             </label>
-                            <p className="text-gray-500 mt-1">
+                            <p className="text-gray-500 dark:text-gray-400 mt-1">
                                 학생회 서비스 이용과 관련된 제반 사항에 동의합니다.
-                                <Link to="/terms" target="_blank" className="text-blue-600 hover:text-blue-500 ml-1 underline">
+                                <Link to="/terms" target="_blank" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 ml-1 underline">
                                     약관 전문 보기
                                 </Link>
                             </p>
@@ -450,24 +450,24 @@ function AgreementStep({
                 </div>
 
                 {/* Privacy */}
-                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                <div className="bg-gray-50 dark:bg-slate-800 p-6 rounded-2xl border border-gray-100 dark:border-slate-700">
                     <div className="flex items-start">
                         <div className="flex h-6 items-center">
                             <input
                                 id="privacy"
                                 type="checkbox"
-                                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                                className="h-5 w-5 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-600 bg-white dark:bg-slate-700 cursor-pointer"
                                 checked={agreements.privacy}
                                 onChange={(e) => setAgreements(prev => ({ ...prev, privacy: e.target.checked }))}
                             />
                         </div>
                         <div className="ml-3 text-sm leading-6">
-                            <label htmlFor="privacy" className="font-medium text-gray-900 cursor-pointer">
+                            <label htmlFor="privacy" className="font-medium text-gray-900 dark:text-gray-200 cursor-pointer">
                                 개인정보 수집 및 이용 동의 (필수)
                             </label>
-                            <p className="text-gray-500 mt-1">
+                            <p className="text-gray-500 dark:text-gray-400 mt-1">
                                 원활한 서비스 제공을 위한 개인정보 수집에 동의합니다.
-                                <Link to="/privacy" target="_blank" className="text-blue-600 hover:text-blue-500 ml-1 underline">
+                                <Link to="/privacy" target="_blank" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 ml-1 underline">
                                     내용 상세보기
                                 </Link>
                             </p>
@@ -475,9 +475,9 @@ function AgreementStep({
                     </div>
                 </div>
 
-                <div className="flex items-start p-4 bg-blue-50/50 rounded-xl">
-                    <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
-                    <p className="text-sm text-blue-800">
+                <div className="flex items-start p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl">
+                    <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3 flex-shrink-0" />
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
                         모든 약관에 동의하셔야 회원가입을 진행할 수 있습니다.
                     </p>
                 </div>
@@ -487,15 +487,15 @@ function AgreementStep({
                 type="button"
                 onClick={onNext}
                 disabled={!agreements.terms || !agreements.privacy}
-                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.99]"
+                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-gray-900 dark:bg-blue-600 hover:bg-gray-800 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.99]"
             >
                 다음으로
             </button>
 
             <div className="text-center">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                     이미 계정이 있으신가요?
-                    <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-500 ml-1">
+                    <Link to="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 ml-1">
                         로그인하기
                     </Link>
                 </p>

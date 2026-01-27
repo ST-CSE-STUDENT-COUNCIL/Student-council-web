@@ -48,7 +48,7 @@ function Clubs() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-gray-400">등록된 동아리가 없습니다.</p>
+          <p className="text-gray-400 dark:text-gray-500">등록된 동아리가 없습니다.</p>
         </div>
       )}
 

@@ -123,7 +123,7 @@ function ActivitiesPage() {
 
                     {/* Right Column: Filter & List */}
                     <div className="w-full lg:w-1/3 flex flex-col sticky top-8 max-h-[calc(100vh-4rem)]">
-                        <div className="bg-gray-50 p-4 rounded-xl flex flex-col flex-1 min-h-0 border border-gray-100 shadow-sm">
+                        <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-xl flex flex-col flex-1 min-h-0 border border-gray-100 dark:border-slate-800 shadow-sm">
                             <div className="mb-4 shrink-0">
                                 <ActivityFilter
                                     search={search}
@@ -146,13 +146,13 @@ function ActivitiesPage() {
 
                             {/* Pagination Controls */}
                             {totalPages > 1 && (
-                                <div className="flex justify-center items-center gap-2 pt-2 border-t border-gray-200 shrink-0">
+                                <div className="flex justify-center items-center gap-2 pt-2 border-t border-gray-200 dark:border-slate-800 shrink-0">
                                     <button
                                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                         disabled={currentPage === 1}
-                                        className="p-1.5 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                         </svg>
                                     </button>
@@ -164,7 +164,7 @@ function ActivitiesPage() {
                                                 onClick={() => setCurrentPage(page)}
                                                 className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-all ${currentPage === page
                                                     ? 'bg-blue-600 text-white shadow-sm'
-                                                    : 'text-gray-600 hover:bg-gray-200'
+                                                    : 'text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-slate-800'
                                                     }`}
                                             >
                                                 {page}
@@ -175,9 +175,9 @@ function ActivitiesPage() {
                                     <button
                                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                         disabled={currentPage === totalPages}
-                                        className="p-1.5 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                         </svg>
                                     </button>

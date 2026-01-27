@@ -1,6 +1,81 @@
 @import "tailwindcss";
 @source "../../node_modules/@tremor/react/dist";
 
+/* Enable dark mode with class strategy */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================
+   Dark Mode Overrides - Premium Dark Theme
+   ============================================ */
+.dark {
+    /* Base Colors - Deep Zinc/Slate for modern feel */
+    --color-background: #020617;
+    /* Slate 950 - Almost black */
+    --color-background-secondary: #0f172a;
+    /* Slate 900 */
+    --color-background-tertiary: #1e293b;
+    /* Slate 800 */
+
+    /* Text Colors - High contrast but soft */
+    --color-foreground: #f8fafc;
+    /* Slate 50 */
+    --color-foreground-secondary: #cbd5e1;
+    /* Slate 300 */
+    --color-foreground-muted: #94a3b8;
+    /* Slate 400 */
+
+    /* Borders - Subtle and refined */
+    --color-border: #1e293b;
+    /* Slate 800 */
+    --color-border-light: #0f172a;
+    /* Slate 900 */
+
+    /* Tremor Dark Overrides */
+    --color-tremor-brand-faint: #0B1221;
+    --color-tremor-brand-muted: #172554;
+    --color-tremor-brand-subtle: #1e40af;
+    --color-tremor-brand: #3b82f6;
+    --color-tremor-brand-emphasis: #60a5fa;
+    --color-tremor-brand-inverted: #030712;
+
+    --color-tremor-background: #0f172a;
+    /* Card Background */
+    --color-tremor-background-muted: #1e293b;
+    --color-tremor-background-subtle: #334155;
+    --color-tremor-background-emphasis: #475569;
+    --color-tremor-background-inverted: #f8fafc;
+
+    --color-tremor-content: #f1f5f9;
+    --color-tremor-content-muted: #cbd5e1;
+    --color-tremor-content-subtle: #94a3b8;
+    --color-tremor-content-emphasis: #f8fafc;
+    --color-tremor-content-inverted: #000000;
+    --color-tremor-content-strong: #ffffff;
+
+    --color-tremor-border: #1e293b;
+    --color-tremor-ring: #0f172a;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+html {
+    color-scheme: light;
+}
+
+html.dark {
+    color-scheme: dark;
+}
+
+body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    /* Improved transition for theme switching */
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 @theme {
     --font-sans: "Pretendard", ui-sans-serif, system-ui, sans-serif;
 
@@ -42,6 +117,7 @@
         transform: scale(0);
         opacity: 0;
     }
+
     to {
         transform: scale(1);
         opacity: 1;
@@ -53,6 +129,7 @@
         opacity: 0;
         transform: translateY(-4px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
