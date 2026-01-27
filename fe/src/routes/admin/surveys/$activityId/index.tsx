@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { activityAdminApi, activityApi } from '../../../lib/api/activities'
-import type { ActivityRegistrationResponse, Activity } from '../../../types/activities'
+import { activityAdminApi, activityApi } from '../../../../lib/api/activities'
+import type { ActivityRegistrationResponse, Activity } from '../../../../types/activities'
 import {
     User, Phone, Building,
     Hash, Calendar, Eye, BarChart3, Check, Loader2, ArrowLeft, Users,
@@ -15,15 +15,15 @@ import {
     type ColumnDef
 } from '@tanstack/react-table'
 import { AnimatePresence } from 'framer-motion'
-import { StatusDropdown } from '../../../components/activities/admin/StatusDropdown'
-import { RegistrationDetailModal } from '../../../components/activities/admin/RegistrationDetailModal'
-import { ImagePreviewModal } from '../../../components/activities/admin/ImagePreviewModal'
-import { SurveyStatsPanel } from '../../../components/activities/admin/SurveyStatsPanel'
-import { SurveyRegistrationsPanel } from '../../../components/activities/admin/SurveyRegistrationsPanel'
-import type { SurveyQuestionStat } from '../../../components/activities/admin/surveyStatsTypes'
-import type { StatusFilterType } from '../../../components/activities/admin/surveyTypes'
+import { StatusDropdown } from '../../../../components/activities/admin/StatusDropdown'
+import { RegistrationDetailModal } from '../../../../components/activities/admin/RegistrationDetailModal'
+import { ImagePreviewModal } from '../../../../components/activities/admin/ImagePreviewModal'
+import { SurveyStatsPanel } from '../../../../components/activities/admin/SurveyStatsPanel'
+import { SurveyRegistrationsPanel } from '../../../../components/activities/admin/SurveyRegistrationsPanel'
+import type { SurveyQuestionStat } from '../../../../components/activities/admin/surveyStatsTypes'
+import type { StatusFilterType } from '../../../../components/activities/admin/surveyTypes'
 
-export const Route = createFileRoute('/admin/surveys/$activityId')({
+export const Route = createFileRoute('/admin/surveys/$activityId/')({
     component: SurveyActivityDetailPage,
 })
 
