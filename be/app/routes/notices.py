@@ -339,14 +339,39 @@ async def get_notice_attachment_presigned_url(
 @router.post(
     "/admin/notices/draft",
     summary="Draft 게시글 생성 (관리자)",
-    description="파일 업로드를 위한 post_id를 미리 획득"
+    description="파일 업로드를 위한 post_id를 미리 획득",
+    responses={
+        429: {"model": ErrorResponse, "description": "요청이 너무 빠릅니다"}
+    }
 )
-@limiter.limit("1/3second")  # Draft 생성 연타 방지
 async def create_draft_notice(
     body: DraftCreateRequest,
     request: Request,
     current_user: dict = Depends(require_admin)
 ):
+    # [Rate Limit] DB 기반 중복/연타 방지 (최근 3초)
+    try:
+        from datetime import datetime, timedelta, timezone
+        
+        limit_time = (datetime.now(timezone.utc) - timedelta(seconds=3)).isoformat()
+        
+        # 최근 3초 내 작성된 글이 있는지 확인 (Draft 포함 모든 글)
+        recent_check = supabase.table("posts")\
+            .select("id", count="exact")\
+            .eq("author_id", current_user["id"])\
+            .gte("created_at", limit_time)\
+            .execute()
+            
+        if recent_check.count and recent_check.count > 0:
+             raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="잠시 후 다시 시도해주세요."
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Rate limit check failed: {e}")
+
     """
     Draft 게시글 생성
     
@@ -395,15 +420,39 @@ async def create_draft_notice(
     description="관리자만 공지사항을 작성할 수 있습니다 (Presigned URL로 첨부파일 업로드)",
     responses={
         401: {"model": ErrorResponse},
-        403: {"model": ErrorResponse, "description": "권한 없음"}
+        403: {"model": ErrorResponse, "description": "권한 없음"},
+        429: {"model": ErrorResponse, "description": "요청이 너무 빠릅니다"}
     }
 )
-@limiter.limit("1/3second")  # 더블 클릭 방지
 async def create_notice(
     body: NoticeCreateRequest,
     request: Request,
     current_user: dict = Depends(require_admin)
 ):
+    # [Rate Limit] DB 기반 중복/연타 방지 (최근 3초 내 작성 금지)
+    try:
+        from datetime import datetime, timedelta, timezone
+        
+        # UTC 기준 3초 전
+        limit_time = (datetime.now(timezone.utc) - timedelta(seconds=3)).isoformat()
+        
+        # Draft가 아닌 실제 글 작성만 체크 (posts 테이블)
+        recent_check = supabase.table("posts")\
+            .select("id", count="exact")\
+            .eq("author_id", current_user["id"])\
+            .gte("created_at", limit_time)\
+            .execute()
+            
+        if recent_check.count and recent_check.count > 0:
+             raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="잠시 후 다시 시도해주세요."
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Rate limit check failed: {e}")
+
     """
     공지사항 작성 (관리자 전용, Presigned URL 사용)
     
