@@ -250,9 +250,26 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
 
                 {/* Content Section */}
                 <div className="relative w-full md:absolute md:top-0 md:right-0 md:bottom-0 md:w-5/12 p-6 flex flex-col bg-white dark:bg-slate-900">
-                    <div className="flex justify-between items-start mb-4 shrink-0">
+                    <div className="flex justify-between items-start mb-2 shrink-0">
                         <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight">{activity.title}</h2>
                     </div>
+
+                    {/* 신청 기간 정보 (상단 이동) */}
+                    {(activity.registration_start || activity.registration_end) && (
+                        <div className="flex items-center gap-2 mb-6 text-sm text-gray-600 dark:text-gray-400">
+                            <span className="font-bold text-indigo-600 dark:text-indigo-400 shrink-0">신청 기간</span>
+                            <span className="w-px h-3 bg-gray-300 dark:bg-gray-600 mx-1"></span>
+                            <span className="font-medium font-numeric tracking-tight truncate">
+                                {activity.registration_start ? new Date(activity.registration_start).toLocaleString('ko-KR', {
+                                    month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
+                                }) : ''}
+                                <span className="mx-1 text-gray-400">~</span>
+                                {activity.registration_end ? new Date(activity.registration_end).toLocaleString('ko-KR', {
+                                    month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
+                                }) : ''}
+                            </span>
+                        </div>
+                    )}
 
                     <div className="flex-1 overflow-y-auto mb-6 custom-scrollbar pr-2 min-h-[100px] md:min-h-0">
                         <p className="text-gray-600 dark:text-gray-300 text-base md:text-lg leading-relaxed whitespace-pre-wrap break-words">
@@ -261,48 +278,6 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
                     </div>
 
                     <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-5 mt-auto">
-                        {/* 신청 기간 정보 */}
-                        {(activity.registration_start || activity.registration_end) && (
-                            <div className="mb-4 pb-4 border-b border-gray-200 dark:border-slate-700">
-                                <div className="flex items-center gap-1.5 mb-2">
-                                    <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">신청 기간</span>
-                                </div>
-                                <div className="space-y-1">
-                                    {activity.registration_start && (
-                                        <div className="flex items-start gap-2 text-xs">
-                                            <span className="font-medium text-gray-500 dark:text-gray-400 min-w-[32px]">시작</span>
-                                            <span className="text-gray-700 dark:text-gray-300 font-medium">
-                                                {new Date(activity.registration_start).toLocaleString('ko-KR', {
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                    hour12: true
-                                                })}
-                                            </span>
-                                        </div>
-                                    )}
-                                    {activity.registration_end && (
-                                        <div className="flex items-start gap-2 text-xs">
-                                            <span className="font-medium text-gray-500 dark:text-gray-400 min-w-[32px]">마감</span>
-                                            <span className="text-gray-700 dark:text-gray-300 font-medium">
-                                                {new Date(activity.registration_end).toLocaleString('ko-KR', {
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                    hour: '2-digit',
-                                                    minute: '2-digit',
-                                                    hour12: true
-                                                })}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
                         {/* 정원 표시 (notice, survey 제외) */}
                         {activity.max_capacity && !['notice', 'survey', 'demand_survey'].includes(activity.type) && (
                             <>
