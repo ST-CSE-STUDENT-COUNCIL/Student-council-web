@@ -14,7 +14,7 @@ from app.config import settings
 
 # 다양한 문서/압축 파일 확장자 모음
 BROAD_ALLOWED_EXTENSIONS = {
-    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf',
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf', '.svg',
     '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.hwp', '.hwpx', '.txt',
     '.zip', '.7z', '.rar'
 }
