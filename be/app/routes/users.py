@@ -107,10 +107,13 @@ async def change_password(
     "/verification-image/upload",
     summary="학적 인증 이미지 직접 업로드",
     responses={
-        401: {"model": ErrorResponse, "description": "인증 필요"}
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        429: {"model": ErrorResponse, "description": "요청 횟수 초과"}
     }
 )
+@limiter.limit("10/hour")
 async def upload_verification_image_direct(
+    request: Request,
     file: UploadFile,
     current_user: dict = Depends(get_current_user)
 ):

@@ -3,7 +3,7 @@
 """
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import math
 from app.schemas.suggestions import (
     SuggestionCreateRequest,
@@ -61,8 +61,6 @@ async def create_suggestion(
     """건의함 작성 (승인된 사용자만 가능)"""
     # [Rate Limit] DB 기반 중복/연타 방지 (최근 5초 내 작성 금지)
     try:
-        from datetime import datetime, timedelta, timezone
-        
         # UTC 기준 5초 전
         limit_time = (datetime.now(timezone.utc) - timedelta(seconds=5)).isoformat()
         

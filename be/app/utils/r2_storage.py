@@ -38,17 +38,24 @@ BUCKET_URL_MAP = {
 }
 
 
-# R2 클라이언트 초기화
+# R2 클라이언트 싱글톤 (연결 재사용으로 성능 향상)
+_r2_client = None
+
+
 def get_r2_client():
-    """Cloudflare R2 클라이언트 생성"""
-    return boto3.client(
-        's3',
-        endpoint_url=f'https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com',
-        aws_access_key_id=settings.R2_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
-        region_name='auto',  # R2는 auto 사용
-        config=Config(signature_version='s3v4')
-    )
+    """Cloudflare R2 클라이언트 반환 (싱글톤)"""
+    global _r2_client
+    if _r2_client is None:
+        _r2_client = boto3.client(
+            's3',
+            endpoint_url=f'https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com',
+            aws_access_key_id=settings.R2_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
+            region_name='auto',  # R2는 auto 사용
+            config=Config(signature_version='s3v4')
+        )
+    return _r2_client
+
 
 
 def validate_file_extension(filename: str, allowed_extensions: set) -> str:

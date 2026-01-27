@@ -4,7 +4,7 @@ boards + posts 통합 API
 """
 from fastapi import APIRouter, HTTPException, Depends, status, Query, File, UploadFile, Form
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import math
 from app.schemas.notices import (
     NoticeListResponse,
@@ -351,8 +351,6 @@ async def create_draft_notice(
 ):
     # [Rate Limit] DB 기반 중복/연타 방지 (최근 3초)
     try:
-        from datetime import datetime, timedelta, timezone
-        
         limit_time = (datetime.now(timezone.utc) - timedelta(seconds=3)).isoformat()
         
         # 최근 3초 내 작성된 글이 있는지 확인 (Draft 포함 모든 글)
@@ -431,8 +429,6 @@ async def create_notice(
 ):
     # [Rate Limit] DB 기반 중복/연타 방지 (최근 3초 내 작성 금지)
     try:
-        from datetime import datetime, timedelta, timezone
-        
         # UTC 기준 3초 전
         limit_time = (datetime.now(timezone.utc) - timedelta(seconds=3)).isoformat()
         

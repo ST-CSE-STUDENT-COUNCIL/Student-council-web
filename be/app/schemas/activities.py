@@ -208,6 +208,9 @@ class ActivityRegistrationRequest(BaseModel):
     # 카톡방 초대용
     kakao_id: Optional[str] = Field(None, max_length=100, description="카카오톡 ID")
     
+    # Turnstile 토큰 (비회원 필수)
+    turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile 토큰 (비회원 신청 시 필수)")
+    
     @field_validator('phone')
     @classmethod
     def normalize_phone(cls, v: Optional[str]) -> Optional[str]:
