@@ -88,14 +88,41 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     const isAnonymousType = activity.type === 'demand_survey' || activity.type === 'survey'
     const isNonMember = user?.verification_status !== 'approved' // 비회원 여부 확인
 
-    // 섹션별로 필드 그룹화 (섹션 기능 제거됨)
+    // 섹션별로 필드 그룹화
     const sections = useMemo(() => {
-        if (!detailActivity?.form_fields || detailActivity.form_fields.length === 0) return []
+        if (!detailActivity?.form_fields) return []
 
-        return [{
+        const result: { title: string; fields: import('../../../types/activities').FormField[] }[] = []
+        let currentSection: { title: string; fields: import('../../../types/activities').FormField[] } = {
             title: '추가 정보',
-            fields: detailActivity.form_fields
-        }]
+            fields: []
+        }
+
+        // 섹터가 하나도 없으면 기본 섹션 하나에 다 넣음
+        const hasSectionBreak = detailActivity.form_fields.some(f => f.type === 'section')
+
+        if (!hasSectionBreak) {
+            if (detailActivity.form_fields.length > 0) {
+                return [{ title: '추가 정보', fields: detailActivity.form_fields }]
+            }
+            return []
+        }
+
+        detailActivity.form_fields.forEach(field => {
+            if (field.type === 'section') {
+                // 이전 섹션이 있고 필드가 있거나, 첫 섹션이 아니면 저장
+                if (currentSection.fields.length > 0 || result.length > 0) {
+                    result.push(currentSection)
+                }
+                currentSection = { title: field.label, fields: [] }
+            } else {
+                currentSection.fields.push(field)
+            }
+        })
+        // 마지막 섹션 저장 (필드가 있거나 빈 섹션이라도)
+        result.push(currentSection)
+
+        return result
     }, [detailActivity?.form_fields])
 
     const totalSteps = 1 + (sections.length > 0 ? sections.length : 0)
