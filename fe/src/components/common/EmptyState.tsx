@@ -32,14 +32,14 @@ export function EmptyState({
 
     return (
         <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                <Icon className="w-8 h-8 text-gray-400" />
+            <div className="w-16 h-16 rounded-full bg-surface-muted flex items-center justify-center mb-4">
+                <Icon className="w-8 h-8 text-foreground-muted" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+            <h3 className="text-lg font-semibold text-foreground mb-1">
                 {displayTitle}
             </h3>
             {description && (
-                <p className="text-sm text-gray-500 max-w-sm mb-4">
+                <p className="text-sm text-foreground-secondary max-w-sm mb-4">
                     {description}
                 </p>
             )}
@@ -65,12 +65,12 @@ export function ErrorState({
                         <AlertCircle className="w-8 h-8 text-red-600" />
                     </div>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">오류가 발생했습니다</h3>
-                <p className="text-gray-600 mb-6 leading-relaxed">{message}</p>
+                <h3 className="text-xl font-bold text-foreground mb-2">오류가 발생했습니다</h3>
+                <p className="text-foreground-secondary mb-6 leading-relaxed">{message}</p>
                 {onRetry && (
                     <button
                         onClick={onRetry}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-foreground text-surface font-semibold rounded-xl hover:opacity-90 transition-opacity shadow-sm"
                     >
                         <RefreshCcw size={18} />
                         다시 시도

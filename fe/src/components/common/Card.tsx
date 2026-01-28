@@ -21,9 +21,9 @@ export function Card({
     return (
         <div
             className={`
-                bg-white rounded-xl border border-gray-200 shadow-sm
+                bg-surface rounded-xl border border-border-default shadow-sm
                 ${paddingClasses[padding]}
-                ${hover ? 'hover:shadow-md hover:border-gray-300 transition-all duration-200' : ''}
+                ${hover ? 'hover:shadow-md hover:border-border-muted transition-all duration-200' : ''}
                 ${className}
             `}
         >
@@ -41,7 +41,7 @@ Card.Header = function CardHeader({
     className?: string
 }) {
     return (
-        <div className={`border-b border-gray-100 pb-4 mb-4 ${className}`}>
+        <div className={`border-b border-border-default pb-4 mb-4 ${className}`}>
             {children}
         </div>
     )
@@ -55,7 +55,7 @@ Card.Title = function CardTitle({
     className?: string
 }) {
     return (
-        <h3 className={`text-lg font-bold text-gray-900 ${className}`}>
+        <h3 className={`text-lg font-bold text-foreground ${className}`}>
             {children}
         </h3>
     )
@@ -79,7 +79,7 @@ Card.Footer = function CardFooter({
     className?: string
 }) {
     return (
-        <div className={`border-t border-gray-100 pt-4 mt-4 ${className}`}>
+        <div className={`border-t border-border-default pt-4 mt-4 ${className}`}>
             {children}
         </div>
     )
