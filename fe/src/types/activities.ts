@@ -15,6 +15,10 @@ export type FormField = {
     required: boolean
     placeholder?: string
     help_text?: string
+    condition?: {
+        target: string
+        value: string
+    }
 }
 
 // 활동 목록 항목

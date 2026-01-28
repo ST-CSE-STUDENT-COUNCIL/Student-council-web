@@ -109,6 +109,11 @@ export const FormFieldsManager = ({ fields, onChange }: FormFieldsManagerProps) 
                                 <span className={`mr-2 ${field.type === 'section' ? 'font-bold text-indigo-900' : 'font-medium'}`}>
                                     {field.label}
                                 </span>
+                                {field.condition && (
+                                    <span className="text-xs text-orange-600 bg-orange-50 px-1 rounded border border-orange-200 mr-2" title={`조건: ${field.condition.target} 질문이 '${field.condition.value}'일 때 표시`}>
+                                        조건부
+                                    </span>
+                                )}
                                 {field.type !== 'section' && (
                                     <>
                                         <span className="text-gray-500 text-xs bg-gray-100 px-1 rounded mr-2">{field.type}</span>
@@ -174,7 +179,7 @@ export const FormFieldsManager = ({ fields, onChange }: FormFieldsManagerProps) 
                                 </div>
                             )}
 
-                            {currentField.type !== 'section' && (
+                            {currentField.type !== 'section' ? (
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
@@ -183,6 +188,61 @@ export const FormFieldsManager = ({ fields, onChange }: FormFieldsManagerProps) 
                                         id="field-required"
                                     />
                                     <label htmlFor="field-required" className="text-sm">필수 응답</label>
+                                </div>
+                            ) : (
+                                <div className="border-t pt-2 mt-2">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <input
+                                            type="checkbox"
+                                            id="condition-toggle"
+                                            checked={!!currentField.condition}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setCurrentField({ ...currentField, condition: { target: '', value: '' } })
+                                                } else {
+                                                    const { condition, ...rest } = currentField
+                                                    setCurrentField(rest)
+                                                }
+                                            }}
+                                        />
+                                        <label htmlFor="condition-toggle" className="text-sm font-medium">조건부 표시 (이전 답변에 따라)</label>
+                                    </div>
+
+                                    {currentField.condition && (
+                                        <div className="pl-4 space-y-2 bg-gray-50 p-2 rounded">
+                                            <div>
+                                                <label className="block text-xs text-gray-600">어떤 질문의 답변을 확인할까요?</label>
+                                                <select
+                                                    className="w-full border rounded text-xs p-1"
+                                                    value={currentField.condition.target}
+                                                    onChange={(e) => setCurrentField({
+                                                        ...currentField,
+                                                        condition: { ...currentField.condition!, target: e.target.value }
+                                                    })}
+                                                >
+                                                    <option value="">-- 질문 선택 --</option>
+                                                    {fields
+                                                        .filter((f, idx) => (editingIndex === null || idx < editingIndex) && ['radio', 'select'].includes(f.type))
+                                                        .map(f => (
+                                                            <option key={f.name} value={f.name}>{f.label}</option>
+                                                        ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-600">어떤 값일 때 보여줄까요?</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full border rounded text-xs p-1"
+                                                    value={currentField.condition.value}
+                                                    placeholder="예: 참여"
+                                                    onChange={(e) => setCurrentField({
+                                                        ...currentField,
+                                                        condition: { ...currentField.condition!, value: e.target.value }
+                                                    })}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

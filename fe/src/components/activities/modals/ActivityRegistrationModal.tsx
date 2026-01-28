@@ -88,12 +88,12 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     const isAnonymousType = activity.type === 'demand_survey' || activity.type === 'survey'
     const isNonMember = user?.verification_status !== 'approved' // 비회원 여부 확인
 
-    // 섹션별로 필드 그룹화
+    // 섹션별로 필드 그룹화 (섹션 기능 복구됨)
     const sections = useMemo(() => {
         if (!detailActivity?.form_fields) return []
 
-        const result: { title: string; fields: import('../../../types/activities').FormField[] }[] = []
-        let currentSection: { title: string; fields: import('../../../types/activities').FormField[] } = {
+        const result: { title: string; fields: import('../../../types/activities').FormField[]; condition?: { target: string; value: string } }[] = []
+        let currentSection: { title: string; fields: import('../../../types/activities').FormField[]; condition?: { target: string; value: string } } = {
             title: '추가 정보',
             fields: []
         }
@@ -114,7 +114,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                 if (currentSection.fields.length > 0 || result.length > 0) {
                     result.push(currentSection)
                 }
-                currentSection = { title: field.label, fields: [] }
+                currentSection = { title: field.label, fields: [], condition: field.condition }
             } else {
                 currentSection.fields.push(field)
             }
@@ -125,8 +125,19 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         return result
     }, [detailActivity?.form_fields])
 
-    const totalSteps = 1 + (sections.length > 0 ? sections.length : 0)
-    const hasAdditionalFields = sections.length > 0
+    // 조건에 따라 보여줄 섹션 필터링
+    const visibleSections = useMemo(() => {
+        return sections.filter(section => {
+            if (!section.condition) return true
+
+            // target 필드의 응답값 확인
+            const targetValue = formData.form_responses?.[section.condition.target]
+            return targetValue === section.condition.value
+        })
+    }, [sections, formData.form_responses])
+
+    const totalSteps = 1 + (visibleSections.length > 0 ? visibleSections.length : 0)
+    const hasAdditionalFields = visibleSections.length > 0
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -250,7 +261,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             return validateStep1()
         }
 
-        const currentSectionInfo = sections[step - 2]
+        const currentSectionInfo = visibleSections[step - 2]
         if (!currentSectionInfo) return true
 
         for (const field of currentSectionInfo.fields) {
@@ -530,12 +541,12 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                 className="space-y-4"
                             >
                                 <div className="bg-purple-50 p-4 rounded-xl text-sm text-purple-800">
-                                    <p className="font-bold mb-1">{sections[step - 2]?.title || '추가 정보'}</p>
+                                    <p className="font-bold mb-1">{visibleSections[step - 2]?.title || '추가 정보'}</p>
                                     <p>활동에 필요한 추가 정보를 입력해주세요.</p>
                                 </div>
 
                                 <div className="space-y-4">
-                                    {sections[step - 2]?.fields?.map((field: import('../../../types/activities').FormField) => (
+                                    {visibleSections[step - 2]?.fields?.map((field: import('../../../types/activities').FormField) => (
                                         <div key={field.name}>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 {field.label}
