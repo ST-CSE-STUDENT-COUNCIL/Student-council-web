@@ -10,7 +10,16 @@ from app.schemas.users import (
     UploadVerificationImageRequest,
     UploadVerificationImageResponse,
     WithdrawRequest,
-    WithdrawResponse
+    WithdrawResponse,
+    ProfileUpdateRequest,
+    ProfileUpdateResponse,
+    ProfileUpdateStatusResponse,
+    EmailChangeRequest,
+    EmailChangeVerifyRequest,
+    EmailChangeResponse,
+    EmailChangeVerifyResponse,
+    PhoneChangeRequest,
+    PhoneChangeResponse
 )
 from app.schemas.auth import ErrorResponse
 from app.schemas.activities import MyActivitiesResponse
@@ -107,10 +116,13 @@ async def change_password(
     "/verification-image/upload",
     summary="학적 인증 이미지 직접 업로드",
     responses={
-        401: {"model": ErrorResponse, "description": "인증 필요"}
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        429: {"model": ErrorResponse, "description": "요청 횟수 초과"}
     }
 )
+@limiter.limit("10/hour")
 async def upload_verification_image_direct(
+    request: Request,
     file: UploadFile,
     current_user: dict = Depends(get_current_user)
 ):
@@ -332,4 +344,287 @@ async def get_my_activities(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"활동 목록 조회 실패: {str(e)}"
+        )
+
+
+# ============================================================================
+# 프로필 변경 API (이름/학번 - 관리자 승인)
+# ============================================================================
+
+@router.post(
+    "/profile-update",
+    summary="프로필 변경 요청 (이름/학번)",
+    description="이름 또는 학번 변경을 요청합니다. 학적 증명 이미지 첨부 필수, 관리자 승인 후 반영됩니다.",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        400: {"model": ErrorResponse, "description": "잘못된 요청"}
+    }
+)
+async def request_profile_update(
+    body: ProfileUpdateRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """프로필 변경 요청 생성"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # 현재 값 가져오기
+        current_value = current_user.get(body.field_name)
+        
+        # 같은 필드에 대해 pending 상태인 요청이 있는지 확인
+        existing = admin_supabase.table('profile_update_requests')\
+            .select('id')\
+            .eq('user_id', current_user['id'])\
+            .eq('field_name', body.field_name)\
+            .eq('status', 'pending')\
+            .execute()
+        
+        if existing.data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="이미 대기 중인 변경 요청이 있습니다"
+            )
+        
+        # 요청 생성
+        result = admin_supabase.table('profile_update_requests').insert({
+            'user_id': current_user['id'],
+            'field_name': body.field_name,
+            'current_value': current_value,
+            'new_value': body.new_value,
+            'verification_image_url': body.verification_image_url,
+            'status': 'pending'
+        }).execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="변경 요청 생성 실패"
+            )
+        
+        data = result.data[0]
+        from datetime import datetime
+        return {
+            "id": data['id'],
+            "field_name": data['field_name'],
+            "current_value": data['current_value'],
+            "new_value": data['new_value'],
+            "status": data['status'],
+            "created_at": data['created_at'],
+            "message": "변경 요청이 접수되었습니다. 관리자 승인을 기다려주세요."
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"변경 요청 실패: {str(e)}"
+        )
+
+
+@router.get(
+    "/profile-update",
+    summary="내 프로필 변경 요청 조회",
+    description="내가 요청한 프로필 변경 상태를 조회합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"}
+    }
+)
+async def get_my_profile_updates(
+    current_user: dict = Depends(get_current_user)
+):
+    """내 프로필 변경 요청 목록"""
+    try:
+        result = supabase.table('profile_update_requests')\
+            .select('id, field_name, current_value, new_value, status, rejection_reason, created_at, processed_at')\
+            .eq('user_id', current_user['id'])\
+            .order('created_at', desc=True)\
+            .execute()
+        
+        return {"requests": result.data or []}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"조회 실패: {str(e)}"
+        )
+
+
+# ============================================================================
+# 이메일 변경 API
+# ============================================================================
+
+@router.post(
+    "/email/send-verification",
+    summary="이메일 변경 인증번호 발송",
+    description="새 이메일로 6자리 인증번호를 발송합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        400: {"model": ErrorResponse, "description": "이미 사용 중인 이메일"},
+        429: {"model": ErrorResponse, "description": "요청 횟수 초과"}
+    }
+)
+@limiter.limit("3/minute")
+async def send_email_change_verification(
+    body: EmailChangeRequest,
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+):
+    """이메일 변경용 인증번호 발송"""
+    from app.utils.email import create_email_verification, send_verification_email
+    
+    try:
+        new_email = body.new_email
+        
+        # 현재 이메일과 같은지 확인
+        if new_email == current_user['email']:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="현재 사용 중인 이메일과 동일합니다"
+            )
+        
+        # 다른 사용자가 이미 사용 중인지 확인
+        existing = supabase.table('users')\
+            .select('id')\
+            .eq('email', new_email)\
+            .execute()
+        
+        if existing.data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="이미 사용 중인 이메일입니다"
+            )
+        
+        # 인증번호 생성 및 발송
+        code = await create_email_verification(new_email)
+        send_verification_email(new_email, code)
+        
+        return {"message": "인증번호가 발송되었습니다. 5분 내에 입력해주세요."}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"인증번호 발송 실패: {str(e)}"
+        )
+
+
+@router.post(
+    "/email/verify",
+    summary="이메일 변경 인증 확인",
+    description="인증번호 확인 후 이메일을 변경합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        400: {"model": ErrorResponse, "description": "인증번호 불일치 또는 만료"}
+    }
+)
+async def verify_email_change(
+    body: EmailChangeVerifyRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """이메일 변경 인증 확인 및 변경"""
+    from app.utils.email import verify_email_code
+    
+    try:
+        # 인증번호 확인
+        is_valid = await verify_email_code(body.new_email, body.code)
+        
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="인증번호가 올바르지 않거나 만료되었습니다"
+            )
+        
+        # 이메일 변경 (users 테이블 + Supabase Auth)
+        admin_supabase = get_supabase_admin()
+        
+        # 1. users 테이블 업데이트
+        admin_supabase.table('users')\
+            .update({'email': body.new_email})\
+            .eq('id', current_user['id'])\
+            .execute()
+        
+        # 2. Supabase Auth 이메일 업데이트
+        admin_supabase.auth.admin.update_user_by_id(
+            current_user['id'],
+            {'email': body.new_email}
+        )
+        
+        # 인증 기록 사용 처리
+        admin_supabase.table('email_verifications')\
+            .update({'used': True})\
+            .eq('email', body.new_email)\
+            .eq('verified', True)\
+            .execute()
+        
+        return {
+            "new_email": body.new_email,
+            "message": "이메일이 성공적으로 변경되었습니다. 다시 로그인해주세요."
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"이메일 변경 실패: {str(e)}"
+        )
+
+
+# ============================================================================
+# 전화번호 변경 API
+# ============================================================================
+
+@router.patch(
+    "/phone",
+    summary="전화번호 변경",
+    description="비밀번호 확인 후 전화번호를 즉시 변경합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        400: {"model": ErrorResponse, "description": "비밀번호 불일치"}
+    }
+)
+async def change_phone(
+    body: PhoneChangeRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """전화번호 변경"""
+    from app.database import get_fresh_admin_client
+    
+    try:
+        # 비밀번호 확인
+        try:
+            fresh_client = get_fresh_admin_client()
+            fresh_client.auth.sign_in_with_password({
+                "email": current_user['email'],
+                "password": body.password
+            })
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="비밀번호가 올바르지 않습니다"
+            )
+        
+        # 전화번호 정규화 (하이픈 제거)
+        new_phone = body.new_phone.replace('-', '')
+        
+        # 전화번호 업데이트
+        admin_supabase = get_supabase_admin()
+        admin_supabase.table('users')\
+            .update({'phone': new_phone})\
+            .eq('id', current_user['id'])\
+            .execute()
+        
+        return {
+            "new_phone": new_phone,
+            "message": "전화번호가 성공적으로 변경되었습니다."
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"전화번호 변경 실패: {str(e)}"
         )
