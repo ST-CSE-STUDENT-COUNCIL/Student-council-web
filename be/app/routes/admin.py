@@ -256,6 +256,15 @@ async def approve_user(user_id: str):
             .eq('id', user_id)\
             .execute()
         
+        # 승인 완료 후 인증 이미지 삭제 (개인정보 보호)
+        if user['verification_image_url']:
+            try:
+                from app.database import supabase
+                supabase.storage.from_('verification-images').remove([user['verification_image_url']])
+            except Exception as e:
+                # 이미지 삭제 실패해도 승인은 유지 (로그만 남김)
+                print(f"[APPROVE INFO] 이미지 삭제 실패 (무시됨): {str(e)}")
+        
         return ApproveUserResponse(user_id=user_id)
     
     except HTTPException:

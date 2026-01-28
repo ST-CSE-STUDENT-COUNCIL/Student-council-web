@@ -440,20 +440,7 @@ async def login(body: LoginRequest, request: Request):
             )
         
         access_token = auth_response.session.access_token
-        
-        if not auth_response.user or not auth_response.session:
-            # 로그인 실패 기록
-            await record_login_attempt(body.student_id, False, client_ip)
-            
-            # 실패 횟수 증가
-            result = await increment_failed_attempts(body.student_id)
-            
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"학번 또는 비밀번호가 올바르지 않습니다. (실패 {result['failed_attempts']}/15)"
-            )
-        
-        access_token = auth_response.session.access_token
+        refresh_token = auth_response.session.refresh_token
         
         # 4. 거절된 사용자는 로그인 차단
         if user_data['verification_status'] == 'rejected':
@@ -469,6 +456,7 @@ async def login(body: LoginRequest, request: Request):
         
         return LoginResponse(
             access_token=access_token,
+            refresh_token=refresh_token,
             user=user_data
         )
     

@@ -20,7 +20,7 @@ class FormField(BaseModel):
     """추가 정보 수집 필드 정의"""
     name: str = Field(..., description="필드 이름 (영문)")
     label: str = Field(..., description="필드 라벨 (한글)")
-    type: Literal["text", "textarea", "select", "radio", "checkbox", "number", "date", "file"] = Field(..., description="입력 타입")
+    type: Literal["text", "textarea", "select", "radio", "checkbox", "number", "date", "file", "section"] = Field(..., description="입력 타입")
     options: Optional[List[str]] = Field(None, description="선택지 (select, radio, checkbox용)")
     required: bool = Field(default=False, description="필수 여부")
     placeholder: Optional[str] = Field(None, description="플레이스홀더")
