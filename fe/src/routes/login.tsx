@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
-import { User, Lock, AlertCircle } from 'lucide-react'
+import { User, Lock, AlertCircle, Clock } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { authApi } from '../lib/api/auth'
 import { Turnstile } from '../components/common/Turnstile'
@@ -20,6 +20,31 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [blockedUntil, setBlockedUntil] = useState<Date | null>(null)
+  const [remainingDisplay, setRemainingDisplay] = useState<string>('')
+
+  useEffect(() => {
+    if (!blockedUntil) return
+
+    const timer = setInterval(() => {
+      const now = new Date()
+      const diff = blockedUntil.getTime() - now.getTime()
+
+      if (diff <= 0) {
+        setBlockedUntil(null)
+        setErrorMessage(null)
+        setRemainingDisplay('')
+        clearInterval(timer)
+        return
+      }
+
+      const minutes = Math.floor(diff / 60000)
+      const seconds = Math.floor((diff % 60000) / 1000)
+      setRemainingDisplay(`${minutes}분 ${seconds}초`)
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [blockedUntil])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,8 +76,18 @@ function Login() {
         const detail = error.response.data?.detail || ''
 
         if (status === 403) {
-          // 거절된 사용자 또는 로그인 차단
-          setErrorMessage(detail || '접근이 거부되었습니다.')
+          // Check for block message
+          // Backend format: "로그인이 일시 차단되었습니다. 약 10분 후 다시 시도해주세요."
+          const match = detail.match(/약 (\d+)분/)
+          if (match) {
+            const minutes = parseInt(match[1])
+            const unblockTime = new Date(Date.now() + minutes * 60 * 1000)
+            setBlockedUntil(unblockTime)
+            setRemainingDisplay(`${minutes}분 0초`)
+            setErrorMessage(`로그인이 일시적으로 제한되었습니다.`)
+          } else {
+            setErrorMessage(detail || '접근이 거부되었습니다.')
+          }
         } else if (status === 401) {
           setErrorMessage(detail || '학번 또는 비밀번호가 일치하지 않습니다.')
         } else if (status === 404) {
@@ -100,7 +135,28 @@ function Login() {
             </p>
           </div>
 
-          {errorMessage && (
+          {blockedUntil && (
+            <div className="rounded-xl bg-red-50 dark:bg-red-900/20 p-4 border border-red-100 dark:border-red-800 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0">
+                  <Clock className="h-5 w-5 text-red-500 dark:text-red-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-red-800 dark:text-red-300">
+                    로그인 제한됨
+                  </h3>
+                  <div className="mt-1 text-2xl font-bold text-red-600 dark:text-red-400 tabular-nums">
+                    {remainingDisplay}
+                  </div>
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400/80">
+                    잠시 후 다시 시도해주세요.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {errorMessage && !blockedUntil && (
             <div className="rounded-xl bg-red-50 dark:bg-red-900/20 p-4 animate-in fade-in slide-in-from-top-2 duration-300 border border-red-100 dark:border-red-800">
               <div className="flex">
                 <div className="flex-shrink-0">
