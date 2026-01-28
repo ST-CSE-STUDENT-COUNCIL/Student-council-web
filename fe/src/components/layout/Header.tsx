@@ -1,4 +1,4 @@
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate, useLocation } from '@tanstack/react-router'
 import { useAuthStore } from '../../store/useAuthStore'
 import { authApi } from '../../lib/api/auth'
 import { navItems } from './Menu'
@@ -10,6 +10,7 @@ import { ThemeToggle } from '../common/ThemeToggle'
 export default function Header() {
     const { isAuthenticated, user, logout } = useAuthStore()
     const navigate = useNavigate()
+    const location = useLocation()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen)
@@ -70,7 +71,7 @@ export default function Header() {
                                     <span>⚙️ 관리자</span>
                                 </Link>
                             )}
-                            <ThemeToggle />
+                            {!location.pathname.startsWith('/admin') && <ThemeToggle />}
                             <button
                                 onClick={handleLogout}
                                 className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 dark:hover:text-red-400 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
