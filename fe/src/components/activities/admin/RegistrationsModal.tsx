@@ -13,7 +13,7 @@ import { StatusDropdown } from './StatusDropdown'
 import { RegistrationDetailModal } from './RegistrationDetailModal'
 import { SurveyStatsModal } from './SurveyStatsModal'
 import { ImagePreviewModal } from './ImagePreviewModal'
-import { AnimatePresence, motion } from 'framer-motion'
+
 
 type RegistrationsModalProps = {
     activity: ActivityListItem

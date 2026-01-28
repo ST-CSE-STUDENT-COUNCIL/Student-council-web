@@ -88,41 +88,14 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     const isAnonymousType = activity.type === 'demand_survey' || activity.type === 'survey'
     const isNonMember = user?.verification_status !== 'approved' // 비회원 여부 확인
 
-    // 섹션별로 필드 그룹화
+    // 섹션별로 필드 그룹화 (섹션 기능 제거됨)
     const sections = useMemo(() => {
-        if (!detailActivity?.form_fields) return []
+        if (!detailActivity?.form_fields || detailActivity.form_fields.length === 0) return []
 
-        const result: { title: string; fields: import('../../../types/activities').FormField[] }[] = []
-        let currentSection: { title: string; fields: import('../../../types/activities').FormField[] } = {
+        return [{
             title: '추가 정보',
-            fields: []
-        }
-
-        // 섹터가 하나도 없으면 기본 섹션 하나에 다 넣음
-        const hasSectionBreak = detailActivity.form_fields.some(f => f.type === 'section')
-
-        if (!hasSectionBreak) {
-            if (detailActivity.form_fields.length > 0) {
-                return [{ title: '추가 정보', fields: detailActivity.form_fields }]
-            }
-            return []
-        }
-
-        detailActivity.form_fields.forEach(field => {
-            if (field.type === 'section') {
-                // 이전 섹션이 있고 필드가 있거나, 첫 섹션이 아니면 저장
-                if (currentSection.fields.length > 0 || result.length > 0) {
-                    result.push(currentSection)
-                }
-                currentSection = { title: field.label, fields: [] }
-            } else {
-                currentSection.fields.push(field)
-            }
-        })
-        // 마지막 섹션 저장 (필드가 있거나 빈 섹션이라도)
-        result.push(currentSection)
-
-        return result
+            fields: detailActivity.form_fields
+        }]
     }, [detailActivity?.form_fields])
 
     const totalSteps = 1 + (sections.length > 0 ? sections.length : 0)
@@ -535,7 +508,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                 </div>
 
                                 <div className="space-y-4">
-                                    {sections[step - 2]?.fields?.map((field: any) => (
+                                    {sections[step - 2]?.fields?.map((field: import('../../../types/activities').FormField) => (
                                         <div key={field.name}>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 {field.label}
@@ -544,7 +517,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
                                             {field.type === 'select' ? (
                                                 <div className="space-y-2">
-                                                    {field.options?.map((opt) => (
+                                                    {field.options?.map((opt: string) => (
                                                         <label key={opt} className="flex items-center gap-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-all">
                                                             <div className="relative flex items-center justify-center w-5 h-5">
                                                                 <input
@@ -578,7 +551,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                 />
                                             ) : field.type === 'radio' ? (
                                                 <div className="space-y-2">
-                                                    {field.options?.map((opt) => (
+                                                    {field.options?.map((opt: string) => (
                                                         <label key={opt} className="flex items-center gap-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-all">
                                                             <div className="relative flex items-center justify-center w-5 h-5">
                                                                 <input
@@ -600,7 +573,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                 </div>
                                             ) : field.type === 'checkbox' ? (
                                                 <div className="space-y-2">
-                                                    {field.options?.map((opt) => (
+                                                    {field.options?.map((opt: string) => (
                                                         <label key={opt} className="flex items-center gap-2 cursor-pointer">
                                                             <input
                                                                 type="checkbox"

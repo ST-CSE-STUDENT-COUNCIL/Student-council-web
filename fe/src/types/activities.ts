@@ -10,7 +10,7 @@ export type ActivityType = 'event' | 'demand_survey' | 'survey' | 'kakao_invite'
 export type FormField = {
     name: string
     label: string
-    type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'date' | 'file' | 'section'
+    type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'date' | 'file'
     options?: string[]
     required: boolean
     placeholder?: string
