@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Modal } from '../../common/Modal'
@@ -83,23 +83,62 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         }
     }, [isOpen, activity.id, user])
 
-    // 추가 질문 여부 확인 (detailActivity 기준)
-    const hasAdditionalFields = detailActivity?.form_fields && detailActivity.form_fields.length > 0
+    // 추가 질문 여부 확인 (detailActivity 기준) - Removed
+    // const hasAdditionalFields = detailActivity?.form_fields && detailActivity.form_fields.length > 0 --> logic moved below as sections check
     const isAnonymousType = activity.type === 'demand_survey' || activity.type === 'survey'
     const isNonMember = user?.verification_status !== 'approved' // 비회원 여부 확인
+
+    // 섹션별로 필드 그룹화
+    const sections = useMemo(() => {
+        if (!detailActivity?.form_fields) return []
+
+        const result: { title: string; fields: import('../../../types/activities').FormField[] }[] = []
+        let currentSection: { title: string; fields: import('../../../types/activities').FormField[] } = {
+            title: '추가 정보',
+            fields: []
+        }
+
+        // 섹터가 하나도 없으면 기본 섹션 하나에 다 넣음
+        const hasSectionBreak = detailActivity.form_fields.some(f => f.type === 'section')
+
+        if (!hasSectionBreak) {
+            if (detailActivity.form_fields.length > 0) {
+                return [{ title: '추가 정보', fields: detailActivity.form_fields }]
+            }
+            return []
+        }
+
+        detailActivity.form_fields.forEach(field => {
+            if (field.type === 'section') {
+                // 이전 섹션이 있고 필드가 있거나, 첫 섹션이 아니면 저장
+                if (currentSection.fields.length > 0 || result.length > 0) {
+                    result.push(currentSection)
+                }
+                currentSection = { title: field.label, fields: [] }
+            } else {
+                currentSection.fields.push(field)
+            }
+        })
+        // 마지막 섹션 저장 (필드가 있거나 빈 섹션이라도)
+        result.push(currentSection)
+
+        return result
+    }, [detailActivity?.form_fields])
+
+    const totalSteps = 1 + (sections.length > 0 ? sections.length : 0)
+    const hasAdditionalFields = sections.length > 0
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        // 1단계이고 추가 질문이 있다면, 어떤 이유로든 제출(Submit) 이벤트가 발생하면
-        // 서버로 보내지 말고 '다음 단계'로 이동 처리 (엔터키 방지, 버튼 오작동 방지)
-        if (step === 1 && hasAdditionalFields) {
+        // 마지막 단계가 아니면 다음 단계로
+        if (step < totalSteps) {
             handleNext()
             return
         }
 
-        // 제출 전 유효성 검사 (모든 케이스)
-        if (!validateStep1()) return
+        // 제출 전 유효성 검사 (현재 단계)
+        if (!validateStep()) return
 
         setLoading(true)
         setError(null)
@@ -205,17 +244,46 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         return true
     }
 
-    // 다음 단계로 이동 전 유효성 검사
+    // 현재 단계 유효성 검사
+    const validateStep = () => {
+        if (step === 1) {
+            return validateStep1()
+        }
+
+        const currentSectionInfo = sections[step - 2]
+        if (!currentSectionInfo) return true
+
+        for (const field of currentSectionInfo.fields) {
+            if (field.required) {
+                const value = formData.form_responses?.[field.name]
+                if (!value || (Array.isArray(value) && value.length === 0)) {
+                    toast.error(`${field.label} 항목을 입력해주세요.`)
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    // 다음 단계로 이동
     const handleNext = (e?: React.MouseEvent) => {
-        // 버튼 클릭 등을 통한 기본 동작 차단
         if (e) {
             e.preventDefault()
             e.stopPropagation()
         }
 
-        if (!validateStep1()) return
+        if (!validateStep()) return
 
-        setStep(2)
+        if (step < totalSteps) {
+            setStep(prev => prev + 1)
+        }
+    }
+
+    // 이전 단계로 이동
+    const handlePrev = () => {
+        if (step > 1) {
+            setStep(prev => prev - 1)
+        }
     }
 
     // 엔터키 처리 로직
@@ -226,14 +294,9 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
             e.preventDefault() // 기본 폼 제출 방지
 
-            // 1단계이고 추가 질문이 있다면 다음 단계로
-            if (step === 1 && hasAdditionalFields) {
+            // 마지막 단계가 아니면 다음 단계로
+            if (step < totalSteps) {
                 handleNext()
-            }
-            // 2단계(마지막 단계)에서는 엔터키로 제출 안됨 (버튼 클릭 강제)
-            if (step === 2) {
-                e.stopPropagation()
-                e.preventDefault()
             }
         }
     }
@@ -245,55 +308,42 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         return (
             <div className="flex gap-3">
                 {step === 1 ? (
-                    <>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
-                        >
-                            취소
-                        </button>
-                        {hasAdditionalFields ? (
-                            <button
-                                type="button"
-                                onClick={handleNext}
-                                className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
-                            >
-                                다음
-                            </button>
-                        ) : (
-                            <button
-                                type="submit"
-                                form="activity-registration-form"
-                                disabled={loading}
-                                className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
-                            >
-                                {loading ? (
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                ) : '신청하기'}
-                            </button>
-                        )}
-                    </>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                    >
+                        취소
+                    </button>
                 ) : (
-                    <>
-                        <button
-                            type="button"
-                            onClick={() => setStep(1)}
-                            className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
-                        >
-                            이전
-                        </button>
-                        <button
-                            type="submit"
-                            form="activity-registration-form"
-                            disabled={loading}
-                            className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
-                        >
-                            {loading ? (
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : '신청하기'}
-                        </button>
-                    </>
+                    <button
+                        type="button"
+                        onClick={handlePrev}
+                        className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                    >
+                        이전
+                    </button>
+                )}
+
+                {step < totalSteps ? (
+                    <button
+                        type="button"
+                        onClick={handleNext}
+                        className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
+                    >
+                        다음
+                    </button>
+                ) : (
+                    <button
+                        type="submit"
+                        form="activity-registration-form"
+                        disabled={loading}
+                        className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
+                    >
+                        {loading ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : '신청하기'}
+                    </button>
                 )}
             </div>
         )
@@ -305,11 +355,12 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                 <LoadingSpinnerSmall />
             ) : (
                 <form id="activity-registration-form" onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex flex-col gap-4">
-                    {/* Progress Indicators (Only if there are 2 steps) */}
+                    {/* Progress Indicators (Dynamic) */}
                     {hasAdditionalFields && (
                         <div className="flex items-center gap-2 mb-4">
-                            <div className={`flex-1 h-2 rounded-full transition-colors ${step >= 1 ? 'bg-blue-600' : 'bg-gray-200'}`} />
-                            <div className={`flex-1 h-2 rounded-full transition-colors ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                            {Array.from({ length: totalSteps }).map((_, i) => (
+                                <div key={i} className={`flex-1 h-2 rounded-full transition-colors ${step >= i + 1 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                            ))}
                         </div>
                     )}
 
@@ -328,49 +379,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                 exit={{ opacity: 0, x: -20 }}
                                 className="space-y-4"
                             >
-                                {/* 신청 기간 정보 */}
-                                {(activity.registration_start || activity.registration_end) && (
-                                    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-xl border border-indigo-100">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            <h3 className="font-bold text-indigo-900">신청 기간</h3>
-                                        </div>
-                                        <div className="space-y-1.5 text-sm">
-                                            {activity.registration_start && (
-                                                <div className="flex items-start gap-2">
-                                                    <span className="font-medium text-indigo-700 min-w-[60px]">시작:</span>
-                                                    <span className="text-indigo-900">
-                                                        {new Date(activity.registration_start).toLocaleString('ko-KR', {
-                                                            year: 'numeric',
-                                                            month: 'long',
-                                                            day: 'numeric',
-                                                            hour: '2-digit',
-                                                            minute: '2-digit',
-                                                            hour12: true
-                                                        })}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {activity.registration_end && (
-                                                <div className="flex items-start gap-2">
-                                                    <span className="font-medium text-indigo-700 min-w-[60px]">마감:</span>
-                                                    <span className="text-indigo-900">
-                                                        {new Date(activity.registration_end).toLocaleString('ko-KR', {
-                                                            year: 'numeric',
-                                                            month: 'long',
-                                                            day: 'numeric',
-                                                            hour: '2-digit',
-                                                            minute: '2-digit',
-                                                            hour12: true
-                                                        })}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+                                {/* 신청 기간 정보 제거됨 */}
 
                                 <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-800">
                                     <p className="font-bold mb-1">{activity.title}</p>
@@ -512,21 +521,21 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                             </motion.div>
                         )}
 
-                        {step === 2 && hasAdditionalFields && (
+                        {step > 1 && hasAdditionalFields && (
                             <motion.div
-                                key="step2"
+                                key={`step${step}`}
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: 20 }}
                                 className="space-y-4"
                             >
                                 <div className="bg-purple-50 p-4 rounded-xl text-sm text-purple-800">
-                                    <p className="font-bold mb-1">추가 정보</p>
+                                    <p className="font-bold mb-1">{sections[step - 2]?.title || '추가 정보'}</p>
                                     <p>활동에 필요한 추가 정보를 입력해주세요.</p>
                                 </div>
 
                                 <div className="space-y-4">
-                                    {detailActivity?.form_fields?.map((field) => (
+                                    {sections[step - 2]?.fields?.map((field: any) => (
                                         <div key={field.name}>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 {field.label}

@@ -97,11 +97,24 @@ export const FormFieldsManager = ({ fields, onChange }: FormFieldsManagerProps) 
             ) : (
                 <div className="space-y-2">
                     {fields.map((field, idx) => (
-                        <div key={idx} className="bg-white border rounded p-3 flex justify-between items-center text-sm">
-                            <div>
-                                <span className="font-medium mr-2">{field.label}</span>
-                                <span className="text-gray-500 text-xs bg-gray-100 px-1 rounded mr-2">{field.type}</span>
-                                {field.required && <span className="text-red-500 text-xs">필수</span>}
+                        <div
+                            key={idx}
+                            className={`border rounded p-3 flex justify-between items-center text-sm ${field.type === 'section'
+                                    ? 'bg-indigo-50 border-indigo-200 border-l-4'
+                                    : 'bg-white'
+                                }`}
+                        >
+                            <div className="flex items-center">
+                                {field.type === 'section' && <span className="text-indigo-600 font-bold mr-2">[구역]</span>}
+                                <span className={`mr-2 ${field.type === 'section' ? 'font-bold text-indigo-900' : 'font-medium'}`}>
+                                    {field.label}
+                                </span>
+                                {field.type !== 'section' && (
+                                    <>
+                                        <span className="text-gray-500 text-xs bg-gray-100 px-1 rounded mr-2">{field.type}</span>
+                                        {field.required && <span className="text-red-500 text-xs">필수</span>}
+                                    </>
+                                )}
                             </div>
                             <div className="flex gap-2">
                                 <button type="button" onClick={() => handleEdit(idx)} className="text-blue-600 hover:text-blue-800">수정</button>
@@ -145,6 +158,7 @@ export const FormFieldsManager = ({ fields, onChange }: FormFieldsManagerProps) 
                                     <option value="number">숫자</option>
                                     <option value="date">날짜</option>
                                     <option value="file">파일 첨부</option>
+                                    <option value="section" className="font-bold text-blue-600">-- 섹션 나누기 --</option>
                                 </select>
                             </div>
 
@@ -160,15 +174,17 @@ export const FormFieldsManager = ({ fields, onChange }: FormFieldsManagerProps) 
                                 </div>
                             )}
 
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={currentField.required}
-                                    onChange={e => setCurrentField({ ...currentField, required: e.target.checked })}
-                                    id="field-required"
-                                />
-                                <label htmlFor="field-required" className="text-sm">필수 응답</label>
-                            </div>
+                            {currentField.type !== 'section' && (
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={currentField.required}
+                                        onChange={e => setCurrentField({ ...currentField, required: e.target.checked })}
+                                        id="field-required"
+                                    />
+                                    <label htmlFor="field-required" className="text-sm">필수 응답</label>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex justify-end gap-2 mt-6">
