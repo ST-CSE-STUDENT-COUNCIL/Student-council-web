@@ -483,9 +483,9 @@ function AdminKakaoTalkPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    {reg.image_url ? (
+                                                    {reg.verification_image_url ? (
                                                         <button
-                                                            onClick={() => setPreviewImageUrl(reg.image_url!)}
+                                                            onClick={() => setPreviewImageUrl(reg.verification_image_url!)}
                                                             className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
                                                             title="인증샷 보기"
                                                         >
@@ -497,8 +497,9 @@ function AdminKakaoTalkPage() {
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <StatusDropdown
+                                                        registrationId={reg.id}
                                                         currentStatus={reg.status}
-                                                        onStatusChange={(status) => handleStatusChange(reg.id, status)}
+                                                        onStatusChange={handleStatusChange}
                                                     />
                                                 </td>
                                                 <td className="px-4 py-3 text-center">
@@ -553,13 +554,13 @@ function AdminKakaoTalkPage() {
                 {selectedRegistration && (
                     <RegistrationDetailModal
                         registration={selectedRegistration}
+                        activityDetail={activityDetail}
                         onClose={() => setSelectedRegistration(null)}
-                        onStatusChange={(status) => {
+                        onStatusChange={(_id, status) => {
                             handleStatusChange(selectedRegistration.id, status)
                             setSelectedRegistration(null)
                         }}
-                        onImageClick={setPreviewImageUrl}
-                        activityType="kakao_invite"
+                        onImagePreview={setPreviewImageUrl}
                     />
                 )}
 
