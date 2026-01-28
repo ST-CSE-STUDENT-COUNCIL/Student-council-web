@@ -122,7 +122,7 @@ function SuggestionPage() {
 
     // 비로그인 사용자 안내 화면
     return (
-        <div className="min-h-screen bg-[var(--color-background)] transition-colors">
+        <div className="min-h-screen bg-(--color-background) transition-colors">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-24 space-y-10">
                 <SuggestionHero
                     stats={stats}

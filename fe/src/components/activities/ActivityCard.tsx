@@ -238,9 +238,9 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
 
                     {/* Status Badge */}
                     <div className="absolute top-4 left-4 z-10 flex gap-2">
-                        <span className={`px-3 py-1.5 text-sm font-bold rounded-full shadow-sm backdrop-blur-md ${status === 'active' ? 'bg-green-500/90 text-white' :
+                        <span className={`px-3 py-1.5 text-sm font-bold rounded-full shadow-sm backdrop-blur-md ${status === 'active'? 'bg-green-500/90 text-white' :
                             status === 'scheduled' ? 'bg-blue-500/90 text-white' :
-                                'bg-gray-500/90 text-white'
+                                'bg-foreground-muted text-surface'
                             }`}>
                             {status === 'active' ? '진행중' :
                                 status === 'scheduled' ? '예정' : '마감'}

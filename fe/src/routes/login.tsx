@@ -108,7 +108,7 @@ function Login() {
     <div className="min-h-screen flex bg-surface">
       {/* Left Section - Branding */}
       <div className="hidden lg:flex w-5/12 bg-[#0F172A] relative overflow-hidden items-center justify-center">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-600/40 z-10" />
+        <div className="absolute inset-0 bg-linear-to-br from-blue-600/20 to-indigo-600/40 z-10" />
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
         <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
 
@@ -138,7 +138,7 @@ function Login() {
           {blockedUntil && (
             <div className="rounded-xl bg-red-50 dark:bg-red-900/20 p-4 border border-red-100 dark:border-red-800 animate-pulse">
               <div className="flex items-center gap-3">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <Clock className="h-5 w-5 text-red-500 dark:text-red-400" />
                 </div>
                 <div className="flex-1">
@@ -159,7 +159,7 @@ function Login() {
           {errorMessage && !blockedUntil && (
             <div className="rounded-xl bg-red-50 dark:bg-red-900/20 p-4 animate-in fade-in slide-in-from-top-2 duration-300 border border-red-100 dark:border-red-800">
               <div className="flex">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   <AlertCircle className="h-5 w-5 text-red-400 dark:text-red-300" aria-hidden="true" />
                 </div>
                 <div className="ml-3">

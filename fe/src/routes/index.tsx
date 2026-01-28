@@ -33,7 +33,7 @@ export const Route = createFileRoute('/')({
 
 const PORTALS = [
     { name: '학교 홈페이지', icon: School, url: 'https://www.seoultech.ac.kr/index.jsp', color: 'text-blue-600', bg: 'bg-blue-50' },
-    { name: '학과 홈페이지', icon: Laptop, url: 'https://computer.seoultech.ac.kr/', color: 'text-slate-600', bg: 'bg-slate-50' },
+    { name: '학과 홈페이지', icon: Laptop, url: 'https://computer.seoultech.ac.kr/', color: 'text-foreground-secondary', bg: 'bg-surface-muted' },
     { name: 'SUIS', icon: MonitorCheck, url: 'https://suis.seoultech.ac.kr/nxui/index.html', color: 'text-cyan-600', bg: 'bg-cyan-50' },
     { name: 'E-Class', icon: MonitorPlay, url: 'https://eclass.seoultech.ac.kr/ilos/main/main_form.acl', color: 'text-indigo-600', bg: 'bg-indigo-50' },
     { name: '학생포탈', icon: GraduationCap, url: 'https://stportal.seoultech.ac.kr/', color: 'text-violet-600', bg: 'bg-violet-50' },
@@ -118,10 +118,10 @@ function Index() {
                                                                     alt=""
                                                                     className="w-full h-full object-cover blur-2xl opacity-40 scale-110 transform"
                                                                 />
-                                                                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/60 to-slate-900/30" />
+                                                                <div className="absolute inset-0 bg-linear-to-r from-slate-950/90 via-slate-900/60 to-slate-900/30" />
                                                             </>
                                                         ) : (
-                                                            <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-950 opacity-50" />
+                                                            <div className="w-full h-full bg-linear-to-br from-slate-800 to-slate-950 opacity-50" />
                                                         )}
                                                     </div>
 
@@ -155,8 +155,8 @@ function Index() {
 
                                                         {/* Right: Poster Card (Desktop Only) */}
                                                         {activity.thumbnail_url ? (
-                                                            <div className="hidden lg:block w-[320px] shrink-0 transform transition-all duration-700 ease-out translate-x-12 opacity-0 [.swiper-slide-active_&]:translate-x-0 [.swiper-slide-active_&]:opacity-100">
-                                                                <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/10 transition-transform duration-500 bg-slate-800">
+                                                            <div className="hidden lg:block w-[320px] shrink-0 transform transition-all duration-700 ease-out translate-x-12 opacity-0 in-[.swiper-slide-active]:translate-x-0 in-[.swiper-slide-active]:opacity-100">
+                                                                <div className="aspect-3/4 rounded-2xl overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/10 transition-transform duration-500 bg-slate-800">
                                                                     <img
                                                                         src={activity.thumbnail_url}
                                                                         alt={activity.title}
@@ -165,7 +165,7 @@ function Index() {
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <div className="hidden lg:flex w-[320px] aspect-[3/4] shrink-0 items-center justify-center rounded-2xl bg-white/5 border border-white/10 shadow-2xl">
+                                                            <div className="hidden lg:flex w-[320px] aspect-3/4 shrink-0 items-center justify-center rounded-2xl bg-white/5 border border-white/10 shadow-2xl">
                                                                 <Megaphone className="w-24 h-24 text-white/20" />
                                                             </div>
                                                         )}
@@ -198,7 +198,7 @@ function Index() {
                     {/* 2. Right Column (4 cols) - Intro & Shortcuts */}
                     <div className="lg:col-span-4 flex flex-col gap-6">
                         {/* 2-1. Intro Card (Gradient) */}
-                        <div className="flex-1 bg-gradient-to-br from-indigo-600 to-violet-700 dark:from-indigo-900 dark:to-violet-900 rounded-3xl p-8 text-white shadow-xl shadow-indigo-500/20 dark:shadow-none flex flex-col justify-between relative overflow-hidden group">
+                        <div className="flex-1 bg-linear-to-br from-indigo-600 to-violet-700 dark:from-indigo-900 dark:to-violet-900 rounded-3xl p-8 text-white shadow-xl shadow-indigo-500/20 dark:shadow-none flex flex-col justify-between relative overflow-hidden group">
                             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_50%)]" />
                             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
 

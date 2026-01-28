@@ -129,7 +129,7 @@ function SignUp() {
         <div className="min-h-screen flex bg-surface">
             {/* Left Section - Branding */}
             <div className="hidden lg:flex w-5/12 bg-[#0F172A] relative overflow-hidden items-center justify-center sticky top-0 h-screen">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-600/40 z-10" />
+                <div className="absolute inset-0 bg-linear-to-br from-blue-600/20 to-indigo-600/40 z-10" />
                 <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
                 <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" />
 
@@ -476,7 +476,7 @@ function AgreementStep({
                 </div>
 
                 <div className="flex items-start p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl">
-                    <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3 flex-shrink-0" />
+                    <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3 shrink-0" />
                     <p className="text-sm text-blue-800 dark:text-blue-200">
                         모든 약관에 동의하셔야 회원가입을 진행할 수 있습니다.
                     </p>
