@@ -57,7 +57,7 @@ export function VerificationPromptModal() {
                 <div className="flex gap-3">
                     <button
                         onClick={handleClose}
-                        className="flex-1 px-4 py-3 rounded-xl font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+                        className="flex-1 px-4 py-3 rounded-xl font-medium text-foreground-secondary bg-surface-muted hover:bg-surface-subtle transition-colors"
                     >
                         나중에 하기
                     </button>
@@ -79,10 +79,10 @@ export function VerificationPromptModal() {
                     </div>
 
                     <div className="space-y-2">
-                        <h4 className="text-lg font-bold text-gray-900">
+                        <h4 className="text-lg font-bold text-foreground">
                             {isRejected ? '학적 인증이 반려되었습니다' : '학적 인증이 필요합니다'}
                         </h4>
-                        <p className="text-gray-600 leading-relaxed break-keep">
+                        <p className="text-foreground-secondary leading-relaxed break-keep">
                             {isRejected
                                 ? <>사유: {user.rejection_reason || '확인 불가'}<br />정보를 수정하여 다시 인증을 진행해주세요.</>
                                 : '원활한 서비스 이용을 위해 학적 인증을 진행해주세요. 학생증 또는 재학증명서를 업로드해야 합니다.'

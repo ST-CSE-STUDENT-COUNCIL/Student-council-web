@@ -120,12 +120,12 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
 
     const getButtonStyle = () => {
         if (status !== 'active') {
-            return 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            return 'bg-surface-muted text-foreground-muted cursor-not-allowed'
         }
 
         switch (activity.type) {
             case 'notice':
-                return 'bg-gray-800 text-white hover:bg-gray-900'
+                return 'bg-foreground text-surface hover:opacity-90'
             case 'kakao_invite':
                 return 'bg-[#FEE500] text-[#000000] hover:bg-[#FDD835]'
             case 'survey':
@@ -134,7 +134,7 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
             case 'event':
             default:
                 if (isFull) {
-                    return 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    return 'bg-surface-muted text-foreground-muted cursor-not-allowed'
                 }
                 return 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5'
         }
@@ -200,11 +200,11 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
 
     return (
         <>
-            <div className={`flex flex-col md:flex-row bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden transition-all duration-300 ${isActive ? 'ring-2 ring-blue-500' : ''}`}>
+            <div className={`flex flex-col md:flex-row bg-surface rounded-2xl shadow-xl overflow-hidden transition-all duration-300 ${isActive ? 'ring-2 ring-blue-500' : ''}`}>
                 {/* Image Section */}
-                <div className="w-full md:w-7/12 relative group bg-gray-100 dark:bg-slate-800">
+                <div className="w-full md:w-7/12 relative group bg-surface-muted">
                     <div className="relative w-full" style={{ paddingBottom: '133%' }}>
-                        <div className="absolute inset-0 w-full h-full bg-gray-200 dark:bg-slate-800">
+                        <div className="absolute inset-0 w-full h-full bg-surface-muted">
                             {displayImages.length > 0 ? (
                                 <Swiper
                                     modules={[Pagination, Navigation]}
@@ -215,7 +215,7 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
                                     slidesPerView={1}
                                 >
                                     {displayImages.map((img, idx) => (
-                                        <SwiperSlide key={idx} className="bg-gray-50 dark:bg-slate-800 flex items-center justify-center">
+                                        <SwiperSlide key={idx} className="bg-surface-muted flex items-center justify-center">
                                             <img
                                                 src={img}
                                                 alt={`${activity.title} - ${idx + 1}`}
@@ -228,7 +228,7 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
                                     ))}
                                 </Swiper>
                             ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+                                <div className="w-full h-full flex flex-col items-center justify-center text-foreground-muted">
                                     <img src="/assets/logo.svg" alt="Logo" className="w-16 h-16 opacity-20 mb-2 brightness-0 dark:brightness-200" />
                                     <span className="text-sm font-medium">이미지가 없습니다</span>
                                 </div>
@@ -249,21 +249,21 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
                 </div>
 
                 {/* Content Section */}
-                <div className="relative w-full md:absolute md:top-0 md:right-0 md:bottom-0 rounded-2xl md:w-5/12 p-6 flex flex-col bg-white dark:bg-slate-900">
+                <div className="relative w-full md:absolute md:top-0 md:right-0 md:bottom-0 rounded-2xl md:w-5/12 p-6 flex flex-col bg-surface">
                     <div className="flex justify-between items-start mb-2 shrink-0">
-                        <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight">{activity.title}</h2>
+                        <h2 className="text-2xl md:text-3xl font-extrabold text-foreground leading-tight">{activity.title}</h2>
                     </div>
 
                     {/* 신청 기간 정보 (상단 이동) */}
                     {(activity.registration_start || activity.registration_end) && (
-                        <div className="flex items-center gap-2 mb-6 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-2 mb-6 text-sm text-foreground-secondary">
                             <span className="font-bold text-indigo-600 dark:text-indigo-400 shrink-0">신청 기간</span>
-                            <span className="w-px h-3 bg-gray-300 dark:bg-gray-600 mx-1"></span>
+                            <span className="w-px h-3 bg-border-default mx-1"></span>
                             <span className="font-medium font-numeric tracking-tight truncate">
                                 {activity.registration_start ? new Date(activity.registration_start).toLocaleString('ko-KR', {
                                     month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
                                 }) : ''}
-                                <span className="mx-1 text-gray-400">~</span>
+                                <span className="mx-1 text-foreground-muted">~</span>
                                 {activity.registration_end ? new Date(activity.registration_end).toLocaleString('ko-KR', {
                                     month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
                                 }) : ''}
@@ -272,25 +272,25 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
                     )}
 
                     <div className="flex-1 overflow-y-auto mb-6 custom-scrollbar pr-2 min-h-[100px] md:min-h-0">
-                        <p className="text-gray-600 dark:text-gray-300 text-base md:text-lg leading-relaxed whitespace-pre-wrap break-words">
+                        <p className="text-foreground-secondary text-base md:text-lg leading-relaxed whitespace-pre-wrap break-words">
                             <span className="text-sm md:text-base">{activity.description}</span>
                         </p>
                     </div>
 
-                    <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-5 mt-auto">
+                    <div className="bg-surface-muted rounded-xl p-5 mt-auto">
                         {/* 정원 표시 (notice, survey 제외) */}
                         {activity.max_capacity && !['notice', 'survey', 'demand_survey'].includes(activity.type) && (
                             <>
                                 <div className="flex justify-between items-center mb-3">
-                                    <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">모집 현황</span>
+                                    <span className="text-sm font-semibold text-foreground-secondary">모집 현황</span>
                                     <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                        {activity.current_count} <span className="text-gray-400 dark:text-gray-500 text-sm font-normal">/ {activity.max_capacity}명</span>
+                                        {activity.current_count} <span className="text-foreground-muted text-sm font-normal">/ {activity.max_capacity}명</span>
                                     </span>
                                 </div>
 
-                                <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2.5 mb-5 overflow-hidden">
+                                <div className="w-full bg-surface-subtle rounded-full h-2.5 mb-5 overflow-hidden">
                                     <div
-                                        className={`h-full rounded-full transition-all duration-500 ${status === 'active' ? 'bg-blue-600 dark:bg-blue-500' : 'bg-gray-400 dark:bg-slate-600'}`}
+                                        className={`h-full rounded-full transition-all duration-500 ${status === 'active' ? 'bg-blue-600 dark:bg-blue-500' : 'bg-foreground-muted'}`}
                                         style={{ width: `${Math.min((activity.current_count / activity.max_capacity) * 100, 100)}%` }}
                                     ></div>
                                 </div>

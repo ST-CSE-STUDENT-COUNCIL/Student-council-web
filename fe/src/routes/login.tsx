@@ -105,7 +105,7 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen flex bg-white dark:bg-slate-900">
+    <div className="min-h-screen flex bg-surface">
       {/* Left Section - Branding */}
       <div className="hidden lg:flex w-5/12 bg-[#0F172A] relative overflow-hidden items-center justify-center">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-600/40 z-10" />
@@ -123,11 +123,11 @@ function Login() {
       </div>
 
       {/* Right Section - Form */}
-      <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-24 bg-white dark:bg-slate-900">
+      <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-24 bg-surface">
         <div className="w-full max-w-sm space-y-10">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">로그인</h2>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">로그인</h2>
+            <p className="mt-2 text-sm text-foreground-secondary">
               계정이 없으신가요?
               <Link to="/signup" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 ml-1">
                 회원가입하기
@@ -174,16 +174,16 @@ function Login() {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">학번</label>
+                <label className="block text-sm font-medium text-foreground mb-2">학번</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                    <User className="h-5 w-5 text-foreground-muted" />
                   </div>
                   <input
                     type="text"
                     required
                     maxLength={20}
-                    className="block w-full pl-10 py-3 border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800"
+                    className="block w-full pl-10 py-3 border-border-default rounded-xl text-foreground placeholder-foreground-muted focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-surface-muted focus:bg-surface"
                     placeholder="학번을 입력해주세요"
                     value={studentId}
                     onChange={(e) => setStudentId(e.target.value.replace(/[^0-9]/g, ''))}
@@ -192,15 +192,15 @@ function Login() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">비밀번호</label>
+                <label className="block text-sm font-medium text-foreground mb-2">비밀번호</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                    <Lock className="h-5 w-5 text-foreground-muted" />
                   </div>
                   <input
                     type="password"
                     required
-                    className="block w-full pl-10 py-3 border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800"
+                    className="block w-full pl-10 py-3 border-border-default rounded-xl text-foreground placeholder-foreground-muted focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-surface-muted focus:bg-surface"
                     placeholder="비밀번호를 입력해주세요"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -217,9 +217,9 @@ function Login() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-slate-800 cursor-pointer"
+                  className="h-4 w-4 rounded border-border-default text-blue-600 focus:ring-blue-500 bg-surface cursor-pointer"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-500 dark:text-gray-400">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-foreground-secondary">
                   로그인 유지
                 </label>
               </div>
@@ -239,7 +239,7 @@ function Login() {
             <button
               type="submit"
               disabled={isLoading || !turnstileToken}
-              className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 dark:bg-blue-600 hover:bg-gray-800 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-blue-600 disabled:opacity-50 transition-all active:scale-[0.99]"
+              className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-foreground hover:opacity-90 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-foreground dark:focus:ring-blue-600 disabled:opacity-50 transition-all active:scale-[0.99]"
             >
               {isLoading ? '로그인 중...' : '로그인'}
             </button>

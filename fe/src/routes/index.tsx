@@ -89,9 +89,9 @@ function Index() {
             <section className="container mx-auto px-4 pt-6 pb-12">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px]">
                     {/* 1. Main Featured Carousel (Large, 8 cols) */}
-                    <div className="lg:col-span-8 relative group rounded-3xl overflow-hidden shadow-2xl shadow-indigo-500/10 dark:shadow-none ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-slate-900">
+                    <div className="lg:col-span-8 relative group rounded-3xl overflow-hidden shadow-2xl shadow-indigo-500/10 dark:shadow-none ring-1 ring-black/5 dark:ring-white/10 bg-surface">
                         {loading ? (
-                            <div className="w-full h-full min-h-[400px] flex items-center justify-center bg-gray-100 dark:bg-slate-800 animate-pulse">
+                            <div className="w-full h-full min-h-[400px] flex items-center justify-center bg-surface-muted animate-pulse">
                                 <LoadingSpinner />
                             </div>
                         ) : (
@@ -147,7 +147,7 @@ function Index() {
 
                                                             <Link
                                                                 to="/activities"
-                                                                className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
+                                                                className="inline-flex items-center gap-2 px-6 py-3.5 bg-surface text-foreground rounded-xl font-bold text-sm hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
                                                             >
                                                                 자세히 보기 <ChevronRight size={16} />
                                                             </Link>
@@ -175,10 +175,10 @@ function Index() {
                                         ))
                                     ) : (
                                         <SwiperSlide>
-                                            <div className="relative w-full h-full min-h-[400px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                            <div className="relative w-full h-full min-h-[400px] bg-surface-muted flex items-center justify-center">
                                                 <div className="text-center p-8">
-                                                    <h2 className="text-3xl font-bold text-slate-400 dark:text-slate-600 mb-2">진행 중인 행사가 없습니다</h2>
-                                                    <p className="text-slate-400">새로운 소식을 기다려주세요!</p>
+                                                    <h2 className="text-3xl font-bold text-foreground-muted mb-2">진행 중인 행사가 없습니다</h2>
+                                                    <p className="text-foreground-secondary">새로운 소식을 기다려주세요!</p>
                                                 </div>
                                             </div>
                                         </SwiperSlide>
@@ -215,13 +215,13 @@ function Index() {
                                 <Link
                                     to="/notices"
                                     search={{ page: 1, sort: 'newest', search: '', board_id: 1, subCategory: 'all' }}
-                                    className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors"
+                                    className="inline-flex items-center gap-2 px-6 py-3 bg-surface text-foreground rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors"
                                 >
                                     공지사항 <ChevronRight size={16} />
                                 </Link>
                                 <Link
                                     to="/activities"
-                                    className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors"
+                                    className="inline-flex items-center gap-2 px-6 py-3 bg-surface text-foreground rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors"
                                 >
                                     행사 신청<ChevronRight size={16} />
                                 </Link>
@@ -229,10 +229,10 @@ function Index() {
                         </div>
 
                         {/* 2-2. Shortcuts Grid (Scrollable or Grid) */}
-                        <div className="flex-1 bg-white dark:bg-slate-900 rounded-3xl p-6 border border-gray-100 dark:border-slate-800 shadow-lg dark:shadow-none overflow-hidden flex flex-col">
-                            <h4 className="text-sm font-bold text-gray-500 dark:text-slate-400 mb-4 px-1 flex items-center justify-between">
+                        <div className="flex-1 bg-surface rounded-3xl p-6 border border-border-default shadow-lg dark:shadow-none overflow-hidden flex flex-col">
+                            <h4 className="text-sm font-bold text-foreground-secondary mb-4 px-1 flex items-center justify-between">
                                 자주 찾는 서비스
-                                <span className="text-xs font-normal text-gray-400">Quick Links</span>
+                                <span className="text-xs font-normal text-foreground-muted">Quick Links</span>
                             </h4>
                             <div className="grid grid-cols-4 gap-2 flex-1 content-start">
                                 {PORTALS.slice(0, 8).map((portal) => (
@@ -241,13 +241,13 @@ function Index() {
                                         href={portal.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors group text-center"
+                                        className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-surface-muted transition-colors group text-center"
                                         title={portal.name}
                                     >
-                                        <div className={`w-10 h-10 rounded-full ${portal.bg} dark:bg-slate-800/80 ${portal.color} flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm`}>
+                                        <div className={`w-10 h-10 rounded-full ${portal.bg} dark:bg-surface-subtle ${portal.color} flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm`}>
                                             <portal.icon size={18} strokeWidth={2} />
                                         </div>
-                                        <span className="text-[11px] font-medium text-gray-600 dark:text-slate-400 group-hover:text-gray-900 dark:group-hover:text-white leading-tight break-keep">
+                                        <span className="text-[11px] font-medium text-foreground-secondary group-hover:text-foreground leading-tight break-keep">
                                             {portal.name}
                                         </span>
                                     </a>
@@ -261,14 +261,14 @@ function Index() {
             {/* Recent Notices Section */}
             <section className="container mx-auto px-4 pb-20">
                 <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
                         최근 소식
                         <div className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
                     </h2>
                     <Link
                         to="/notices"
                         search={{ page: 1, sort: 'newest', search: '', board_id: 1, subCategory: 'all' }}
-                        className="text-sm font-medium text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors flex items-center gap-1"
+                        className="text-sm font-medium text-foreground-secondary hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1"
                     >
                         전체보기 <ChevronRight size={16} />
                     </Link>
@@ -280,7 +280,7 @@ function Index() {
                             key={post.id}
                             to="/notices/$noticeId"
                             params={{ noticeId: post.id.toString() }}
-                            className="group bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 hover:border-indigo-100 dark:hover:border-indigo-900 shadow-sm hover:shadow-md transition-all duration-300"
+                            className="group bg-surface rounded-2xl p-6 border border-border-default hover:border-indigo-100 dark:hover:border-indigo-900 shadow-sm hover:shadow-md transition-all duration-300"
                         >
                             <div className="flex items-center justify-between mb-4">
                                 <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${post.board.id === 1
@@ -289,21 +289,21 @@ function Index() {
                                     }`}>
                                     {getSubCategoryLabel(post.subcategory || '공지')}
                                 </span>
-                                <span className="text-xs text-gray-400 dark:text-slate-500 font-medium">
+                                <span className="text-xs text-foreground-muted font-medium">
                                     {post.created_at.split('T')[0]}
                                 </span>
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-2 line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                            <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                 {post.is_pinned && <span className="mr-2 inline-block text-rose-500">📌</span>}
                                 {post.title}
                             </h3>
-                            <p className="text-sm text-gray-500 dark:text-slate-400 line-clamp-2 leading-relaxed h-11">
+                            <p className="text-sm text-foreground-secondary line-clamp-2 leading-relaxed h-11">
                                 {post.content}
                             </p>
                         </Link>
                     ))}
                     {posts.length === 0 && (
-                        <div className="col-span-full py-20 text-center text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800">
+                        <div className="col-span-full py-20 text-center text-foreground-muted bg-surface-muted rounded-2xl border border-dashed border-border-default">
                             <Megaphone size={32} className="mx-auto mb-3 opacity-50" />
                             <p>등록된 게시글이 없습니다.</p>
                         </div>

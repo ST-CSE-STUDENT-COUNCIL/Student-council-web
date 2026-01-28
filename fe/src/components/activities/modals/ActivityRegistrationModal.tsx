@@ -249,7 +249,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                            className="flex-1 py-2.5 bg-surface-muted text-foreground font-medium rounded-xl hover:bg-surface-subtle transition-colors"
                         >
                             취소
                         </button>
@@ -266,7 +266,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                 type="submit"
                                 form="activity-registration-form"
                                 disabled={loading}
-                                className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
+                                className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-surface-subtle disabled:cursor-not-allowed flex justify-center items-center"
                             >
                                 {loading ? (
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -279,7 +279,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                         <button
                             type="button"
                             onClick={() => setStep(1)}
-                            className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                            className="flex-1 py-2.5 bg-surface-muted text-foreground font-medium rounded-xl hover:bg-surface-subtle transition-colors"
                         >
                             이전
                         </button>
@@ -287,7 +287,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                             type="submit"
                             form="activity-registration-form"
                             disabled={loading}
-                            className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
+                            className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-surface-subtle disabled:cursor-not-allowed flex justify-center items-center"
                         >
                             {loading ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -308,8 +308,8 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                     {/* Progress Indicators (Only if there are 2 steps) */}
                     {hasAdditionalFields && (
                         <div className="flex items-center gap-2 mb-4">
-                            <div className={`flex-1 h-2 rounded-full transition-colors ${step >= 1 ? 'bg-blue-600' : 'bg-gray-200'}`} />
-                            <div className={`flex-1 h-2 rounded-full transition-colors ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                            <div className={`flex-1 h-2 rounded-full transition-colors ${step >= 1 ? 'bg-blue-600' : 'bg-surface-muted'}`} />
+                            <div className={`flex-1 h-2 rounded-full transition-colors ${step >= 2 ? 'bg-blue-600' : 'bg-surface-muted'}`} />
                         </div>
                     )}
 
@@ -382,13 +382,13 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                 {!isAnonymousType && (
                                     <>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
+                                            <label className="block text-sm font-medium text-foreground mb-1">이름</label>
                                             <input
                                                 type="text"
                                                 name="name"
                                                 value={formData.name}
                                                 onChange={handleChange}
-                                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
+                                                className="w-full px-4 py-2 border border-border-default rounded-lg focus:outline-none focus:border-blue-500"
                                                 placeholder="이름을 입력하세요"
                                                 autoFocus
                                             />
@@ -396,7 +396,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                <label className="block text-sm font-medium text-foreground mb-1">
                                                     {activity.type === 'kakao_invite' ? '학번 (없다면 생년월일)' : '학번'}
                                                 </label>
                                                 <input
@@ -407,25 +407,25 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     maxLength={8}
                                                     inputMode="numeric"
                                                     pattern="[0-9]*"
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
+                                                    className="w-full px-4 py-2 border border-border-default rounded-lg focus:outline-none focus:border-blue-500"
                                                     placeholder="예: 25101234"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">학과</label>
+                                                <label className="block text-sm font-medium text-foreground mb-1">학과</label>
                                                 <input
                                                     type="text"
                                                     name="department"
                                                     value={formData.department}
                                                     onChange={handleChange}
                                                     readOnly
-                                                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 cursor-not-allowed"
+                                                    className="w-full px-4 py-2 bg-surface-muted border border-border-default rounded-lg text-foreground-secondary cursor-not-allowed"
                                                 />
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">연락처</label>
+                                            <label className="block text-sm font-medium text-foreground mb-1">연락처</label>
                                             <div className="pb-6">
                                                 <PhoneInput
                                                     value={formData.phone || ''}
@@ -438,18 +438,18 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                         {activity.type === 'kakao_invite' && (
                                             <>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">카카오톡 ID (선택사항)</label>
+                                                    <label className="block text-sm font-medium text-foreground mb-1">카카오톡 ID (선택사항)</label>
                                                     <input
                                                         type="text"
                                                         name="kakao_id"
                                                         value={formData.kakao_id}
                                                         onChange={handleChange}
-                                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
+                                                        className="w-full px-4 py-2 border border-border-default rounded-lg focus:outline-none focus:border-blue-500"
                                                         placeholder="카카오톡 ID를 입력하세요"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label className="block text-sm font-medium text-foreground mb-1">
                                                         학적 인증자료 제출 <span className="text-red-500">*</span>
                                                     </label>
                                                     <input
@@ -467,12 +467,12 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                                 toast.error('파일 업로드에 실패했습니다.')
                                                             }
                                                         }}
-                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                        className="w-full text-sm text-foreground-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                                     />
                                                     {formData.verification_image_url && (
                                                         <p className="text-xs text-green-600 mt-1 font-medium">✓ 인증 자료가 업로드되었습니다.</p>
                                                     )}
-                                                    <p className="text-xs text-gray-400 mt-1">학생증, 합격증 등 학적을 증명할 수 있는 자료를 첨부해주세요.</p>
+                                                    <p className="text-xs text-foreground-muted mt-1">학생증, 합격증 등 학적을 증명할 수 있는 자료를 첨부해주세요.</p>
                                                 </div>
                                             </>
                                         )}
@@ -490,10 +490,10 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                 className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
                                             />
                                             <div className="flex-1 text-sm">
-                                                <p className="font-semibold text-gray-900 mb-1">
+                                                <p className="font-semibold text-foreground mb-1">
                                                     비회원 개인정보 수집 및 처리 규정에 동의합니다. <span className="text-red-500">*</span>
                                                 </p>
-                                                <p className="text-gray-600 text-xs">
+                                                <p className="text-foreground-secondary text-xs">
                                                     학생회비 미납부자 및 비회원의 경우, 행사 참가를 위해 개인정보 수집 및 이용에 동의가 필요합니다.{' '}
                                                     <a
                                                         href="/non-member-policy"
@@ -528,7 +528,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                 <div className="space-y-4">
                                     {detailActivity?.form_fields?.map((field) => (
                                         <div key={field.name}>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <label className="block text-sm font-medium text-foreground mb-1">
                                                 {field.label}
                                                 {field.required && <span className="text-red-500 ml-1">*</span>}
                                             </label>
@@ -536,7 +536,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                             {field.type === 'select' ? (
                                                 <div className="space-y-2">
                                                     {field.options?.map((opt) => (
-                                                        <label key={opt} className="flex items-center gap-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-all">
+                                                        <label key={opt} className="flex items-center gap-3 cursor-pointer p-3 border border-border-default rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-all">
                                                             <div className="relative flex items-center justify-center w-5 h-5">
                                                                 <input
                                                                     type="radio"
@@ -548,10 +548,10 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                                         form_responses: { ...prev.form_responses, [field.name]: e.target.value }
                                                                     }))}
                                                                     required={field.required}
-                                                                    className="peer appearance-none w-5 h-5 border-2 border-gray-300 rounded-full checked:border-blue-500 checked:border-4 transition-all"
+                                                                    className="peer appearance-none w-5 h-5 border-2 border-border-default rounded-full checked:border-blue-500 checked:border-4 transition-all"
                                                                 />
                                                             </div>
-                                                            <span className="text-sm font-medium text-gray-700 peer-checked:text-blue-700">{opt}</span>
+                                                            <span className="text-sm font-medium text-foreground peer-checked:text-blue-700">{opt}</span>
                                                         </label>
                                                     ))}
                                                 </div>
@@ -565,12 +565,12 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     required={field.required}
                                                     placeholder={field.placeholder}
                                                     rows={3}
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 resize-none"
+                                                    className="w-full px-4 py-2 border border-border-default rounded-lg focus:outline-none focus:border-blue-500 resize-none"
                                                 />
                                             ) : field.type === 'radio' ? (
                                                 <div className="space-y-2">
                                                     {field.options?.map((opt) => (
-                                                        <label key={opt} className="flex items-center gap-3 cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-all">
+                                                        <label key={opt} className="flex items-center gap-3 cursor-pointer p-3 border border-border-default rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-all">
                                                             <div className="relative flex items-center justify-center w-5 h-5">
                                                                 <input
                                                                     type="radio"
@@ -582,10 +582,10 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                                         form_responses: { ...prev.form_responses, [field.name]: e.target.value }
                                                                     }))}
                                                                     required={field.required}
-                                                                    className="peer appearance-none w-5 h-5 border-2 border-gray-300 rounded-full checked:border-blue-500 checked:border-4 transition-all"
+                                                                    className="peer appearance-none w-5 h-5 border-2 border-border-default rounded-full checked:border-blue-500 checked:border-4 transition-all"
                                                                 />
                                                             </div>
-                                                            <span className="text-sm font-medium text-gray-700 peer-checked:text-blue-700">{opt}</span>
+                                                            <span className="text-sm font-medium text-foreground peer-checked:text-blue-700">{opt}</span>
                                                         </label>
                                                     ))}
                                                 </div>
@@ -611,7 +611,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                                 }}
                                                                 className="text-blue-600 rounded focus:ring-blue-500"
                                                             />
-                                                            <span className="text-sm text-gray-700">{opt}</span>
+                                                            <span className="text-sm text-foreground">{opt}</span>
                                                         </label>
                                                     ))}
                                                 </div>
@@ -638,7 +638,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                             }
                                                         }}
                                                         required={field.required && !formData.form_responses?.[field.name]}
-                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                        className="w-full text-sm text-foreground-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                                     />
                                                     {formData.form_responses?.[field.name] && (
                                                         <p className="text-xs text-green-600 font-medium">
@@ -656,12 +656,12 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     }))}
                                                     required={field.required}
                                                     placeholder={field.placeholder}
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500"
+                                                    className="w-full px-4 py-2 border border-border-default rounded-lg focus:outline-none focus:border-blue-500"
                                                 />
                                             )
                                             }
                                             {field.help_text && (
-                                                <p className="text-xs text-gray-500 mt-1">{field.help_text}</p>
+                                                <p className="text-xs text-foreground-muted mt-1">{field.help_text}</p>
                                             )}
                                         </div>
                                     ))}

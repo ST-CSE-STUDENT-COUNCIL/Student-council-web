@@ -111,10 +111,10 @@ function MyPage() {
       <div className="flex min-h-[calc(100vh-300px)] items-center justify-center px-4 py-12">
         <div className="text-center">
           <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
             로그인이 필요한 페이지입니다
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-foreground-secondary mb-6">
             마이페이지를 이용하려면 로그인해주세요.
           </p>
           <Link

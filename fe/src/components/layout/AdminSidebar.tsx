@@ -17,8 +17,8 @@ export const AdminSidebar = () => {
     const location = useLocation()
 
     return (
-        <aside className="w-64 bg-slate-900 min-h-screen text-white shrink-0 hidden md:block">
-            <div className="p-6 border-b border-slate-800">
+        <aside className="w-64 bg-foreground min-h-screen text-surface shrink-0 hidden md:block">
+            <div className="p-6 border-b border-surface/20">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                     <span>🛡️ 관리자 페이지</span>
                 </h2>
@@ -35,7 +35,7 @@ export const AdminSidebar = () => {
                             to={item.href}
                             className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive
                                 ? 'bg-blue-600 text-white shadow-md'
-                                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                                : 'text-foreground-muted hover:text-surface hover:bg-surface-muted'
                                 }`}
                         >
                             <Icon className="w-5 h-5" />

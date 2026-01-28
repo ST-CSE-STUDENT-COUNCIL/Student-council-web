@@ -126,7 +126,7 @@ function SignUp() {
     }
 
     return (
-        <div className="min-h-screen flex bg-white dark:bg-slate-900">
+        <div className="min-h-screen flex bg-surface">
             {/* Left Section - Branding */}
             <div className="hidden lg:flex w-5/12 bg-[#0F172A] relative overflow-hidden items-center justify-center sticky top-0 h-screen">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-600/40 z-10" />
@@ -144,7 +144,7 @@ function SignUp() {
             </div>
 
             {/* Right Section - Form */}
-            <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-12 lg:p-24 bg-white dark:bg-slate-900 overflow-y-auto">
+            <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-12 lg:p-24 bg-surface overflow-y-auto">
                 <div className="w-full max-w-xl space-y-10">
                     {step === 'agreement' ? (
                         <AgreementStep
@@ -157,12 +157,12 @@ function SignUp() {
                             <div className="mb-8">
                                 <button
                                     onClick={() => setStep('agreement')}
-                                    className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 flex items-center gap-1 mb-4"
+                                    className="text-sm text-foreground-secondary hover:text-foreground flex items-center gap-1 mb-4"
                                 >
                                     ← 약관 동의로 돌아가기
                                 </button>
-                                <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">회원정보 입력</h2>
-                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                <h2 className="text-3xl font-bold tracking-tight text-foreground">회원정보 입력</h2>
+                                <p className="mt-2 text-sm text-foreground-secondary">
                                     학생회 서비스를 이용하기 위한 정보를 입력해주세요.
                                 </p>
                             </div>

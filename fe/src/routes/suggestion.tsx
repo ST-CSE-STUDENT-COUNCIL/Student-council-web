@@ -122,7 +122,7 @@ function SuggestionPage() {
 
     // 비로그인 사용자 안내 화면
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors">
+        <div className="min-h-screen bg-[var(--color-background)] transition-colors">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-24 space-y-10">
                 <SuggestionHero
                     stats={stats}
@@ -134,12 +134,12 @@ function SuggestionPage() {
                 />
 
                 {!user ? (
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 text-center shadow-lg transition-transform hover:scale-[1.01]">
+                    <div className="rounded-2xl border border-border-default bg-surface p-8 text-center shadow-lg transition-transform hover:scale-[1.01]">
                         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30 text-3xl">
                             <LockKeyhole className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">로그인이 필요합니다</h2>
-                        <p className="mt-2 text-slate-600 dark:text-slate-400">
+                        <h2 className="text-xl font-bold text-foreground">로그인이 필요합니다</h2>
+                        <p className="mt-2 text-foreground-secondary">
                             건의사항을 조회하거나 작성하려면 로그인이 필요합니다.
                         </p>
                         <Link
@@ -162,7 +162,7 @@ function SuggestionPage() {
                                 <SuggestionPageSizeSelect value={pageSize} onChange={setPageSize} />
                                 <button
                                     type="button"
-                                    className="shrink-0 rounded-xl bg-slate-900 dark:bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                                    className="shrink-0 rounded-xl bg-foreground dark:bg-blue-600 px-5 py-3 text-sm font-semibold text-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:text-white"
                                     onClick={() => {
                                         if (user?.verification_status !== 'approved') {
                                             toast.error('학적 인증이 완료된 사용자만 건의사항을 작성할 수 있습니다.')

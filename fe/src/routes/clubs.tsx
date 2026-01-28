@@ -31,7 +31,7 @@ function Clubs() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-500">동아리 정보를 불러오는 중...</div>
+        <div className="text-foreground-secondary">동아리 정보를 불러오는 중...</div>
       </div>
     )
   }
@@ -48,7 +48,7 @@ function Clubs() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-gray-400 dark:text-gray-500">등록된 동아리가 없습니다.</p>
+          <p className="text-foreground-muted">등록된 동아리가 없습니다.</p>
         </div>
       )}
 
