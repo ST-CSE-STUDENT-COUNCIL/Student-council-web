@@ -16,14 +16,6 @@ function Welfare() {
   const [lockerError, setLockerError] = React.useState<string | null>(null)
   const [lockerInfo, setLockerInfo] = React.useState<LockerInfo | null>(null)
   const today = React.useMemo(() => new Date().toISOString().slice(0, 10), [])
-  const lockerDeadline = React.useMemo(() => {
-    const d = new Date()
-    d.setDate(d.getDate() + 7)
-    return d.toISOString().slice(0, 10)
-  }, [])
-  const displayToday = today.slice(5)
-  const displayDeadline = lockerDeadline.slice(5)
-  const periodLabel = `${displayToday} ~ ${displayDeadline}`
   const disabledClass = 'border-gray-200 opacity-60 cursor-not-allowed hover:-translate-y-0 hover:shadow-none'
 
   const { lockerStart, lockerEnd, lockerReturnStart, lockerReturnEnd } = React.useMemo(() => {
@@ -50,10 +42,10 @@ function Welfare() {
 
   const rentalPeriodLabel = lockerStart && lockerEnd
     ? `${lockerStart.slice(0, 10)} ~ ${lockerEnd.slice(0, 10)}`
-    : periodLabel
+    : ''
   const returnPeriodLabel = lockerReturnStart && lockerReturnEnd
     ? `${lockerReturnStart.slice(0, 10)} ~ ${lockerReturnEnd.slice(0, 10)}`
-    : periodLabel
+    : ''
 
   const fetchRentals = React.useCallback(async () => {
     try {

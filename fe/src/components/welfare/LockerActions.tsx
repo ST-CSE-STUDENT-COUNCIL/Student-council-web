@@ -34,7 +34,9 @@ export function LockerActions({
                 <div className={`mt-1 h-8 w-1.5 rounded-full ${isRentalActive ? 'bg-blue-500' : 'bg-gray-300 dark:bg-slate-600'}`} aria-hidden />
                 <div className="flex-1">
                     <div className="text-sm font-semibold text-gray-900 dark:text-white">사물함 대여 신청</div>
-                    <div className="text-[11px] text-gray-400 dark:text-gray-500">{rentalPeriodLabel}</div>
+                    {rentalPeriodLabel ? (
+                        <div className="text-[11px] text-gray-400 dark:text-gray-500">{rentalPeriodLabel}</div>
+                    ) : null}
                 </div>
             </button>
             <button
@@ -46,7 +48,9 @@ export function LockerActions({
                 <div className={`mt-1 h-8 w-1.5 rounded-full ${isExtendActive ? 'bg-amber-500' : 'bg-gray-300 dark:bg-slate-600'}`} aria-hidden />
                 <div className="flex-1">
                     <div className="text-sm font-semibold text-gray-900 dark:text-white">사물함 연장 신청</div>
-                    <div className="text-[11px] text-gray-400 dark:text-gray-500">{returnPeriodLabel}</div>
+                    {returnPeriodLabel ? (
+                        <div className="text-[11px] text-gray-400 dark:text-gray-500">{returnPeriodLabel}</div>
+                    ) : null}
                 </div>
             </button>
             <button
@@ -58,7 +62,9 @@ export function LockerActions({
                 <div className={`mt-1 h-8 w-1.5 rounded-full ${isReturnActive ? 'bg-red-500' : 'bg-gray-300 dark:bg-slate-600'}`} aria-hidden />
                 <div className="flex-1">
                     <div className="text-sm font-semibold text-gray-900 dark:text-white">사물함 반납 신청</div>
-                    <div className="text-[11px] text-gray-400 dark:text-gray-500">{returnPeriodLabel}</div>
+                    {returnPeriodLabel ? (
+                        <div className="text-[11px] text-gray-400 dark:text-gray-500">{returnPeriodLabel}</div>
+                    ) : null}
                 </div>
             </button>
         </div>
