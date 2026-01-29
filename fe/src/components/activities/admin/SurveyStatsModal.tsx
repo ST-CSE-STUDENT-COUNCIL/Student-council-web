@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion'
 import { X, BarChart3 } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { QuestionJumpNav } from './QuestionJumpNav'
 
 type SurveyStatsModalProps = {
     surveyStats: {
@@ -14,6 +16,36 @@ type SurveyStatsModalProps = {
 }
 
 export function SurveyStatsModal({ surveyStats, onClose }: SurveyStatsModalProps) {
+    const [highlightedId, setHighlightedId] = useState<string | null>(null)
+    const highlightTimeoutRef = useRef<number | null>(null)
+
+    const questionsForJump = useMemo(() => {
+        return (surveyStats.question_stats || []).map((stat, index) => {
+            const typeLabel = stat.type === 'multiple_choice' || stat.type === 'radio' || stat.type === 'checkbox'
+                ? '객관식'
+                : '주관식'
+            return { id: String(index), label: `${index + 1}. ${stat.question} (${typeLabel})` }
+        })
+    }, [surveyStats.question_stats])
+
+    const getQuestionElementId = useCallback((id: string) => `survey-stats-modal-question-${id}`, [])
+
+    const scrollToQuestion = useCallback((id: string) => {
+        const el = document.getElementById(getQuestionElementId(id))
+        if (!el) return false
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        setHighlightedId(id)
+        if (highlightTimeoutRef.current) window.clearTimeout(highlightTimeoutRef.current)
+        highlightTimeoutRef.current = window.setTimeout(() => setHighlightedId(null), 1800)
+        return true
+    }, [getQuestionElementId])
+
+    useEffect(() => {
+        return () => {
+            if (highlightTimeoutRef.current) window.clearTimeout(highlightTimeoutRef.current)
+        }
+    }, [])
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -47,10 +79,26 @@ export function SurveyStatsModal({ surveyStats, onClose }: SurveyStatsModalProps
 
                 {/* Content */}
                 <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+                    {questionsForJump.length > 0 && (
+                        <QuestionJumpNav
+                            questions={questionsForJump}
+                            onJump={(id) => {
+                                window.requestAnimationFrame(() => scrollToQuestion(id))
+                            }}
+                            className="mb-6"
+                        />
+                    )}
                     {surveyStats.question_stats && surveyStats.question_stats.length > 0 ? (
                         <div className="space-y-6">
                             {surveyStats.question_stats.map((stat, index) => (
-                                <div key={index} className="p-4 bg-gray-50 rounded-xl">
+                                <div
+                                    key={index}
+                                    id={getQuestionElementId(String(index))}
+                                    className={[
+                                        'p-4 bg-gray-50 rounded-xl scroll-mt-24 transition-shadow',
+                                        highlightedId === String(index) ? 'ring-2 ring-purple-200 shadow-md' : ''
+                                    ].join(' ')}
+                                >
                                     <h4 className="font-semibold text-gray-900 mb-4">{index + 1}. {stat.question}</h4>
                                     {stat.type === 'multiple_choice' || stat.type === 'radio' || stat.type === 'checkbox' ? (
                                         <div className="space-y-3">
