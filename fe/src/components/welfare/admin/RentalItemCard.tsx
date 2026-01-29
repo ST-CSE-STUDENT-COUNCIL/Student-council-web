@@ -7,6 +7,10 @@ type RentalItemCardProps = {
 }
 
 export function RentalItemCard({ item, onEdit, onDelete }: RentalItemCardProps) {
+    const availableQuantity = Number.isFinite(Number(item.available_quantity))
+        ? Number(item.available_quantity)
+        : null
+
     return (
         <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
             <div className="relative mb-3">
@@ -29,7 +33,12 @@ export function RentalItemCard({ item, onEdit, onDelete }: RentalItemCardProps) 
 
             <div className="py-2 border-t border-b border-gray-100 mb-3">
                 <p className="text-sm text-gray-600">
-                    현재 재고: <span className="font-semibold text-blue-600">{item.available_quantity ?? '-'}</span>
+                    현재 재고:{' '}
+                    <span
+                        className={`font-semibold ${availableQuantity !== null && availableQuantity <= 0 ? 'text-red-500' : 'text-blue-600'}`}
+                    >
+                        {availableQuantity !== null ? `${availableQuantity}개` : '-'}
+                    </span>
                 </p>
             </div>
 
