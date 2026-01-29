@@ -8,7 +8,7 @@ export const Route = createFileRoute('/welfare')({
 })
 
 function Welfare() {
-  const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함'>('대여사업')
+  const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함' | '프린터'>('대여사업')
   const [rentalItems, setRentalItems] = React.useState<WelfareRental[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
@@ -151,7 +151,7 @@ function Welfare() {
               </div>
             )}
           </div>
-        ) : (
+        ) : selectedCategory === '사물함' ? (
           <div className="space-y-6">
             <div className="flex items-start justify-between gap-6 flex-col lg:flex-row lg:items-center">
               <div>
@@ -194,6 +194,20 @@ function Welfare() {
                   배치도 정보가 없습니다.
                 </div>
               )}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">프린터</h2>
+              <p className="text-gray-600 dark:text-gray-400">프린터 사용 안내를 확인하세요.</p>
+            </div>
+
+            <div className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 bg-gray-50 dark:bg-slate-800 transition-colors">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">프린터 사용 안내</h3>
+              <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
+                프린터 사용 안내 이미지 영역
+              </div>
             </div>
           </div>
         )}

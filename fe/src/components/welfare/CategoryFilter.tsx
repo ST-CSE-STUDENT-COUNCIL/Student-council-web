@@ -1,12 +1,13 @@
 type CategoryFilterProps = {
-  selectedCategory: '대여사업' | '사물함'
-  onSelect: (category: '대여사업' | '사물함') => void
+  selectedCategory: '대여사업' | '사물함' | '프린터'
+  onSelect: (category: '대여사업' | '사물함' | '프린터') => void
 }
 
 export function CategoryFilter({ selectedCategory, onSelect }: CategoryFilterProps) {
   const categories = [
     { value: '대여사업' as const, label: '대여사업' },
-    { value: '사물함' as const, label: '사물함' }
+    { value: '사물함' as const, label: '사물함' },
+    { value: '프린터' as const, label: '프린터' },
   ]
 
   return (
