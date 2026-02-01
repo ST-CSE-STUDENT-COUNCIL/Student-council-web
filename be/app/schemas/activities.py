@@ -16,6 +16,12 @@ from datetime import datetime
 # ============================================================================
 # Form Field 스키마 (추가 정보 수집 필드 정의)
 # ============================================================================
+class FormFieldCondition(BaseModel):
+    """조건부 필드/섹션 표시 조건"""
+    target: str = Field(..., description="조건을 검사할 대상 필드의 name")
+    value: str = Field(..., description="조건이 참이 되기 위한 값 (예: '참여')")
+
+
 class FormField(BaseModel):
     """추가 정보 수집 필드 정의"""
     name: str = Field(..., description="필드 이름 (영문)")
@@ -25,6 +31,7 @@ class FormField(BaseModel):
     required: bool = Field(default=False, description="필수 여부")
     placeholder: Optional[str] = Field(None, description="플레이스홀더")
     help_text: Optional[str] = Field(None, description="도움말")
+    condition: Optional[FormFieldCondition] = Field(None, description="이 필드(또는 섹션)가 표시될 조건")
 
 
 # ============================================================================
