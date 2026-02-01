@@ -30,6 +30,44 @@ router = APIRouter(tags=["복지사업"])
 
 
 # ============================================================================
+# 복지사업 이미지 (Generic Welfare Images)
+# ============================================================================
+
+@router.post("/admin/welfare/image/presigned-url", summary="복지사업 이미지 업로드용 Presigned URL 발급 (관리자)")
+async def get_welfare_image_presigned_url(
+    filename: str,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    복지사업 관련 이미지 업로드를 위한 Presigned URL을 발급합니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    - **프로세스**:
+      1. 이 API로 Presigned URL 받기
+      2. 프론트에서 해당 URL로 직접 PUT 요청으로 이미지 업로드
+      3. public_url을 프론트에서 저장/사용
+    """
+    file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"welfare-general/{unique_filename}"
+    
+    presigned_url = generate_presigned_url(
+        bucket_name="welfare-images",
+        file_key=file_key,
+        expires_in=300  # 5분 유효
+    )
+    
+    base_url = get_bucket_url("welfare-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
+
+
+# ============================================================================
 # 사물함 (Locker)
 # ============================================================================
 
