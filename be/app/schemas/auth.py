@@ -122,6 +122,12 @@ class LoginResponse(BaseModel):
     user: dict
 
 
+class RefreshResponse(BaseModel):
+    """토큰 갱신 응답"""
+    access_token: str
+    token_type: str = "bearer"
+
+
 class LogoutResponse(BaseModel):
     """로그아웃 응답"""
     message: str = "로그아웃되었습니다"

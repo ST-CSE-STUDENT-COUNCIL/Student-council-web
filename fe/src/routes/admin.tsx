@@ -1,6 +1,8 @@
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { AdminSidebar } from '../components/layout/AdminSidebar'
 import { useAuthStore } from '../store/useAuthStore'
+import { useThemeStore } from '../store/useThemeStore'
 
 export const Route = createFileRoute('/admin')({
     component: AdminLayout,
@@ -25,6 +27,26 @@ export const Route = createFileRoute('/admin')({
 })
 
 function AdminLayout() {
+    const { resolvedTheme, setTheme } = useThemeStore()
+
+    useEffect(() => {
+        // 강제로 라이트 모드 적용
+        document.documentElement.classList.remove('dark')
+
+        return () => {
+            // 언마운트 시 원래 테마 복구
+            const currentTheme = useThemeStore.getState().theme
+            setTheme(currentTheme)
+        }
+    }, [])
+
+    // 테마 변경 감지 시에도 라이트 모드 강제 유지
+    useEffect(() => {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark')
+        }
+    }, [resolvedTheme])
+
     return (
         <div className="flex bg-gray-50 min-h-screen">
             <AdminSidebar />
