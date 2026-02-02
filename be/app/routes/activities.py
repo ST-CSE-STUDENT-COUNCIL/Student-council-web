@@ -332,8 +332,18 @@ async def register_for_activity(
                 detail="카톡방 초대 신청은 로그인이 필요합니다"
             )
         
-        # 비회원 신청 시 필수 정보 확인 (이메일 제외)
+        # 비회원 신청 시 Turnstile 검증 필수
         if not current_user:
+            if not body.turnstile_token:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="비회원 신청은 Turnstile 인증이 필요합니다"
+                )
+            # Turnstile 검증
+            from app.utils.turnstile import verify_turnstile
+            await verify_turnstile(token=body.turnstile_token)
+            
+            # 필수 정보 확인
             if not all([body.name, body.student_id, body.department, body.phone]):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,

@@ -3,7 +3,7 @@
 """
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import math
 from app.schemas.suggestions import (
     SuggestionCreateRequest,
@@ -49,7 +49,8 @@ def _get_author_name(author_id: str) -> str:
     description="건의함을 작성합니다. 작성자는 기본 익명 처리되며, 관리자만 작성자를 확인할 수 있습니다.",
     responses={
         401: {"model": ErrorResponse, "description": "인증 필요"},
-        403: {"model": ErrorResponse, "description": "승인 대기 중"}
+        403: {"model": ErrorResponse, "description": "승인 대기 중"},
+        429: {"model": ErrorResponse, "description": "요청이 너무 빠릅니다"}
     }
 )
 async def create_suggestion(
@@ -58,6 +59,31 @@ async def create_suggestion(
     current_user: dict = Depends(require_verified_user)
 ):
     """건의함 작성 (승인된 사용자만 가능)"""
+    # [Rate Limit] DB 기반 중복/연타 방지 (최근 5초 내 작성 금지)
+    try:
+        # UTC 기준 5초 전
+        limit_time = (datetime.now(timezone.utc) - timedelta(seconds=5)).isoformat()
+        
+        # 최근 5초 내 작성된 글이 있는지 확인
+        recent_check = supabase.table("suggestions")\
+            .select("id", count="exact")\
+            .eq("author_id", current_user["id"])\
+            .gte("created_at", limit_time)\
+            .execute()
+            
+        if recent_check.count and recent_check.count > 0:
+             raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="잠시 후 다시 시도해주세요. (중복 제출 방지)"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Rate limit check failed: {e}")
+        # DB 오류시에는 진행 허용 (Fail Open) 또는 차단?
+        # 안전하게 진행 허용
+        pass
+
     try:
         # 1. Turnstile 검증
         if body.turnstile_token:

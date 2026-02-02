@@ -1,7 +1,7 @@
 """
 인증 관련 API 엔드포인트
 """
-from fastapi import APIRouter, HTTPException, Header, Request, status
+from fastapi import APIRouter, HTTPException, Header, Request, Response, status
 from typing import Optional
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -17,6 +17,7 @@ from app.schemas.auth import (
     SignupResponse,
     LoginRequest,
     LoginResponse,
+    RefreshResponse,
     LogoutResponse,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
@@ -440,20 +441,7 @@ async def login(body: LoginRequest, request: Request):
             )
         
         access_token = auth_response.session.access_token
-        
-        if not auth_response.user or not auth_response.session:
-            # 로그인 실패 기록
-            await record_login_attempt(body.student_id, False, client_ip)
-            
-            # 실패 횟수 증가
-            result = await increment_failed_attempts(body.student_id)
-            
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"학번 또는 비밀번호가 올바르지 않습니다. (실패 {result['failed_attempts']}/15)"
-            )
-        
-        access_token = auth_response.session.access_token
+        refresh_token = auth_response.session.refresh_token
         
         # 4. 거절된 사용자는 로그인 차단
         if user_data['verification_status'] == 'rejected':
@@ -466,11 +454,28 @@ async def login(body: LoginRequest, request: Request):
         # 5. 로그인 성공 - 실패 횟수 초기화 및 기록
         await reset_failed_attempts(body.student_id)
         await record_login_attempt(body.student_id, True, client_ip)
+        # 6. 응답 생성 및 refresh_token을 HttpOnly 쿠키로 설정
+        from fastapi.responses import JSONResponse
         
-        return LoginResponse(
-            access_token=access_token,
-            user=user_data
+        response_data = {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": user_data
+        }
+        
+        response = JSONResponse(content=response_data)
+        
+        # HttpOnly 쿠키 설정 (30일 유효)
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            samesite="lax",
+            secure=True,  # HTTPS에서만 전송
+            max_age=30 * 24 * 60 * 60  # 30일
         )
+        
+        return response
     
     except HTTPException:
         raise
@@ -483,43 +488,46 @@ async def login(body: LoginRequest, request: Request):
 
 @router.post(
     "/logout",
-    response_model=LogoutResponse,
     status_code=status.HTTP_200_OK,
     summary="로그아웃",
-    description="현재 세션을 종료하고 refresh token을 무효화합니다 (access token은 만료 시간까지 유효)",
+    description="현재 세션을 종료하고 refresh token을 무효화합니다",
     responses={
         401: {"model": ErrorResponse, "description": "인증되지 않은 요청"}
     }
 )
-async def logout(authorization: Optional[str] = Header(None)):
-    """로그아웃 (세션 무효화)"""
+async def logout(
+    request: Request,
+    authorization: Optional[str] = Header(None)
+):
+    """로그아웃 (세션 무효화 + 쿠키 삭제)"""
+    from fastapi.responses import JSONResponse
+    
     try:
-        if not authorization or not authorization.startswith("Bearer "):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="인증 토큰이 필요합니다"
-            )
-        
-        # Bearer 토큰 추출
-        access_token = authorization.replace("Bearer ", "")
-        
-        # Supabase에서 사용자의 모든 세션 무효화
-        # 1. 토큰으로 사용자 정보 조회
-        try:
-            # 싱글톤 오염 방지를 위해 새 클라이언트 생성
-            from app.database import get_fresh_admin_client
-            fresh_client = get_fresh_admin_client()
+        if authorization and authorization.startswith("Bearer "):
+            # Bearer 토큰 추출
+            access_token = authorization.replace("Bearer ", "")
             
-            user_response = fresh_client.auth.get_user(access_token)
-            if user_response and user_response.user:
-                # 2. 해당 사용자의 모든 세션 무효화
-                fresh_client.auth.admin.sign_out(user_response.user.id, scope='global')
-        except Exception:
-            # 토큰이 이미 만료되었거나 유효하지 않은 경우
-            # 프론트엔드에서는 이미 삭제할 것이므로 성공 처리
-            pass
+            # Supabase에서 사용자의 모든 세션 무효화
+            try:
+                from app.database import get_fresh_admin_client
+                fresh_client = get_fresh_admin_client()
+                
+                user_response = fresh_client.auth.get_user(access_token)
+                if user_response and user_response.user:
+                    fresh_client.auth.admin.sign_out(user_response.user.id, scope='global')
+            except Exception:
+                pass
         
-        return LogoutResponse()
+        # 응답 생성 및 쿠키 삭제
+        response = JSONResponse(content={"message": "로그아웃되었습니다"})
+        response.delete_cookie(
+            key="refresh_token",
+            httponly=True,
+            samesite="lax",
+            secure=True
+        )
+        
+        return response
     
     except HTTPException:
         raise
@@ -527,6 +535,80 @@ async def logout(authorization: Optional[str] = Header(None)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"로그아웃 실패: {str(e)}"
+        )
+
+
+@router.post(
+    "/refresh",
+    response_model=RefreshResponse,
+    status_code=status.HTTP_200_OK,
+    summary="토큰 갱신",
+    description="refresh_token 쿠키를 사용하여 새로운 access_token을 발급합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "유효하지 않은 refresh token"}
+    }
+)
+async def refresh_token(request: Request):
+    """Access Token 갱신 (Cookie에서 Refresh Token 사용)"""
+    from fastapi.responses import JSONResponse
+    
+    try:
+        # 쿠키에서 refresh_token 추출
+        refresh_token = request.cookies.get("refresh_token")
+        
+        if not refresh_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="refresh token이 없습니다. 다시 로그인해주세요."
+            )
+        
+        # Supabase에서 세션 갱신
+        from app.database import get_fresh_admin_client
+        fresh_client = get_fresh_admin_client()
+        
+        try:
+            auth_response = fresh_client.auth.refresh_session(refresh_token)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="refresh token이 만료되었습니다. 다시 로그인해주세요."
+            )
+        
+        if not auth_response.session:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="세션 갱신에 실패했습니다. 다시 로그인해주세요."
+            )
+        
+        new_access_token = auth_response.session.access_token
+        new_refresh_token = auth_response.session.refresh_token
+        
+        # 응답 생성 (새 refresh_token으로 쿠키 업데이트 - Token Rotation)
+        response_data = {
+            "access_token": new_access_token,
+            "token_type": "bearer"
+        }
+        
+        response = JSONResponse(content=response_data)
+        
+        # 새 refresh_token으로 쿠키 갱신
+        response.set_cookie(
+            key="refresh_token",
+            value=new_refresh_token,
+            httponly=True,
+            samesite="lax",
+            secure=True,
+            max_age=30 * 24 * 60 * 60  # 30일
+        )
+        
+        return response
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"토큰 갱신 실패: {str(e)}"
         )
 
 
