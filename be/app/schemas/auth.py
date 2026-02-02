@@ -118,9 +118,14 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     """로그인 응답"""
     access_token: str
-    refresh_token: str
     token_type: str = "bearer"
     user: dict
+
+
+class RefreshResponse(BaseModel):
+    """토큰 갱신 응답"""
+    access_token: str
+    token_type: str = "bearer"
 
 
 class LogoutResponse(BaseModel):
