@@ -1,6 +1,7 @@
 import React from 'react'
 import { toast } from 'sonner'
-import { welfareApi } from '../../../lib/api/welfare'
+import { welfareApi, type PrinterInfo } from '../../../lib/api/welfare'
+import { PrinterImageSection } from './PrinterImageSection'
 import { useAuthStore } from '../../../store/useAuthStore'
 
 export function PrinterManagementView() {
@@ -9,6 +10,21 @@ export function PrinterManagementView() {
     const [previewUrl, setPreviewUrl] = React.useState<string>('')
     const [uploadedUrl, setUploadedUrl] = React.useState<string>('')
     const [isUploading, setIsUploading] = React.useState(false)
+    const [printerInfo, setPrinterInfo] = React.useState<PrinterInfo | null>(null)
+
+    const fetchPrinterInfo = React.useCallback(async () => {
+        try {
+            const info = await welfareApi.getPrinterInfo()
+            setPrinterInfo(info)
+        } catch (error) {
+            console.error('[프린터 이미지] 정보 로드 실패:', error)
+            toast.error('프린터 정보를 불러오지 못했습니다.')
+        }
+    }, [])
+
+    React.useEffect(() => {
+        fetchPrinterInfo()
+    }, [fetchPrinterInfo])
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0] || null
@@ -60,8 +76,12 @@ export function PrinterManagementView() {
             await welfareApi.uploadImageToS3(presigned_url, selectedFile)
             console.log('[프린터 이미지] S3 업로드 완료')
 
-            // 3. 업로드 성공 시 public_url 저장
+            // 3. 업로드 완료 알림
+            await welfareApi.completePrinterImageUpload(public_url, accessToken)
+
+            // 4. 업로드 성공 시 public_url 저장 및 정보 갱신
             setUploadedUrl(public_url)
+            await fetchPrinterInfo()
 
             toast.success('프린터 사용 안내 이미지가 업로드되었습니다.')
             console.log('[프린터 이미지] 업로드된 이미지 URL:', public_url)
@@ -78,6 +98,7 @@ export function PrinterManagementView() {
         }
     }
 
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between gap-4 flex-col sm:flex-row">
@@ -87,62 +108,17 @@ export function PrinterManagementView() {
                 </div>
             </div>
 
-            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">사용 안내 이미지</h3>
+            <PrinterImageSection
+                selectedFile={selectedFile}
+                previewUrl={previewUrl}
+                uploadedUrl={uploadedUrl}
+                isUploading={isUploading}
+                printerInfo={printerInfo}
+                onFileChange={handleFileChange}
+                onSave={handleSave}
+                onReset={handleReset}
+            />
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="space-y-3">
-                        <label className="block text-sm font-medium text-gray-700" htmlFor="printer-guide-image">
-                            이미지 파일 선택
-                        </label>
-                        <input
-                            id="printer-guide-image"
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            className="block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-gray-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-black"
-                        />
-                        <p className="text-xs text-gray-500">PNG/JPG 권장. 최대 10MB까지 업로드 가능합니다.</p>
-
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                onClick={handleSave}
-                                disabled={isUploading || !selectedFile}
-                                className="rounded-lg bg-gray-900 hover:bg-black text-white px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isUploading ? '업로드 중...' : '저장'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleReset}
-                                className="rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 text-sm font-semibold transition-colors"
-                            >
-                                초기화
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        <div className="text-sm font-medium text-gray-700">미리보기</div>
-                        <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 bg-white flex items-center justify-center overflow-hidden">
-                            {previewUrl ? (
-                                <img src={previewUrl} alt="프린터 사용 안내 미리보기" className="w-full h-full object-contain" />
-                            ) : (
-                                <span className="text-sm text-gray-400">이미지를 선택하면 여기에 표시됩니다.</span>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* 업로드 완료된 URL 표시 */}
-                {uploadedUrl && (
-                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <p className="text-sm font-medium text-green-800 mb-1">✓ 업로드 완료</p>
-                        <p className="text-xs text-green-600 break-all">{uploadedUrl}</p>
-                    </div>
-                )}
-            </div>
         </div>
     )
 }

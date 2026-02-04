@@ -33,6 +33,14 @@ export type LockerInfo = {
     updated_at: string;
 };
 
+export type PrinterInfo = {
+    id: number;
+    image_url: string | null;
+    description: string | null;
+    google_form_url: string | null;
+    updated_at: string;
+};
+
 export const welfareApi = {
     /**
      * Presigned URL을 획득합니다.
@@ -78,10 +86,9 @@ export const welfareApi = {
 
     /**
      * 프린터 사용 안내 이미지 업로드용 Presigned URL을 획득합니다.
-     * 복지사업 이미지 업로드를 위한 범용 API를 사용합니다.
      */
-    getPrinterImagePresignedUrl: async (filename: string, token?: string | null): Promise<{ presigned_url: string; public_url: string; file_key: string }> => {
-        const response = await axios.post(`${API_BASE_URL}/admin/welfare/image/presigned-url`, {}, {
+    getPrinterImagePresignedUrl: async (filename: string, token?: string | null): Promise<{ presigned_url: string; public_url: string }> => {
+        const response = await axios.post(`${API_BASE_URL}/admin/welfare/print/image/presigned-url`, {}, {
             params: { filename },
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
@@ -93,6 +100,17 @@ export const welfareApi = {
      */
     completeLockerImageUpload: async (publicUrl: string, token?: string | null): Promise<{ layout_image_url?: string }> => {
         const response = await axios.post(`${API_BASE_URL}/admin/welfare/locker_image/complete`, {}, {
+            params: { public_url: publicUrl },
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return response.data;
+    },
+
+    /**
+     * 프린터 사용 안내 이미지 업로드 완료를 서버에 알립니다.
+     */
+    completePrinterImageUpload: async (publicUrl: string, token?: string | null): Promise<string> => {
+        const response = await axios.post(`${API_BASE_URL}/admin/welfare/print/image/complete`, {}, {
             params: { public_url: publicUrl },
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
@@ -112,6 +130,14 @@ export const welfareApi = {
      */
     getLockerInfo: async (): Promise<LockerInfo> => {
         const response = await axios.get(`${API_BASE_URL}/welfare/locker_periods`);
+        return response.data;
+    },
+
+    /**
+     * 프린터 사용 안내 정보를 가져옵니다.
+     */
+    getPrinterInfo: async (): Promise<PrinterInfo> => {
+        const response = await axios.get(`${API_BASE_URL}/welfare/print`);
         return response.data;
     },
 
@@ -166,6 +192,16 @@ export const welfareApi = {
         description?: string | null;
     }, token?: string | null): Promise<LockerInfo> => {
         const response = await axios.put(`${API_BASE_URL}/admin/welfare/locker_periods`, data, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return response.data;
+    },
+
+    /**
+     * 프린터 사용 안내 정보를 수정합니다.
+     */
+    updatePrinterInfo: async (data: { description?: string | null }, token?: string | null): Promise<PrinterInfo> => {
+        const response = await axios.put(`${API_BASE_URL}/admin/welfare/print`, data, {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return response.data;
