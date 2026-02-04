@@ -3,7 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Key, UserX } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { mypageApi } from '../lib/api/mypage'
-import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, ChangePasswordModal, WithdrawModal } from '../components/mypage'
+import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, EditProfileModal, ChangePasswordModal, WithdrawModal } from '../components/mypage'
 import type { User } from '../types/users'
 import type { MyRegistration } from '../lib/api/mypage'
 
@@ -16,6 +16,7 @@ function MyPage() {
   const [profile, setProfile] = React.useState<User | null>(user)
   const [activeTab, setActiveTab] = React.useState<'info' | 'events'>('info')
   const [showVerifyModal, setShowVerifyModal] = React.useState(false)
+  const [showEditProfileModal, setShowEditProfileModal] = React.useState(false)
   const [showPasswordModal, setShowPasswordModal] = React.useState(false)
   const [showWithdrawModal, setShowWithdrawModal] = React.useState(false)
   const [myRegistrations, setMyRegistrations] = React.useState<MyRegistration[]>([])
@@ -212,7 +213,17 @@ function MyPage() {
         <main className="flex-1 space-y-6">
           {activeTab === 'info' && (
             <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">내 정보</h2>
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">내 정보</h2>
+                <button
+                  type="button"
+                  onClick={() => setShowEditProfileModal(true)}
+                  className="px-3 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  내 정보 수정
+                </button>
+              </div>
+
               <div className="space-y-4">
                 <InfoLine label="이름" value={currentUser.name} />
                 <InfoLine label="학번" value={currentUser.student_id} />
@@ -275,6 +286,14 @@ function MyPage() {
         </main>
 
         {showVerifyModal && <VerifyModal onClose={() => setShowVerifyModal(false)} onUploaded={handleVerificationUploaded} />}
+        {showEditProfileModal && (
+          <EditProfileModal
+            onClose={() => setShowEditProfileModal(false)}
+            initialName={currentUser.name}
+            initialStudentId={currentUser.student_id}
+            verificationStatus={currentUser.verification_status}
+          />
+        )}
         {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
         {showWithdrawModal && <WithdrawModal onClose={() => setShowWithdrawModal(false)} />}
       </div>

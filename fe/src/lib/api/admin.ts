@@ -49,4 +49,8 @@ export const adminApi = {
         const response = await api.post<{ message: string }>(`/admin/users/${studentId}/unblock`)
         return response.data
     },
+    getProfileUpdates: async (params?: { status_filter?: string | null }) => {
+        const response = await api.get('/admin/profile-updates', { params })
+        return response.data
+    },
 }

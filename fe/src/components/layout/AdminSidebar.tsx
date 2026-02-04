@@ -1,5 +1,5 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import { LayoutDashboard, Megaphone, Calendar, Gift, Users, FileText, MessageSquare, BarChart3, MessageCircle } from 'lucide-react'
+import { LayoutDashboard, Megaphone, Calendar, Gift, Users, FileText, MessageSquare, BarChart3, MessageCircle, UserRoundPen } from 'lucide-react'
 
 const MENU_ITEMS = [
     { label: '대시보드', href: '/admin', icon: LayoutDashboard },
@@ -7,6 +7,7 @@ const MENU_ITEMS = [
     { label: '행사·공지 신청', href: '/admin/events', icon: Calendar },
     { label: '수요조사·설문조사', href: '/admin/surveys', icon: BarChart3 },
     { label: '카톡방 초대', href: '/admin/kakaotalk', icon: MessageCircle },
+    { label: '프로필 변경 요청', href: '/admin/profile-updates', icon: UserRoundPen },
     { label: '복지 사업 관리', href: '/admin/welfare', icon: Gift },
     { label: '동아리 관리', href: '/admin/clubs', icon: Users },
     { label: '학생회 소개', href: '/admin/intro', icon: FileText },
