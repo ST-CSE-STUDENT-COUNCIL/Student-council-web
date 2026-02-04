@@ -71,7 +71,6 @@ function MyPage() {
 
     return myRegistrations
       .filter(reg => {
-        if (reg.status === 'cancelled') return false
         if (!reg.activity) return false
 
         const endDate = reg.activity.registration_end
@@ -94,7 +93,6 @@ function MyPage() {
     return myRegistrations
       .filter(reg => {
         if (!reg.activity) return false
-        if (reg.status === 'cancelled') return false
 
         const endDate = reg.activity.registration_end
         if (!endDate) return false // 종료일 없으면 완료되지 않음 (상시)
@@ -104,6 +102,10 @@ function MyPage() {
       .map(reg => ({
         title: reg.activity!.title,
         date: formatDate(reg.activity!.registration_end || reg.registered_at),
+        status: reg.status === 'rejected' || reg.status === 'cancelled'
+          ? getStatusLabel(reg.status)
+          : '마감',
+        rawStatus: reg.status,
       }))
   }, [myRegistrations])
 
@@ -271,7 +273,7 @@ function MyPage() {
                     <div key={event.title} className="border border-gray-100 dark:border-slate-700 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm text-gray-500 dark:text-gray-400">{event.date}</p>
-                        <StatusPill status="마감" />
+                        <StatusPill status={event.status} />
                       </div>
                       <p className="font-semibold text-gray-900 dark:text-white">{event.title}</p>
                     </div>
@@ -329,7 +331,7 @@ function getStatusLabel(status: string) {
   switch (status) {
     case 'pending': return '신청 대기'
     case 'approved': return '신청 승인'
-    case 'rejected': return '반려됨'
+    case 'rejected': return '신청 거절'
     case 'cancelled': return '취소됨'
     default: return status
   }
