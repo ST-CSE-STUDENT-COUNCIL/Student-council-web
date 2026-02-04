@@ -2,6 +2,7 @@
 복지사업 관련 API 라우트
 - 사물함: 배치도 + 구글폼 URL
 - 물품대여: 물품 목록 + 구글 스프레드시트 재고 조회
+- 프린트: 이미지 + 구글폼 URL
 """
 from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from typing import List, Optional
@@ -10,7 +11,9 @@ from app.schemas.welfare import (
     LockerInfoUpdate,
     RentalItem,
     RentalItemCreate,
-    RentalItemUpdate
+    RentalItemUpdate,
+    PrintWelfareInfo,
+    PrintWelfareInfoUpdate
 )
 from app.database import get_supabase, get_supabase_admin
 from app.utils.auth import get_current_user, require_admin
@@ -30,7 +33,124 @@ router = APIRouter(tags=["복지사업"])
 
 
 # ============================================================================
-# 복지사업 이미지 (Generic Welfare Images)
+# 프린트 복지사업 (Print Welfare)
+# ============================================================================
+
+@router.get("/welfare/print", response_model=PrintWelfareInfo, summary="프린트 복지사업 정보 조회 (공개)")
+async def get_print_welfare_info():
+    """
+    프린트 복지사업 이미지 URL과 구글폼 URL을 조회합니다.
+    
+    - **공개 API**: 인증 불필요
+    """
+    supabase = get_supabase()
+    
+    result = supabase.table('print_welfare_info').select('*').eq('id', 1).limit(1).execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=404, detail="프린트 복지 정보가 없습니다")
+    
+    return result.data[0]
+
+
+@router.post("/admin/welfare/print/image/presigned-url", summary="프린트 복지 이미지 업로드용 Presigned URL 발급 (관리자)")
+async def get_print_welfare_presigned_url(
+    filename: str,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    프린트 복지사업 이미지 업로드를 위한 Presigned URL을 발급합니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    - **프로세스**:
+      1. 이 API로 Presigned URL 받기
+      2. 프론트에서 해당 URL로 직접 PUT 요청으로 이미지 업로드
+      3. /admin/welfare/print/image/complete API로 업로드 완료 알림
+    """
+    file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"print-welfare/{unique_filename}"
+    
+    presigned_url = generate_presigned_url(
+        bucket_name="welfare-images",
+        file_key=file_key,
+        expires_in=300  # 5분 유효
+    )
+    
+    base_url = get_bucket_url("welfare-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
+
+
+@router.post("/admin/welfare/print/image/complete", summary="프린트 복지 이미지 업로드 완료 처리 (관리자)")
+async def complete_print_welfare_image_upload(
+    public_url: str,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    프린트 복지사업 이미지 업로드 완료 후 DB에 저장합니다.
+    기존 이미지가 있으면 R2에서 삭제합니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    """
+    admin_supabase = get_supabase_admin()
+    
+    try:
+        # 기존 레코드 확인
+        existing = admin_supabase.table('print_welfare_info').select('*').eq('id', 1).execute()
+        
+        # 기존 이미지가 있으면 R2에서 삭제
+        if existing.data and existing.data[0].get('image_url'):
+            old_image_url = existing.data[0]['image_url']
+            if old_image_url and old_image_url != public_url:
+                await delete_file_from_r2(old_image_url, "welfare-images")
+        
+        # DB 업데이트
+        result = admin_supabase.table('print_welfare_info').update({
+            'image_url': public_url,
+            'updated_at': 'NOW()'
+        }).eq('id', 1).execute()
+        
+        return {"image_url": public_url}
+    except Exception as e:
+        print(f"[API ERROR] complete_print_welfare_image_upload: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"이미지 정보 저장 실패: {str(e)}")
+
+
+@router.put("/admin/welfare/print", response_model=PrintWelfareInfo, summary="프린트 복지 정보 수정 (관리자)")
+async def update_print_welfare_info(
+    body: PrintWelfareInfoUpdate,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    프린트 복지사업 정보(설명, 구글폼 URL)를 수정합니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    - **이미지 업로드**: 별도 /admin/welfare/print/image/complete API 사용
+    """
+    admin_supabase = get_supabase_admin()
+    
+    update_data = body.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
+    
+    update_data['updated_at'] = 'NOW()'
+    
+    result = admin_supabase.table('print_welfare_info').update(update_data).eq('id', 1).execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=500, detail="프린트 복지 정보 저장 실패")
+    
+    return result.data[0]
+
+
+# ============================================================================
+# 복지사업 이미지 (Generic Welfare Images) - 범용
 # ============================================================================
 
 @router.post("/admin/welfare/image/presigned-url", summary="복지사업 이미지 업로드용 Presigned URL 발급 (관리자)")
