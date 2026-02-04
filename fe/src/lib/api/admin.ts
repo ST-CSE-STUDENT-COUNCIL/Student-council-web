@@ -53,4 +53,14 @@ export const adminApi = {
         const response = await api.get('/admin/profile-updates', { params })
         return response.data
     },
+    approveProfileUpdate: async (requestId: string | number) => {
+        const response = await api.post(`/admin/profile-updates/${requestId}/approve`)
+        return response.data
+    },
+    rejectProfileUpdate: async (requestId: string | number, reason: string) => {
+        const response = await api.post(`/admin/profile-updates/${requestId}/reject`, null, {
+            params: { reason },
+        })
+        return response.data
+    },
 }

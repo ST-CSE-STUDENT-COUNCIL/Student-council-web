@@ -57,8 +57,27 @@ export function EditProfileModal({ onClose, initialName = '', initialStudentId =
     }
   }, [previewUrl])
 
-  const isApproved = verificationStatus === 'approved'
-  const isReady = !isApproved && name.trim().length > 0 && studentId.trim().length > 0 && Boolean(file)
+  async function readFileAsDataUrl(targetFile: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result)
+        } else {
+          reject(new Error('이미지 데이터를 읽지 못했습니다.'))
+        }
+      }
+
+      reader.onerror = () => {
+        reject(new Error('이미지 파일 읽기에 실패했습니다.'))
+      }
+
+      reader.readAsDataURL(targetFile)
+    })
+  }
+
+  const isReady = name.trim().length > 0 && studentId.trim().length > 0 && Boolean(file)
 
   async function handleSubmit() {
     if (!file || isSubmitting) return
@@ -77,7 +96,7 @@ export function EditProfileModal({ onClose, initialName = '', initialStudentId =
     setError(null)
 
     try {
-      const { file_path } = await mypageApi.uploadVerificationImage(file)
+      const verificationImageUrl = await readFileAsDataUrl(file)
       const requests: Array<Promise<unknown>> = []
 
       if (nameChanged) {
@@ -85,7 +104,7 @@ export function EditProfileModal({ onClose, initialName = '', initialStudentId =
           mypageApi.requestProfileUpdate({
             field_name: 'name',
             new_value: trimmedName,
-            verification_image_url: file_path
+            verification_image_url: verificationImageUrl
           })
         )
       }
@@ -95,7 +114,7 @@ export function EditProfileModal({ onClose, initialName = '', initialStudentId =
           mypageApi.requestProfileUpdate({
             field_name: 'student_id',
             new_value: trimmedStudentId,
-            verification_image_url: file_path
+            verification_image_url: verificationImageUrl
           })
         )
       }
@@ -128,12 +147,6 @@ export function EditProfileModal({ onClose, initialName = '', initialStudentId =
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
           이름과 학번 변경 요청을 위해 학적인증 이미지를 첨부해주세요.
         </p>
-        {isApproved && (
-          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-            이미 학적 인증이 승인된 사용자는 재업로드가 불가합니다. 학생회로 문의해주세요.
-          </div>
-        )}
-
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">이름</label>

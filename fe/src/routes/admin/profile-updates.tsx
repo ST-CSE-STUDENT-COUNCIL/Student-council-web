@@ -13,8 +13,7 @@ type ProfileUpdateRequest = {
   id: string
   name: string
   studentId: string
-  field: UpdateField
-  newValue: string
+  updates: Array<{ field: UpdateField; newValue: string }>
   requestedAt: string
   status: 'pending' | 'approved' | 'rejected'
   verificationImageUrl: string
@@ -39,6 +38,7 @@ function AdminProfileUpdatesPage() {
   const [requests, setRequests] = useState<ProfileUpdateRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -60,21 +60,65 @@ function AdminProfileUpdatesPage() {
           Array.isArray((data as { requests?: unknown })?.requests) ? (data as { requests: unknown[] }).requests :
           []
 
-        const mapped = (payload as RawProfileUpdateItem[]).map((item, index) => {
+        const rawItems = payload as RawProfileUpdateItem[]
+        const needsUserLookup = rawItems.some((item) =>
+          Boolean(item.user_id) && (!item.name || !item.student_id)
+        )
+
+        let userLookup = new Map<string, { name: string; student_id: string }>()
+
+        if (needsUserLookup) {
+          const usersData = await adminApi.getUsers()
+          if (cancelled) return
+
+          userLookup = new Map(
+            (usersData.users || []).map((user) => [
+              user.id,
+              { name: user.name, student_id: user.student_id },
+            ])
+          )
+        }
+
+        const groups = new Map<string, ProfileUpdateRequest>()
+
+        rawItems.forEach((item, index) => {
           const field: UpdateField = item.field_name === 'student_id' ? 'student_id' : 'name'
           const createdAt = item.created_at || item.requested_at || ''
+          const fallbackUser = item.user_id ? userLookup.get(item.user_id) : undefined
+          const groupKey = `${item.user_id ?? 'unknown'}-${normalizeDateKey(createdAt)}`
 
-          return {
+          const existing = groups.get(groupKey)
+          const base = existing ?? {
             id: String(item.id ?? item.user_id ?? index),
-            name: item.name ?? '이름 미등록',
-            studentId: item.student_id ?? '-',
-            field,
-            newValue: item.new_value ?? '- ',
+            name: item.name ?? fallbackUser?.name ?? '이름 미등록',
+            studentId: item.student_id ?? fallbackUser?.student_id ?? '-',
+            updates: [],
             requestedAt: createdAt ? formatDateTime(createdAt) : '-',
             status: normalizeStatus(item.status),
             verificationImageUrl: item.verification_image_url ?? '',
           }
+
+          const updates = base.updates.some((u) => u.field === field)
+            ? base.updates.map((u) => (u.field === field ? { field, newValue: item.new_value ?? '- ' } : u))
+            : [...base.updates, { field, newValue: item.new_value ?? '- ' }]
+
+          const nextStatus = mergeStatus(base.status, normalizeStatus(item.status))
+          const nextRequestedAt = createdAt && base.requestedAt === '-'
+            ? formatDateTime(createdAt)
+            : base.requestedAt
+
+          const next = {
+            ...base,
+            updates,
+            status: nextStatus,
+            requestedAt: nextRequestedAt,
+            verificationImageUrl: base.verificationImageUrl || item.verification_image_url || '',
+          }
+
+          groups.set(groupKey, next)
         })
+
+        const mapped = Array.from(groups.values())
 
         setRequests(mapped)
       } catch (err) {
@@ -93,6 +137,43 @@ function AdminProfileUpdatesPage() {
       cancelled = true
     }
   }, [statusFilter])
+
+  async function handleApprove(requestId: string) {
+    if (actionLoadingId) return
+    setActionLoadingId(requestId)
+
+    try {
+      await adminApi.approveProfileUpdate(requestId)
+      setRequests((prev) => prev.map((req) =>
+        req.id === requestId ? { ...req, status: 'approved' } : req
+      ))
+    } catch (err) {
+      console.error('프로필 변경 승인 실패:', err)
+      setError('승인 처리에 실패했습니다.')
+    } finally {
+      setActionLoadingId(null)
+    }
+  }
+
+  async function handleReject(requestId: string) {
+    if (actionLoadingId) return
+    const reason = window.prompt('반려 사유를 입력해주세요.')
+    if (!reason || reason.trim().length === 0) return
+
+    setActionLoadingId(requestId)
+
+    try {
+      await adminApi.rejectProfileUpdate(requestId, reason.trim())
+      setRequests((prev) => prev.map((req) =>
+        req.id === requestId ? { ...req, status: 'rejected' } : req
+      ))
+    } catch (err) {
+      console.error('프로필 변경 반려 실패:', err)
+      setError('반려 처리에 실패했습니다.')
+    } finally {
+      setActionLoadingId(null)
+    }
+  }
 
   const pendingCount = requests.filter((req) => req.status === 'pending').length
   const approvedCount = requests.filter((req) => req.status === 'approved').length
@@ -166,10 +247,14 @@ function AdminProfileUpdatesPage() {
                       <StatusPill status={req.status} />
                     </div>
                     <p className="text-sm text-gray-500">학번: {req.studentId}</p>
-                    <p className="text-sm text-gray-600">
-                      변경 요청: <span className="font-medium text-gray-900">{req.field === 'name' ? '이름' : '학번'}</span> →{' '}
-                      <span className="font-medium text-blue-600">{req.newValue}</span>
-                    </p>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      {req.updates.map((update) => (
+                        <p key={update.field}>
+                          변경 요청: <span className="font-medium text-gray-900">{update.field === 'name' ? '이름' : '학번'}</span> →{' '}
+                          <span className="font-medium text-blue-600">{update.newValue}</span>
+                        </p>
+                      ))}
+                    </div>
                     <p className="text-xs text-gray-400">요청일: {req.requestedAt}</p>
                   </div>
                 </div>
@@ -185,17 +270,25 @@ function AdminProfileUpdatesPage() {
                   </button>
                   <button
                     type="button"
-                    disabled
-                    className="px-3 py-2 text-sm font-medium text-white bg-emerald-500/60 rounded-lg cursor-not-allowed"
+                    disabled={req.status !== 'pending' || actionLoadingId === req.id}
+                    onClick={() => handleApprove(req.id)}
+                    className={`px-3 py-2 text-sm font-medium text-white rounded-lg ${req.status !== 'pending' || actionLoadingId === req.id
+                      ? 'bg-emerald-500/60 cursor-not-allowed'
+                      : 'bg-emerald-500 hover:bg-emerald-600'
+                      }`}
                   >
-                    승인
+                    {actionLoadingId === req.id ? '처리 중...' : '승인'}
                   </button>
                   <button
                     type="button"
-                    disabled
-                    className="px-3 py-2 text-sm font-medium text-white bg-rose-500/60 rounded-lg cursor-not-allowed"
+                    disabled={req.status !== 'pending' || actionLoadingId === req.id}
+                    onClick={() => handleReject(req.id)}
+                    className={`px-3 py-2 text-sm font-medium text-white rounded-lg ${req.status !== 'pending' || actionLoadingId === req.id
+                      ? 'bg-rose-500/60 cursor-not-allowed'
+                      : 'bg-rose-500 hover:bg-rose-600'
+                      }`}
                   >
-                    반려
+                    {actionLoadingId === req.id ? '처리 중...' : '반려'}
                   </button>
                 </div>
               </div>
@@ -280,6 +373,27 @@ function StatusPill({ status }: StatusPillProps) {
 function normalizeStatus(status?: string | null): 'pending' | 'approved' | 'rejected' {
   if (status === 'approved' || status === 'rejected') return status
   return 'pending'
+}
+
+function mergeStatus(
+  current: 'pending' | 'approved' | 'rejected',
+  incoming: 'pending' | 'approved' | 'rejected'
+): 'pending' | 'approved' | 'rejected' {
+  if (current === 'rejected' || incoming === 'rejected') return 'rejected'
+  if (current === 'pending' || incoming === 'pending') return 'pending'
+  return 'approved'
+}
+
+function normalizeDateKey(date: string) {
+  if (!date) return 'no-date'
+  const parsed = new Date(date)
+  if (Number.isNaN(parsed.getTime())) return date
+  const year = parsed.getFullYear()
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const hour = String(parsed.getHours()).padStart(2, '0')
+  const minute = String(parsed.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
 function formatDateTime(date: string) {

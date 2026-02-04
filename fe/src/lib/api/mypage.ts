@@ -32,6 +32,18 @@ export type MyRegistrationsResponse = {
     total_pages: number
 }
 
+export type ProfileUpdateRequest = {
+    id?: string | number
+    field_name?: 'name' | 'student_id'
+    new_value?: string
+    status?: string
+    rejection_reason?: string
+    reason?: string
+    created_at?: string
+    requested_at?: string
+    verification_image_url?: string
+}
+
 
 
 export const mypageApi = {
@@ -87,6 +99,10 @@ export const mypageApi = {
         verification_image_url: string
     }) => {
         const response = await api.post(`${API_BASE_URL}/profile-update`, data)
+        return response.data
+    },
+    getProfileUpdateRequests: async () => {
+        const response = await api.get(`${API_BASE_URL}/profile-update`)
         return response.data
     },
 }

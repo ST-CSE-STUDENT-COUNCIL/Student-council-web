@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/useAuthStore'
 import { mypageApi } from '../lib/api/mypage'
 import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, EditProfileModal, ChangePasswordModal, WithdrawModal } from '../components/mypage'
 import type { User } from '../types/users'
-import type { MyRegistration } from '../lib/api/mypage'
+import type { MyRegistration, ProfileUpdateRequest } from '../lib/api/mypage'
 
 export const Route = createFileRoute('/mypage')({
   component: MyPage,
@@ -20,6 +20,8 @@ function MyPage() {
   const [showPasswordModal, setShowPasswordModal] = React.useState(false)
   const [showWithdrawModal, setShowWithdrawModal] = React.useState(false)
   const [myRegistrations, setMyRegistrations] = React.useState<MyRegistration[]>([])
+  const [profileUpdateRequests, setProfileUpdateRequests] = React.useState<ProfileUpdateRequest[]>([])
+  const [profileUpdateError, setProfileUpdateError] = React.useState<string | null>(null)
   const currentUser = profile ?? user
 
   const handleWithdraw = React.useCallback(() => {
@@ -42,20 +44,42 @@ function MyPage() {
     let cancelled = false
 
     async function loadData() {
-      try {
-        const [profileData, registrationsData] = await Promise.all([
-          mypageApi.getProfile(),
-          mypageApi.getMyRegistrations()
-        ])
+      const results = await Promise.allSettled([
+        mypageApi.getProfile(),
+        mypageApi.getMyRegistrations(),
+        mypageApi.getProfileUpdateRequests(),
+      ])
 
-        if (cancelled) return
+      if (cancelled) return
 
-        setProfile(profileData)
-        setUser(profileData)
-        setMyRegistrations(registrationsData.items)
-      } catch (err) {
-        if (cancelled) return
-        console.error('Failed to load profile or registrations', err)
+      const [profileResult, registrationsResult, updatesResult] = results
+
+      if (profileResult.status === 'fulfilled') {
+        setProfile(profileResult.value)
+        setUser(profileResult.value)
+      } else {
+        console.error('Failed to load profile', profileResult.reason)
+      }
+
+      if (registrationsResult.status === 'fulfilled') {
+        setMyRegistrations(registrationsResult.value.items)
+      } else {
+        console.error('Failed to load registrations', registrationsResult.reason)
+      }
+
+      if (updatesResult.status === 'fulfilled') {
+        const data = updatesResult.value
+        const payload =
+          Array.isArray(data) ? data :
+          Array.isArray((data as { items?: unknown })?.items) ? (data as { items: unknown[] }).items :
+          Array.isArray((data as { requests?: unknown })?.requests) ? (data as { requests: unknown[] }).requests :
+          []
+
+        setProfileUpdateRequests(payload as ProfileUpdateRequest[])
+        setProfileUpdateError(null)
+      } else {
+        console.error('Failed to load profile update requests', updatesResult.reason)
+        setProfileUpdateError('프로필 변경 요청 내역을 불러오지 못했습니다.')
       }
     }
 
@@ -139,6 +163,48 @@ function MyPage() {
     { id: 'info', label: '내 정보' },
     { id: 'events', label: '행사' },
   ]
+
+  const mappedProfileUpdates = React.useMemo(() => {
+    const groups = new Map<string, {
+      id: string
+      updates: Array<{ field: 'name' | 'student_id'; newValue: string }>
+      statusLabel: string
+      requestedAt: string
+      rejectionReason: string
+    }>()
+
+    profileUpdateRequests.forEach((item, index) => {
+      const field: 'name' | 'student_id' = item.field_name === 'student_id' ? 'student_id' : 'name'
+      const createdAt = item.created_at || item.requested_at || ''
+      const rejectionReason = item.rejection_reason || item.reason || ''
+      const groupKey = normalizeDateKey(createdAt)
+
+      const existing = groups.get(groupKey)
+      const base = existing ?? {
+        id: String(item.id ?? index),
+        updates: [],
+        statusLabel: getProfileUpdateStatusLabel(item.status),
+        requestedAt: createdAt ? formatDateTime(createdAt) : '-',
+        rejectionReason,
+      }
+
+      const updates = base.updates.some((u) => u.field === field)
+        ? base.updates.map((u) => (u.field === field ? { field, newValue: item.new_value ?? '-' } : u))
+        : [...base.updates, { field, newValue: item.new_value ?? '-' }]
+
+      const nextStatus = mergeStatusLabel(base.statusLabel, getProfileUpdateStatusLabel(item.status))
+      const nextReason = base.rejectionReason || rejectionReason
+
+      groups.set(groupKey, {
+        ...base,
+        updates,
+        statusLabel: nextStatus,
+        rejectionReason: nextReason,
+      })
+    })
+
+    return Array.from(groups.values())
+  }, [profileUpdateRequests])
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -237,6 +303,46 @@ function MyPage() {
                   <Badge tone={getMembershipStatus(currentUser)} />
                 </div>
               </div>
+
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">프로필 변경 요청</h3>
+                {profileUpdateError && (
+                  <p className="text-sm text-red-600 dark:text-red-400">{profileUpdateError}</p>
+                )}
+                {!profileUpdateError && mappedProfileUpdates.length === 0 && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">요청 내역이 없습니다.</p>
+                )}
+                {!profileUpdateError && mappedProfileUpdates.length > 0 && (
+                  <div className="space-y-3">
+                    {mappedProfileUpdates.map((req) => (
+                      <div
+                        key={req.id}
+                        className="border border-gray-100 dark:border-slate-700 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                      >
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">요청일: {req.requestedAt}</p>
+                          <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                            {req.updates.map((update) => (
+                              <p key={update.field}>
+                                변경 요청: <span className="font-semibold text-gray-900 dark:text-white">{update.field === 'name' ? '이름' : '학번'}</span> →{' '}
+                                <span className="font-semibold text-blue-600 dark:text-blue-400">{update.newValue}</span>
+                              </p>
+                            ))}
+                          </div>
+                          {req.statusLabel === '반려' && req.rejectionReason && (
+                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                              반려 사유: {req.rejectionReason}
+                            </p>
+                          )}
+                        </div>
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-200">
+                          {req.statusLabel}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </section>
           )}
 
@@ -325,6 +431,38 @@ function formatDate(dateStr: string) {
   } catch (e) {
     return dateStr
   }
+}
+
+function formatDateTime(dateStr: string) {
+  if (!dateStr) return '-'
+  const parsed = new Date(dateStr)
+  if (Number.isNaN(parsed.getTime())) return dateStr
+  return parsed.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+}
+
+function getProfileUpdateStatusLabel(status?: string | null) {
+  if (status === 'approved') return '승인'
+  if (status === 'rejected') return '반려'
+  if (status === 'pending') return '대기'
+  return status || '대기'
+}
+
+function mergeStatusLabel(current: string, incoming: string) {
+  if (current === '반려' || incoming === '반려') return '반려'
+  if (current === '대기' || incoming === '대기') return '대기'
+  return '승인'
+}
+
+function normalizeDateKey(dateStr: string) {
+  if (!dateStr) return 'no-date'
+  const parsed = new Date(dateStr)
+  if (Number.isNaN(parsed.getTime())) return dateStr
+  const year = parsed.getFullYear()
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const hour = String(parsed.getHours()).padStart(2, '0')
+  const minute = String(parsed.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
 function getStatusLabel(status: string) {
