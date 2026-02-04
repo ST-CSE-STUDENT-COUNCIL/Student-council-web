@@ -77,6 +77,18 @@ export const welfareApi = {
     },
 
     /**
+     * 프린터 사용 안내 이미지 업로드용 Presigned URL을 획득합니다.
+     * 복지사업 이미지 업로드를 위한 범용 API를 사용합니다.
+     */
+    getPrinterImagePresignedUrl: async (filename: string, token?: string | null): Promise<{ presigned_url: string; public_url: string; file_key: string }> => {
+        const response = await axios.post(`${API_BASE_URL}/admin/welfare/image/presigned-url`, {}, {
+            params: { filename },
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return response.data;
+    },
+
+    /**
      * Presigned URL 업로드 완료 후 서버에 공개 URL을 전달합니다.
      */
     completeLockerImageUpload: async (publicUrl: string, token?: string | null): Promise<{ layout_image_url?: string }> => {
