@@ -28,7 +28,12 @@ from app.schemas.activities import (
     SurveyStatsResponse,
     RegistrationStatusUpdateRequest,
     DemandSurveyStatsResponse,
-    ErrorResponse
+    ErrorResponse,
+    AttendanceCheckRequest,
+    AttendanceCheckResponse,
+    AttendanceInfoResponse,
+    AttendanceListResponse,
+    AttendanceListItem
 )
 from app.utils.auth import optional_current_user, require_verified_user, require_admin
 from app.utils.r2_storage import (
@@ -1402,3 +1407,274 @@ async def delete_activity_image(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"이미지 삭제 실패: {str(e)}"
         )
+
+
+# ============================================================================
+# 출석 체크 API
+# ============================================================================
+
+@router.get(
+    "/{activity_id}/attendance/search",
+    response_model=AttendanceInfoResponse,
+    summary="학번으로 출석 정보 검색 (공개)",
+    description="학번으로 신청 내역을 검색하여 출석 정보를 확인합니다",
+    responses={
+        404: {"model": ErrorResponse, "description": "신청 내역 없음"}
+    }
+)
+async def search_attendance_by_student_id(
+    activity_id: int,
+    student_id: str = Query(..., description="학번")
+):
+    """학번으로 출석 정보 검색 (로그인 불필요)"""
+    try:
+        # 활동 조회
+        activity_result = supabase.table('activities').select('title').eq('id', activity_id).single().execute()
+        if not activity_result.data:
+            raise HTTPException(status_code=404, detail="활동을 찾을 수 없습니다")
+        
+        # 학번으로 신청 내역 조회
+        registration_result = supabase.table('activity_registrations')\
+            .select('id, user_name, student_id, attended, attended_at')\
+            .eq('activity_id', activity_id)\
+            .eq('student_id', student_id)\
+            .single()\
+            .execute()
+        
+        if not registration_result.data:
+            raise HTTPException(status_code=404, detail="해당 학번으로 신청된 내역이 없습니다")
+        
+        reg = registration_result.data
+        
+        return AttendanceInfoResponse(
+            registration_id=reg['id'],
+            activity_title=activity_result.data['title'],
+            user_name=reg['user_name'],
+            student_id=reg['student_id'],
+            already_attended=reg.get('attended', False),
+            attended_at=reg.get('attended_at')
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"출석 정보 조회 실패: {str(e)}")
+
+
+@router.post(
+    "/{activity_id}/attend",
+    response_model=AttendanceCheckResponse,
+    summary="출석 체크 (공개)",
+    description="학번으로 출석 체크합니다 (로그인 불필요)",
+    responses={
+        404: {"model": ErrorResponse, "description": "신청 내역 없음"},
+        409: {"model": ErrorResponse, "description": "이미 출석 체크됨"}
+    }
+)
+async def attend_by_student_id(
+    activity_id: int,
+    body: AttendanceCheckRequest
+):
+    """학번으로 출석 체크 (로그인 불필요)"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # 학번으로 신청 내역 조회
+        registration_result = admin_supabase.table('activity_registrations')\
+            .select('id, attended')\
+            .eq('activity_id', activity_id)\
+            .eq('student_id', body.student_id)\
+            .single()\
+            .execute()
+        
+        if not registration_result.data:
+            raise HTTPException(status_code=404, detail="해당 학번으로 신청된 내역이 없습니다")
+        
+        reg = registration_result.data
+        
+        if reg.get('attended'):
+            raise HTTPException(status_code=409, detail="이미 출석 체크가 완료되었습니다")
+        
+        # 출석 체크
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
+        
+        admin_supabase.table('activity_registrations').update({
+            'attended': True,
+            'attended_at': now.isoformat()
+        }).eq('id', reg['id']).execute()
+        
+        return AttendanceCheckResponse(
+            registration_id=reg['id'],
+            attended_at=now
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"출석 체크 실패: {str(e)}")
+
+
+@router.get(
+    "/admin/{activity_id}/attendance",
+    response_model=AttendanceListResponse,
+    summary="출석 현황 조회 (관리자)",
+    description="행사의 전체 출석 현황을 조회합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        404: {"model": ErrorResponse, "description": "활동 없음"}
+    }
+)
+async def get_attendance_list(
+    activity_id: int,
+    current_user: dict = Depends(require_admin)
+):
+    """출석 현황 조회 (관리자)"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # 활동 조회
+        activity_result = admin_supabase.table('activities').select('title').eq('id', activity_id).single().execute()
+        if not activity_result.data:
+            raise HTTPException(status_code=404, detail="활동을 찾을 수 없습니다")
+        
+        # 신청자 목록 조회 (users 조인)
+        registrations_result = admin_supabase.table('activity_registrations')\
+            .select('id, user_id, user_name, student_id, phone, created_at, attended, attended_at')\
+            .eq('activity_id', activity_id)\
+            .order('created_at')\
+            .execute()
+        
+        registrations = registrations_result.data or []
+        
+        # 출석 통계
+        total = len(registrations)
+        attended_count = sum(1 for r in registrations if r.get('attended'))
+        attendance_rate = (attended_count / total * 100) if total > 0 else 0
+        
+        # 응답 데이터 구성
+        items = [
+            AttendanceListItem(
+                registration_id=r['id'],
+                user_id=r.get('user_id'),
+                user_name=r['user_name'],
+                student_id=r['student_id'],
+                phone=r.get('phone'),
+                registered_at=r['created_at'],
+                attended=r.get('attended', False),
+                attended_at=r.get('attended_at')
+            )
+            for r in registrations
+        ]
+        
+        return AttendanceListResponse(
+            activity_id=activity_id,
+            activity_title=activity_result.data['title'],
+            total_registrations=total,
+            attended_count=attended_count,
+            attendance_rate=round(attendance_rate, 1),
+            registrations=items
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"출석 현황 조회 실패: {str(e)}")
+
+
+@router.post(
+    "/admin/{activity_id}/registrations/{registration_id}/attend",
+    response_model=AttendanceCheckResponse,
+    summary="출석 체크 (관리자)",
+    description="관리자가 특정 참석자의 출석을 체크합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        404: {"model": ErrorResponse, "description": "신청 내역 없음"}
+    }
+)
+async def admin_mark_attendance(
+    activity_id: int,
+    registration_id: int,
+    current_user: dict = Depends(require_admin)
+):
+    """관리자가 출석 체크"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # 신청 내역 확인
+        reg_result = admin_supabase.table('activity_registrations')\
+            .select('id')\
+            .eq('id', registration_id)\
+            .eq('activity_id', activity_id)\
+            .single()\
+            .execute()
+        
+        if not reg_result.data:
+            raise HTTPException(status_code=404, detail="신청 내역을 찾을 수 없습니다")
+        
+        # 출석 체크
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
+        
+        admin_supabase.table('activity_registrations').update({
+            'attended': True,
+            'attended_at': now.isoformat()
+        }).eq('id', registration_id).execute()
+        
+        return AttendanceCheckResponse(
+            message="출석 처리가 완료되었습니다",
+            registration_id=registration_id,
+            attended_at=now
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"출석 체크 실패: {str(e)}")
+
+
+@router.delete(
+    "/admin/{activity_id}/registrations/{registration_id}/attend",
+    status_code=status.HTTP_200_OK,
+    summary="출석 취소 (관리자)",
+    description="관리자가 특정 참석자의 출석을 취소합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        404: {"model": ErrorResponse, "description": "신청 내역 없음"}
+    }
+)
+async def admin_cancel_attendance(
+    activity_id: int,
+    registration_id: int,
+    current_user: dict = Depends(require_admin)
+):
+    """관리자가 출석 취소"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # 신청 내역 확인
+        reg_result = admin_supabase.table('activity_registrations')\
+            .select('id')\
+            .eq('id', registration_id)\
+            .eq('activity_id', activity_id)\
+            .single()\
+            .execute()
+        
+        if not reg_result.data:
+            raise HTTPException(status_code=404, detail="신청 내역을 찾을 수 없습니다")
+        
+        # 출석 취소
+        admin_supabase.table('activity_registrations').update({
+            'attended': False,
+            'attended_at': None
+        }).eq('id', registration_id).execute()
+        
+        return {"message": "출석이 취소되었습니다", "registration_id": registration_id}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"출석 취소 실패: {str(e)}")

@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 
 import { LockerManagementView } from '../../components/welfare/admin/LockerManagementView'
+import { PrinterManagementView } from '../../components/welfare/admin/PrinterManagementView'
 import { RentalManagementView } from '../../components/welfare/admin/RentalManagementView'
 import { welfareApi, type WelfareRental } from '../../lib/api/welfare'
 
@@ -12,7 +13,7 @@ export const Route = createFileRoute('/admin/welfare')({
 })
 
 function AdminWelfarePage() {
-    const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함'>('대여사업')
+    const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함' | '프린터'>('대여사업')
     const [rentalItems, setRentalItems] = React.useState<WelfareRental[]>([])
     const [loading, setLoading] = React.useState(false)
     const [error, setError] = React.useState<string | null>(null)
@@ -43,10 +44,15 @@ function AdminWelfarePage() {
                 title: '대여사업 관리',
                 description: '물품 재고 및 대여 신청을 관리합니다.',
             }
-        } else {
+        } else if (selectedCategory === '사물함') {
             return {
                 title: '사물함 관리',
                 description: '사물함 배정 및 신청을 관리합니다.',
+            }
+        } else {
+            return {
+                title: '프린터 관리',
+                description: '프린터 사용 안내 이미지를 관리합니다.',
             }
         }
     }
@@ -64,10 +70,10 @@ function AdminWelfarePage() {
 
             {/* Category Filter */}
             <div className="mb-6 flex flex-wrap gap-2">
-                {['대여사업', '사물함'].map((category) => (
+                {['대여사업', '사물함', '프린터'].map((category) => (
                     <button
                         key={category}
-                        onClick={() => setSelectedCategory(category as '대여사업' | '사물함')}
+                        onClick={() => setSelectedCategory(category as '대여사업' | '사물함' | '프린터')}
                         className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${selectedCategory === category
                                 ? 'bg-gray-900 text-white border-gray-900'
                                 : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
@@ -86,8 +92,10 @@ function AdminWelfarePage() {
                         error={error}
                         onRefresh={fetchRentals}
                     />
-                ) : (
+                ) : selectedCategory === '사물함' ? (
                     <LockerManagementView />
+                ) : (
+                    <PrinterManagementView />
                 )}
             </div>
         </div>
