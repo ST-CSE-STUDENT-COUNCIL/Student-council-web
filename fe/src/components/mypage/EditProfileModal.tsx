@@ -92,6 +92,11 @@ export function EditProfileModal({ onClose, initialName = '', initialStudentId =
       return
     }
 
+    if (studentIdChanged && !/^\d{8}$/.test(trimmedStudentId)) {
+      setError('학번은 8자리 숫자여야 합니다.')
+      return
+    }
+
     setIsSubmitting(true)
     setError(null)
 

@@ -11,6 +11,7 @@ type UpdateField = 'name' | 'student_id'
 
 type ProfileUpdateRequest = {
   id: string
+  requestIds: Array<string>
   name: string
   studentId: string
   updates: Array<{ field: UpdateField; newValue: string }>
@@ -36,6 +37,7 @@ function AdminProfileUpdatesPage() {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const [requests, setRequests] = useState<ProfileUpdateRequest[]>([])
+  const [allRequests, setAllRequests] = useState<ProfileUpdateRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
@@ -48,9 +50,7 @@ function AdminProfileUpdatesPage() {
       setError(null)
 
       try {
-        const data = await adminApi.getProfileUpdates({
-          status_filter: statusFilter === 'all' ? null : statusFilter,
-        })
+        const data = await adminApi.getProfileUpdates()
 
         if (cancelled) return
 
@@ -90,6 +90,7 @@ function AdminProfileUpdatesPage() {
           const existing = groups.get(groupKey)
           const base = existing ?? {
             id: String(item.id ?? item.user_id ?? index),
+            requestIds: [],
             name: item.name ?? fallbackUser?.name ?? '이름 미등록',
             studentId: item.student_id ?? fallbackUser?.student_id ?? '-',
             updates: [],
@@ -97,6 +98,11 @@ function AdminProfileUpdatesPage() {
             status: normalizeStatus(item.status),
             verificationImageUrl: item.verification_image_url ?? '',
           }
+
+          const requestId = item.id ? String(item.id) : undefined
+          const nextRequestIds = requestId && !base.requestIds.includes(requestId)
+            ? [...base.requestIds, requestId]
+            : base.requestIds
 
           const updates = base.updates.some((u) => u.field === field)
             ? base.updates.map((u) => (u.field === field ? { field, newValue: item.new_value ?? '- ' } : u))
@@ -109,6 +115,7 @@ function AdminProfileUpdatesPage() {
 
           const next = {
             ...base,
+            requestIds: nextRequestIds,
             updates,
             status: nextStatus,
             requestedAt: nextRequestedAt,
@@ -119,8 +126,12 @@ function AdminProfileUpdatesPage() {
         })
 
         const mapped = Array.from(groups.values())
+        const filtered = statusFilter === 'all'
+          ? mapped
+          : mapped.filter((item) => item.status === statusFilter)
 
-        setRequests(mapped)
+        setAllRequests(mapped)
+        setRequests(filtered)
       } catch (err) {
         console.error('프로필 변경 요청 조회 실패:', err)
         if (!cancelled) {
@@ -138,12 +149,13 @@ function AdminProfileUpdatesPage() {
     }
   }, [statusFilter])
 
-  async function handleApprove(requestId: string) {
+  async function handleApprove(requestId: string, requestIds: Array<string>) {
     if (actionLoadingId) return
     setActionLoadingId(requestId)
 
     try {
-      await adminApi.approveProfileUpdate(requestId)
+      const targets = requestIds.length > 0 ? requestIds : [requestId]
+      await Promise.all(targets.map((id) => adminApi.approveProfileUpdate(id)))
       setRequests((prev) => prev.map((req) =>
         req.id === requestId ? { ...req, status: 'approved' } : req
       ))
@@ -155,7 +167,7 @@ function AdminProfileUpdatesPage() {
     }
   }
 
-  async function handleReject(requestId: string) {
+  async function handleReject(requestId: string, requestIds: Array<string>) {
     if (actionLoadingId) return
     const reason = window.prompt('반려 사유를 입력해주세요.')
     if (!reason || reason.trim().length === 0) return
@@ -163,7 +175,8 @@ function AdminProfileUpdatesPage() {
     setActionLoadingId(requestId)
 
     try {
-      await adminApi.rejectProfileUpdate(requestId, reason.trim())
+      const targets = requestIds.length > 0 ? requestIds : [requestId]
+      await Promise.all(targets.map((id) => adminApi.rejectProfileUpdate(id, reason.trim())))
       setRequests((prev) => prev.map((req) =>
         req.id === requestId ? { ...req, status: 'rejected' } : req
       ))
@@ -175,9 +188,9 @@ function AdminProfileUpdatesPage() {
     }
   }
 
-  const pendingCount = requests.filter((req) => req.status === 'pending').length
-  const approvedCount = requests.filter((req) => req.status === 'approved').length
-  const rejectedCount = requests.filter((req) => req.status === 'rejected').length
+  const pendingCount = allRequests.filter((req) => req.status === 'pending').length
+  const approvedCount = allRequests.filter((req) => req.status === 'approved').length
+  const rejectedCount = allRequests.filter((req) => req.status === 'rejected').length
 
   return (
     <div className="p-6 max-w-7xl mx-auto text-gray-900 font-sans">
@@ -271,7 +284,7 @@ function AdminProfileUpdatesPage() {
                   <button
                     type="button"
                     disabled={req.status !== 'pending' || actionLoadingId === req.id}
-                    onClick={() => handleApprove(req.id)}
+                          onClick={() => handleApprove(req.id, req.requestIds)}
                     className={`px-3 py-2 text-sm font-medium text-white rounded-lg ${req.status !== 'pending' || actionLoadingId === req.id
                       ? 'bg-emerald-500/60 cursor-not-allowed'
                       : 'bg-emerald-500 hover:bg-emerald-600'
@@ -282,7 +295,7 @@ function AdminProfileUpdatesPage() {
                   <button
                     type="button"
                     disabled={req.status !== 'pending' || actionLoadingId === req.id}
-                    onClick={() => handleReject(req.id)}
+                          onClick={() => handleReject(req.id, req.requestIds)}
                     className={`px-3 py-2 text-sm font-medium text-white rounded-lg ${req.status !== 'pending' || actionLoadingId === req.id
                       ? 'bg-rose-500/60 cursor-not-allowed'
                       : 'bg-rose-500 hover:bg-rose-600'
