@@ -1,8 +1,7 @@
 import { Fragment } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { X, BarChart3 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { QuestionJumpNav } from './QuestionJumpNav'
+
 
 type SurveyStatsModalProps = {
     surveyStats: {
@@ -17,35 +16,7 @@ type SurveyStatsModalProps = {
 }
 
 export function SurveyStatsModal({ surveyStats, onClose }: SurveyStatsModalProps) {
-    const [highlightedId, setHighlightedId] = useState<string | null>(null)
-    const highlightTimeoutRef = useRef<number | null>(null)
-
-    const questionsForJump = useMemo(() => {
-        return (surveyStats.question_stats || []).map((stat, index) => {
-            const typeLabel = stat.type === 'multiple_choice' || stat.type === 'radio' || stat.type === 'checkbox'
-                ? '객관식'
-                : '주관식'
-            return { id: String(index), label: `${index + 1}. ${stat.question} (${typeLabel})` }
-        })
-    }, [surveyStats.question_stats])
-
-    const getQuestionElementId = useCallback((id: string) => `survey-stats-modal-question-${id}`, [])
-
-    const scrollToQuestion = useCallback((id: string) => {
-        const el = document.getElementById(getQuestionElementId(id))
-        if (!el) return false
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        setHighlightedId(id)
-        if (highlightTimeoutRef.current) window.clearTimeout(highlightTimeoutRef.current)
-        highlightTimeoutRef.current = window.setTimeout(() => setHighlightedId(null), 1800)
-        return true
-    }, [getQuestionElementId])
-
-    useEffect(() => {
-        return () => {
-            if (highlightTimeoutRef.current) window.clearTimeout(highlightTimeoutRef.current)
-        }
-    }, [])
+    // Unused navigation logic removed
 
     return (
         <Transition appear show={true} as={Fragment}>

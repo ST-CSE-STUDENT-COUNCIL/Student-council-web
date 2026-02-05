@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react'
-import { welfareApi, type GuidebookInfo } from '../../../lib/api/welfare'
+import { useState, useEffect } from 'react'
+import { welfareApi } from '../../../lib/api/welfare'
 import { useAuthStore } from '../../../store/useAuthStore'
 import { Save } from 'lucide-react'
 
 export function GuidebookManagementView() {
     const { accessToken: token } = useAuthStore()
-    const [info, setInfo] = useState<GuidebookInfo | null>(null)
+
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
@@ -19,7 +19,6 @@ export function GuidebookManagementView() {
         try {
             setLoading(true)
             const data = await welfareApi.getGuidebookInfo()
-            setInfo(data)
             setNotionUrl(data.notion_url || '')
             setTitle(data.title || '')
             setDescription(data.description || '')
@@ -111,7 +110,7 @@ export function GuidebookManagementView() {
             </div>
 
             {/* Preview */}
-            <div className="mt-8 border-t pt-8">
+            <div className="mt-8">
                 <h3 className="text-lg font-semibold mb-4">미리보기</h3>
                 {notionUrl ? (
                     <div className="w-full h-[600px] border rounded overflow-hidden bg-gray-50">
