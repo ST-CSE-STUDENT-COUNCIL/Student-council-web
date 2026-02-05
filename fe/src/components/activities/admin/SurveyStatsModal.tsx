@@ -2,6 +2,7 @@ import { Fragment } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { X, BarChart3 } from 'lucide-react'
 
+
 type SurveyStatsModalProps = {
     surveyStats: {
         total_responses: number
@@ -15,6 +16,8 @@ type SurveyStatsModalProps = {
 }
 
 export function SurveyStatsModal({ surveyStats, onClose }: SurveyStatsModalProps) {
+    // Unused navigation logic removed
+
     return (
         <Transition appear show={true} as={Fragment}>
             <Dialog as="div" className="relative z-[60]" onClose={onClose}>

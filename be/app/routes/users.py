@@ -120,7 +120,7 @@ async def change_password(
         429: {"model": ErrorResponse, "description": "요청 횟수 초과"}
     }
 )
-@limiter.limit("10/hour")
+@limiter.limit("30/hour")  # 공용 IP 고려
 async def upload_verification_image_direct(
     request: Request,
     file: UploadFile,
@@ -352,6 +352,50 @@ async def get_my_activities(
 # ============================================================================
 
 @router.post(
+    "/profile-update/image/upload",
+    summary="프로필 변경용 학적 인증 이미지 업로드",
+    description="프로필 변경 요청에 필요한 학적 인증 이미지를 업로드합니다. 이미 승인된 사용자도 업로드 가능합니다.",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        400: {"model": ErrorResponse, "description": "잘못된 파일 형식"},
+        429: {"model": ErrorResponse, "description": "요청 횟수 초과"}
+    }
+)
+@limiter.limit("30/hour")  # 공용 IP 고려
+async def upload_profile_update_image(
+    request: Request,
+    file: UploadFile,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    프로필 변경용 학적 인증 이미지 업로드 (Private Storage)
+    
+    - 승인 여부와 관계없이 업로드 가능
+    - Rate limit: 시간당 10회
+    """
+    from app.utils.storage import upload_verification_image
+    
+    try:
+        # 파일 업로드 (profile-updates 폴더에 저장)
+        try:
+            file_path = await upload_verification_image(file, current_user['id'], folder="profile-updates")
+        except Exception:
+            raise
+        
+        return {
+            "file_path": file_path,
+            "message": "이미지 업로드 성공. 프로필 변경 요청 시 이 경로를 사용하세요."
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"이미지 업로드 실패: {str(e)}"
+        )
+
+
+@router.post(
     "/profile-update",
     summary="프로필 변경 요청 (이름/학번)",
     description="이름 또는 학번 변경을 요청합니다. 학적 증명 이미지 첨부 필수, 관리자 승인 후 반영됩니다.",
@@ -365,6 +409,30 @@ async def request_profile_update(
     current_user: dict = Depends(get_current_user)
 ):
     """프로필 변경 요청 생성"""
+    from datetime import timezone, timedelta
+    
+    # [Rate Limit] DB 기반 중복/연타 방지 (최근 5초 내 요청 금지)
+    try:
+        limit_time = (datetime.now(timezone.utc) - timedelta(seconds=5)).isoformat()
+        
+        recent_check = supabase.table("profile_update_requests")\
+            .select("id", count="exact")\
+            .eq("user_id", current_user["id"])\
+            .gte("created_at", limit_time)\
+            .execute()
+            
+        if recent_check.count and recent_check.count > 0:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="잠시 후 다시 시도해주세요. (중복 제출 방지)"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Rate limit check failed: {e}")
+        # DB 오류시 진행 허용 (Fail Open)
+        pass
+    
     try:
         admin_supabase = get_supabase_admin()
         
@@ -464,7 +532,7 @@ async def get_my_profile_updates(
         429: {"model": ErrorResponse, "description": "요청 횟수 초과"}
     }
 )
-@limiter.limit("3/minute")
+@limiter.limit("10/minute")  # 공용 IP 고려
 async def send_email_change_verification(
     body: EmailChangeRequest,
     request: Request,

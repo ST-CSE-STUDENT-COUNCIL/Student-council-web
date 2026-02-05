@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { authApi } from '../lib/api/auth'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
-import { CheckCircle } from 'lucide-react'
+import { CheckCircle, Eye, EyeOff } from 'lucide-react'
 
 import { PhoneInput } from '../components/common/PhoneInput'
 import { Turnstile } from '../components/common/Turnstile'
@@ -26,6 +26,8 @@ function SignUp() {
     })
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
     const [verificationCode, setVerificationCode] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
+    const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
 
     // react-hook-form with zod
     const {
@@ -324,17 +326,26 @@ function SignUp() {
                                     <div className="sm:col-span-2 grid grid-cols-1 gap-6 sm:grid-cols-2">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">비밀번호</label>
-                                            <input
-                                                type="password"
-                                                {...register('password')}
-                                                className={`block w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${watchedPassword?.length > 0 && Object.values(passwordValidation).every(Boolean)
-                                                    ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30'
-                                                    : watchedPassword?.length > 0
-                                                        ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200 dark:focus:ring-amber-900/30'
-                                                        : 'border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30'
-                                                    }`}
-                                                placeholder="8자 이상, 영문+숫자+특수문자"
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    type={showPassword ? 'text' : 'password'}
+                                                    {...register('password')}
+                                                    className={`block w-full px-4 pr-10 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${watchedPassword?.length > 0 && Object.values(passwordValidation).every(Boolean)
+                                                        ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30'
+                                                        : watchedPassword?.length > 0
+                                                            ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200 dark:focus:ring-amber-900/30'
+                                                            : 'border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30'
+                                                        }`}
+                                                    placeholder="8자 이상, 영문+숫자+특수문자"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                                >
+                                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                                </button>
+                                            </div>
                                             {watchedPassword?.length > 0 && (
                                                 <div className="mt-3 grid grid-cols-2 gap-2">
                                                     <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.minLength ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
@@ -356,19 +367,28 @@ function SignUp() {
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">비밀번호 확인</label>
                                             <div className="relative">
                                                 <input
-                                                    type="password"
+                                                    type={showPasswordConfirm ? 'text' : 'password'}
                                                     {...register('password_confirm')}
-                                                    className={`block w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${showPasswordError ? 'border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-900/30'
+                                                    className={`block w-full px-4 pr-10 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${showPasswordError ? 'border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-900/30'
                                                         : watchedPasswordConfirm && passwordsMatch ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30'
                                                             : 'border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30'
                                                         }`}
                                                     placeholder="비밀번호 재입력"
                                                 />
-                                                {watchedPasswordConfirm && (
-                                                    <div className={`absolute right-3 top-3.5 ${passwordsMatch ? 'text-green-500' : 'text-red-500'}`}>
-                                                        <CheckCircle size={20} />
-                                                    </div>
-                                                )}
+                                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-1">
+                                                    {watchedPasswordConfirm && (
+                                                        <span className={`${passwordsMatch ? 'text-green-500' : 'text-red-500'}`}>
+                                                            <CheckCircle size={20} />
+                                                        </span>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                                                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                                    >
+                                                        {showPasswordConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                                    </button>
+                                                </div>
                                             </div>
                                             {showPasswordError && (
                                                 <p className="mt-2 text-sm text-red-600 dark:text-red-400">비밀번호가 일치하지 않습니다</p>

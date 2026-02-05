@@ -730,6 +730,64 @@ async def get_profile_update_requests(
         )
 
 
+@router.get(
+    "/profile-updates/rejected",
+    summary="거부된 프로필 변경 요청 목록",
+    description="거부된 프로필 변경 요청을 조회합니다"
+)
+async def get_rejected_profile_updates():
+    """거부된 프로필 변경 요청 목록"""
+    try:
+        result = supabase.table('profile_update_requests')\
+            .select('*, users!user_id(name, student_id, email)')\
+            .eq('status', 'rejected')\
+            .order('updated_at', desc=True)\
+            .execute()
+        
+        requests = []
+        for req in (result.data or []):
+            signed_url = create_signed_url(req.get('verification_image_url'))
+            req['verification_image_signed_url'] = signed_url
+            requests.append(req)
+        
+        return {"requests": requests, "total": len(requests)}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"조회 실패: {str(e)}"
+        )
+
+
+@router.get(
+    "/profile-updates/approved",
+    summary="승인된 프로필 변경 요청 목록",
+    description="승인된 프로필 변경 요청을 조회합니다"
+)
+async def get_approved_profile_updates():
+    """승인된 프로필 변경 요청 목록"""
+    try:
+        result = supabase.table('profile_update_requests')\
+            .select('*, users!user_id(name, student_id, email)')\
+            .eq('status', 'approved')\
+            .order('updated_at', desc=True)\
+            .execute()
+        
+        requests = []
+        for req in (result.data or []):
+            signed_url = create_signed_url(req.get('verification_image_url'))
+            req['verification_image_signed_url'] = signed_url
+            requests.append(req)
+        
+        return {"requests": requests, "total": len(requests)}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"조회 실패: {str(e)}"
+        )
+
+
 @router.post(
     "/profile-updates/{request_id}/approve",
     summary="프로필 변경 승인",
@@ -863,4 +921,79 @@ async def reject_profile_update(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"거부 처리 실패: {str(e)}"
+        )
+
+
+# ============================================================================
+# 개인정보 총책임자 정보 관리 (학생회장)
+# ============================================================================
+
+@router.get(
+    "/privacy-officer",
+    summary="개인정보 총책임자 정보 조회",
+    description="개인정보 총책임자(학생회장) 정보를 조회합니다"
+)
+async def get_privacy_officer_info():
+    """개인정보 총책임자 정보 조회"""
+    try:
+        result = supabase.table('privacy_officer_info').select('*').eq('id', 1).single().execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="개인정보 총책임자 정보가 없습니다")
+        
+        return result.data
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"조회 실패: {str(e)}"
+        )
+
+
+@router.put(
+    "/privacy-officer",
+    summary="개인정보 총책임자 정보 수정",
+    description="개인정보 총책임자(학생회장) 정보를 수정합니다"
+)
+async def update_privacy_officer_info(
+    name: Optional[str] = None,
+    phone: Optional[str] = None,
+    email: Optional[str] = None,
+    office_address: Optional[str] = None,
+    description: Optional[str] = None
+):
+    """개인정보 총책임자 정보 수정"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        update_data = {}
+        if name is not None:
+            update_data['name'] = name
+        if phone is not None:
+            update_data['phone'] = phone
+        if email is not None:
+            update_data['email'] = email
+        if office_address is not None:
+            update_data['office_address'] = office_address
+        if description is not None:
+            update_data['description'] = description
+        
+        if not update_data:
+            raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
+        
+        update_data['updated_at'] = datetime.utcnow().isoformat()
+        
+        result = admin_supabase.table('privacy_officer_info').update(update_data).eq('id', 1).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=500, detail="수정 실패")
+        
+        return result.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"수정 실패: {str(e)}"
         )

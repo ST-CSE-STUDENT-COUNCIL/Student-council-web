@@ -114,7 +114,7 @@ function ActivitiesPage() {
             ) : (
                 <div className="flex flex-col lg:flex-row gap-8 mt-6">
                     {/* Left Column: Large Selected Card */}
-                    <div className="w-full lg:w-2/3">
+                    <div className="w-full lg:w-2/3 lg:shrink-0 lg:grow-0">
                         <div className="sticky top-8">
                             {selectedActivity ? (
                                 <div className="transform transition-all duration-500 hover:scale-[1.01] animate-fade-in">
@@ -129,7 +129,7 @@ function ActivitiesPage() {
                     </div>
 
                     {/* Right Column: Filter & List */}
-                    <div className="w-full lg:w-1/3 flex flex-col sticky top-8 max-h-[calc(100vh-4rem)]">
+                    <div className="w-full lg:w-1/3 lg:shrink-0 lg:grow-0 flex flex-col sticky top-8 max-h-[calc(100vh-4rem)]">
                         <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-xl flex flex-col flex-1 min-h-0 border border-gray-100 dark:border-slate-800 shadow-sm">
                             <div className="mb-4 shrink-0">
                                 <ActivityFilter

@@ -178,6 +178,13 @@ export const getActivityStatus = (activity: ActivityListItem | Activity): Activi
         if (now > end) return 'closed'
     }
 
+    // 정원 마감 체크 (오픈 예정이나 기간 마감이 아닐 때 체크)
+    if (activity.max_capacity && activity.current_count >= activity.max_capacity) {
+        // 공지사항 등 정원 개념이 없는 타입은 제외할 수도 있으나, 
+        // max_capacity가 설정되어 있다는 것은 제한을 두겠다는 의도이므로 포함
+        return 'closed'
+    }
+
     return 'active'
 }
 

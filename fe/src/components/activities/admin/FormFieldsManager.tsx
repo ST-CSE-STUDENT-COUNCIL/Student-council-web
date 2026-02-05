@@ -1,5 +1,9 @@
 import { useState } from 'react'
+import { Plus, ChevronDown, ChevronUp, Layout } from 'lucide-react'
 import type { FormField } from '../../../types/activities'
+import { SideButton } from './form-parts/SideButton'
+import { FieldEditor } from './form-parts/FieldEditor'
+import { FieldPreview } from './form-parts/FieldPreview'
 
 type FormFieldsManagerProps = {
     fields: FormField[]
@@ -7,261 +11,134 @@ type FormFieldsManagerProps = {
 }
 
 /**
- * 활동 신청 시 추가 질문을 관리하는 컴포넌트
+ * 구글 폼 스타일의 직관적인 질문 생성기
  */
 export const FormFieldsManager = ({ fields, onChange }: FormFieldsManagerProps) => {
-    const [isEditing, setIsEditing] = useState(false)
-    const [editingIndex, setEditingIndex] = useState<number | null>(null)
+    // 현재 활성화(편집 중)된 필드의 인덱스
+    const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
 
-    const [currentField, setCurrentField] = useState<FormField>({
-        name: '',
-        label: '',
-        type: 'text',
-        required: false,
-        options: [],
-        placeholder: '',
-        help_text: ''
-    })
-
-    // 옵션 문자열 관리 (줄바꿈이나 콤마로 구분된 문자열을 배열로 변환)
-    const [optionsStr, setOptionsStr] = useState('')
-
-    const handleEdit = (index: number) => {
-        const field = fields[index]
-        setEditingIndex(index)
-        setCurrentField(field)
-        setOptionsStr(field.options?.join('\n') || '')
-        setIsEditing(true)
-    }
-
-    const handleAdd = () => {
-        setEditingIndex(null)
-        setCurrentField({
+    // 새 질문 추가
+    const addField = (type: FormField['type'] = 'text') => {
+        const newField: FormField = {
             name: `field_${Date.now()}`,
             label: '',
-            type: 'text',
+            type,
             required: false,
-            options: [],
+            options: type === 'section' ? undefined : [], // 섹션은 옵션 없음
             placeholder: '',
             help_text: ''
-        })
-        setOptionsStr('')
-        setIsEditing(true)
+        }
+
+        // 섹션은 맨 마지막, 일반 질문은 현재 포커스 다음 또는 맨 뒤에 추가
+        const insertIndex = focusedIndex !== null ? focusedIndex + 1 : fields.length
+
+        const newFields = [...fields]
+        newFields.splice(insertIndex, 0, newField)
+
+        onChange(newFields)
+        setFocusedIndex(insertIndex)
     }
 
-    const handleDelete = (index: number) => {
+    // 질문 업데이트
+    const updateField = (index: number, updates: Partial<FormField>) => {
+        const newFields = [...fields]
+        newFields[index] = { ...newFields[index], ...updates }
+        onChange(newFields)
+    }
+
+    // 질문 삭제
+    const deleteField = (index: number) => {
         if (!confirm('정말 삭제하시겠습니까?')) return
-        const newFields = [...fields]
-        newFields.splice(index, 1)
+        const newFields = fields.filter((_, i) => i !== index)
         onChange(newFields)
+        if (focusedIndex === index) setFocusedIndex(null)
     }
 
-    const handleSave = () => {
-        if (!currentField.label) {
-            alert('질문 제목(라벨)을 입력해주세요.')
-            return
+    // 질문 복제
+    const duplicateField = (index: number) => {
+        const field = fields[index]
+        const newField = {
+            ...field,
+            name: `field_${Date.now()}`, // name은 유니크해야 함
+            label: field.label + ' (복사됨)'
         }
+        const newFields = [...fields]
+        newFields.splice(index + 1, 0, newField)
+        onChange(newFields)
+        setFocusedIndex(index + 1)
+    }
 
-        const fieldToSave = {
-            ...currentField,
-            options: ['select', 'radio', 'checkbox'].includes(currentField.type)
-                ? optionsStr.split('\n').map(s => s.trim()).filter(Boolean)
-                : undefined
-        }
+    // 순서 변경 (간단한 위/아래 이동)
+    const moveField = (index: number, direction: 'up' | 'down') => {
+        if (direction === 'up' && index === 0) return
+        if (direction === 'down' && index === fields.length - 1) return
 
         const newFields = [...fields]
-        if (editingIndex !== null) {
-            newFields[editingIndex] = fieldToSave
-        } else {
-            newFields.push(fieldToSave)
-        }
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+        // Swap
+        [newFields[index], newFields[targetIndex]] = [newFields[targetIndex], newFields[index]]
+
         onChange(newFields)
-        setIsEditing(false)
+        setFocusedIndex(targetIndex) // 포커스 따라가기
     }
 
     return (
-        <div className="space-y-4 border rounded-md p-4 bg-gray-50">
-            <div className="flex justify-between items-center">
-                <label className="block text-sm font-medium text-gray-700">추가 질문 (선택 사항)</label>
-                <button
-                    type="button"
-                    onClick={handleAdd}
-                    className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
-                >
-                    + 질문 추가
-                </button>
+        <div className="flex gap-4 items-start relative w-full">
+            {/* 메인 리스트 영역 */}
+            <div className="flex-1 space-y-4 pb-20">
+                {fields.length === 0 && (
+                    <div
+                        className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-10 text-center text-gray-400 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer"
+                        onClick={() => addField('text')}
+                    >
+                        <p className="mb-2">아직 질문이 없습니다.</p>
+                        <p className="font-bold text-blue-600">+ 버튼을 눌러 첫 번째 질문을 만들어보세요!</p>
+                    </div>
+                )}
+
+                {fields.map((field, index) => (
+                    <div
+                        key={field.name}
+                        onClick={() => setFocusedIndex(index)}
+                        className={`
+                            relative bg-white rounded-xl transition-all duration-200
+                            ${focusedIndex === index
+                                ? 'shadow-lg ring-1 ring-blue-200 border-l-8 border-l-blue-600 z-10 scale-[1.01]'
+                                : 'shadow-sm border border-gray-200 hover:shadow-md cursor-pointer border-l-8 border-l-transparent'
+                            }
+                        `}
+                    >
+                        {focusedIndex === index ? (
+                            // 편집 모드
+                            <FieldEditor
+                                field={field}
+                                onChange={(updates) => updateField(index, updates)}
+                                onDelete={() => deleteField(index)}
+                                onDuplicate={() => duplicateField(index)}
+                                allFields={fields} // 조건 설정을 위해 전체 필드 전달
+                            />
+                        ) : (
+                            // 뷰 모드
+                            <FieldPreview field={field} />
+                        )}
+
+                        {/* 사이드 액션 (순서 변경 등) - 호버 시 표시 추천하지만 여기선 간단히 항상 표시 or 포커스시 표시 */}
+                        {focusedIndex === index && (
+                            <div className="absolute -right-12 top-0 flex flex-col gap-2 p-2 flex">
+                                <button type="button" onClick={(e) => { e.stopPropagation(); moveField(index, 'up') }} className="p-2 bg-white shadow rounded-full text-gray-500 hover:text-blue-600" title="위로 이동"><ChevronUp size={18} /></button>
+                                <button type="button" onClick={(e) => { e.stopPropagation(); moveField(index, 'down') }} className="p-2 bg-white shadow rounded-full text-gray-500 hover:text-blue-600" title="아래로 이동"><ChevronDown size={18} /></button>
+                            </div>
+                        )}
+                    </div>
+                ))}
             </div>
 
-            {fields.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">설정된 추가 질문이 없습니다.</p>
-            ) : (
-                <div className="space-y-2">
-                    {fields.map((field, idx) => (
-                        <div
-                            key={idx}
-                            className={`border rounded p-3 flex justify-between items-center text-sm ${field.type === 'section'
-                                ? 'bg-indigo-50 border-indigo-200 border-l-4'
-                                : 'bg-white'
-                                }`}
-                        >
-                            <div className="flex items-center">
-                                {field.type === 'section' && <span className="text-indigo-600 font-bold mr-2">[구역]</span>}
-                                <span className={`mr-2 ${field.type === 'section' ? 'font-bold text-indigo-900' : 'font-medium'}`}>
-                                    {field.label}
-                                </span>
-                                {field.condition && (
-                                    <span className="text-xs text-orange-600 bg-orange-50 px-1 rounded border border-orange-200 mr-2" title={`조건: ${field.condition.target} 질문이 '${field.condition.value}'일 때 표시`}>
-                                        조건부
-                                    </span>
-                                )}
-                                {field.type !== 'section' && (
-                                    <>
-                                        <span className="text-gray-500 text-xs bg-gray-100 px-1 rounded mr-2">{field.type}</span>
-                                        {field.required && <span className="text-red-500 text-xs">필수</span>}
-                                    </>
-                                )}
-                            </div>
-                            <div className="flex gap-2">
-                                <button type="button" onClick={() => handleEdit(idx)} className="text-blue-600 hover:text-blue-800">수정</button>
-                                <button type="button" onClick={() => handleDelete(idx)} className="text-red-600 hover:text-red-800">삭제</button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* 편집 모달 */}
-            {isEditing && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
-                    <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-                        <h3 className="text-lg font-bold mb-4">{editingIndex !== null ? '질문 수정' : '새 질문 추가'}</h3>
-
-                        <div className="space-y-3">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-700">질문 제목</label>
-                                <input
-                                    type="text"
-                                    value={currentField.label}
-                                    onChange={e => setCurrentField({ ...currentField, label: e.target.value })}
-                                    className="w-full border rounded px-2 py-1"
-                                    autoFocus
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-gray-700">답변 타입</label>
-                                <select
-                                    value={currentField.type}
-                                    onChange={e => setCurrentField({ ...currentField, type: e.target.value as FormField['type'] })}
-                                    className="w-full border rounded px-2 py-1"
-                                >
-                                    <option value="text">단답형 (Text)</option>
-                                    <option value="textarea">서술형 (Textarea)</option>
-                                    <option value="radio">객관식 (단일 선택)</option>
-                                    <option value="checkbox">객관식 (다중 선택)</option>
-                                    <option value="select">드롭다운 (Select)</option>
-                                    <option value="number">숫자</option>
-                                    <option value="date">날짜</option>
-                                    <option value="file">파일 첨부</option>
-                                    <option value="section" className="font-bold text-blue-600">-- 섹션 나누기 --</option>
-                                </select>
-                            </div>
-
-                            {['radio', 'checkbox', 'select'].includes(currentField.type) && (
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-700">선택지 (줄바꿈으로 구분)</label>
-                                    <textarea
-                                        value={optionsStr}
-                                        onChange={e => setOptionsStr(e.target.value)}
-                                        className="w-full border rounded px-2 py-1 h-20"
-                                        placeholder="예: 참여\n불참\n미정"
-                                    />
-                                </div>
-                            )}
-
-                            {currentField.type !== 'section' ? (
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={currentField.required}
-                                        onChange={e => setCurrentField({ ...currentField, required: e.target.checked })}
-                                        id="field-required"
-                                    />
-                                    <label htmlFor="field-required" className="text-sm">필수 응답</label>
-                                </div>
-                            ) : (
-                                <div className="border-t pt-2 mt-2">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <input
-                                            type="checkbox"
-                                            id="condition-toggle"
-                                            checked={!!currentField.condition}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setCurrentField({ ...currentField, condition: { target: '', value: '' } })
-                                                } else {
-                                                    const { condition, ...rest } = currentField
-                                                    setCurrentField(rest)
-                                                }
-                                            }}
-                                        />
-                                        <label htmlFor="condition-toggle" className="text-sm font-medium">조건부 표시 (이전 답변에 따라)</label>
-                                    </div>
-
-                                    {currentField.condition && (
-                                        <div className="pl-4 space-y-2 bg-gray-50 p-2 rounded">
-                                            <div>
-                                                <label className="block text-xs text-gray-600">어떤 질문의 답변을 확인할까요?</label>
-                                                <select
-                                                    className="w-full border rounded text-xs p-1"
-                                                    value={currentField.condition.target}
-                                                    onChange={(e) => setCurrentField({
-                                                        ...currentField,
-                                                        condition: { ...currentField.condition!, target: e.target.value }
-                                                    })}
-                                                >
-                                                    <option value="">-- 질문 선택 --</option>
-                                                    {fields
-                                                        .filter((f, idx) => (editingIndex === null || idx < editingIndex) && ['radio', 'select'].includes(f.type))
-                                                        .map(f => (
-                                                            <option key={f.name} value={f.name}>{f.label}</option>
-                                                        ))}
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs text-gray-600">어떤 값일 때 보여줄까요?</label>
-                                                <input
-                                                    type="text"
-                                                    className="w-full border rounded text-xs p-1"
-                                                    value={currentField.condition.value}
-                                                    placeholder="예: 참여"
-                                                    onChange={(e) => setCurrentField({
-                                                        ...currentField,
-                                                        condition: { ...currentField.condition!, value: e.target.value }
-                                                    })}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex justify-end gap-2 mt-6">
-                            <button
-                                type="button"
-                                onClick={() => setIsEditing(false)}
-                                className="px-3 py-1 border rounded hover:bg-gray-50"
-                            >취소</button>
-                            <button
-                                type="button"
-                                onClick={handleSave}
-                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                            >저장</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* 플로팅 사이드바 (구글 폼 스타일 - 리스트 우측 sticky) */}
+            <div className="sticky top-10 z-50 self-start h-fit flex flex-col gap-3 bg-white p-2 rounded-xl shadow-md border border-gray-100 animate-in fade-in slide-in-from-right-4 duration-300">
+                <SideButton icon={<Plus size={20} />} label="질문 추가" onClick={() => addField('text')} />
+                <SideButton icon={<Layout size={20} />} label="섹션 추가" onClick={() => addField('section')} />
+            </div>
         </div>
     )
 }

@@ -810,7 +810,7 @@ function AdminActivitiesPage() {
       {/* Create/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+          <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-900">
                 {editingActivity ? '신청 수정' : '새 신청 만들기'}
@@ -820,156 +820,158 @@ function AdminActivitiesPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6">
-              {/* Image Upload */}
-              <ImageUploader
-                images={images}
-                onImagesChange={setImages}
-                isDragging={isDragging}
-                onDraggingChange={setIsDragging}
-                maxImages={10}
-              />
-
-              {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-2">신청 타입</label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as ActivityType }))}
-                    disabled={!!editingActivity}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 disabled:bg-gray-100"
-                  >
-                    {Object.entries(activityTypeLabels).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-2">최대 정원</label>
-                  <input
-                    type="number"
-                    value={formData.max_capacity || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, max_capacity: e.target.value ? parseInt(e.target.value) : undefined }))}
-                    min={1}
-                    placeholder="무제한"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">제목</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  required
-                  placeholder="신청 제목을 입력하세요"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+            <div className="flex-1 overflow-y-auto p-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Image Upload */}
+                <ImageUploader
+                  images={images}
+                  onImagesChange={setImages}
+                  isDragging={isDragging}
+                  onDraggingChange={setIsDragging}
+                  maxImages={10}
                 />
-              </div>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">설명</label>
-                <TextareaAutosize
-                  ref={textareaRef}
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  minRows={4}
-                  onFocus={adjustScrollToCenter}
-                  onClick={adjustScrollToCenter}
-                  onKeyUp={(e) => {
-                    if (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                      adjustScrollToCenter();
-                    }
-                  }}
-                  placeholder="신청에 대한 설명을 입력하세요"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 resize-none"
-                />
-              </div>
+                {/* Basic Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-900 mb-2">신청 타입</label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as ActivityType }))}
+                      disabled={!!editingActivity}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 disabled:bg-gray-100"
+                    >
+                      {Object.entries(activityTypeLabels).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-900 mb-2">최대 정원</label>
+                    <input
+                      type="number"
+                      value={formData.max_capacity || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, max_capacity: e.target.value ? parseInt(e.target.value) : undefined }))}
+                      min={1}
+                      placeholder="무제한"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                    />
+                  </div>
+                </div>
 
-              {formData.type === 'notice' && (
                 <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-2">외부 링크</label>
+                  <label className="block text-sm font-bold text-gray-900 mb-2">제목</label>
                   <input
                     type="text"
-                    value={formData.config?.external_link || ''}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      config: { ...prev.config, external_link: e.target.value }
-                    }))}
-                    placeholder="https://example.com"
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    required
+                    placeholder="신청 제목을 입력하세요"
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                   />
-                  <p className="mt-1 text-xs text-gray-500">배너 클릭 시 이동할 외부 링크를 입력하세요.</p>
                 </div>
-              )}
 
-              <FormFieldsManager
-                fields={formData.form_fields || []}
-                onChange={(fields) => setFormData(prev => ({ ...prev, form_fields: fields }))}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-2">신청 시작</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.registration_start}
-                    onChange={(e) => setFormData(prev => ({ ...prev, registration_start: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                  <label className="block text-sm font-bold text-gray-900 mb-2">설명</label>
+                  <TextareaAutosize
+                    ref={textareaRef}
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    minRows={4}
+                    onFocus={adjustScrollToCenter}
+                    onClick={adjustScrollToCenter}
+                    onKeyUp={(e) => {
+                      if (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                        adjustScrollToCenter();
+                      }
+                    }}
+                    placeholder="신청에 대한 설명을 입력하세요"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 resize-none"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-2">신청 종료</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.registration_end}
-                    onChange={(e) => setFormData(prev => ({ ...prev, registration_end: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-                  />
+
+                {formData.type === 'notice' && (
+                  <div>
+                    <label className="block text-sm font-bold text-gray-900 mb-2">외부 링크</label>
+                    <input
+                      type="text"
+                      value={formData.config?.external_link || ''}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        config: { ...prev.config, external_link: e.target.value }
+                      }))}
+                      placeholder="https://example.com"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">배너 클릭 시 이동할 외부 링크를 입력하세요.</p>
+                  </div>
+                )}
+
+                <FormFieldsManager
+                  fields={formData.form_fields || []}
+                  onChange={(fields) => setFormData(prev => ({ ...prev, form_fields: fields }))}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-900 mb-2">신청 시작</label>
+                    <input
+                      type="datetime-local"
+                      value={formData.registration_start}
+                      onChange={(e) => setFormData(prev => ({ ...prev, registration_start: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-900 mb-2">신청 종료</label>
+                    <input
+                      type="datetime-local"
+                      value={formData.registration_end}
+                      onChange={(e) => setFormData(prev => ({ ...prev, registration_end: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-6 p-4 bg-gray-50 rounded-xl">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div
-                    onClick={() => setFormData(prev => ({ ...prev, require_membership: !prev.require_membership }))}
-                    className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-all ${formData.require_membership ? 'bg-purple-500' : 'bg-gray-300'}`}
-                  >
-                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${formData.require_membership ? 'translate-x-6' : 'translate-x-0'}`} />
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">회비 납부자만</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div
-                    onClick={() => setFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
-                    className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-all ${formData.is_active ? 'bg-emerald-500' : 'bg-gray-300'}`}
-                  >
-                    <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${formData.is_active ? 'translate-x-6' : 'translate-x-0'}`} />
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">활성화</span>
-                </label>
-              </div>
+                <div className="flex items-center gap-6 p-4 bg-gray-50 rounded-xl">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <div
+                      onClick={() => setFormData(prev => ({ ...prev, require_membership: !prev.require_membership }))}
+                      className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-all ${formData.require_membership ? 'bg-purple-500' : 'bg-gray-300'}`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${formData.require_membership ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">회비 납부자만</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <div
+                      onClick={() => setFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
+                      className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-all ${formData.is_active ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${formData.is_active ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">활성화</span>
+                  </label>
+                </div>
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3 px-4 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-all"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                  {saving ? '저장 중...' : (editingActivity ? '수정 완료' : '생성하기')}
-                </button>
-              </div>
-            </form>
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 py-3 px-4 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-all"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    {saving ? '저장 중...' : (editingActivity ? '수정 완료' : '생성하기')}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
