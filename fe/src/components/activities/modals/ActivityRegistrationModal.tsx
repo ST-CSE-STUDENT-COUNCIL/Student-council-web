@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Modal } from '../../common/Modal'
 import { PhoneInput } from '../../common/PhoneInput'
+import { Turnstile } from '../../common/Turnstile'
 import type { Activity, ActivityListItem, ActivityRegistrationRequest } from '../../../types/activities'
 import { activityApi } from '../../../lib/api/activities'
 import { useAuthStore } from '../../../store/useAuthStore'
@@ -33,6 +34,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [nonMemberAgreed, setNonMemberAgreed] = useState(false)
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
 
     // 모달이 열릴 때마다 초기화 및 상세 정보 가져오기
     useEffect(() => {
@@ -52,6 +54,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             setDetailActivity(null) // 로딩 상태 유도
             setError(null)
             setNonMemberAgreed(false) // 비회원 약관 동의 초기화
+            setTurnstileToken(null) // Turnstile 토큰 초기화
 
             // 2. 상세 정보 가져오기 (무조건 새로고침)
             const fetchDetail = async () => {
@@ -221,6 +224,12 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         // 비회원 약관 동의 검증
         if (isNonMember && !nonMemberAgreed) {
             toast.error('비회원 처리 규정에 동의해주세요.')
+            return false
+        }
+
+        // 비회원 Turnstile 검증
+        if (isNonMember && !turnstileToken) {
+            toast.error('보안 검증을 완료해주세요.')
             return false
         }
 
@@ -527,6 +536,16 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                 </p>
                                             </div>
                                         </label>
+                                    </div>
+                                )}
+
+                                {/* 비회원 Turnstile (익명이 아니고, 비회원인 경우) */}
+                                {!isAnonymousType && isNonMember && (
+                                    <div className="flex justify-center">
+                                        <Turnstile
+                                            onVerify={(token) => setTurnstileToken(token)}
+                                            onExpire={() => setTurnstileToken(null)}
+                                        />
                                     </div>
                                 )}
                             </motion.div>
