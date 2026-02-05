@@ -3,7 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Key, UserX } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { mypageApi } from '../lib/api/mypage'
-import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, EditProfileModal, ChangePasswordModal, WithdrawModal } from '../components/mypage'
+import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, EditProfileModal, ChangePasswordModal, WithdrawModal, ProfileInfoHeader, ProfileUpdateSection } from '../components/mypage'
 import type { User } from '../types/users'
 import type { MyRegistration, ProfileUpdateRequest } from '../lib/api/mypage'
 
@@ -287,20 +287,10 @@ function MyPage() {
         <main className="flex-1 space-y-6">
           {activeTab === 'info' && (
             <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
-              <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">내 정보</h2>
-                <button
-                  type="button"
-                  disabled={hasPendingProfileUpdate}
-                  onClick={() => setShowEditProfileModal(true)}
-                  className={`px-3 py-2 text-sm font-medium rounded-lg transition ${hasPendingProfileUpdate
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                    }`}
-                >
-                  {hasPendingProfileUpdate ? '변경 요청 처리 중' : '내 정보 수정'}
-                </button>
-              </div>
+              <ProfileInfoHeader
+                hasPendingProfileUpdate={hasPendingProfileUpdate}
+                onEditProfile={() => setShowEditProfileModal(true)}
+              />
 
               <div className="space-y-4">
                 <InfoLine label="이름" value={currentUser.name} />
@@ -314,45 +304,10 @@ function MyPage() {
                 </div>
               </div>
 
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">프로필 변경 요청</h3>
-                {profileUpdateError && (
-                  <p className="text-sm text-red-600 dark:text-red-400">{profileUpdateError}</p>
-                )}
-                {!profileUpdateError && mappedProfileUpdates.length === 0 && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">요청 내역이 없습니다.</p>
-                )}
-                {!profileUpdateError && mappedProfileUpdates.length > 0 && (
-                  <div className="space-y-3">
-                    {mappedProfileUpdates.map((req) => (
-                      <div
-                        key={req.id}
-                        className="border border-gray-100 dark:border-slate-700 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-                      >
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">요청일: {req.requestedAt}</p>
-                          <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                            {req.updates.map((update) => (
-                              <p key={update.field}>
-                                변경 요청: <span className="font-semibold text-gray-900 dark:text-white">{update.field === 'name' ? '이름' : '학번'}</span> →{' '}
-                                <span className="font-semibold text-blue-600 dark:text-blue-400">{update.newValue}</span>
-                              </p>
-                            ))}
-                          </div>
-                          {req.statusLabel === '반려' && req.rejectionReason && (
-                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                              반려 사유: {req.rejectionReason}
-                            </p>
-                          )}
-                        </div>
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-200">
-                          {req.statusLabel}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <ProfileUpdateSection
+                error={profileUpdateError}
+                items={mappedProfileUpdates}
+              />
             </section>
           )}
 

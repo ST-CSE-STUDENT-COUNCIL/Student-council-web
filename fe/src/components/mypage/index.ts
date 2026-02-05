@@ -6,6 +6,8 @@ export { Badge } from './Badge'
 export { InfoCard } from './InfoCard'
 export { VerifyModal } from './VerifyModal'
 export { EditProfileModal } from './EditProfileModal'
+export { ProfileInfoHeader } from './ProfileInfoHeader'
+export { ProfileUpdateSection } from './ProfileUpdateSection'
 export { ChangePasswordModal } from './ChangePasswordModal'
 export { WithdrawModal } from './WithdrawModal'
 
