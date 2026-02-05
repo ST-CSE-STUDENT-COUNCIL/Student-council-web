@@ -160,11 +160,6 @@ function PrivacyPolicy() {
                                 <p>연락처: {officerPhone}</p>
                                 <p>이메일: {officerEmail}</p>
                             </div>
-                            <div>
-                                <p className="font-bold text-gray-900 dark:text-white mb-1">개인정보 보호 담당부서</p>
-                                <p>부서명: 컴퓨터공학과 학생회 집행부</p>
-                                <p>이메일: seoultech.cs.42.compass@gmail.com</p>
-                            </div>
                         </div>
                     </div>
                 </section>
