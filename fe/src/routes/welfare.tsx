@@ -1,14 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 import { CategoryFilter, LockerActions, RentalCard } from '../components/welfare'
-import { welfareApi, type WelfareRental, type LockerInfo, type PrinterInfo } from '../lib/api/welfare'
+import { welfareApi, type WelfareRental, type LockerInfo, type PrinterInfo, type GuidebookInfo } from '../lib/api/welfare'
 
 export const Route = createFileRoute('/welfare')({
   component: Welfare,
 })
 
 function Welfare() {
-  const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함' | '프린터'>('대여사업')
+  const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함' | '프린터' | '신입생 가이드북'>('대여사업')
   const [rentalItems, setRentalItems] = React.useState<WelfareRental[]>([])
   const [rentalCategoryFilter, setRentalCategoryFilter] = React.useState<string>('전체')
   const [loading, setLoading] = React.useState(true)
@@ -19,6 +19,8 @@ function Welfare() {
   const [printerLoading, setPrinterLoading] = React.useState(true)
   const [printerError, setPrinterError] = React.useState<string | null>(null)
   const [printerInfo, setPrinterInfo] = React.useState<PrinterInfo | null>(null)
+  const [guidebookLoading, setGuidebookLoading] = React.useState(true)
+  const [guidebookInfo, setGuidebookInfo] = React.useState<GuidebookInfo | null>(null)
   const today = React.useMemo(() => new Date().toISOString().slice(0, 10), [])
   const disabledClass = 'border-gray-200 opacity-60 cursor-not-allowed hover:-translate-y-0 hover:shadow-none'
 
@@ -56,13 +58,15 @@ function Welfare() {
       setLoading(true)
       setLockerLoading(true)
       setPrinterLoading(true)
+      setGuidebookLoading(true)
       setError(null)
       setLockerError(null)
       setPrinterError(null)
-      const [rentalsResult, lockerResult, printerResult] = await Promise.allSettled([
+      const [rentalsResult, lockerResult, printerResult, guidebookResult] = await Promise.allSettled([
         welfareApi.getRentals(),
         welfareApi.getLockerInfo(),
-        welfareApi.getPrinterInfo()
+        welfareApi.getPrinterInfo(),
+        welfareApi.getGuidebookInfo()
       ])
 
       if (rentalsResult.status === 'fulfilled') {
@@ -87,6 +91,12 @@ function Welfare() {
         console.error('프린터 정보 로드 실패:', printerResult.reason)
         setPrinterError('프린터 정보를 불러올 수 없습니다.')
       }
+
+      if (guidebookResult.status === 'fulfilled') {
+        setGuidebookInfo(guidebookResult.value)
+      } else {
+        console.error('가이드북 정보 로드 실패:', guidebookResult.reason)
+      }
     } catch (err) {
       console.error('복지사업 데이터 로드 실패:', err)
       setError('데이터를 불러올 수 없습니다.')
@@ -94,6 +104,7 @@ function Welfare() {
       setLoading(false)
       setLockerLoading(false)
       setPrinterLoading(false)
+      setGuidebookLoading(false)
     }
   }, [today])
 
@@ -173,7 +184,7 @@ function Welfare() {
   }, [groupedRentalSections, rentalCategoryFilter])
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="w-full px-[5%] lg:px-[10%] py-12">
       {/* Page Title */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">복지사업</h1>
@@ -283,7 +294,7 @@ function Welfare() {
               )}
             </div>
           </div>
-        ) : (
+        ) : selectedCategory === '프린터' ? (
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">프린터</h2>
@@ -319,6 +330,22 @@ function Welfare() {
                 </div>
               )}
             </div>
+          </div>
+        ) : (
+          <div className="w-full h-[800px] bg-white dark:bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center">
+            {guidebookLoading ? (
+              <p className="text-gray-500 dark:text-gray-400">가이드북 정보를 불러오는 중입니다...</p>
+            ) : guidebookInfo?.notion_url ? (
+              <iframe
+                src={guidebookInfo.notion_url}
+                width="100%"
+                height="100%"
+                className="border-0 w-full h-full"
+                title={guidebookInfo.title || "신입생 가이드북"}
+              />
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">등록된 가이드북 정보가 없습니다.</p>
+            )}
           </div>
         )}
       </div>

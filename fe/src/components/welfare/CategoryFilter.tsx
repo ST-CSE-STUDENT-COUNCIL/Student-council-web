@@ -1,6 +1,6 @@
 type CategoryFilterProps = {
-  selectedCategory: '대여사업' | '사물함' | '프린터'
-  onSelect: (category: '대여사업' | '사물함' | '프린터') => void
+  selectedCategory: '대여사업' | '사물함' | '프린터' | '신입생 가이드북'
+  onSelect: (category: '대여사업' | '사물함' | '프린터' | '신입생 가이드북') => void
 }
 
 export function CategoryFilter({ selectedCategory, onSelect }: CategoryFilterProps) {
@@ -8,6 +8,7 @@ export function CategoryFilter({ selectedCategory, onSelect }: CategoryFilterPro
     { value: '대여사업' as const, label: '대여사업' },
     { value: '사물함' as const, label: '사물함' },
     { value: '프린터' as const, label: '프린터' },
+    { value: '신입생 가이드북' as const, label: '신입생 가이드북' },
   ]
 
   return (
@@ -18,8 +19,8 @@ export function CategoryFilter({ selectedCategory, onSelect }: CategoryFilterPro
             key={cat.value}
             onClick={() => onSelect(cat.value)}
             className={`px-8 py-3 rounded-xl font-bold transition-all duration-200 text-lg ${selectedCategory === cat.value
-                ? 'bg-blue-600 text-white shadow-lg scale-105'
-                : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-slate-700'
+              ? 'bg-blue-600 text-white shadow-lg scale-105'
+              : 'bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-slate-700'
               }`}
           >
             {cat.label}

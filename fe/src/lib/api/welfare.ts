@@ -41,6 +41,12 @@ export type PrinterInfo = {
     updated_at: string;
 };
 
+export type GuidebookInfo = {
+    notion_url: string;
+    title?: string;
+    description?: string;
+};
+
 export const welfareApi = {
     /**
      * Presigned URL을 획득합니다.
@@ -202,6 +208,24 @@ export const welfareApi = {
      */
     updatePrinterInfo: async (data: { description?: string | null }, token?: string | null): Promise<PrinterInfo> => {
         const response = await axios.put(`${API_BASE_URL}/admin/welfare/print`, data, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return response.data;
+    },
+
+    /**
+     * 신입생 가이드북 정보를 가져옵니다.
+     */
+    getGuidebookInfo: async (): Promise<GuidebookInfo> => {
+        const response = await axios.get(`${API_BASE_URL}/welfare/guidebook`);
+        return response.data;
+    },
+
+    /**
+     * 신입생 가이드북 정보를 수정합니다.
+     */
+    updateGuidebookInfo: async (data: { notion_url?: string; title?: string; description?: string }, token?: string | null): Promise<GuidebookInfo> => {
+        const response = await axios.put(`${API_BASE_URL}/admin/welfare/guidebook`, data, {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return response.data;
