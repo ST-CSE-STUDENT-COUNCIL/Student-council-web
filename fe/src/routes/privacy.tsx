@@ -1,10 +1,23 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
+import { privacyOfficerApi } from '../lib/api/privacyOfficer'
 
 export const Route = createFileRoute('/privacy')({
     component: PrivacyPolicy,
 })
 
 function PrivacyPolicy() {
+    // 개인정보 총책임자 정보 조회
+    const { data: officerInfo } = useQuery({
+        queryKey: ['privacyOfficerPublic'],
+        queryFn: privacyOfficerApi.getPublic,
+        staleTime: 1000 * 60 * 5, // 5분간 캐시
+    })
+
+    const officerName = officerInfo?.name || '컴퓨터공학과 학생회장'
+    const officerPhone = officerInfo?.phone || '010-0000-0000'
+    const officerEmail = officerInfo?.email || 'seoultech.cs.42.compass@gmail.com'
+
     return (
         <div className="container mx-auto px-4 py-12 max-w-4xl">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 border-b border-gray-200 dark:border-gray-700 pb-4">
@@ -143,14 +156,9 @@ function PrivacyPolicy() {
                         <div className="grid md:grid-cols-2 gap-4">
                             <div>
                                 <p className="font-bold text-gray-900 dark:text-white mb-1">개인정보 보호책임자</p>
-                                <p>성명: 컴퓨터공학과 학생회장</p>
-                                <p>연락처: 010-8338-1251</p>
-                                <p>이메일: seoultech.cs.42.compass@gmail.com</p>
-                            </div>
-                            <div>
-                                <p className="font-bold text-gray-900 dark:text-white mb-1">개인정보 보호 담당부서</p>
-                                <p>부서명: 컴퓨터공학과 학생회 집행부</p>
-                                <p>이메일: seoultech.cs.42.compass@gmail.com</p>
+                                <p>성명: {officerName}</p>
+                                <p>연락처: {officerPhone}</p>
+                                <p>이메일: {officerEmail}</p>
                             </div>
                         </div>
                     </div>
@@ -192,3 +200,4 @@ function PrivacyPolicy() {
         </div>
     )
 }
+

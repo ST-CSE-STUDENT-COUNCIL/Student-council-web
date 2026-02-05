@@ -31,6 +31,7 @@ import { Route as ActivitiesIndexRouteImport } from './routes/activities/index'
 import { Route as NoticesNoticeIdRouteImport } from './routes/notices/$noticeId'
 import { Route as AdminWelfareRouteImport } from './routes/admin/welfare'
 import { Route as AdminSuggestionsRouteImport } from './routes/admin/suggestions'
+import { Route as AdminPrivacyOfficerRouteImport } from './routes/admin/privacy-officer'
 import { Route as AdminIntroRouteImport } from './routes/admin/intro'
 import { Route as AdminClubsRouteImport } from './routes/admin/clubs'
 import { Route as AdminActivitiesRouteImport } from './routes/admin/activities'
@@ -159,6 +160,11 @@ const AdminSuggestionsRoute = AdminSuggestionsRouteImport.update({
   path: '/suggestions',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPrivacyOfficerRoute = AdminPrivacyOfficerRouteImport.update({
+  id: '/privacy-officer',
+  path: '/privacy-officer',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminIntroRoute = AdminIntroRouteImport.update({
   id: '/intro',
   path: '/intro',
@@ -269,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/clubs': typeof AdminClubsRoute
   '/admin/intro': typeof AdminIntroRoute
+  '/admin/privacy-officer': typeof AdminPrivacyOfficerRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
@@ -308,6 +315,7 @@ export interface FileRoutesByTo {
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/clubs': typeof AdminClubsRoute
   '/admin/intro': typeof AdminIntroRoute
+  '/admin/privacy-officer': typeof AdminPrivacyOfficerRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
@@ -350,6 +358,7 @@ export interface FileRoutesById {
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/clubs': typeof AdminClubsRoute
   '/admin/intro': typeof AdminIntroRoute
+  '/admin/privacy-officer': typeof AdminPrivacyOfficerRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
@@ -393,6 +402,7 @@ export interface FileRouteTypes {
     | '/admin/activities'
     | '/admin/clubs'
     | '/admin/intro'
+    | '/admin/privacy-officer'
     | '/admin/suggestions'
     | '/admin/welfare'
     | '/notices/$noticeId'
@@ -432,6 +442,7 @@ export interface FileRouteTypes {
     | '/admin/activities'
     | '/admin/clubs'
     | '/admin/intro'
+    | '/admin/privacy-officer'
     | '/admin/suggestions'
     | '/admin/welfare'
     | '/notices/$noticeId'
@@ -473,6 +484,7 @@ export interface FileRouteTypes {
     | '/admin/activities'
     | '/admin/clubs'
     | '/admin/intro'
+    | '/admin/privacy-officer'
     | '/admin/suggestions'
     | '/admin/welfare'
     | '/notices/$noticeId'
@@ -671,6 +683,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSuggestionsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/privacy-officer': {
+      id: '/admin/privacy-officer'
+      path: '/privacy-officer'
+      fullPath: '/admin/privacy-officer'
+      preLoaderRoute: typeof AdminPrivacyOfficerRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/intro': {
       id: '/admin/intro'
       path: '/intro'
@@ -797,6 +816,7 @@ interface AdminRouteChildren {
   AdminActivitiesRoute: typeof AdminActivitiesRoute
   AdminClubsRoute: typeof AdminClubsRoute
   AdminIntroRoute: typeof AdminIntroRoute
+  AdminPrivacyOfficerRoute: typeof AdminPrivacyOfficerRoute
   AdminSuggestionsRoute: typeof AdminSuggestionsRoute
   AdminWelfareRoute: typeof AdminWelfareRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -820,6 +840,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminActivitiesRoute: AdminActivitiesRoute,
   AdminClubsRoute: AdminClubsRoute,
   AdminIntroRoute: AdminIntroRoute,
+  AdminPrivacyOfficerRoute: AdminPrivacyOfficerRoute,
   AdminSuggestionsRoute: AdminSuggestionsRoute,
   AdminWelfareRoute: AdminWelfareRoute,
   AdminIndexRoute: AdminIndexRoute,
