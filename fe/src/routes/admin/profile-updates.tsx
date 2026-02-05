@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FileCheck2, Image as ImageIcon, ShieldCheck, UserRoundPen } from 'lucide-react'
 import { adminApi } from '../../lib/api/admin'
 
@@ -38,9 +38,116 @@ function AdminProfileUpdatesPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const [requests, setRequests] = useState<ProfileUpdateRequest[]>([])
   const [allRequests, setAllRequests] = useState<ProfileUpdateRequest[]>([])
+  const [statsCounts, setStatsCounts] = useState({ pending: 0, approved: 0, rejected: 0 })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
+  const userLookupRef = useRef<Map<string, { name: string; student_id: string }> | null>(null)
+
+  const buildRequests = (
+    items: RawProfileUpdateItem[],
+    userLookup: Map<string, { name: string; student_id: string }> = new Map()
+  ) => {
+    const groups = new Map<string, ProfileUpdateRequest>()
+
+    items.forEach((item, index) => {
+      const field: UpdateField = item.field_name === 'student_id' ? 'student_id' : 'name'
+      const createdAt = item.created_at || item.requested_at || ''
+      const fallbackUser = item.user_id ? userLookup.get(item.user_id) : undefined
+      const groupKey = `${item.user_id ?? 'unknown'}-${normalizeDateKey(createdAt)}`
+
+      const existing = groups.get(groupKey)
+      const base = existing ?? {
+        id: String(item.id ?? item.user_id ?? index),
+        requestIds: [],
+        name: item.name ?? fallbackUser?.name ?? '이름 미등록',
+        studentId: item.student_id ?? fallbackUser?.student_id ?? '-',
+        updates: [],
+        requestedAt: createdAt ? formatDateTime(createdAt) : '-',
+        status: normalizeStatus(item.status),
+        verificationImageUrl: item.verification_image_url ?? '',
+      }
+
+      const requestId = item.id ? String(item.id) : undefined
+      const nextRequestIds = requestId && !base.requestIds.includes(requestId)
+        ? [...base.requestIds, requestId]
+        : base.requestIds
+
+      const updates = base.updates.some((u) => u.field === field)
+        ? base.updates.map((u) => (u.field === field ? { field, newValue: item.new_value ?? '- ' } : u))
+        : [...base.updates, { field, newValue: item.new_value ?? '- ' }]
+
+      const nextStatus = mergeStatus(base.status, normalizeStatus(item.status))
+      const nextRequestedAt = createdAt && base.requestedAt === '-'
+        ? formatDateTime(createdAt)
+        : base.requestedAt
+
+      groups.set(groupKey, {
+        ...base,
+        requestIds: nextRequestIds,
+        updates,
+        status: nextStatus,
+        requestedAt: nextRequestedAt,
+        verificationImageUrl: base.verificationImageUrl || item.verification_image_url || '',
+      })
+    })
+
+    return Array.from(groups.values())
+  }
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function fetchStats() {
+      try {
+        const safeFetch = async (fetcher: () => Promise<unknown>) => {
+          try {
+            return await fetcher()
+          } catch (fetchError) {
+            console.error('프로필 변경 요청 통계 조회 실패:', fetchError)
+            return []
+          }
+        }
+
+        const [pendingData, approvedData, rejectedData] = await Promise.all([
+          safeFetch(() => adminApi.getProfileUpdates()),
+          safeFetch(() => adminApi.getApprovedProfileUpdates()),
+          safeFetch(() => adminApi.getRejectedProfileUpdates()),
+        ])
+
+        if (cancelled) return
+
+        const normalizePayload = (data: unknown): RawProfileUpdateItem[] => {
+          if (Array.isArray(data)) return data as RawProfileUpdateItem[]
+          if (Array.isArray((data as { items?: unknown })?.items)) {
+            return (data as { items: RawProfileUpdateItem[] }).items
+          }
+          if (Array.isArray((data as { requests?: unknown })?.requests)) {
+            return (data as { requests: RawProfileUpdateItem[] }).requests
+          }
+          return []
+        }
+
+        const pendingItems = normalizePayload(pendingData)
+        const approvedItems = normalizePayload(approvedData)
+        const rejectedItems = normalizePayload(rejectedData)
+
+        setStatsCounts({
+          pending: buildRequests(pendingItems).length,
+          approved: buildRequests(approvedItems).length,
+          rejected: buildRequests(rejectedItems).length,
+        })
+      } catch (err) {
+        console.error('프로필 변경 요청 통계 조회 실패:', err)
+      }
+    }
+
+    fetchStats()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -50,7 +157,9 @@ function AdminProfileUpdatesPage() {
       setError(null)
 
       try {
-        const data = await adminApi.getProfileUpdates()
+        const data = await adminApi.getProfileUpdates({
+          status_filter: statusFilter === 'all' ? null : statusFilter,
+        })
 
         if (cancelled) return
 
@@ -60,14 +169,15 @@ function AdminProfileUpdatesPage() {
           Array.isArray((data as { requests?: unknown })?.requests) ? (data as { requests: unknown[] }).requests :
           []
 
-        const rawItems = payload as RawProfileUpdateItem[]
-        const needsUserLookup = rawItems.some((item) =>
+        const allRawItems = payload as RawProfileUpdateItem[]
+
+        const needsUserLookup = allRawItems.some((item) =>
           Boolean(item.user_id) && (!item.name || !item.student_id)
         )
 
-        let userLookup = new Map<string, { name: string; student_id: string }>()
+        let userLookup = userLookupRef.current ?? new Map<string, { name: string; student_id: string }>()
 
-        if (needsUserLookup) {
+        if (needsUserLookup && userLookupRef.current === null) {
           const usersData = await adminApi.getUsers()
           if (cancelled) return
 
@@ -77,60 +187,17 @@ function AdminProfileUpdatesPage() {
               { name: user.name, student_id: user.student_id },
             ])
           )
+          userLookupRef.current = userLookup
         }
 
-        const groups = new Map<string, ProfileUpdateRequest>()
-
-        rawItems.forEach((item, index) => {
-          const field: UpdateField = item.field_name === 'student_id' ? 'student_id' : 'name'
-          const createdAt = item.created_at || item.requested_at || ''
-          const fallbackUser = item.user_id ? userLookup.get(item.user_id) : undefined
-          const groupKey = `${item.user_id ?? 'unknown'}-${normalizeDateKey(createdAt)}`
-
-          const existing = groups.get(groupKey)
-          const base = existing ?? {
-            id: String(item.id ?? item.user_id ?? index),
-            requestIds: [],
-            name: item.name ?? fallbackUser?.name ?? '이름 미등록',
-            studentId: item.student_id ?? fallbackUser?.student_id ?? '-',
-            updates: [],
-            requestedAt: createdAt ? formatDateTime(createdAt) : '-',
-            status: normalizeStatus(item.status),
-            verificationImageUrl: item.verification_image_url ?? '',
-          }
-
-          const requestId = item.id ? String(item.id) : undefined
-          const nextRequestIds = requestId && !base.requestIds.includes(requestId)
-            ? [...base.requestIds, requestId]
-            : base.requestIds
-
-          const updates = base.updates.some((u) => u.field === field)
-            ? base.updates.map((u) => (u.field === field ? { field, newValue: item.new_value ?? '- ' } : u))
-            : [...base.updates, { field, newValue: item.new_value ?? '- ' }]
-
-          const nextStatus = mergeStatus(base.status, normalizeStatus(item.status))
-          const nextRequestedAt = createdAt && base.requestedAt === '-'
-            ? formatDateTime(createdAt)
-            : base.requestedAt
-
-          const next = {
-            ...base,
-            requestIds: nextRequestIds,
-            updates,
-            status: nextStatus,
-            requestedAt: nextRequestedAt,
-            verificationImageUrl: base.verificationImageUrl || item.verification_image_url || '',
-          }
-
-          groups.set(groupKey, next)
-        })
-
-        const mapped = Array.from(groups.values())
+        const mapped = buildRequests(allRawItems, userLookup)
         const filtered = statusFilter === 'all'
           ? mapped
           : mapped.filter((item) => item.status === statusFilter)
 
-        setAllRequests(mapped)
+        setAllRequests((prev) => (
+          statusFilter === 'all' || prev.length === 0 ? mapped : prev
+        ))
         setRequests(filtered)
       } catch (err) {
         console.error('프로필 변경 요청 조회 실패:', err)
@@ -159,6 +226,14 @@ function AdminProfileUpdatesPage() {
       setRequests((prev) => prev.map((req) =>
         req.id === requestId ? { ...req, status: 'approved' } : req
       ))
+      setAllRequests((prev) => prev.map((req) =>
+        req.id === requestId ? { ...req, status: 'approved' } : req
+      ))
+      setStatsCounts((prev) => ({
+        pending: Math.max(0, prev.pending - 1),
+        approved: prev.approved + 1,
+        rejected: prev.rejected,
+      }))
     } catch (err) {
       console.error('프로필 변경 승인 실패:', err)
       setError('승인 처리에 실패했습니다.')
@@ -180,6 +255,14 @@ function AdminProfileUpdatesPage() {
       setRequests((prev) => prev.map((req) =>
         req.id === requestId ? { ...req, status: 'rejected' } : req
       ))
+      setAllRequests((prev) => prev.map((req) =>
+        req.id === requestId ? { ...req, status: 'rejected' } : req
+      ))
+      setStatsCounts((prev) => ({
+        pending: Math.max(0, prev.pending - 1),
+        approved: prev.approved,
+        rejected: prev.rejected + 1,
+      }))
     } catch (err) {
       console.error('프로필 변경 반려 실패:', err)
       setError('반려 처리에 실패했습니다.')
@@ -188,9 +271,9 @@ function AdminProfileUpdatesPage() {
     }
   }
 
-  const pendingCount = allRequests.filter((req) => req.status === 'pending').length
-  const approvedCount = allRequests.filter((req) => req.status === 'approved').length
-  const rejectedCount = allRequests.filter((req) => req.status === 'rejected').length
+  const pendingCount = statsCounts.pending
+  const approvedCount = statsCounts.approved
+  const rejectedCount = statsCounts.rejected
 
   return (
     <div className="p-6 max-w-7xl mx-auto text-gray-900 font-sans">
@@ -384,7 +467,10 @@ function StatusPill({ status }: StatusPillProps) {
 }
 
 function normalizeStatus(status?: string | null): 'pending' | 'approved' | 'rejected' {
-  if (status === 'approved' || status === 'rejected') return status
+  const normalized = (status ?? '').toLowerCase().trim()
+  if (normalized === 'approved' || normalized === 'approve') return 'approved'
+  if (normalized === 'rejected' || normalized === 'reject' || normalized === 'denied') return 'rejected'
+  if (normalized === 'pending' || normalized === 'submitted') return 'pending'
   return 'pending'
 }
 

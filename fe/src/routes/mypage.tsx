@@ -406,9 +406,10 @@ function formatDateTime(dateStr: string) {
 }
 
 function getProfileUpdateStatusLabel(status?: string | null) {
-  if (status === 'approved') return '승인'
-  if (status === 'rejected') return '반려'
-  if (status === 'pending') return '대기'
+  const normalized = (status ?? '').toLowerCase().trim()
+  if (normalized === 'approved' || normalized === 'approve') return '승인'
+  if (normalized === 'rejected' || normalized === 'reject' || normalized === 'denied') return '반려'
+  if (normalized === 'pending' || normalized === 'submitted') return '대기'
   return status || '대기'
 }
 
