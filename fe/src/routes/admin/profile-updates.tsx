@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
-import { FileCheck2, Image as ImageIcon, ShieldCheck, UserRoundPen } from 'lucide-react'
+import { ShieldCheck, UserRoundPen } from 'lucide-react'
 import { adminApi } from '../../lib/api/admin'
 
 export const Route = createFileRoute('/admin/profile-updates')({
@@ -38,7 +38,6 @@ function AdminProfileUpdatesPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const [requests, setRequests] = useState<ProfileUpdateRequest[]>([])
   const [allRequests, setAllRequests] = useState<ProfileUpdateRequest[]>([])
-  const [statsCounts, setStatsCounts] = useState({ pending: 0, approved: 0, rejected: 0 })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
@@ -94,60 +93,6 @@ function AdminProfileUpdatesPage() {
 
     return Array.from(groups.values())
   }
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function fetchStats() {
-      try {
-        const safeFetch = async (fetcher: () => Promise<unknown>) => {
-          try {
-            return await fetcher()
-          } catch (fetchError) {
-            console.error('프로필 변경 요청 통계 조회 실패:', fetchError)
-            return []
-          }
-        }
-
-        const [pendingData, approvedData, rejectedData] = await Promise.all([
-          safeFetch(() => adminApi.getProfileUpdates()),
-          safeFetch(() => adminApi.getApprovedProfileUpdates()),
-          safeFetch(() => adminApi.getRejectedProfileUpdates()),
-        ])
-
-        if (cancelled) return
-
-        const normalizePayload = (data: unknown): RawProfileUpdateItem[] => {
-          if (Array.isArray(data)) return data as RawProfileUpdateItem[]
-          if (Array.isArray((data as { items?: unknown })?.items)) {
-            return (data as { items: RawProfileUpdateItem[] }).items
-          }
-          if (Array.isArray((data as { requests?: unknown })?.requests)) {
-            return (data as { requests: RawProfileUpdateItem[] }).requests
-          }
-          return []
-        }
-
-        const pendingItems = normalizePayload(pendingData)
-        const approvedItems = normalizePayload(approvedData)
-        const rejectedItems = normalizePayload(rejectedData)
-
-        setStatsCounts({
-          pending: buildRequests(pendingItems).length,
-          approved: buildRequests(approvedItems).length,
-          rejected: buildRequests(rejectedItems).length,
-        })
-      } catch (err) {
-        console.error('프로필 변경 요청 통계 조회 실패:', err)
-      }
-    }
-
-    fetchStats()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -229,11 +174,6 @@ function AdminProfileUpdatesPage() {
       setAllRequests((prev) => prev.map((req) =>
         req.id === requestId ? { ...req, status: 'approved' } : req
       ))
-      setStatsCounts((prev) => ({
-        pending: Math.max(0, prev.pending - 1),
-        approved: prev.approved + 1,
-        rejected: prev.rejected,
-      }))
     } catch (err) {
       console.error('프로필 변경 승인 실패:', err)
       setError('승인 처리에 실패했습니다.')
@@ -258,11 +198,6 @@ function AdminProfileUpdatesPage() {
       setAllRequests((prev) => prev.map((req) =>
         req.id === requestId ? { ...req, status: 'rejected' } : req
       ))
-      setStatsCounts((prev) => ({
-        pending: Math.max(0, prev.pending - 1),
-        approved: prev.approved,
-        rejected: prev.rejected + 1,
-      }))
     } catch (err) {
       console.error('프로필 변경 반려 실패:', err)
       setError('반려 처리에 실패했습니다.')
@@ -270,10 +205,6 @@ function AdminProfileUpdatesPage() {
       setActionLoadingId(null)
     }
   }
-
-  const pendingCount = statsCounts.pending
-  const approvedCount = statsCounts.approved
-  const rejectedCount = statsCounts.rejected
 
   return (
     <div className="p-6 max-w-7xl mx-auto text-gray-900 font-sans">
@@ -293,12 +224,6 @@ function AdminProfileUpdatesPage() {
             학적인증 이미지 확인 필수
           </div>
         </header>
-
-        <section className="grid gap-4 md:grid-cols-3">
-          <StatCard title="승인 대기" value={pendingCount} tone="blue" icon={FileCheck2} />
-          <StatCard title="승인 완료" value={approvedCount} tone="emerald" icon={ShieldCheck} />
-          <StatCard title="반려됨" value={rejectedCount} tone="rose" icon={ImageIcon} />
-        </section>
 
         <section className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="flex flex-col gap-3 px-6 py-4 border-b border-gray-100 md:flex-row md:items-center md:justify-between">
@@ -413,35 +338,6 @@ function AdminProfileUpdatesPage() {
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-type StatCardProps = {
-  title: string
-  value: number
-  tone: 'blue' | 'emerald' | 'rose'
-  icon: React.ComponentType<{ size?: number; className?: string }>
-}
-
-function StatCard({ title, value, tone, icon: Icon }: StatCardProps) {
-  const toneStyles: Record<StatCardProps['tone'], { bg: string; text: string }> = {
-    blue: { bg: 'bg-blue-50', text: 'text-blue-600' },
-    emerald: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
-    rose: { bg: 'bg-rose-50', text: 'text-rose-600' },
-  }
-
-  const { bg, text } = toneStyles[tone]
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-500">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-      </div>
-      <div className={`w-12 h-12 rounded-2xl ${bg} flex items-center justify-center`}>
-        <Icon size={22} className={text} />
-      </div>
     </div>
   )
 }
