@@ -20,8 +20,14 @@ type PendingMembersListProps = {
     onRefresh: () => void
     onApprove: (id: string) => void
     onReject: (id: string) => void
-    onPreview: (url: string) => void
+    onPreview: (path: string) => void
+    page: number
+    totalPages: number
+    onPageChange: (page: number) => void
 }
+
+import { Pagination } from '../../ui/Pagination'
+import { FileImage } from 'lucide-react'
 
 export function PendingMembersList({
     members,
@@ -33,6 +39,9 @@ export function PendingMembersList({
     onApprove,
     onReject,
     onPreview,
+    page,
+    totalPages,
+    onPageChange,
 }: PendingMembersListProps) {
     return (
         <div className="space-y-4 p-6">
@@ -101,23 +110,16 @@ export function PendingMembersList({
                             <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
                                 {member.verificationImageUrl && (
                                     <div className="flex items-center gap-2">
-                                        <img
-                                            src={member.verificationImageUrl}
-                                            alt={`${member.name} 학적 인증 이미지`}
-                                            loading="lazy"
-                                            referrerPolicy="no-referrer"
-                                            onError={(e) => {
-                                                e.currentTarget.style.display = 'none'
-                                            }}
-                                            className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
-                                        />
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+                                            <FileImage size={20} />
+                                        </div>
                                         <button
                                             type="button"
                                             onClick={() => onPreview(member.verificationImageUrl as string)}
                                             className="inline-flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
                                         >
                                             <Eye size={16} />
-                                            원본 보기
+                                            이미지 확인
                                         </button>
                                     </div>
                                 )}
@@ -144,6 +146,7 @@ export function PendingMembersList({
                             </div>
                         </div>
                     ))}
+                    <Pagination currentPage={page} totalPages={totalPages} onPageChange={onPageChange} />
                 </div>
             )}
         </div>
