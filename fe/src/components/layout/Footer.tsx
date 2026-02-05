@@ -31,7 +31,7 @@ export default function Footer() {
                             <a href="https://www.instagram.com/seoultech_com/" className="text-slate-400 hover:text-white transition-colors">
                                 <Instagram className="w-5 h-5" />
                             </a>
-                            <a href="mailto:seoultech.cs.42.compass@gmail.com" className="text-slate-400 hover:text-white transition-colors">
+                            <a href={`mailto:${officerInfo?.email}`} className="text-slate-400 hover:text-white transition-colors">
                                 <Mail className="w-5 h-5" />
                             </a>
                         </div>
@@ -68,6 +68,13 @@ export default function Footer() {
                             <p>{officeAddress.includes('미래관') ? officeAddress : `${officeAddress}`}</p>
                             {!officeAddress.includes('미래관') && <p>미래관 305-4호 학생회실</p>}
                             <p>Tel {officerName}: {officerPhone}</p>
+                            {officerInfo?.email && (
+                                <p>
+                                    <a href={`mailto:${officerInfo.email}`} className="hover:text-blue-400 transition-colors">
+                                        {officerInfo.email}
+                                    </a>
+                                </p>
+                            )}
                             <p className="pt-2 text-xs text-slate-500">
                                 © 2025 Computer Engineering Student Council.<br />All rights reserved.
                             </p>
