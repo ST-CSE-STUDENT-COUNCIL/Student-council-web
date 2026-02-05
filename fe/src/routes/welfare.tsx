@@ -1,29 +1,25 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 import { CategoryFilter, LockerActions, RentalCard } from '../components/welfare'
-import { welfareApi, type WelfareRental, type LockerInfo } from '../lib/api/welfare'
+import { welfareApi, type WelfareRental, type LockerInfo, type PrinterInfo } from '../lib/api/welfare'
 
 export const Route = createFileRoute('/welfare')({
   component: Welfare,
 })
 
 function Welfare() {
-  const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함'>('대여사업')
+  const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함' | '프린터'>('대여사업')
   const [rentalItems, setRentalItems] = React.useState<WelfareRental[]>([])
+  const [rentalCategoryFilter, setRentalCategoryFilter] = React.useState<string>('전체')
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [lockerLoading, setLockerLoading] = React.useState(true)
   const [lockerError, setLockerError] = React.useState<string | null>(null)
   const [lockerInfo, setLockerInfo] = React.useState<LockerInfo | null>(null)
+  const [printerLoading, setPrinterLoading] = React.useState(true)
+  const [printerError, setPrinterError] = React.useState<string | null>(null)
+  const [printerInfo, setPrinterInfo] = React.useState<PrinterInfo | null>(null)
   const today = React.useMemo(() => new Date().toISOString().slice(0, 10), [])
-  const lockerDeadline = React.useMemo(() => {
-    const d = new Date()
-    d.setDate(d.getDate() + 7)
-    return d.toISOString().slice(0, 10)
-  }, [])
-  const displayToday = today.slice(5)
-  const displayDeadline = lockerDeadline.slice(5)
-  const periodLabel = `${displayToday} ~ ${displayDeadline}`
   const disabledClass = 'border-gray-200 opacity-60 cursor-not-allowed hover:-translate-y-0 hover:shadow-none'
 
   const { lockerStart, lockerEnd, lockerReturnStart, lockerReturnEnd } = React.useMemo(() => {
@@ -50,20 +46,23 @@ function Welfare() {
 
   const rentalPeriodLabel = lockerStart && lockerEnd
     ? `${lockerStart.slice(0, 10)} ~ ${lockerEnd.slice(0, 10)}`
-    : periodLabel
+    : ''
   const returnPeriodLabel = lockerReturnStart && lockerReturnEnd
     ? `${lockerReturnStart.slice(0, 10)} ~ ${lockerReturnEnd.slice(0, 10)}`
-    : periodLabel
+    : ''
 
   const fetchRentals = React.useCallback(async () => {
     try {
       setLoading(true)
       setLockerLoading(true)
+      setPrinterLoading(true)
       setError(null)
       setLockerError(null)
-      const [rentalsResult, lockerResult] = await Promise.allSettled([
+      setPrinterError(null)
+      const [rentalsResult, lockerResult, printerResult] = await Promise.allSettled([
         welfareApi.getRentals(),
-        welfareApi.getLockerInfo()
+        welfareApi.getLockerInfo(),
+        welfareApi.getPrinterInfo()
       ])
 
       if (rentalsResult.status === 'fulfilled') {
@@ -81,18 +80,69 @@ function Welfare() {
         console.error('사물함 정보 로드 실패:', lockerResult.reason)
         setLockerError('사물함 정보를 불러올 수 없습니다.')
       }
+
+      if (printerResult.status === 'fulfilled') {
+        setPrinterInfo(printerResult.value)
+      } else {
+        console.error('프린터 정보 로드 실패:', printerResult.reason)
+        setPrinterError('프린터 정보를 불러올 수 없습니다.')
+      }
     } catch (err) {
       console.error('복지사업 데이터 로드 실패:', err)
       setError('데이터를 불러올 수 없습니다.')
     } finally {
       setLoading(false)
       setLockerLoading(false)
+      setPrinterLoading(false)
     }
   }, [today])
 
   React.useEffect(() => {
     fetchRentals()
   }, [fetchRentals])
+
+  const groupedRentalSections = React.useMemo(() => {
+    const groups = new Map<string, WelfareRental[]>()
+    for (const item of rentalItems) {
+      const categoryKey = item.category?.trim() || '기타'
+      const existing = groups.get(categoryKey)
+      if (existing) {
+        existing.push(item)
+      } else {
+        groups.set(categoryKey, [item])
+      }
+    }
+
+    for (const items of groups.values()) {
+      items.sort((a, b) => a.item_name.localeCompare(b.item_name, 'ko'))
+    }
+
+    const preferredCategoryOrder = ['케이블', '어댑터', '보조배터리']
+    const categoryNames = Array.from(groups.keys()).sort((a, b) => {
+      const aIndex = preferredCategoryOrder.indexOf(a)
+      const bIndex = preferredCategoryOrder.indexOf(b)
+      const aRank = aIndex === -1 ? Number.POSITIVE_INFINITY : aIndex
+      const bRank = bIndex === -1 ? Number.POSITIVE_INFINITY : bIndex
+
+      if (aRank !== bRank) return aRank - bRank
+      if (a === '기타') return 1
+      if (b === '기타') return -1
+      return a.localeCompare(b, 'ko')
+    })
+
+    return categoryNames.map((name) => ({
+      name,
+      items: groups.get(name) || [],
+    }))
+  }, [rentalItems])
+
+  const rentalCategoryOptions = React.useMemo(() => groupedRentalSections.map((section) => section.name), [groupedRentalSections])
+
+  React.useEffect(() => {
+    if (rentalCategoryFilter !== '전체' && !rentalCategoryOptions.includes(rentalCategoryFilter)) {
+      setRentalCategoryFilter('전체')
+    }
+  }, [rentalCategoryFilter, rentalCategoryOptions])
 
   const navigateIfActive = React.useCallback((active: boolean, url: string) => {
     if (!active || !url) return
@@ -116,6 +166,12 @@ function Welfare() {
     navigateIfActive(isReturnActive, lockerReturnUrl)
   }, [navigateIfActive, isReturnActive, lockerReturnUrl])
 
+
+  const filteredRentalSections = React.useMemo(() => {
+    if (rentalCategoryFilter === '전체') return groupedRentalSections
+    return groupedRentalSections.filter((section) => section.name === rentalCategoryFilter)
+  }, [groupedRentalSections, rentalCategoryFilter])
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Page Title */}
@@ -130,7 +186,28 @@ function Welfare() {
       <div className="bg-white dark:bg-slate-900 rounded-lg shadow p-6 transition-colors">
         {selectedCategory === '대여사업' ? (
           <div>
-            <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">대여사업</h2>
+            <div className="flex items-start justify-between gap-4 mb-6 flex-col sm:flex-row sm:items-center">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">대여사업</h2>
+              <div className="flex items-center gap-2">
+                <label htmlFor="rental-category-filter" className="text-sm text-gray-500 dark:text-gray-400">
+                  카테고리
+                </label>
+                <select
+                  id="rental-category-filter"
+                  value={rentalCategoryFilter}
+                  onChange={(e) => setRentalCategoryFilter(e.target.value)}
+                  disabled={loading || rentalCategoryOptions.length === 0}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100"
+                >
+                  <option value="전체">전체</option>
+                  {rentalCategoryOptions.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             {loading ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 dark:text-gray-400">로딩 중...</p>
@@ -144,14 +221,24 @@ function Welfare() {
                 <p className="text-gray-500 dark:text-gray-400">대여 가능한 물품이 없습니다.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {rentalItems.map((item) => (
-                  <RentalCard key={item.id} item={item} onApply={handleRentalRedirect} />
+              <div className="space-y-10">
+                {filteredRentalSections.map((section) => (
+                  <section key={section.name} className="space-y-4">
+                    <div className="flex items-end justify-between gap-4">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">{section.name}</h3>
+                      <div className="text-xs text-gray-400 dark:text-gray-500">{section.items.length}개</div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {section.items.map((item) => (
+                        <RentalCard key={item.id} item={item} onApply={handleRentalRedirect} />
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
             )}
           </div>
-        ) : (
+        ) : selectedCategory === '사물함' ? (
           <div className="space-y-6">
             <div className="flex items-start justify-between gap-6 flex-col lg:flex-row lg:items-center">
               <div>
@@ -192,6 +279,43 @@ function Welfare() {
               ) : (
                 <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
                   배치도 정보가 없습니다.
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">프린터</h2>
+              <p className="text-gray-600 dark:text-gray-400">프린터 사용 안내를 확인하세요.</p>
+            </div>
+
+            <div className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 bg-gray-50 dark:bg-slate-800 transition-colors">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">프린터 사용 안내</h3>
+              {printerLoading ? (
+                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
+                  안내 이미지 불러오는 중...
+                </div>
+              ) : printerError ? (
+                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-red-500 text-sm">
+                  {printerError}
+                </div>
+              ) : printerInfo?.image_url ? (
+                <div className="space-y-3">
+                  <img
+                    src={printerInfo.image_url}
+                    alt="프린터 사용 안내"
+                    className="w-full rounded-md border border-gray-200 dark:border-slate-700"
+                  />
+                  {printerInfo.description ? (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">
+                      {printerInfo.description}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
+                  안내 이미지가 없습니다.
                 </div>
               )}
             </div>
