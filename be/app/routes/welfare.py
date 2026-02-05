@@ -558,3 +558,72 @@ async def delete_rental_item(
         raise HTTPException(status_code=404, detail="물품을 찾을 수 없습니다")
     
     return None
+
+
+# ============================================================================
+# 신입생 가이드북 (Freshman Guidebook)
+# ============================================================================
+
+@router.get("/welfare/guidebook", summary="신입생 가이드북 정보 조회 (공개)")
+async def get_guidebook_info():
+    """
+    신입생 가이드북 노션 URL을 조회합니다.
+    
+    - **공개 API**: 인증 불필요
+    - **프론트**: 반환된 notion_url을 iframe으로 표시
+    """
+    result = supabase.table('guidebook_info').select('*').eq('id', 1).single().execute()
+    
+    if not result.data or not result.data.get('notion_url'):
+        return {
+            "notion_url": None,
+            "message": "가이드북이 등록되지 않았습니다"
+        }
+    
+    data = result.data
+    
+    return {
+        "notion_url": data.get('notion_url'),
+        "title": data.get('title'),
+        "description": data.get('description'),
+        "updated_at": data.get('updated_at')
+    }
+
+
+@router.put("/admin/welfare/guidebook", summary="신입생 가이드북 정보 수정 (관리자)")
+async def update_guidebook_info(
+    notion_url: Optional[str] = None,
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    신입생 가이드북 정보를 수정합니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    - **title/description**: 비우면 OG 메타데이터에서 자동 추출
+    """
+    from datetime import timezone, timedelta
+    
+    admin_supabase = get_supabase_admin()
+    
+    update_data = {}
+    if notion_url is not None:
+        update_data['notion_url'] = notion_url
+    if title is not None:
+        update_data['title'] = title
+    if description is not None:
+        update_data['description'] = description
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
+    
+    kst = timezone(timedelta(hours=9))
+    update_data['updated_at'] = datetime.now(kst).isoformat()
+    
+    result = admin_supabase.table('guidebook_info').update(update_data).eq('id', 1).execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=500, detail="수정 실패")
+    
+    return result.data[0]
