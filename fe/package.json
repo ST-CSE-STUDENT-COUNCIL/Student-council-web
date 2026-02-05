@@ -15,6 +15,9 @@
     "react-dom": "$react-dom"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.9",
+    "@hookform/resolvers": "^5.2.2",
+    "@tanstack/react-query": "^5.90.20",
     "@tanstack/react-router": "^1.143.11",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/router-devtools": "^1.143.11",
@@ -26,11 +29,13 @@
     "pretendard": "^1.3.9",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-hook-form": "^7.71.1",
     "react-textarea-autosize": "^8.5.9",
     "recharts": "^3.7.0",
     "sonner": "^2.0.7",
     "sweetalert2": "^11.26.17",
     "swiper": "^12.0.3",
+    "zod": "^4.3.6",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

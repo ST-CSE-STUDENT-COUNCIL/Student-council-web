@@ -31,15 +31,23 @@ import { Route as ActivitiesIndexRouteImport } from './routes/activities/index'
 import { Route as NoticesNoticeIdRouteImport } from './routes/notices/$noticeId'
 import { Route as AdminWelfareRouteImport } from './routes/admin/welfare'
 import { Route as AdminSuggestionsRouteImport } from './routes/admin/suggestions'
-import { Route as AdminNoticesRouteImport } from './routes/admin/notices'
 import { Route as AdminIntroRouteImport } from './routes/admin/intro'
 import { Route as AdminClubsRouteImport } from './routes/admin/clubs'
 import { Route as AdminActivitiesRouteImport } from './routes/admin/activities'
 import { Route as AdminSurveysIndexRouteImport } from './routes/admin/surveys/index'
+import { Route as AdminNoticesIndexRouteImport } from './routes/admin/notices/index'
 import { Route as AdminKakaotalkIndexRouteImport } from './routes/admin/kakaotalk/index'
 import { Route as AdminEventsIndexRouteImport } from './routes/admin/events/index'
-import { Route as AdminSurveysActivityIdRouteImport } from './routes/admin/surveys/$activityId'
-import { Route as AdminEventsEventIdRouteImport } from './routes/admin/events/$eventId'
+import { Route as AdminSurveysCreateRouteImport } from './routes/admin/surveys/create'
+import { Route as AdminNoticesCreateRouteImport } from './routes/admin/notices/create'
+import { Route as AdminKakaotalkCreateRouteImport } from './routes/admin/kakaotalk/create'
+import { Route as AdminEventsCreateRouteImport } from './routes/admin/events/create'
+import { Route as AdminSurveysActivityIdIndexRouteImport } from './routes/admin/surveys/$activityId/index'
+import { Route as AdminEventsEventIdIndexRouteImport } from './routes/admin/events/$eventId/index'
+import { Route as AdminSurveysActivityIdEditRouteImport } from './routes/admin/surveys/$activityId/edit'
+import { Route as AdminNoticesNoticeIdEditRouteImport } from './routes/admin/notices/$noticeId/edit'
+import { Route as AdminKakaotalkActivityIdEditRouteImport } from './routes/admin/kakaotalk/$activityId/edit'
+import { Route as AdminEventsEventIdEditRouteImport } from './routes/admin/events/$eventId/edit'
 
 const WelfareRoute = WelfareRouteImport.update({
   id: '/welfare',
@@ -151,11 +159,6 @@ const AdminSuggestionsRoute = AdminSuggestionsRouteImport.update({
   path: '/suggestions',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminNoticesRoute = AdminNoticesRouteImport.update({
-  id: '/notices',
-  path: '/notices',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminIntroRoute = AdminIntroRouteImport.update({
   id: '/intro',
   path: '/intro',
@@ -176,6 +179,11 @@ const AdminSurveysIndexRoute = AdminSurveysIndexRouteImport.update({
   path: '/surveys/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminNoticesIndexRoute = AdminNoticesIndexRouteImport.update({
+  id: '/notices/',
+  path: '/notices/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminKakaotalkIndexRoute = AdminKakaotalkIndexRouteImport.update({
   id: '/kakaotalk/',
   path: '/kakaotalk/',
@@ -186,14 +194,58 @@ const AdminEventsIndexRoute = AdminEventsIndexRouteImport.update({
   path: '/events/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminSurveysActivityIdRoute = AdminSurveysActivityIdRouteImport.update({
-  id: '/surveys/$activityId',
-  path: '/surveys/$activityId',
+const AdminSurveysCreateRoute = AdminSurveysCreateRouteImport.update({
+  id: '/surveys/create',
+  path: '/surveys/create',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminEventsEventIdRoute = AdminEventsEventIdRouteImport.update({
-  id: '/events/$eventId',
-  path: '/events/$eventId',
+const AdminNoticesCreateRoute = AdminNoticesCreateRouteImport.update({
+  id: '/notices/create',
+  path: '/notices/create',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKakaotalkCreateRoute = AdminKakaotalkCreateRouteImport.update({
+  id: '/kakaotalk/create',
+  path: '/kakaotalk/create',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEventsCreateRoute = AdminEventsCreateRouteImport.update({
+  id: '/events/create',
+  path: '/events/create',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSurveysActivityIdIndexRoute =
+  AdminSurveysActivityIdIndexRouteImport.update({
+    id: '/surveys/$activityId/',
+    path: '/surveys/$activityId/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminEventsEventIdIndexRoute = AdminEventsEventIdIndexRouteImport.update({
+  id: '/events/$eventId/',
+  path: '/events/$eventId/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSurveysActivityIdEditRoute =
+  AdminSurveysActivityIdEditRouteImport.update({
+    id: '/surveys/$activityId/edit',
+    path: '/surveys/$activityId/edit',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminNoticesNoticeIdEditRoute =
+  AdminNoticesNoticeIdEditRouteImport.update({
+    id: '/notices/$noticeId/edit',
+    path: '/notices/$noticeId/edit',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminKakaotalkActivityIdEditRoute =
+  AdminKakaotalkActivityIdEditRouteImport.update({
+    id: '/kakaotalk/$activityId/edit',
+    path: '/kakaotalk/$activityId/edit',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminEventsEventIdEditRoute = AdminEventsEventIdEditRouteImport.update({
+  id: '/events/$eventId/edit',
+  path: '/events/$eventId/edit',
   getParentRoute: () => AdminRoute,
 } as any)
 
@@ -217,18 +269,26 @@ export interface FileRoutesByFullPath {
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/clubs': typeof AdminClubsRoute
   '/admin/intro': typeof AdminIntroRoute
-  '/admin/notices': typeof AdminNoticesRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
   '/activities': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/notices/': typeof NoticesIndexRoute
-  '/admin/events/$eventId': typeof AdminEventsEventIdRoute
-  '/admin/surveys/$activityId': typeof AdminSurveysActivityIdRoute
+  '/admin/events/create': typeof AdminEventsCreateRoute
+  '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
+  '/admin/notices/create': typeof AdminNoticesCreateRoute
+  '/admin/surveys/create': typeof AdminSurveysCreateRoute
   '/admin/events': typeof AdminEventsIndexRoute
   '/admin/kakaotalk': typeof AdminKakaotalkIndexRoute
+  '/admin/notices': typeof AdminNoticesIndexRoute
   '/admin/surveys': typeof AdminSurveysIndexRoute
+  '/admin/events/$eventId/edit': typeof AdminEventsEventIdEditRoute
+  '/admin/kakaotalk/$activityId/edit': typeof AdminKakaotalkActivityIdEditRoute
+  '/admin/notices/$noticeId/edit': typeof AdminNoticesNoticeIdEditRoute
+  '/admin/surveys/$activityId/edit': typeof AdminSurveysActivityIdEditRoute
+  '/admin/events/$eventId': typeof AdminEventsEventIdIndexRoute
+  '/admin/surveys/$activityId': typeof AdminSurveysActivityIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -248,18 +308,26 @@ export interface FileRoutesByTo {
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/clubs': typeof AdminClubsRoute
   '/admin/intro': typeof AdminIntroRoute
-  '/admin/notices': typeof AdminNoticesRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
   '/activities': typeof ActivitiesIndexRoute
   '/admin': typeof AdminIndexRoute
   '/notices': typeof NoticesIndexRoute
-  '/admin/events/$eventId': typeof AdminEventsEventIdRoute
-  '/admin/surveys/$activityId': typeof AdminSurveysActivityIdRoute
+  '/admin/events/create': typeof AdminEventsCreateRoute
+  '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
+  '/admin/notices/create': typeof AdminNoticesCreateRoute
+  '/admin/surveys/create': typeof AdminSurveysCreateRoute
   '/admin/events': typeof AdminEventsIndexRoute
   '/admin/kakaotalk': typeof AdminKakaotalkIndexRoute
+  '/admin/notices': typeof AdminNoticesIndexRoute
   '/admin/surveys': typeof AdminSurveysIndexRoute
+  '/admin/events/$eventId/edit': typeof AdminEventsEventIdEditRoute
+  '/admin/kakaotalk/$activityId/edit': typeof AdminKakaotalkActivityIdEditRoute
+  '/admin/notices/$noticeId/edit': typeof AdminNoticesNoticeIdEditRoute
+  '/admin/surveys/$activityId/edit': typeof AdminSurveysActivityIdEditRoute
+  '/admin/events/$eventId': typeof AdminEventsEventIdIndexRoute
+  '/admin/surveys/$activityId': typeof AdminSurveysActivityIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -282,18 +350,26 @@ export interface FileRoutesById {
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/clubs': typeof AdminClubsRoute
   '/admin/intro': typeof AdminIntroRoute
-  '/admin/notices': typeof AdminNoticesRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
   '/activities/': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/notices/': typeof NoticesIndexRoute
-  '/admin/events/$eventId': typeof AdminEventsEventIdRoute
-  '/admin/surveys/$activityId': typeof AdminSurveysActivityIdRoute
+  '/admin/events/create': typeof AdminEventsCreateRoute
+  '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
+  '/admin/notices/create': typeof AdminNoticesCreateRoute
+  '/admin/surveys/create': typeof AdminSurveysCreateRoute
   '/admin/events/': typeof AdminEventsIndexRoute
   '/admin/kakaotalk/': typeof AdminKakaotalkIndexRoute
+  '/admin/notices/': typeof AdminNoticesIndexRoute
   '/admin/surveys/': typeof AdminSurveysIndexRoute
+  '/admin/events/$eventId/edit': typeof AdminEventsEventIdEditRoute
+  '/admin/kakaotalk/$activityId/edit': typeof AdminKakaotalkActivityIdEditRoute
+  '/admin/notices/$noticeId/edit': typeof AdminNoticesNoticeIdEditRoute
+  '/admin/surveys/$activityId/edit': typeof AdminSurveysActivityIdEditRoute
+  '/admin/events/$eventId/': typeof AdminEventsEventIdIndexRoute
+  '/admin/surveys/$activityId/': typeof AdminSurveysActivityIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -317,18 +393,26 @@ export interface FileRouteTypes {
     | '/admin/activities'
     | '/admin/clubs'
     | '/admin/intro'
-    | '/admin/notices'
     | '/admin/suggestions'
     | '/admin/welfare'
     | '/notices/$noticeId'
     | '/activities'
     | '/admin/'
     | '/notices/'
-    | '/admin/events/$eventId'
-    | '/admin/surveys/$activityId'
+    | '/admin/events/create'
+    | '/admin/kakaotalk/create'
+    | '/admin/notices/create'
+    | '/admin/surveys/create'
     | '/admin/events'
     | '/admin/kakaotalk'
+    | '/admin/notices'
     | '/admin/surveys'
+    | '/admin/events/$eventId/edit'
+    | '/admin/kakaotalk/$activityId/edit'
+    | '/admin/notices/$noticeId/edit'
+    | '/admin/surveys/$activityId/edit'
+    | '/admin/events/$eventId'
+    | '/admin/surveys/$activityId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -348,18 +432,26 @@ export interface FileRouteTypes {
     | '/admin/activities'
     | '/admin/clubs'
     | '/admin/intro'
-    | '/admin/notices'
     | '/admin/suggestions'
     | '/admin/welfare'
     | '/notices/$noticeId'
     | '/activities'
     | '/admin'
     | '/notices'
-    | '/admin/events/$eventId'
-    | '/admin/surveys/$activityId'
+    | '/admin/events/create'
+    | '/admin/kakaotalk/create'
+    | '/admin/notices/create'
+    | '/admin/surveys/create'
     | '/admin/events'
     | '/admin/kakaotalk'
+    | '/admin/notices'
     | '/admin/surveys'
+    | '/admin/events/$eventId/edit'
+    | '/admin/kakaotalk/$activityId/edit'
+    | '/admin/notices/$noticeId/edit'
+    | '/admin/surveys/$activityId/edit'
+    | '/admin/events/$eventId'
+    | '/admin/surveys/$activityId'
   id:
     | '__root__'
     | '/'
@@ -381,18 +473,26 @@ export interface FileRouteTypes {
     | '/admin/activities'
     | '/admin/clubs'
     | '/admin/intro'
-    | '/admin/notices'
     | '/admin/suggestions'
     | '/admin/welfare'
     | '/notices/$noticeId'
     | '/activities/'
     | '/admin/'
     | '/notices/'
-    | '/admin/events/$eventId'
-    | '/admin/surveys/$activityId'
+    | '/admin/events/create'
+    | '/admin/kakaotalk/create'
+    | '/admin/notices/create'
+    | '/admin/surveys/create'
     | '/admin/events/'
     | '/admin/kakaotalk/'
+    | '/admin/notices/'
     | '/admin/surveys/'
+    | '/admin/events/$eventId/edit'
+    | '/admin/kakaotalk/$activityId/edit'
+    | '/admin/notices/$noticeId/edit'
+    | '/admin/surveys/$activityId/edit'
+    | '/admin/events/$eventId/'
+    | '/admin/surveys/$activityId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -571,13 +671,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSuggestionsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/notices': {
-      id: '/admin/notices'
-      path: '/notices'
-      fullPath: '/admin/notices'
-      preLoaderRoute: typeof AdminNoticesRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/intro': {
       id: '/admin/intro'
       path: '/intro'
@@ -606,6 +699,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSurveysIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/notices/': {
+      id: '/admin/notices/'
+      path: '/notices'
+      fullPath: '/admin/notices'
+      preLoaderRoute: typeof AdminNoticesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/kakaotalk/': {
       id: '/admin/kakaotalk/'
       path: '/kakaotalk'
@@ -620,18 +720,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEventsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/surveys/$activityId': {
-      id: '/admin/surveys/$activityId'
-      path: '/surveys/$activityId'
-      fullPath: '/admin/surveys/$activityId'
-      preLoaderRoute: typeof AdminSurveysActivityIdRouteImport
+    '/admin/surveys/create': {
+      id: '/admin/surveys/create'
+      path: '/surveys/create'
+      fullPath: '/admin/surveys/create'
+      preLoaderRoute: typeof AdminSurveysCreateRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/events/$eventId': {
-      id: '/admin/events/$eventId'
+    '/admin/notices/create': {
+      id: '/admin/notices/create'
+      path: '/notices/create'
+      fullPath: '/admin/notices/create'
+      preLoaderRoute: typeof AdminNoticesCreateRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/kakaotalk/create': {
+      id: '/admin/kakaotalk/create'
+      path: '/kakaotalk/create'
+      fullPath: '/admin/kakaotalk/create'
+      preLoaderRoute: typeof AdminKakaotalkCreateRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/events/create': {
+      id: '/admin/events/create'
+      path: '/events/create'
+      fullPath: '/admin/events/create'
+      preLoaderRoute: typeof AdminEventsCreateRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/surveys/$activityId/': {
+      id: '/admin/surveys/$activityId/'
+      path: '/surveys/$activityId'
+      fullPath: '/admin/surveys/$activityId'
+      preLoaderRoute: typeof AdminSurveysActivityIdIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/events/$eventId/': {
+      id: '/admin/events/$eventId/'
       path: '/events/$eventId'
       fullPath: '/admin/events/$eventId'
-      preLoaderRoute: typeof AdminEventsEventIdRouteImport
+      preLoaderRoute: typeof AdminEventsEventIdIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/surveys/$activityId/edit': {
+      id: '/admin/surveys/$activityId/edit'
+      path: '/surveys/$activityId/edit'
+      fullPath: '/admin/surveys/$activityId/edit'
+      preLoaderRoute: typeof AdminSurveysActivityIdEditRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notices/$noticeId/edit': {
+      id: '/admin/notices/$noticeId/edit'
+      path: '/notices/$noticeId/edit'
+      fullPath: '/admin/notices/$noticeId/edit'
+      preLoaderRoute: typeof AdminNoticesNoticeIdEditRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/kakaotalk/$activityId/edit': {
+      id: '/admin/kakaotalk/$activityId/edit'
+      path: '/kakaotalk/$activityId/edit'
+      fullPath: '/admin/kakaotalk/$activityId/edit'
+      preLoaderRoute: typeof AdminKakaotalkActivityIdEditRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/events/$eventId/edit': {
+      id: '/admin/events/$eventId/edit'
+      path: '/events/$eventId/edit'
+      fullPath: '/admin/events/$eventId/edit'
+      preLoaderRoute: typeof AdminEventsEventIdEditRouteImport
       parentRoute: typeof AdminRoute
     }
   }
@@ -641,30 +797,46 @@ interface AdminRouteChildren {
   AdminActivitiesRoute: typeof AdminActivitiesRoute
   AdminClubsRoute: typeof AdminClubsRoute
   AdminIntroRoute: typeof AdminIntroRoute
-  AdminNoticesRoute: typeof AdminNoticesRoute
   AdminSuggestionsRoute: typeof AdminSuggestionsRoute
   AdminWelfareRoute: typeof AdminWelfareRoute
   AdminIndexRoute: typeof AdminIndexRoute
-  AdminEventsEventIdRoute: typeof AdminEventsEventIdRoute
-  AdminSurveysActivityIdRoute: typeof AdminSurveysActivityIdRoute
+  AdminEventsCreateRoute: typeof AdminEventsCreateRoute
+  AdminKakaotalkCreateRoute: typeof AdminKakaotalkCreateRoute
+  AdminNoticesCreateRoute: typeof AdminNoticesCreateRoute
+  AdminSurveysCreateRoute: typeof AdminSurveysCreateRoute
   AdminEventsIndexRoute: typeof AdminEventsIndexRoute
   AdminKakaotalkIndexRoute: typeof AdminKakaotalkIndexRoute
+  AdminNoticesIndexRoute: typeof AdminNoticesIndexRoute
   AdminSurveysIndexRoute: typeof AdminSurveysIndexRoute
+  AdminEventsEventIdEditRoute: typeof AdminEventsEventIdEditRoute
+  AdminKakaotalkActivityIdEditRoute: typeof AdminKakaotalkActivityIdEditRoute
+  AdminNoticesNoticeIdEditRoute: typeof AdminNoticesNoticeIdEditRoute
+  AdminSurveysActivityIdEditRoute: typeof AdminSurveysActivityIdEditRoute
+  AdminEventsEventIdIndexRoute: typeof AdminEventsEventIdIndexRoute
+  AdminSurveysActivityIdIndexRoute: typeof AdminSurveysActivityIdIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminActivitiesRoute: AdminActivitiesRoute,
   AdminClubsRoute: AdminClubsRoute,
   AdminIntroRoute: AdminIntroRoute,
-  AdminNoticesRoute: AdminNoticesRoute,
   AdminSuggestionsRoute: AdminSuggestionsRoute,
   AdminWelfareRoute: AdminWelfareRoute,
   AdminIndexRoute: AdminIndexRoute,
-  AdminEventsEventIdRoute: AdminEventsEventIdRoute,
-  AdminSurveysActivityIdRoute: AdminSurveysActivityIdRoute,
+  AdminEventsCreateRoute: AdminEventsCreateRoute,
+  AdminKakaotalkCreateRoute: AdminKakaotalkCreateRoute,
+  AdminNoticesCreateRoute: AdminNoticesCreateRoute,
+  AdminSurveysCreateRoute: AdminSurveysCreateRoute,
   AdminEventsIndexRoute: AdminEventsIndexRoute,
   AdminKakaotalkIndexRoute: AdminKakaotalkIndexRoute,
+  AdminNoticesIndexRoute: AdminNoticesIndexRoute,
   AdminSurveysIndexRoute: AdminSurveysIndexRoute,
+  AdminEventsEventIdEditRoute: AdminEventsEventIdEditRoute,
+  AdminKakaotalkActivityIdEditRoute: AdminKakaotalkActivityIdEditRoute,
+  AdminNoticesNoticeIdEditRoute: AdminNoticesNoticeIdEditRoute,
+  AdminSurveysActivityIdEditRoute: AdminSurveysActivityIdEditRoute,
+  AdminEventsEventIdIndexRoute: AdminEventsEventIdIndexRoute,
+  AdminSurveysActivityIdIndexRoute: AdminSurveysActivityIdIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

@@ -50,7 +50,7 @@ export function SuggestionCreateModal({
                 <div className="flex items-center justify-end gap-3">
                     <button
                         type="button"
-                        className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                        className="rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600"
                         onClick={() => {
                             if (submitting) return
                             onClose()
@@ -62,7 +62,7 @@ export function SuggestionCreateModal({
                         type="submit"
                         form="suggestion-form"
                         disabled={submitting}
-                        className={`rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition ${submitting ? 'bg-slate-400' : 'bg-slate-900 hover:-translate-y-0.5 hover:shadow-md'}`}
+                        className={`rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition ${submitting ? 'bg-slate-400 dark:bg-slate-600' : 'bg-slate-900 dark:bg-blue-600 hover:-translate-y-0.5 hover:shadow-md'}`}
                     >
                         {submitting ? '등록 중...' : '등록하기'}
                     </button>
@@ -71,24 +71,24 @@ export function SuggestionCreateModal({
         >
             <form id="suggestion-form" className="space-y-5" onSubmit={handleSubmit}>
                 <div>
-                    <label className="block text-sm font-medium text-slate-700">제목</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">제목</label>
                     <input
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="예: 자습실 콘센트 추가 설치 요청"
-                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+                        className="mt-2 w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500 dark:text-white dark:placeholder-slate-500"
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-700">내용</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">내용</label>
                     <textarea
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         placeholder="구체적인 위치, 문제 상황, 필요 조치 등을 작성해주세요."
                         rows={6}
-                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 resize-y"
+                        className="mt-2 w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-500 dark:text-white dark:placeholder-slate-500 resize-y"
                     />
-                    <p className="mt-2 text-xs text-slate-500">익명 건의함으로 처리되며, 관리자가 확인 후 진행됩니다.</p>
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">익명 건의함으로 처리되며, 관리자가 확인 후 진행됩니다.</p>
                 </div>
             </form>
         </Modal>

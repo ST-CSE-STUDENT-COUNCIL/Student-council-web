@@ -256,6 +256,15 @@ async def approve_user(user_id: str):
             .eq('id', user_id)\
             .execute()
         
+        # 승인 완료 후 인증 이미지 삭제 (개인정보 보호)
+        if user['verification_image_url']:
+            try:
+                from app.database import supabase
+                supabase.storage.from_('verification-images').remove([user['verification_image_url']])
+            except Exception as e:
+                # 이미지 삭제 실패해도 승인은 유지 (로그만 남김)
+                print(f"[APPROVE INFO] 이미지 삭제 실패 (무시됨): {str(e)}")
+        
         return ApproveUserResponse(user_id=user_id)
     
     except HTTPException:
@@ -673,4 +682,185 @@ async def unblock_user_by_admin(student_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"차단 해제 실패: {str(e)}"
+        )
+
+
+# ============================================================================
+# 프로필 변경 요청 관리
+# ============================================================================
+
+@router.get(
+    "/profile-updates",
+    summary="프로필 변경 요청 목록",
+    description="관리자 승인 대기 중인 프로필 변경 요청을 조회합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"}
+    }
+)
+async def get_profile_update_requests(
+    status_filter: Optional[str] = None
+):
+    """프로필 변경 요청 목록 조회"""
+    try:
+        query = supabase.table('profile_update_requests')\
+            .select('*, users!user_id(name, student_id, email)')
+        
+        if status_filter:
+            query = query.eq('status', status_filter)
+        else:
+            query = query.eq('status', 'pending')  # 기본: 대기 중인 것만
+        
+        result = query.order('created_at', desc=True).execute()
+        
+        # Signed URL 생성
+        requests = []
+        for req in (result.data or []):
+            signed_url = create_signed_url(req.get('verification_image_url'))
+            req['verification_image_signed_url'] = signed_url
+            requests.append(req)
+        
+        return {"requests": requests}
+    
+    except Exception as e:
+        print(f"[API ERROR] get_profile_update_requests: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"조회 실패: {str(e)}"
+        )
+
+
+@router.post(
+    "/profile-updates/{request_id}/approve",
+    summary="프로필 변경 승인",
+    description="프로필 변경 요청을 승인하고 사용자 정보를 업데이트합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        404: {"model": ErrorResponse, "description": "요청을 찾을 수 없음"}
+    }
+)
+async def approve_profile_update(
+    request_id: int,
+    current_user: dict = Depends(require_admin)
+):
+    """프로필 변경 승인"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # 요청 조회
+        req_result = admin_supabase.table('profile_update_requests')\
+            .select('*')\
+            .eq('id', request_id)\
+            .eq('status', 'pending')\
+            .single()\
+            .execute()
+        
+        if not req_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="처리할 요청이 없습니다"
+            )
+        
+        request_data = req_result.data
+        
+        # 사용자 정보 업데이트
+        admin_supabase.table('users')\
+            .update({request_data['field_name']: request_data['new_value']})\
+            .eq('id', request_data['user_id'])\
+            .execute()
+        
+        # 요청 상태 업데이트
+        from datetime import timezone
+        admin_supabase.table('profile_update_requests')\
+            .update({
+                'status': 'approved',
+                'processed_at': datetime.now(timezone.utc).isoformat(),
+                'processed_by': current_user['id']
+            })\
+            .eq('id', request_id)\
+            .execute()
+        
+        return {
+            "request_id": request_id,
+            "status": "approved",
+            "message": "프로필 변경이 승인되었습니다"
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[API ERROR] approve_profile_update: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"승인 처리 실패: {str(e)}"
+        )
+
+
+@router.post(
+    "/profile-updates/{request_id}/reject",
+    summary="프로필 변경 거부",
+    description="프로필 변경 요청을 거부합니다 (사유 필수)",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        404: {"model": ErrorResponse, "description": "요청을 찾을 수 없음"},
+        400: {"model": ErrorResponse, "description": "거부 사유 필수"}
+    }
+)
+async def reject_profile_update(
+    request_id: int,
+    reason: str,
+    current_user: dict = Depends(require_admin)
+):
+    """프로필 변경 거부"""
+    try:
+        if not reason or len(reason.strip()) < 2:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="거부 사유를 입력해주세요"
+            )
+        
+        admin_supabase = get_supabase_admin()
+        
+        # 요청 조회
+        req_result = admin_supabase.table('profile_update_requests')\
+            .select('id')\
+            .eq('id', request_id)\
+            .eq('status', 'pending')\
+            .single()\
+            .execute()
+        
+        if not req_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="처리할 요청이 없습니다"
+            )
+        
+        # 요청 상태 업데이트
+        from datetime import timezone
+        admin_supabase.table('profile_update_requests')\
+            .update({
+                'status': 'rejected',
+                'rejection_reason': reason.strip(),
+                'processed_at': datetime.now(timezone.utc).isoformat(),
+                'processed_by': current_user['id']
+            })\
+            .eq('id', request_id)\
+            .execute()
+        
+        return {
+            "request_id": request_id,
+            "status": "rejected",
+            "rejection_reason": reason.strip(),
+            "message": "프로필 변경 요청이 거부되었습니다"
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[API ERROR] reject_profile_update: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"거부 처리 실패: {str(e)}"
         )

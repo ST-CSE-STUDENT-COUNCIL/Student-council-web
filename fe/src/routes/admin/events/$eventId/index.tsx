@@ -1,14 +1,14 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { activityAdminApi, activityApi } from '../../../lib/api/activities'
-import type { ActivityRegistrationResponse, Activity } from '../../../types/activities'
+import { activityAdminApi, activityApi } from '../../../../lib/api/activities'
+import type { ActivityRegistrationResponse, Activity } from '../../../../types/activities'
 import {
   Search, CheckCircle, XCircle, Clock, User, Phone, Building,
   Hash, Calendar, Eye, ChevronLeft, ChevronRight, Users,
   Check, Loader2, ArrowLeft,
   PieChart, LayoutGrid, List, ClipboardList, Image as ImageIcon, FileText
 } from 'lucide-react'
-import { EventStatsPanel } from '../../../components/activities/admin/EventStatsPanel'
+import { EventStatsPanel } from '../../../../components/activities/admin/EventStatsPanel'
 import {
   useReactTable,
   getCoreRowModel,
@@ -18,11 +18,11 @@ import {
   type ColumnDef
 } from '@tanstack/react-table'
 import { AnimatePresence } from 'framer-motion'
-import { StatusDropdown } from '../../../components/activities/admin/StatusDropdown'
-import { RegistrationDetailModal } from '../../../components/activities/admin/RegistrationDetailModal'
-import { ImagePreviewModal } from '../../../components/activities/admin/ImagePreviewModal'
+import { StatusDropdown } from '../../../../components/activities/admin/StatusDropdown'
+import { RegistrationDetailModal } from '../../../../components/activities/admin/RegistrationDetailModal'
+import { ImagePreviewModal } from '../../../../components/activities/admin/ImagePreviewModal'
 
-export const Route = createFileRoute('/admin/events/$eventId')({
+export const Route = createFileRoute('/admin/events/$eventId/')({
   component: EventActivityDetailPage,
 })
 
@@ -480,7 +480,6 @@ function EventActivityDetailPage() {
           </div>
         </div>
       </div>
-
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
         <button
@@ -504,7 +503,6 @@ function EventActivityDetailPage() {
           통계 및 분석
         </button>
       </div>
-
       {currentTab === 'list' ? (
         <>
           {/* Stats Bar */}
@@ -693,7 +691,6 @@ function EventActivityDetailPage() {
                           </button>
                         </div>
                       )}
-
                       {/* Card Header */}
                       <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
                         <span className="font-mono text-sm font-bold text-purple-600">#{seqNum}</span>
@@ -704,7 +701,6 @@ function EventActivityDetailPage() {
                           })}
                         </span>
                       </div>
-
                       {/* Card Body */}
                       <div className="p-5 flex-1 space-y-4">
                         <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-50">
@@ -769,7 +765,6 @@ function EventActivityDetailPage() {
                           })}
                         </div>
                       </div>
-
                       {/* Card Footer */}
                       <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-3 bg-gray-50/30">
                         <div onClick={e => e.stopPropagation()} className="flex-1">
@@ -842,7 +837,6 @@ function EventActivityDetailPage() {
           onPreviewImage={setPreviewImageUrl}
         />
       )}
-
       {/* Sub-modals */}
       <AnimatePresence>
         {selectedRegistration && (
@@ -855,7 +849,6 @@ function EventActivityDetailPage() {
           />
         )}
       </AnimatePresence>
-
       <AnimatePresence>
         {previewImageUrl && (
           <ImagePreviewModal

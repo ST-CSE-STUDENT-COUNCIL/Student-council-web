@@ -71,20 +71,20 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
+                className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-transparent dark:border-slate-700"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white dark:from-slate-800 dark:to-slate-800">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                            <Lock size={20} className="text-blue-600" />
+                        <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                            <Lock size={20} className="text-blue-600 dark:text-blue-400" />
                         </div>
-                        <h2 className="text-lg font-bold text-gray-900">비밀번호 변경</h2>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">비밀번호 변경</h2>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     >
                         <X size={20} />
                     </button>
@@ -93,11 +93,11 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                 {/* Content */}
                 {success ? (
                     <div className="p-8 text-center">
-                        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle size={32} className="text-green-600" />
+                        <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
+                            <CheckCircle size={32} className="text-green-600 dark:text-green-400" />
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">비밀번호가 변경되었습니다</h3>
-                        <p className="text-sm text-gray-500">다음 로그인 시 새 비밀번호를 사용해주세요.</p>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">비밀번호가 변경되었습니다</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">다음 로그인 시 새 비밀번호를 사용해주세요.</p>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="p-6 space-y-5">
@@ -108,7 +108,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm"
+                                    className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 text-sm"
                                 >
                                     <AlertCircle size={16} />
                                     {error}
@@ -118,7 +118,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
 
                         {/* Current Password */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 현재 비밀번호
                             </label>
                             <div className="relative">
@@ -127,13 +127,13 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                                     value={currentPassword}
                                     onChange={(e) => setCurrentPassword(e.target.value)}
                                     placeholder="현재 비밀번호를 입력하세요"
-                                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                     required
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                                 >
                                     {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -142,7 +142,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
 
                         {/* New Password */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 새 비밀번호
                             </label>
                             <div className="relative">
@@ -151,13 +151,13 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     placeholder="새 비밀번호를 입력하세요"
-                                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                    className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
                                     required
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowNewPassword(!showNewPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                                 >
                                     {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -166,19 +166,19 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                             {/* Password Requirements */}
                             {newPassword.length > 0 && (
                                 <div className="mt-3 space-y-1.5">
-                                    <div className={`flex items-center gap-2 text-xs ${passwordValidation.minLength ? 'text-green-600' : 'text-gray-400'}`}>
+                                    <div className={`flex items-center gap-2 text-xs ${passwordValidation.minLength ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                         <CheckCircle size={14} />
                                         8자 이상
                                     </div>
-                                    <div className={`flex items-center gap-2 text-xs ${passwordValidation.hasLetter ? 'text-green-600' : 'text-gray-400'}`}>
+                                    <div className={`flex items-center gap-2 text-xs ${passwordValidation.hasLetter ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                         <CheckCircle size={14} />
                                         영문 포함
                                     </div>
-                                    <div className={`flex items-center gap-2 text-xs ${passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-400'}`}>
+                                    <div className={`flex items-center gap-2 text-xs ${passwordValidation.hasNumber ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                         <CheckCircle size={14} />
                                         숫자 포함
                                     </div>
-                                    <div className={`flex items-center gap-2 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-gray-400'}`}>
+                                    <div className={`flex items-center gap-2 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                         <CheckCircle size={14} />
                                         특수문자 포함 (!@#$%^&* 등)
                                     </div>
@@ -188,7 +188,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
 
                         {/* Confirm Password */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 새 비밀번호 확인
                             </label>
                             <div className="relative">
@@ -197,22 +197,22 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder="새 비밀번호를 다시 입력하세요"
-                                    className={`w-full px-4 py-3 pr-12 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${confirmPassword.length > 0 && !passwordValidation.match
-                                        ? 'border-red-300 bg-red-50/50'
-                                        : 'border-gray-200'
+                                    className={`w-full px-4 py-3 pr-12 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all dark:bg-slate-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 ${confirmPassword.length > 0 && !passwordValidation.match
+                                        ? 'border-red-300 bg-red-50/50 dark:border-red-800 dark:bg-red-900/10'
+                                        : 'border-gray-200 dark:border-slate-600'
                                         }`}
                                     required
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                                 >
                                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
                             {confirmPassword.length > 0 && !passwordValidation.match && (
-                                <p className="mt-2 text-xs text-red-600 flex items-center gap-1">
+                                <p className="mt-2 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
                                     <AlertCircle size={12} />
                                     비밀번호가 일치하지 않습니다
                                 </p>
@@ -224,7 +224,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-all"
+                                className="flex-1 py-3 px-4 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-all"
                             >
                                 취소
                             </button>

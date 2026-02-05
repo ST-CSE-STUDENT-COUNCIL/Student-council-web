@@ -146,7 +146,7 @@ function ResetPassword() {
     }
 
     return (
-        <div className="min-h-screen flex bg-white">
+        <div className="min-h-screen flex bg-white dark:bg-slate-900">
             {/* Left Section - Branding */}
             <div className="hidden lg:flex w-5/12 bg-[#0F172A] relative overflow-hidden items-center justify-center">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-600/40 z-10" />
@@ -164,16 +164,16 @@ function ResetPassword() {
             </div>
 
             {/* Right Section - Form */}
-            <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-24 bg-white">
+            <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-24 bg-white dark:bg-slate-900">
                 <div className="w-full max-w-sm">
                     {/* Header */}
                     <div className="mb-10">
-                        <Link to="/login" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 mb-6 transition-colors group">
+                        <Link to="/login" className="inline-flex items-center text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mb-6 transition-colors group">
                             <ChevronLeft className="h-4 w-4 mr-1 group-hover:-translate-x-1 transition-transform" />
                             로그인으로 돌아가기
                         </Link>
-                        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">비밀번호 재설정</h2>
-                        <p className="mt-2 text-sm text-gray-500">
+                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">비밀번호 재설정</h2>
+                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                             {step === 1 && "가입한 학번을 입력해주세요."}
                             {step === 2 && (
                                 <>
@@ -190,7 +190,7 @@ function ResetPassword() {
                         {[1, 2, 3].map((s) => (
                             <div
                                 key={s}
-                                className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${s <= step ? 'bg-gray-900' : 'bg-gray-100'
+                                className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${s <= step ? 'bg-gray-900 dark:bg-blue-500' : 'bg-gray-100 dark:bg-slate-700'
                                     }`}
                             />
                         ))}
@@ -207,16 +207,16 @@ function ResetPassword() {
                                 className="space-y-6"
                             >
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">학번</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">학번</label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <User className="h-5 w-5 text-gray-400" />
+                                            <User className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                                         </div>
                                         <input
                                             type="text"
                                             required
                                             maxLength={8}
-                                            className="block w-full pl-10 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white"
+                                            className="block w-full pl-10 py-3 border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800"
                                             placeholder="학번을 입력해주세요"
                                             value={studentId}
                                             onChange={(e) => setStudentId(e.target.value)}
@@ -235,7 +235,7 @@ function ResetPassword() {
                                 <button
                                     type="submit"
                                     disabled={isLoading || !turnstileToken || studentId.length < 4}
-                                    className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-all active:scale-[0.99]"
+                                    className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 dark:bg-blue-600 hover:bg-gray-800 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-blue-600 disabled:opacity-50 transition-all active:scale-[0.99]"
                                 >
                                     {isLoading ? '전송 중...' : '인증번호 받기'}
                                 </button>
@@ -253,28 +253,28 @@ function ResetPassword() {
                             >
                                 <div>
                                     <div className="flex justify-between items-center mb-2">
-                                        <label className="block text-sm font-medium text-gray-700">인증번호</label>
-                                        <div className={`flex items-center gap-1.5 text-sm font-mono font-bold ${timeLeft <= 60 ? 'text-red-600' : 'text-blue-600'}`}>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">인증번호</label>
+                                        <div className={`flex items-center gap-1.5 text-sm font-mono font-bold ${timeLeft <= 60 ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                             <span>{timeLeft > 0 ? formatTime(timeLeft) : '만료됨'}</span>
                                         </div>
                                     </div>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <Key className="h-5 w-5 text-gray-400" />
+                                            <Key className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                                         </div>
                                         <input
                                             type="text"
                                             required
                                             maxLength={6}
-                                            className="block w-full pl-10 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 text-lg tracking-widest transition-all bg-gray-50 focus:bg-white"
+                                            className="block w-full pl-10 py-3 border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 text-lg tracking-widest transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800"
                                             placeholder="000000"
                                             value={code}
                                             onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                                         />
                                     </div>
                                     <div className="mt-2 text-right">
-                                        <button type="button" onClick={() => setStep(1)} className="text-sm font-medium text-blue-600 hover:text-blue-500">
+                                        <button type="button" onClick={() => setStep(1)} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
                                             학번 다시 입력하기
                                         </button>
                                     </div>
@@ -282,7 +282,7 @@ function ResetPassword() {
                                 <button
                                     type="submit"
                                     disabled={isLoading || code.length !== 6 || timeLeft <= 0}
-                                    className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-all active:scale-[0.99]"
+                                    className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 dark:bg-blue-600 hover:bg-gray-800 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-blue-600 disabled:opacity-50 transition-all active:scale-[0.99]"
                                 >
                                     {isLoading ? '확인 중...' : '인증하기'}
                                 </button>
@@ -299,20 +299,20 @@ function ResetPassword() {
                                 className="space-y-6"
                             >
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">새 비밀번호</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">새 비밀번호</label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <Lock className="h-5 w-5 text-gray-400" />
+                                            <Lock className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                                         </div>
                                         <input
                                             type="password"
                                             required
                                             minLength={8}
-                                            className={`block w-full pl-10 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${password.length > 0 && isPasswordValid
-                                                ? 'border-green-500 focus:border-green-500 focus:ring-green-200'
+                                            className={`block w-full pl-10 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${password.length > 0 && isPasswordValid
+                                                ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30'
                                                 : password.length > 0 && !isPasswordValid
-                                                    ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200'
-                                                    : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                                                    ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200 dark:focus:ring-amber-900/30'
+                                                    : 'border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30'
                                                 }`}
                                             placeholder="8자 이상, 영문+숫자+특수문자"
                                             value={password}
@@ -323,19 +323,19 @@ function ResetPassword() {
                                     {/* Password Requirements */}
                                     {password.length > 0 && (
                                         <div className="mt-3 grid grid-cols-2 gap-2">
-                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.minLength ? 'text-green-600' : 'text-gray-400'}`}>
+                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.minLength ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                                 <CheckCircle size={12} />
                                                 8자 이상
                                             </div>
-                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasLetter ? 'text-green-600' : 'text-gray-400'}`}>
+                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasLetter ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                                 <CheckCircle size={12} />
                                                 영문 포함
                                             </div>
-                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-400'}`}>
+                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasNumber ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                                 <CheckCircle size={12} />
                                                 숫자 포함
                                             </div>
-                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-gray-400'}`}>
+                                            <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                                 <CheckCircle size={12} />
                                                 특수문자 포함
                                             </div>
@@ -343,19 +343,19 @@ function ResetPassword() {
                                     )}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호 확인</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">비밀번호 확인</label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <CheckCircle2 className="h-5 w-5 text-gray-400" />
+                                            <CheckCircle2 className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                                         </div>
                                         <input
                                             type="password"
                                             required
-                                            className={`block w-full pl-10 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${confirmPassword && password !== confirmPassword
-                                                ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                                            className={`block w-full pl-10 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${confirmPassword && password !== confirmPassword
+                                                ? 'border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-900/30'
                                                 : confirmPassword && password === confirmPassword
-                                                    ? 'border-green-500 focus:border-green-500 focus:ring-green-200'
-                                                    : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                                                    ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30'
+                                                    : 'border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30'
                                                 }`}
                                             placeholder="새 비밀번호 확인"
                                             value={confirmPassword}
@@ -363,13 +363,13 @@ function ResetPassword() {
                                         />
                                     </div>
                                     {confirmPassword && password !== confirmPassword && (
-                                        <p className="mt-2 text-sm text-red-600">비밀번호가 일치하지 않습니다.</p>
+                                        <p className="mt-2 text-sm text-red-600 dark:text-red-400">비밀번호가 일치하지 않습니다.</p>
                                     )}
                                 </div>
                                 <button
                                     type="submit"
                                     disabled={isLoading || password !== confirmPassword || !isPasswordValid}
-                                    className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-all active:scale-[0.99]"
+                                    className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gray-900 dark:bg-blue-600 hover:bg-gray-800 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-blue-600 disabled:opacity-50 transition-all active:scale-[0.99]"
                                 >
                                     {isLoading ? '변경 중...' : '비밀번호 변경하기'}
                                 </button>

@@ -4,7 +4,7 @@ boards + posts 통합 API
 """
 from fastapi import APIRouter, HTTPException, Depends, status, Query, File, UploadFile, Form
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import math
 from app.schemas.notices import (
     NoticeListResponse,
@@ -28,9 +28,13 @@ from app.utils.r2_storage import (
 from app.database import supabase, get_supabase_admin
 import uuid
 import os
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from fastapi import Request
 
 
 router = APIRouter(tags=["공지사항"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 # 영어-한글 매핑
@@ -111,9 +115,10 @@ async def get_notices(
         
         # 1. 전체 개수 조회 (Total Count) - 페이지네이션 및 번호 계산용
         # 검색 조건도 포함해야 정확한 개수가 나옴
-        count_query = supabase.table('posts')\
-            .select('id', count='exact', head=True)\
-            .eq('is_deleted', False)
+        # 1. 전체 개수 조회 (Total Count) - 확실한 방법(ID 조회) 사용
+        # 검색 조건도 포함해야 정확한 개수가 나옴
+        # 주의: 데이터가 많아지면 count='exact', head=True 방식으로 복귀 고려
+        count_query = supabase.table('posts').select('id').eq('is_deleted', False)
         
         if board_ids:
             count_query = count_query.in_('board_id', board_ids)
@@ -125,20 +130,7 @@ async def get_notices(
             count_query = count_query.or_(f'title.ilike.%{search}%,content.ilike.%{search}%')
             
         count_result = count_query.execute()
-        # count='exact', head=True를 사용하면 data는 없고 count 필드에 전체 개수가 옴
-        # 만약 지원하지 않는 구버전이라면 fallback 로직 고려 (여기선 지원한다고 가정)
-        # 혹시 몰라 기존 방식(select id)으로 fallback 하려 했으나, 
-        # count 파라미터는 postgrest-py에서 지원함.
-        if count_result.count is not None:
-             total = count_result.count
-        else:
-             # 만약 count를 못 가져오면 기존 방식으로 재시도 (안전장치)
-             fallback_query = supabase.table('posts').select('id').eq('is_deleted', False)
-             if board_ids: fallback_query = fallback_query.in_('board_id', board_ids)
-             if sub_category_filter: fallback_query = fallback_query.eq('subcategory', sub_category_filter)
-             if search: fallback_query = fallback_query.or_(f'title.ilike.%{search}%,content.ilike.%{search}%')
-             fallback_result = fallback_query.execute()
-             total = len(fallback_result.data) if fallback_result.data else 0
+        total = len(count_result.data) if count_result.data else 0
 
         
         # 2. 목록 데이터 조회
@@ -192,8 +184,13 @@ async def get_notices(
             }
             
             # [수정] 표시용 번호 계산
-            # 공식: total - offset - current_index
-            display_no = total - offset - i
+            # 공식: (전체 - 오프셋 - 인덱스)
+            # total이 0이면 현재 페이지 결과 개수 기준으로 계산
+            if total > 0:
+                display_no = total - offset - i
+            else:
+                # fallback: 현재 페이지 내에서 역순 번호 (len - i)
+                display_no = len(posts_data) - i
             
             notices.append({
                 **post,
@@ -342,12 +339,37 @@ async def get_notice_attachment_presigned_url(
 @router.post(
     "/admin/notices/draft",
     summary="Draft 게시글 생성 (관리자)",
-    description="파일 업로드를 위한 post_id를 미리 획득"
+    description="파일 업로드를 위한 post_id를 미리 획득",
+    responses={
+        429: {"model": ErrorResponse, "description": "요청이 너무 빠릅니다"}
+    }
 )
 async def create_draft_notice(
     body: DraftCreateRequest,
+    request: Request,
     current_user: dict = Depends(require_admin)
 ):
+    # [Rate Limit] DB 기반 중복/연타 방지 (최근 3초)
+    try:
+        limit_time = (datetime.now(timezone.utc) - timedelta(seconds=3)).isoformat()
+        
+        # 최근 3초 내 작성된 글이 있는지 확인 (Draft 포함 모든 글)
+        recent_check = supabase.table("posts")\
+            .select("id", count="exact")\
+            .eq("author_id", current_user["id"])\
+            .gte("created_at", limit_time)\
+            .execute()
+            
+        if recent_check.count and recent_check.count > 0:
+             raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="잠시 후 다시 시도해주세요."
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Rate limit check failed: {e}")
+
     """
     Draft 게시글 생성
     
@@ -396,13 +418,37 @@ async def create_draft_notice(
     description="관리자만 공지사항을 작성할 수 있습니다 (Presigned URL로 첨부파일 업로드)",
     responses={
         401: {"model": ErrorResponse},
-        403: {"model": ErrorResponse, "description": "권한 없음"}
+        403: {"model": ErrorResponse, "description": "권한 없음"},
+        429: {"model": ErrorResponse, "description": "요청이 너무 빠릅니다"}
     }
 )
 async def create_notice(
     body: NoticeCreateRequest,
+    request: Request,
     current_user: dict = Depends(require_admin)
 ):
+    # [Rate Limit] DB 기반 중복/연타 방지 (최근 3초 내 작성 금지)
+    try:
+        # UTC 기준 3초 전
+        limit_time = (datetime.now(timezone.utc) - timedelta(seconds=3)).isoformat()
+        
+        # Draft가 아닌 실제 글 작성만 체크 (posts 테이블)
+        recent_check = supabase.table("posts")\
+            .select("id", count="exact")\
+            .eq("author_id", current_user["id"])\
+            .gte("created_at", limit_time)\
+            .execute()
+            
+        if recent_check.count and recent_check.count > 0:
+             raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="잠시 후 다시 시도해주세요."
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Rate limit check failed: {e}")
+
     """
     공지사항 작성 (관리자 전용, Presigned URL 사용)
     

@@ -59,3 +59,78 @@ class WithdrawResponse(BaseModel):
     """회원탈퇴 응답"""
     message: str = Field(default="회원탈퇴가 완료되었습니다.", description="결과 메시지")
 
+
+# ============================================================================
+# 프로필 변경 요청 스키마 (이름/학번 - 관리자 승인)
+# ============================================================================
+
+class ProfileUpdateRequest(BaseModel):
+    """프로필 변경 요청 (이름/학번)"""
+    field_name: str = Field(..., pattern="^(name|student_id)$", description="변경할 필드 (name 또는 student_id)")
+    new_value: str = Field(..., min_length=1, max_length=100, description="새로운 값")
+    verification_image_url: str = Field(..., description="학적 증명 이미지 Storage 경로")
+
+
+class ProfileUpdateResponse(BaseModel):
+    """프로필 변경 요청 응답"""
+    id: int
+    field_name: str
+    current_value: Optional[str]
+    new_value: str
+    status: str
+    created_at: datetime
+    message: str = Field(default="변경 요청이 접수되었습니다. 관리자 승인을 기다려주세요.")
+
+
+class ProfileUpdateStatusResponse(BaseModel):
+    """내 프로필 변경 요청 상태"""
+    id: int
+    field_name: str
+    current_value: Optional[str]
+    new_value: str
+    status: str
+    rejection_reason: Optional[str]
+    created_at: datetime
+    processed_at: Optional[datetime]
+
+
+# ============================================================================
+# 이메일 변경 스키마
+# ============================================================================
+
+class EmailChangeRequest(BaseModel):
+    """이메일 변경 인증번호 발송 요청"""
+    new_email: EmailStr = Field(..., description="새 이메일 주소 (@seoultech.ac.kr)")
+
+
+class EmailChangeVerifyRequest(BaseModel):
+    """이메일 변경 인증 확인"""
+    new_email: EmailStr = Field(..., description="새 이메일 주소")
+    code: str = Field(..., min_length=6, max_length=6, description="6자리 인증번호")
+
+
+class EmailChangeResponse(BaseModel):
+    """이메일 변경 응답"""
+    message: str = Field(default="인증번호가 발송되었습니다.", description="결과 메시지")
+
+
+class EmailChangeVerifyResponse(BaseModel):
+    """이메일 변경 완료 응답"""
+    new_email: str
+    message: str = Field(default="이메일이 성공적으로 변경되었습니다.", description="결과 메시지")
+
+
+# ============================================================================
+# 전화번호 변경 스키마
+# ============================================================================
+
+class PhoneChangeRequest(BaseModel):
+    """전화번호 변경 요청"""
+    new_phone: str = Field(..., pattern=r"^010-?\d{4}-?\d{4}$", description="새 전화번호")
+    password: str = Field(..., description="현재 비밀번호")
+
+
+class PhoneChangeResponse(BaseModel):
+    """전화번호 변경 응답"""
+    new_phone: str
+    message: str = Field(default="전화번호가 성공적으로 변경되었습니다.", description="결과 메시지")

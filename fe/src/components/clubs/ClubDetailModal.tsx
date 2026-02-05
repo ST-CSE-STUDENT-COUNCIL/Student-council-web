@@ -57,7 +57,7 @@ export function ClubDetailModal({ club, onClose }: Props) {
             maxWidth="max-w-4xl"
         >
             {loading ? (
-                <div className="py-12 text-center text-gray-500">
+                <div className="py-12 text-center text-gray-500 dark:text-gray-400">
                     동아리 정보를 불러오는 중...
                 </div>
             ) : (
@@ -76,22 +76,22 @@ export function ClubDetailModal({ club, onClose }: Props) {
                             ))}
                         </div>
                     ) : (
-                        <div className="w-full h-64 flex items-center justify-center text-gray-400 bg-gray-50 rounded-lg">
+                        <div className="w-full h-64 flex items-center justify-center text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-slate-700 rounded-lg">
                             <span className="text-sm">소개 이미지가 없습니다.</span>
                         </div>
                     )}
 
                     {/* 동아리 설명 */}
-                    <div className="border-t border-gray-200 pt-4">
-                        <h4 className="text-lg font-semibold text-gray-900 mb-2">동아리 소개</h4>
-                        <p className="text-gray-700 whitespace-pre-line leading-relaxed">
+                    <div className="border-t border-gray-200 dark:border-slate-700 pt-4">
+                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">동아리 소개</h4>
+                        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">
                             {displayClub?.description}
                         </p>
                     </div>
 
                     {/* 웹사이트 링크 */}
                     {displayClub?.website_url && (
-                        <div className="border-t border-gray-200 pt-4">
+                        <div className="border-t border-gray-200 dark:border-slate-700 pt-4">
                             <a
                                 href={displayClub.website_url}
                                 target="_blank"

@@ -10,6 +10,9 @@ export { RentalItemCard } from './RentalItemCard'
 export { RentalAddModal } from './RentalAddModal'
 export { RentalEditModal } from './RentalEditModal'
 
+// Printer Components
+export { PrinterImageSection } from './PrinterImageSection'
+
 // Types
 export * from './LockerTypes'
 export * from './RentalTypes'

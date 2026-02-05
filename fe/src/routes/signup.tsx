@@ -1,11 +1,17 @@
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { authApi } from '../lib/api/auth'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
+import { CheckCircle } from 'lucide-react'
+
 import { PhoneInput } from '../components/common/PhoneInput'
 import { Turnstile } from '../components/common/Turnstile'
-import { CheckCircle } from 'lucide-react'
+import { signupFormSchema, type SignupFormData } from '../schemas/auth'
+import { useEmailVerification } from '../hooks/useEmailVerification'
+import { useStudentIdCheck } from '../hooks/useStudentIdCheck'
 
 export const Route = createFileRoute('/signup')({
     component: SignUp,
@@ -18,248 +24,78 @@ function SignUp() {
         terms: false,
         privacy: false,
     })
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+    const [verificationCode, setVerificationCode] = useState('')
 
-    const [formData, setFormData] = useState({
-        name: '',
-        student_id: '',
-        emailPrefix: '',
-        phone: '',
-        password: '',
-        password_confirm: '',
-        department: '컴퓨터공학과',
+    // react-hook-form with zod
+    const {
+        register,
+        handleSubmit,
+        watch,
+        setValue,
+        formState: { errors },
+    } = useForm<SignupFormData>({
+        resolver: zodResolver(signupFormSchema),
+        defaultValues: {
+            name: '',
+            student_id: '',
+            emailPrefix: '',
+            phone: '',
+            password: '',
+            password_confirm: '',
+            department: '컴퓨터공학과',
+        },
+        mode: 'onChange',
     })
 
-    // Verification States
-    const [verificationStep, setVerificationStep] = useState<'idle' | 'sent' | 'verified'>('idle')
-    const [verificationCode, setVerificationCode] = useState('')
-    const [isEmailVerified, setIsEmailVerified] = useState(false)
-    const [isSendingEmail, setIsSendingEmail] = useState(false)
-    const [isVerifying, setIsVerifying] = useState(false)
+    const watchedPassword = watch('password')
+    const watchedPasswordConfirm = watch('password_confirm')
+    const watchedEmailPrefix = watch('emailPrefix')
+    const watchedStudentId = watch('student_id')
 
-    // Timer States (5분 = 300초)
-    const [timeLeft, setTimeLeft] = useState(0)
-    const [canResend, setCanResend] = useState(false)
+    // Custom hooks
+    const getFullEmail = useCallback(() => {
+        return watchedEmailPrefix ? `${watchedEmailPrefix}@seoultech.ac.kr` : ''
+    }, [watchedEmailPrefix])
 
-    // Student ID Check States
-    const [isStudentIdChecking, setIsStudentIdChecking] = useState(false)
-    const [isStudentIdAvailable, setIsStudentIdAvailable] = useState<boolean | null>(null)
+    const emailVerification = useEmailVerification(getFullEmail)
+    const studentIdCheck = useStudentIdCheck()
 
-    // Turnstile State
-    const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
-
-    // 타이머 로직
-    useEffect(() => {
-        if (timeLeft <= 0) {
-            if (verificationStep === 'sent') {
-                setCanResend(true)
-            }
-            return
-        }
-
-        const timer = setInterval(() => {
-            setTimeLeft(prev => prev - 1)
-        }, 1000)
-
-        return () => clearInterval(timer)
-    }, [timeLeft, verificationStep])
-
-    // 시간 포맷 함수 (mm:ss)
-    const formatTime = useCallback((seconds: number) => {
-        const mins = Math.floor(seconds / 60)
-        const secs = seconds % 60
-        return `${mins}:${secs.toString().padStart(2, '0')}`
-    }, [])
-
-    // 비밀번호 일치 여부 확인
-    const passwordsMatch = formData.password === formData.password_confirm
-    const showPasswordError = formData.password_confirm.length > 0 && !passwordsMatch
-
-    // 비밀번호 유효성 검사
+    // Password validation display
     const passwordValidation = {
-        minLength: formData.password.length >= 8,
-        hasNumber: /\d/.test(formData.password),
-        hasLetter: /[a-zA-Z]/.test(formData.password),
-        hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(formData.password)
+        minLength: watchedPassword?.length >= 8,
+        hasNumber: /\d/.test(watchedPassword || ''),
+        hasLetter: /[a-zA-Z]/.test(watchedPassword || ''),
+        hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(watchedPassword || '')
     }
 
-    const isPasswordValid =
-        passwordValidation.minLength &&
-        passwordValidation.hasNumber &&
-        passwordValidation.hasLetter &&
-        passwordValidation.hasSpecialChar
+    const passwordsMatch = watchedPassword === watchedPasswordConfirm
+    const showPasswordError = (watchedPasswordConfirm?.length ?? 0) > 0 && !passwordsMatch
 
-    // 전체 이메일을 조합하는 헬퍼 함수
-    const getFullEmail = () => {
-        return formData.emailPrefix ? `${formData.emailPrefix}@seoultech.ac.kr` : ''
+    // Handlers
+    const handleStudentIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const numbers = e.target.value.replace(/\D/g, '').slice(0, 8)
+        setValue('student_id', numbers, { shouldValidate: true })
+        studentIdCheck.reset()
     }
 
-    // emailPrefix에 @ 문자가 포함되어 있는지 확인
-    const hasAtSymbol = formData.emailPrefix.includes('@')
-
-    const checkStudentId = async () => {
-        if (formData.student_id.length < 4) return // 최소 길이 체크
-
-        setIsStudentIdChecking(true)
-        try {
-            const result = await authApi.checkStudentId(formData.student_id)
-            setIsStudentIdAvailable(result.available)
-            if (!result.available) {
-                toast.error(result.message)
-            }
-        } catch (error) {
-            console.error('Student ID check failed:', error)
-            toast.error('학번 중복 확인 중 오류가 발생했습니다.')
-        } finally {
-            setIsStudentIdChecking(false)
-        }
-    }
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target
-        
-        // emailPrefix 입력 시 @ 문자 차단
-        if (name === 'emailPrefix' && value.includes('@')) {
+    const handleEmailPrefixChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value
+        if (value.includes('@')) {
             toast.error("'@'를 제외한 아이디만 입력해주세요.")
             return
         }
-        
-        // 학번 입력 필드: 숫자만 허용, 최대 8자리
-        if (name === 'student_id') {
-            const numbers = value.replace(/\D/g, '') // 숫자만 추출
-            const limited = numbers.slice(0, 8) // 최대 8자리
-            setFormData(prev => ({ ...prev, [name]: limited }))
-            return
-        }
-        
-        setFormData(prev => ({ ...prev, [name]: value }))
+        setValue('emailPrefix', value, { shouldValidate: true })
     }
 
-    const sendVerificationEmail = async () => {
-        if (!formData.emailPrefix.trim()) {
-            toast.error('이메일을 입력해주세요.')
-            return
-        }
-
-        if (hasAtSymbol) {
-            toast.error("'@'를 제외한 아이디만 입력해주세요.")
-            return
-        }
-
-        const fullEmail = getFullEmail()
-        setIsSendingEmail(true)
-        try {
-            await authApi.sendVerification(fullEmail)
-            setVerificationStep('sent')
-            setTimeLeft(300) // 5분 타이머 시작
-            setCanResend(false)
-            toast.success('인증번호가 발송되었습니다. 이메일을 확인해주세요.')
-        } catch (error) {
-            console.error('Email send failed:', error)
-            if (isAxiosError(error) && error.response?.data?.detail) {
-                const detail = error.response.data.detail
-                // 이미 인증된 이메일인 경우 자동 처리
-                if (typeof detail === 'string' && detail.includes('이미 인증 완료된 이메일입니다')) {
-                    setIsEmailVerified(true)
-                    setVerificationStep('verified')
-                    setTimeLeft(0)
-                    toast.info('이미 인증된 이메일입니다. 회원가입을 계속 진행해주세요.')
-                } else {
-                    toast.error(detail)
-                }
-            } else {
-                toast.error('인증번호 발송에 실패했습니다.')
-            }
-        } finally {
-            setIsSendingEmail(false)
-        }
-    }
-
-    const resendVerificationEmail = async () => {
-        const fullEmail = getFullEmail()
-        setIsSendingEmail(true)
-        try {
-            await authApi.sendVerification(fullEmail)
-            setTimeLeft(300) // 5분 타이머 재시작
-            setCanResend(false)
-            setVerificationCode('')
-            toast.success('인증번호가 재발송되었습니다.')
-        } catch (error) {
-            console.error('Email resend failed:', error)
-            if (isAxiosError(error) && error.response?.data?.detail) {
-                toast.error(error.response.data.detail)
-            } else {
-                toast.error('인증번호 재발송에 실패했습니다.')
-            }
-        } finally {
-            setIsSendingEmail(false)
-        }
-    }
-
-    const verifyCode = async () => {
-        if (verificationCode.length !== 6) {
-            toast.error('6자리 인증번호를 입력해주세요.')
-            return
-        }
-
-        if (timeLeft <= 0) {
-            toast.error('인증 시간이 만료되었습니다. 인증번호를 재발송해주세요.')
-            return
-        }
-
-        setIsVerifying(true)
-        try {
-            await authApi.verifyEmail({
-                email: getFullEmail(),
-                code: verificationCode
-            })
-            setIsEmailVerified(true)
-            setVerificationStep('verified')
-            setTimeLeft(0)
-            toast.success('이메일 인증이 완료되었습니다.')
-        } catch (error) {
-            console.error('Verification failed:', error)
-            if (isAxiosError(error) && error.response?.data?.detail) {
-                toast.error(error.response.data.detail)
-            } else {
-                toast.error('인증번호 확인에 실패했습니다.')
-            }
-        } finally {
-            setIsVerifying(false)
-        }
-    }
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-
-        if (!passwordsMatch) {
-            toast.error('비밀번호가 일치하지 않습니다.')
-            return
-        }
-
-        if (!isPasswordValid) {
-            toast.error('비밀번호는 8자 이상, 영문, 숫자, 특수문자를 포함해야 합니다.')
-            return
-        }
-
-        // 학번 8자리 검증
-        if (formData.student_id.length !== 8) {
-            toast.error('학번 8자리를 정확히 입력해주세요.')
-            return
-        }
-
-        if (isStudentIdAvailable !== true) {
+    const onSubmit = async (data: SignupFormData) => {
+        if (studentIdCheck.isAvailable !== true) {
             toast.error('학번 중복 확인을 완료해주세요.')
             return
         }
 
-        if (!isEmailVerified) {
+        if (!emailVerification.isVerified) {
             toast.error('이메일 인증을 완료해주세요.')
-            return
-        }
-
-        // 전화번호 11자리 검증
-        if (formData.phone.length !== 11) {
-            toast.error('전화번호를 정확히 입력해주세요.')
             return
         }
 
@@ -270,12 +106,12 @@ function SignUp() {
 
         try {
             await authApi.signup({
-                name: formData.name,
-                student_id: formData.student_id,
+                name: data.name,
+                student_id: data.student_id,
                 email: getFullEmail(),
-                phone: formData.phone,
-                password: formData.password,
-                department: formData.department
+                phone: data.phone,
+                password: data.password,
+                department: data.department
             })
             toast.success('회원가입이 완료되었습니다. 로그인해주세요.')
             navigate({ to: '/login' })
@@ -290,7 +126,7 @@ function SignUp() {
     }
 
     return (
-        <div className="min-h-screen flex bg-white">
+        <div className="min-h-screen flex bg-white dark:bg-slate-900">
             {/* Left Section - Branding */}
             <div className="hidden lg:flex w-5/12 bg-[#0F172A] relative overflow-hidden items-center justify-center sticky top-0 h-screen">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-indigo-600/40 z-10" />
@@ -308,267 +144,163 @@ function SignUp() {
             </div>
 
             {/* Right Section - Form */}
-            <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-12 lg:p-24 bg-white overflow-y-auto">
+            <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-12 lg:p-24 bg-white dark:bg-slate-900 overflow-y-auto">
                 <div className="w-full max-w-xl space-y-10">
                     {step === 'agreement' ? (
-                        <div className="space-y-8">
-                            <div>
-                                <h2 className="text-3xl font-bold tracking-tight text-gray-900">약관 동의</h2>
-                                <p className="mt-2 text-sm text-gray-500">
-                                    서비스 이용을 위해 약관 및 개인정보 수집에 동의해주세요.
-                                </p>
-                            </div>
-
-                            <div className="space-y-6">
-                                {/* Terms of Service */}
-                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                                    <div className="flex items-start">
-                                        <div className="flex h-6 items-center">
-                                            <input
-                                                id="terms"
-                                                name="terms"
-                                                type="checkbox"
-                                                required
-                                                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
-                                                checked={agreements.terms}
-                                                onChange={(e) => setAgreements(prev => ({ ...prev, terms: e.target.checked }))}
-                                            />
-                                        </div>
-                                        <div className="ml-3 text-sm leading-6">
-                                            <label htmlFor="terms" className="font-medium text-gray-900 cursor-pointer">
-                                                이용약관 동의 (필수)
-                                            </label>
-                                            <p className="text-gray-500 mt-1">
-                                                학생회 서비스 이용과 관련된 제반 사항에 동의합니다.
-                                                <Link to="/terms" target="_blank" className="text-blue-600 hover:text-blue-500 ml-1 underline decoration-blue-600/30 hover:decoration-blue-500">
-                                                    약관 전문 보기
-                                                </Link>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Privacy Policy */}
-                                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                                    <div className="flex items-start">
-                                        <div className="flex h-6 items-center">
-                                            <input
-                                                id="privacy"
-                                                name="privacy"
-                                                type="checkbox"
-                                                required
-                                                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
-                                                checked={agreements.privacy}
-                                                onChange={(e) => setAgreements(prev => ({ ...prev, privacy: e.target.checked }))}
-                                            />
-                                        </div>
-                                        <div className="ml-3 text-sm leading-6">
-                                            <label htmlFor="privacy" className="font-medium text-gray-900 cursor-pointer">
-                                                개인정보 수집 및 이용 동의 (필수)
-                                            </label>
-                                            <p className="text-gray-500 mt-1">
-                                                원활한 서비스 제공을 위한 개인정보 수집에 동의합니다.
-                                                <Link to="/privacy" target="_blank" className="text-blue-600 hover:text-blue-500 ml-1 underline decoration-blue-600/30 hover:decoration-blue-500">
-                                                    내용 상세보기
-                                                </Link>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start p-4 bg-blue-50/50 rounded-xl">
-                                    <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
-                                    <p className="text-sm text-blue-800">
-                                        모든 약관에 동의하셔야 회원가입을 진행할 수 있습니다.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => setStep('form')}
-                                disabled={!agreements.terms || !agreements.privacy}
-                                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.99]"
-                            >
-                                다음으로
-                            </button>
-
-                            <div className="text-center">
-                                <p className="text-sm text-gray-500">
-                                    이미 계정이 있으신가요?
-                                    <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-500 ml-1">
-                                        로그인하기
-                                    </Link>
-                                </p>
-                            </div>
-                        </div>
+                        <AgreementStep
+                            agreements={agreements}
+                            setAgreements={setAgreements}
+                            onNext={() => setStep('form')}
+                        />
                     ) : (
                         <div>
                             <div className="mb-8">
                                 <button
                                     onClick={() => setStep('agreement')}
-                                    className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1 mb-4"
+                                    className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 flex items-center gap-1 mb-4"
                                 >
                                     ← 약관 동의로 돌아가기
                                 </button>
-                                <h2 className="text-3xl font-bold tracking-tight text-gray-900">회원정보 입력</h2>
-                                <p className="mt-2 text-sm text-gray-500">
+                                <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">회원정보 입력</h2>
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                     학생회 서비스를 이용하기 위한 정보를 입력해주세요.
                                 </p>
                             </div>
 
-                            <form className="space-y-8" onSubmit={handleSubmit}>
+                            <form className="space-y-8" onSubmit={handleSubmit(onSubmit)}>
                                 <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
                                     {/* Name */}
                                     <div className="sm:col-span-1">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">이름</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">이름</label>
                                         <input
                                             type="text"
-                                            name="name"
-                                            required
-                                            className="block w-full px-4 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white"
-                                            value={formData.name}
-                                            onChange={handleChange}
+                                            {...register('name')}
+                                            className="block w-full px-4 py-3 border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800"
                                             placeholder="홍길동"
                                         />
+                                        {errors.name && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name.message}</p>}
                                     </div>
 
                                     {/* Department */}
                                     <div className="sm:col-span-1">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">학과</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">학과</label>
                                         <input
                                             type="text"
-                                            name="department"
-                                            required
-                                            className="block w-full px-4 py-3 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 focus:bg-white"
-                                            value={formData.department}
-                                            onChange={handleChange}
+                                            {...register('department')}
+                                            className="block w-full px-4 py-3 border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800"
                                             placeholder="컴퓨터공학과"
                                         />
                                     </div>
 
                                     {/* Student ID */}
                                     <div className="sm:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">학번</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">학번</label>
                                         <div className="flex gap-3">
                                             <div className="relative flex-1">
                                                 <input
                                                     type="text"
-                                                    name="student_id"
-                                                    required
+                                                    value={watchedStudentId}
+                                                    onChange={handleStudentIdChange}
                                                     maxLength={8}
                                                     inputMode="numeric"
                                                     pattern="[0-9]*"
-                                                    className={`block w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${isStudentIdAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-200' :
-                                                        isStudentIdAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-200' :
-                                                            'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                                                    className={`block w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${studentIdCheck.isAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30' :
+                                                        studentIdCheck.isAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-900/30' :
+                                                            'border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30'
                                                         }`}
-                                                    value={formData.student_id}
-                                                    onChange={(e) => {
-                                                        handleChange(e)
-                                                        setIsStudentIdAvailable(null)
-                                                    }}
                                                     placeholder="8자리 학번 입력"
                                                 />
-                                                {isStudentIdAvailable === true && (
+                                                {studentIdCheck.isAvailable === true && (
                                                     <div className="absolute right-3 top-3.5 text-green-500">
-                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                                        <CheckCircle size={20} />
                                                     </div>
                                                 )}
                                             </div>
                                             <button
                                                 type="button"
-                                                onClick={checkStudentId}
-                                                disabled={formData.student_id.length < 8 || isStudentIdChecking}
-                                                className="whitespace-nowrap px-6 py-3 border border-transparent rounded-xl text-sm font-semibold text-white bg-slate-800 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                                onClick={() => studentIdCheck.check(watchedStudentId)}
+                                                disabled={watchedStudentId.length < 8 || studentIdCheck.isChecking}
+                                                className="whitespace-nowrap px-6 py-3 border border-transparent rounded-xl text-sm font-semibold text-white bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 dark:focus:ring-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                             >
-                                                {isStudentIdChecking ? '확인중' : '중복확인'}
+                                                {studentIdCheck.isChecking ? '확인중' : '중복확인'}
                                             </button>
                                         </div>
-                                        {isStudentIdAvailable === false && (
-                                            <p className="mt-2 text-sm text-red-600">🚫 이미 가입된 학번입니다.</p>
+                                        {studentIdCheck.isAvailable === false && (
+                                            <p className="mt-2 text-sm text-red-600 dark:text-red-400">🚫 이미 가입된 학번입니다.</p>
                                         )}
                                     </div>
 
                                     {/* Email */}
                                     <div className="sm:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">이메일</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">이메일</label>
                                         <div className="flex gap-3 items-center">
                                             <div className="flex items-center gap-2 flex-1">
                                                 <input
                                                     type="text"
-                                                    name="emailPrefix"
-                                                    required
-                                                    disabled={isEmailVerified}
-                                                    className={`block w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white disabled:bg-gray-100 disabled:text-gray-500 ${hasAtSymbol ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'}`}
-                                                    value={formData.emailPrefix}
-                                                    onChange={handleChange}
+                                                    value={watchedEmailPrefix}
+                                                    onChange={handleEmailPrefixChange}
+                                                    disabled={emailVerification.isVerified}
+                                                    className="block w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 disabled:bg-gray-100 dark:disabled:bg-slate-900 disabled:text-gray-500 border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30"
                                                     placeholder="example"
                                                 />
-                                                <span className="text-gray-700 text-md whitespace-nowrap">@seoultech.ac.kr</span>
+                                                <span className="text-gray-700 dark:text-gray-300 text-md whitespace-nowrap">@seoultech.ac.kr</span>
                                             </div>
                                             <button
                                                 type="button"
-                                                onClick={sendVerificationEmail}
-                                                disabled={isEmailVerified || isSendingEmail || !formData.emailPrefix.trim() || hasAtSymbol}
-                                                className={`whitespace-nowrap px-6 py-3 border border-transparent rounded-xl text-sm font-semibold text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isEmailVerified ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+                                                onClick={emailVerification.sendVerification}
+                                                disabled={emailVerification.isVerified || emailVerification.isSending || !watchedEmailPrefix?.trim()}
+                                                className={`whitespace-nowrap px-6 py-3 border border-transparent rounded-xl text-sm font-semibold text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${emailVerification.isVerified ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
                                                     }`}
                                             >
-                                                {isSendingEmail ? '발송중...' : (isEmailVerified ? '인증완료' : '인증번호 발송')}
+                                                {emailVerification.isSending ? '발송중...' : (emailVerification.isVerified ? '인증완료' : '인증번호 발송')}
                                             </button>
                                         </div>
-                                        {hasAtSymbol && (
-                                            <p className="mt-2 text-sm text-red-600">'@'를 제외한 아이디만 입력해주세요.</p>
-                                        )}
                                     </div>
 
                                     {/* Verification Code */}
-                                    {verificationStep === 'sent' && (
-                                        <div className="sm:col-span-2 bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                                    {emailVerification.step === 'sent' && (
+                                        <div className="sm:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl border border-blue-100 dark:border-blue-800">
                                             <div className="flex items-center justify-between mb-3">
-                                                <label className="block text-sm font-medium text-blue-900">인증번호 확인</label>
-                                                {/* 타이머 표시 */}
-                                                <div className={`flex items-center gap-2 text-sm font-mono font-bold ${timeLeft <= 60 ? 'text-red-600' : 'text-blue-600'}`}>
+                                                <label className="block text-sm font-medium text-blue-900 dark:text-blue-200">인증번호 확인</label>
+                                                <div className={`flex items-center gap-2 text-sm font-mono font-bold ${emailVerification.timer.timeLeft <= 60 ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
-                                                    <span>{formatTime(timeLeft)}</span>
+                                                    <span>{emailVerification.timer.formatTime()}</span>
                                                 </div>
                                             </div>
                                             <div className="flex gap-3">
                                                 <input
                                                     type="text"
                                                     maxLength={6}
-                                                    className="block w-full px-4 py-3 border-blue-200 rounded-xl text-blue-900 placeholder-blue-300 focus:ring-blue-500 focus:border-blue-500 sm:text-lg tracking-widest transition-all bg-white"
+                                                    className="block w-full px-4 py-3 border-blue-200 dark:border-blue-800 rounded-xl text-blue-900 dark:text-blue-100 placeholder-blue-300 dark:placeholder-blue-600 focus:ring-blue-500 focus:border-blue-500 sm:text-lg tracking-widest transition-all bg-white dark:bg-slate-800"
                                                     value={verificationCode}
                                                     onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                                                     placeholder="000000"
                                                 />
                                                 <button
                                                     type="button"
-                                                    onClick={verifyCode}
-                                                    disabled={isVerifying || timeLeft <= 0}
+                                                    onClick={() => emailVerification.verifyCode(verificationCode)}
+                                                    disabled={emailVerification.isVerifying || emailVerification.timer.isExpired}
                                                     className="whitespace-nowrap px-6 py-3 border border-transparent rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all disabled:opacity-50"
                                                 >
-                                                    {isVerifying ? '확인중' : '확인'}
+                                                    {emailVerification.isVerifying ? '확인중' : '확인'}
                                                 </button>
                                             </div>
-
-                                            {/* 안내 메시지 및 재전송 버튼 */}
                                             <div className="mt-3 flex items-center justify-between">
-                                                <p className="text-sm text-blue-600">
-                                                    {timeLeft > 0
+                                                <p className="text-sm text-blue-600 dark:text-blue-400">
+                                                    {!emailVerification.timer.isExpired
                                                         ? '이메일로 전송된 6자리 인증번호를 입력해주세요.'
                                                         : '⏰ 인증 시간이 만료되었습니다.'}
                                                 </p>
-                                                {(canResend || timeLeft <= 0) && (
+                                                {emailVerification.canResend && (
                                                     <button
                                                         type="button"
-                                                        onClick={resendVerificationEmail}
-                                                        disabled={isSendingEmail}
-                                                        className="text-sm font-semibold text-blue-700 hover:text-blue-800 underline underline-offset-2 disabled:opacity-50"
+                                                        onClick={emailVerification.resendVerification}
+                                                        disabled={emailVerification.isSending}
+                                                        className="text-sm font-semibold text-blue-700 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline underline-offset-2 disabled:opacity-50"
                                                     >
-                                                        {isSendingEmail ? '발송중...' : '재전송'}
+                                                        {emailVerification.isSending ? '발송중...' : '재전송'}
                                                     </button>
                                                 )}
                                             </div>
@@ -577,11 +309,11 @@ function SignUp() {
 
                                     {/* Phone */}
                                     <div className="sm:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">전화번호</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">전화번호</label>
                                         <div className="pb-6">
                                             <PhoneInput
-                                                value={formData.phone}
-                                                onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
+                                                value={watch('phone')}
+                                                onChange={(value) => setValue('phone', value, { shouldValidate: true })}
                                                 required
                                                 showValidation={true}
                                             />
@@ -591,85 +323,55 @@ function SignUp() {
                                     {/* Password */}
                                     <div className="sm:col-span-2 grid grid-cols-1 gap-6 sm:grid-cols-2">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">비밀번호</label>
                                             <input
                                                 type="password"
-                                                name="password"
-                                                required
-                                                minLength={8}
-                                                className={`block w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${formData.password.length > 0 && isPasswordValid
-                                                    ? 'border-green-500 focus:border-green-500 focus:ring-green-200'
-                                                    : formData.password.length > 0 && !isPasswordValid
-                                                        ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200'
-                                                        : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                                                {...register('password')}
+                                                className={`block w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${watchedPassword?.length > 0 && Object.values(passwordValidation).every(Boolean)
+                                                    ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30'
+                                                    : watchedPassword?.length > 0
+                                                        ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200 dark:focus:ring-amber-900/30'
+                                                        : 'border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30'
                                                     }`}
-                                                value={formData.password}
-                                                onChange={handleChange}
                                                 placeholder="8자 이상, 영문+숫자+특수문자"
                                             />
-
-                                            {/* Password Requirements */}
-                                            {formData.password.length > 0 && (
+                                            {watchedPassword?.length > 0 && (
                                                 <div className="mt-3 grid grid-cols-2 gap-2">
-                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.minLength ? 'text-green-600' : 'text-gray-400'}`}>
-                                                        <CheckCircle size={12} />
-                                                        8자 이상
+                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.minLength ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                        <CheckCircle size={12} /> 8자 이상
                                                     </div>
-                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasLetter ? 'text-green-600' : 'text-gray-400'}`}>
-                                                        <CheckCircle size={12} />
-                                                        영문 포함
+                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasLetter ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                        <CheckCircle size={12} /> 영문 포함
                                                     </div>
-                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-400'}`}>
-                                                        <CheckCircle size={12} />
-                                                        숫자 포함
+                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasNumber ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                        <CheckCircle size={12} /> 숫자 포함
                                                     </div>
-                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600' : 'text-gray-400'}`}>
-                                                        <CheckCircle size={12} />
-                                                        특수문자 포함
+                                                    <div className={`flex items-center gap-1.5 text-xs ${passwordValidation.hasSpecialChar ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                        <CheckCircle size={12} /> 특수문자 포함
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">비밀번호 확인</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">비밀번호 확인</label>
                                             <div className="relative">
                                                 <input
                                                     type="password"
-                                                    name="password_confirm"
-                                                    required
-                                                    className={`block w-full px-4 py-3 border rounded-xl text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm transition-all bg-gray-50 focus:bg-white ${showPasswordError
-                                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                                                        : formData.password_confirm && passwordsMatch
-                                                            ? 'border-green-500 focus:border-green-500 focus:ring-green-200'
-                                                            : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                                                    {...register('password_confirm')}
+                                                    className={`block w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${showPasswordError ? 'border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-900/30'
+                                                        : watchedPasswordConfirm && passwordsMatch ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30'
+                                                            : 'border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30'
                                                         }`}
-                                                    value={formData.password_confirm}
-                                                    onChange={handleChange}
                                                     placeholder="비밀번호 재입력"
                                                 />
-                                                {/* 일치/불일치 아이콘 */}
-                                                {formData.password_confirm && (
+                                                {watchedPasswordConfirm && (
                                                     <div className={`absolute right-3 top-3.5 ${passwordsMatch ? 'text-green-500' : 'text-red-500'}`}>
-                                                        {passwordsMatch ? (
-                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                                            </svg>
-                                                        ) : (
-                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                                            </svg>
-                                                        )}
+                                                        <CheckCircle size={20} />
                                                     </div>
                                                 )}
                                             </div>
-                                            {/* 불일치 메시지 */}
                                             {showPasswordError && (
-                                                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                                    </svg>
-                                                    비밀번호가 일치하지 않습니다
-                                                </p>
+                                                <p className="mt-2 text-sm text-red-600 dark:text-red-400">비밀번호가 일치하지 않습니다</p>
                                             )}
                                         </div>
                                     </div>
@@ -686,8 +388,8 @@ function SignUp() {
                                 <div className="pt-6">
                                     <button
                                         type="submit"
-                                        disabled={!isEmailVerified || isStudentIdAvailable !== true || showPasswordError || !isPasswordValid || !passwordsMatch || !turnstileToken}
-                                        className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.99]"
+                                        disabled={!emailVerification.isVerified || studentIdCheck.isAvailable !== true || showPasswordError || !turnstileToken}
+                                        className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-gray-900 dark:bg-blue-600 hover:bg-gray-800 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.99]"
                                     >
                                         가입하기
                                     </button>
@@ -701,3 +403,103 @@ function SignUp() {
     )
 }
 
+// Agreement Step Component
+function AgreementStep({
+    agreements,
+    setAgreements,
+    onNext,
+}: {
+    agreements: { terms: boolean; privacy: boolean }
+    setAgreements: React.Dispatch<React.SetStateAction<{ terms: boolean; privacy: boolean }>>
+    onNext: () => void
+}) {
+    return (
+        <div className="space-y-8">
+            <div>
+                <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">약관 동의</h2>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    서비스 이용을 위해 약관 및 개인정보 수집에 동의해주세요.
+                </p>
+            </div>
+
+            <div className="space-y-6">
+                {/* Terms */}
+                <div className="bg-gray-50 dark:bg-slate-800 p-6 rounded-2xl border border-gray-100 dark:border-slate-700">
+                    <div className="flex items-start">
+                        <div className="flex h-6 items-center">
+                            <input
+                                id="terms"
+                                type="checkbox"
+                                className="h-5 w-5 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-600 bg-white dark:bg-slate-700 cursor-pointer"
+                                checked={agreements.terms}
+                                onChange={(e) => setAgreements(prev => ({ ...prev, terms: e.target.checked }))}
+                            />
+                        </div>
+                        <div className="ml-3 text-sm leading-6">
+                            <label htmlFor="terms" className="font-medium text-gray-900 dark:text-gray-200 cursor-pointer">
+                                이용약관 동의 (필수)
+                            </label>
+                            <p className="text-gray-500 dark:text-gray-400 mt-1">
+                                학생회 서비스 이용과 관련된 제반 사항에 동의합니다.
+                                <Link to="/terms" target="_blank" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 ml-1 underline">
+                                    약관 전문 보기
+                                </Link>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Privacy */}
+                <div className="bg-gray-50 dark:bg-slate-800 p-6 rounded-2xl border border-gray-100 dark:border-slate-700">
+                    <div className="flex items-start">
+                        <div className="flex h-6 items-center">
+                            <input
+                                id="privacy"
+                                type="checkbox"
+                                className="h-5 w-5 rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-600 bg-white dark:bg-slate-700 cursor-pointer"
+                                checked={agreements.privacy}
+                                onChange={(e) => setAgreements(prev => ({ ...prev, privacy: e.target.checked }))}
+                            />
+                        </div>
+                        <div className="ml-3 text-sm leading-6">
+                            <label htmlFor="privacy" className="font-medium text-gray-900 dark:text-gray-200 cursor-pointer">
+                                개인정보 수집 및 이용 동의 (필수)
+                            </label>
+                            <p className="text-gray-500 dark:text-gray-400 mt-1">
+                                원활한 서비스 제공을 위한 개인정보 수집에 동의합니다.
+                                <Link to="/privacy" target="_blank" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 ml-1 underline">
+                                    내용 상세보기
+                                </Link>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-start p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl">
+                    <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3 flex-shrink-0" />
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                        모든 약관에 동의하셔야 회원가입을 진행할 수 있습니다.
+                    </p>
+                </div>
+            </div>
+
+            <button
+                type="button"
+                onClick={onNext}
+                disabled={!agreements.terms || !agreements.privacy}
+                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-gray-900 dark:bg-blue-600 hover:bg-gray-800 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 dark:focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.99]"
+            >
+                다음으로
+            </button>
+
+            <div className="text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                    이미 계정이 있으신가요?
+                    <Link to="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 ml-1">
+                        로그인하기
+                    </Link>
+                </p>
+            </div>
+        </div>
+    )
+}
