@@ -120,7 +120,7 @@ async def change_password(
         429: {"model": ErrorResponse, "description": "요청 횟수 초과"}
     }
 )
-@limiter.limit("10/hour")
+@limiter.limit("30/hour")  # 공용 IP 고려
 async def upload_verification_image_direct(
     request: Request,
     file: UploadFile,
@@ -361,7 +361,7 @@ async def get_my_activities(
         429: {"model": ErrorResponse, "description": "요청 횟수 초과"}
     }
 )
-@limiter.limit("10/hour")
+@limiter.limit("30/hour")  # 공용 IP 고려
 async def upload_profile_update_image(
     request: Request,
     file: UploadFile,
@@ -409,6 +409,30 @@ async def request_profile_update(
     current_user: dict = Depends(get_current_user)
 ):
     """프로필 변경 요청 생성"""
+    from datetime import timezone, timedelta
+    
+    # [Rate Limit] DB 기반 중복/연타 방지 (최근 5초 내 요청 금지)
+    try:
+        limit_time = (datetime.now(timezone.utc) - timedelta(seconds=5)).isoformat()
+        
+        recent_check = supabase.table("profile_update_requests")\
+            .select("id", count="exact")\
+            .eq("user_id", current_user["id"])\
+            .gte("created_at", limit_time)\
+            .execute()
+            
+        if recent_check.count and recent_check.count > 0:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="잠시 후 다시 시도해주세요. (중복 제출 방지)"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Rate limit check failed: {e}")
+        # DB 오류시 진행 허용 (Fail Open)
+        pass
+    
     try:
         admin_supabase = get_supabase_admin()
         
@@ -508,7 +532,7 @@ async def get_my_profile_updates(
         429: {"model": ErrorResponse, "description": "요청 횟수 초과"}
     }
 )
-@limiter.limit("3/minute")
+@limiter.limit("10/minute")  # 공용 IP 고려
 async def send_email_change_verification(
     body: EmailChangeRequest,
     request: Request,

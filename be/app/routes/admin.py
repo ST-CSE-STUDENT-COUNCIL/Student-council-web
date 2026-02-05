@@ -730,6 +730,64 @@ async def get_profile_update_requests(
         )
 
 
+@router.get(
+    "/profile-updates/rejected",
+    summary="거부된 프로필 변경 요청 목록",
+    description="거부된 프로필 변경 요청을 조회합니다"
+)
+async def get_rejected_profile_updates():
+    """거부된 프로필 변경 요청 목록"""
+    try:
+        result = supabase.table('profile_update_requests')\
+            .select('*, users!user_id(name, student_id, email)')\
+            .eq('status', 'rejected')\
+            .order('updated_at', desc=True)\
+            .execute()
+        
+        requests = []
+        for req in (result.data or []):
+            signed_url = create_signed_url(req.get('verification_image_url'))
+            req['verification_image_signed_url'] = signed_url
+            requests.append(req)
+        
+        return {"requests": requests, "total": len(requests)}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"조회 실패: {str(e)}"
+        )
+
+
+@router.get(
+    "/profile-updates/approved",
+    summary="승인된 프로필 변경 요청 목록",
+    description="승인된 프로필 변경 요청을 조회합니다"
+)
+async def get_approved_profile_updates():
+    """승인된 프로필 변경 요청 목록"""
+    try:
+        result = supabase.table('profile_update_requests')\
+            .select('*, users!user_id(name, student_id, email)')\
+            .eq('status', 'approved')\
+            .order('updated_at', desc=True)\
+            .execute()
+        
+        requests = []
+        for req in (result.data or []):
+            signed_url = create_signed_url(req.get('verification_image_url'))
+            req['verification_image_signed_url'] = signed_url
+            requests.append(req)
+        
+        return {"requests": requests, "total": len(requests)}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"조회 실패: {str(e)}"
+        )
+
+
 @router.post(
     "/profile-updates/{request_id}/approve",
     summary="프로필 변경 승인",
