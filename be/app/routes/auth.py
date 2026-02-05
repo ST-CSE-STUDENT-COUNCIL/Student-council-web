@@ -67,7 +67,7 @@ limiter = Limiter(key_func=get_remote_address)
         500: {"model": ErrorResponse, "description": "이메일 발송 실패"}
     }
 )
-@limiter.limit("3/minute")
+@limiter.limit("10/minute")  # 공용 IP 고려
 async def send_verification(body: SendVerificationRequest, request: Request):
     """이메일 인증번호 발송"""
     try:
@@ -316,7 +316,7 @@ async def signup(request: SignupRequest):
         429: {"model": ErrorResponse, "description": "요청 횟수 초과"}
     }
 )
-@limiter.limit("100/5minutes")  # IP 기반 제한 완화 (공용 IP 고려)
+@limiter.limit("300/5minutes")  # 공용 IP 고려 (넉넉하게)
 async def login(body: LoginRequest, request: Request):
     """로그인 (학번 + 비밀번호)"""
     client_ip = get_remote_address(request)
@@ -624,7 +624,7 @@ async def refresh_token(request: Request):
         500: {"model": ErrorResponse, "description": "이메일 발송 실패"}
     }
 )
-@limiter.limit("3/minute")
+@limiter.limit("10/minute")  # 공용 IP 고려
 async def forgot_password(body: ForgotPasswordRequest, request: Request):
     """비밀번호 찾기 - 학번으로 인증번호 발송"""
     try:
