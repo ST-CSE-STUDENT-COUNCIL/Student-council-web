@@ -206,6 +206,12 @@ function MyPage() {
     return Array.from(groups.values())
   }, [profileUpdateRequests])
 
+  const hasPendingProfileUpdate = React.useMemo(() => {
+    return profileUpdateRequests.some(
+      (item) => item.status === 'pending' || item.status === 'submitted'
+    )
+  }, [profileUpdateRequests])
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">마이페이지</h1>
@@ -285,10 +291,14 @@ function MyPage() {
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">내 정보</h2>
                 <button
                   type="button"
+                  disabled={hasPendingProfileUpdate}
                   onClick={() => setShowEditProfileModal(true)}
-                  className="px-3 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  className={`px-3 py-2 text-sm font-medium rounded-lg transition ${hasPendingProfileUpdate
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
                 >
-                  내 정보 수정
+                  {hasPendingProfileUpdate ? '변경 요청 처리 중' : '내 정보 수정'}
                 </button>
               </div>
 
