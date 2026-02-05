@@ -37,15 +37,15 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md',
                             leaveFrom="opacity-100 scale-100"
                             leaveTo="opacity-0 scale-95"
                         >
-                            <Dialog.Panel className={`w-full ${maxWidth} transform rounded-2xl bg-white text-left align-middle shadow-xl transition-all flex flex-col max-h-[90vh] overflow-hidden`}>
+                            <Dialog.Panel className={`w-full ${maxWidth} transform rounded-2xl bg-white text-left align-middle shadow-xl transition-all flex flex-col max-h-[90vh] overflow-hidden dark:bg-slate-900 dark:text-gray-100`}>
                                 {/* Header */}
-                                <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100 flex-shrink-0">
-                                    <Dialog.Title as="h3" className="text-xl font-bold text-gray-900">
+                                <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100 flex-shrink-0 dark:border-slate-800">
+                                    <Dialog.Title as="h3" className="text-xl font-bold text-gray-900 dark:text-white">
                                         {title}
                                     </Dialog.Title>
                                     <button
                                         onClick={onClose}
-                                        className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                                        className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none dark:hover:bg-slate-800 dark:hover:text-gray-200"
                                     >
                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -60,7 +60,7 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md',
 
                                 {/* Footer (Optional) */}
                                 {footer && (
-                                    <div className="px-6 py-4 border-t border-gray-100 flex-shrink-0 bg-gray-50/50">
+                                    <div className="px-6 py-4 border-t border-gray-100 flex-shrink-0 bg-gray-50/50 dark:border-slate-800 dark:bg-slate-800/50">
                                         {footer}
                                     </div>
                                 )}

@@ -496,7 +496,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                                 toast.error('파일 업로드에 실패했습니다.')
                                                             }
                                                         }}
-                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-400 dark:file:bg-blue-900/30 dark:file:text-blue-300 dark:hover:file:bg-blue-900/50"
                                                     />
                                                     {formData.verification_image_url && (
                                                         <p className="text-xs text-green-600 mt-1 font-medium">✓ 인증 자료가 업로드되었습니다.</p>
@@ -590,7 +590,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                                     className="peer appearance-none w-5 h-5 border-2 border-gray-300 rounded-full checked:border-blue-500 checked:border-4 transition-all"
                                                                 />
                                                             </div>
-                                                            <span className="text-sm font-medium text-gray-700 peer-checked:text-blue-700">{opt}</span>
+                                                            <span className="text-sm font-medium text-gray-700 peer-checked:text-blue-700 dark:text-gray-300 dark:peer-checked:text-blue-400">{opt}</span>
                                                         </label>
                                                     ))}
                                                 </div>
@@ -624,7 +624,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                                     className="peer appearance-none w-5 h-5 border-2 border-gray-300 rounded-full checked:border-blue-500 checked:border-4 transition-all"
                                                                 />
                                                             </div>
-                                                            <span className="text-sm font-medium text-gray-700 peer-checked:text-blue-700">{opt}</span>
+                                                            <span className="text-sm font-medium text-gray-700 peer-checked:text-blue-700 dark:text-gray-300 dark:peer-checked:text-blue-400">{opt}</span>
                                                         </label>
                                                     ))}
                                                 </div>
@@ -677,7 +677,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                             }
                                                         }}
                                                         required={field.required && !formData.form_responses?.[field.name]}
-                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-400 dark:file:bg-blue-900/30 dark:file:text-blue-300 dark:hover:file:bg-blue-900/50"
                                                     />
                                                     {formData.form_responses?.[field.name] && (
                                                         <p className="text-xs text-green-600 font-medium">
