@@ -352,6 +352,50 @@ async def get_my_activities(
 # ============================================================================
 
 @router.post(
+    "/profile-update/image/upload",
+    summary="프로필 변경용 학적 인증 이미지 업로드",
+    description="프로필 변경 요청에 필요한 학적 인증 이미지를 업로드합니다. 이미 승인된 사용자도 업로드 가능합니다.",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        400: {"model": ErrorResponse, "description": "잘못된 파일 형식"},
+        429: {"model": ErrorResponse, "description": "요청 횟수 초과"}
+    }
+)
+@limiter.limit("10/hour")
+async def upload_profile_update_image(
+    request: Request,
+    file: UploadFile,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    프로필 변경용 학적 인증 이미지 업로드 (Private Storage)
+    
+    - 승인 여부와 관계없이 업로드 가능
+    - Rate limit: 시간당 10회
+    """
+    from app.utils.storage import upload_verification_image
+    
+    try:
+        # 파일 업로드 (profile-updates 폴더에 저장)
+        try:
+            file_path = await upload_verification_image(file, current_user['id'], folder="profile-updates")
+        except Exception:
+            raise
+        
+        return {
+            "file_path": file_path,
+            "message": "이미지 업로드 성공. 프로필 변경 요청 시 이 경로를 사용하세요."
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"이미지 업로드 실패: {str(e)}"
+        )
+
+
+@router.post(
     "/profile-update",
     summary="프로필 변경 요청 (이름/학번)",
     description="이름 또는 학번 변경을 요청합니다. 학적 증명 이미지 첨부 필수, 관리자 승인 후 반영됩니다.",
