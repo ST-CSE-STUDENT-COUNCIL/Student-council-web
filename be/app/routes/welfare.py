@@ -13,7 +13,8 @@ from app.schemas.welfare import (
     RentalItemCreate,
     RentalItemUpdate,
     PrintWelfareInfo,
-    PrintWelfareInfoUpdate
+    PrintWelfareInfoUpdate,
+    GuidebookInfoUpdate
 )
 from app.database import get_supabase, get_supabase_admin
 from app.utils.auth import get_current_user, require_admin
@@ -572,6 +573,7 @@ async def get_guidebook_info():
     - **공개 API**: 인증 불필요
     - **프론트**: 반환된 notion_url을 iframe으로 표시
     """
+    supabase = get_supabase()
     result = supabase.table('guidebook_info').select('*').eq('id', 1).single().execute()
     
     if not result.data or not result.data.get('notion_url'):
@@ -592,28 +594,25 @@ async def get_guidebook_info():
 
 @router.put("/admin/welfare/guidebook", summary="신입생 가이드북 정보 수정 (관리자)")
 async def update_guidebook_info(
-    notion_url: Optional[str] = None,
-    title: Optional[str] = None,
-    description: Optional[str] = None,
+    body: GuidebookInfoUpdate,
     current_user: dict = Depends(require_admin)
 ):
     """
     신입생 가이드북 정보를 수정합니다.
     
     - **관리자 전용**: admin 권한 필요
-    - **title/description**: 비우면 OG 메타데이터에서 자동 추출
     """
-    from datetime import timezone, timedelta
+    from datetime import datetime, timezone, timedelta
     
     admin_supabase = get_supabase_admin()
     
     update_data = {}
-    if notion_url is not None:
-        update_data['notion_url'] = notion_url
-    if title is not None:
-        update_data['title'] = title
-    if description is not None:
-        update_data['description'] = description
+    if body.notion_url is not None:
+        update_data['notion_url'] = body.notion_url
+    if body.title is not None:
+        update_data['title'] = body.title
+    if body.description is not None:
+        update_data['description'] = body.description
     
     if not update_data:
         raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
