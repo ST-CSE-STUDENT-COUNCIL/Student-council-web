@@ -198,7 +198,12 @@ function Welfare() {
         {selectedCategory === '대여사업' ? (
           <div>
             <div className="flex items-start justify-between gap-4 mb-6 flex-col sm:flex-row sm:items-center">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">대여사업</h2>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">대여사업</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  * 재고 정보는 최대 5분 간격으로 갱신됩니다.
+                </p>
+              </div>
               <div className="flex items-center gap-2">
                 <label htmlFor="rental-category-filter" className="text-sm text-gray-500 dark:text-gray-400">
                   카테고리
