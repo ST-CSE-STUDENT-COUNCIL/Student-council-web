@@ -80,7 +80,9 @@ export const ActivityList = ({ activities, onActivitySelect, selectedActivityId,
                     </div>
 
                     <div className="mt-2 flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
-                        <span className="truncate pr-4">{activity.description}</span>
+                        <span className="truncate pr-4 min-h-[1.25rem] block flex-1">
+                            {activity.description || '\u00A0'}
+                        </span>
                         {activity.max_capacity && !['notice', 'survey'].includes(activity.type) && (
                             <span className="whitespace-nowrap font-medium">
                                 {activity.current_count} / {activity.max_capacity}명
