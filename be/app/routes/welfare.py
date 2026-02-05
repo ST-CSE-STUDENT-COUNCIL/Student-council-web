@@ -429,7 +429,18 @@ async def get_rental_items():
     result = supabase.table('rental_items').select('*').eq('is_active', True).order('category, item_name').execute()
     
     # 각 물품의 재고를 구글 스프레드시트에서 조회
+    from cachetools import TTLCache
+    
+    # 캐시 초기화 (최대 100개 항목, 5분 유효)
+    # 전역변수로 선언하여 요청 간 공유
+    if not hasattr(get_rental_items, "cache"):
+        get_rental_items.cache = TTLCache(maxsize=100, ttl=300)
+    
     items = []
+    
+    # 배치 처리를 위한 시트별 그룹화가 이상적이지만,
+    # 일단 캐싱으로 부하를 대폭 줄임
+    
     for item in result.data:
         available_quantity = None
         
@@ -438,8 +449,20 @@ async def get_rental_items():
             sheet_name = item.get('quantity_sheet_name', 'Sheet1')
             cell_range = item.get('quantity_cell_range', 'B2')
             range_notation = f"{sheet_name}!{cell_range}"
+            cache_key = f"{item['spreadsheet_id']}:{range_notation}"
             
-            available_quantity = get_sheet_value(item['spreadsheet_id'], range_notation)
+            # 캐시 확인
+            if cache_key in get_rental_items.cache:
+                available_quantity = get_rental_items.cache[cache_key]
+            else:
+                try:
+                    available_quantity = get_sheet_value(item['spreadsheet_id'], range_notation)
+                    # 성공 시 캐시에 저장
+                    get_rental_items.cache[cache_key] = available_quantity
+                except Exception as e:
+                    print(f"재고 조회 실패 ({item['item_name']}): {e}")
+                    # 실패 시 캐시된 값이 있다면 그것이라도 사용 (없으면 None)
+                    pass
         
         items.append({
             **item,
