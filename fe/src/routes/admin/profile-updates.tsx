@@ -46,7 +46,7 @@ type RawProfileUpdateItem = {
 
 function AdminProfileUpdatesPage() {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected'>('pending')
   const [requests, setRequests] = useState<ProfileUpdateRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -145,11 +145,6 @@ function AdminProfileUpdatesPage() {
     let cancelled = false
 
     async function fetchRequests() {
-      if (statusFilter === 'all') {
-        setRequests([])
-        return
-      }
-
       setLoading(true)
       setError(null)
 
@@ -286,7 +281,7 @@ function AdminProfileUpdatesPage() {
               <p className="text-sm text-gray-500">최근 요청부터 표시됩니다.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
+              {(['pending', 'approved', 'rejected'] as const).map((status) => (
                 <button
                   key={status}
                   type="button"
@@ -296,7 +291,7 @@ function AdminProfileUpdatesPage() {
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                 >
-                  {status === 'all' ? '전체' : status === 'pending' ? '대기' : status === 'approved' ? '승인' : '반려'}
+                  {status === 'pending' ? '요청' : status === 'approved' ? '승인' : '반려'}
                 </button>
               ))}
             </div>
@@ -397,7 +392,7 @@ function AdminProfileUpdatesPage() {
               )
             })}
           </div>
-          {statusFilter !== 'all' && !error && (
+          {!error && (
             <div className="px-6 py-4 border-t border-gray-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="text-sm text-gray-500">
                 표시 {requests.length}건{total !== null ? ` · 전체 ${total}건` : ''}
