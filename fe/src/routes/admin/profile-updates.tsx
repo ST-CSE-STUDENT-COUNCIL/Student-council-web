@@ -16,6 +16,7 @@ type ProfileUpdateRequest = {
   studentId: string
   updates: Array<{ field: UpdateField; newValue: string; currentValue: string }>
   requestedAt: string
+  requestedAtRaw: string
   status: 'pending' | 'approved' | 'rejected'
   verificationImageUrl: string
 }
@@ -58,8 +59,17 @@ function AdminProfileUpdatesPage() {
   const buildRequests = (items: RawProfileUpdateItem[]) => {
     const groups = new Map<string, ProfileUpdateRequest>()
 
-    items.forEach((item, index) => {
+    const sortedItems = [...items].sort((a, b) => {
+      const aTime = new Date(a.created_at || a.requested_at || 0).getTime()
+      const bTime = new Date(b.created_at || b.requested_at || 0).getTime()
+      return aTime - bTime
+    })
+
+    sortedItems.forEach((item, index) => {
       const field: UpdateField = item.field_name === 'student_id' ? 'student_id' : 'name'
+      const requestedName = field === 'name' ? item.new_value : undefined
+      const approvedCurrentName =
+        field === 'name' && item.status === 'approved' ? item.current_value : undefined
       const createdAt = item.created_at || item.requested_at || ''
       const groupKey = `${item.user_id ?? 'unknown'}-${normalizeDateKey(createdAt)}`
 
@@ -67,11 +77,13 @@ function AdminProfileUpdatesPage() {
       const base = existing ?? {
         id: String(item.id ?? item.user_id ?? index),
         requestIds: [],
-        name: item.users?.name
+        name: approvedCurrentName
+          ?? item.users?.name
           ?? item.user?.name
           ?? item.name
           ?? item.user_name
           ?? (field === 'name' ? item.current_value : undefined)
+          ?? requestedName
           ?? '이름 미등록',
         studentId: item.users?.student_id
           ?? item.user?.student_id
@@ -79,6 +91,7 @@ function AdminProfileUpdatesPage() {
           ?? '-',
         updates: [],
         requestedAt: createdAt ? formatDateTime(createdAt) : '-',
+        requestedAtRaw: createdAt,
         status: normalizeStatus(item.status),
         verificationImageUrl: item.verification_image_url ?? '',
       }
@@ -100,6 +113,9 @@ function AdminProfileUpdatesPage() {
       const nextRequestedAt = createdAt && base.requestedAt === '-'
         ? formatDateTime(createdAt)
         : base.requestedAt
+      const nextRequestedAtRaw = createdAt && !base.requestedAtRaw
+        ? createdAt
+        : base.requestedAtRaw
 
       groups.set(groupKey, {
         ...base,
@@ -107,11 +123,16 @@ function AdminProfileUpdatesPage() {
         updates,
         status: nextStatus,
         requestedAt: nextRequestedAt,
+        requestedAtRaw: nextRequestedAtRaw,
         verificationImageUrl: base.verificationImageUrl || item.verification_image_url || '',
       })
     })
 
-    return Array.from(groups.values())
+    return Array.from(groups.values()).sort((a, b) => {
+      const aTime = new Date(a.requestedAtRaw || 0).getTime()
+      const bTime = new Date(b.requestedAtRaw || 0).getTime()
+      return bTime - aTime
+    })
   }
 
   useEffect(() => {
@@ -142,6 +163,9 @@ function AdminProfileUpdatesPage() {
               page,
               page_size: pageSize,
             })
+        if (statusFilter === 'approved') {
+          console.log('승인 목록 응답:', data)
+        }
 
         if (cancelled) return
 
@@ -288,7 +312,12 @@ function AdminProfileUpdatesPage() {
             {!loading && !error && requests.length === 0 && (
               <div className="px-6 py-10 text-center text-sm text-gray-500">표시할 요청이 없습니다.</div>
             )}
-            {!loading && !error && requests.map((req) => (
+            {!loading && !error && requests.map((req) => {
+              const nameUpdate = req.updates.find((update) => update.field === 'name')
+              const currentName = nameUpdate?.currentValue?.trim()
+              const displayName = (currentName && currentName !== '-' ? currentName : req.name) || '이름 미등록'
+
+              return (
               <div
                 key={req.id}
                 className={`px-6 py-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 ${getRequestCardClass(req.status)}`}
@@ -297,18 +326,32 @@ function AdminProfileUpdatesPage() {
                   <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-lg">🧑‍🎓</div>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900">{req.name}</h3>
+                      <h3 className="font-semibold text-gray-900">{displayName}의 요청</h3>
                       <StatusPill status={req.status} />
                     </div>
-                    <p className="text-sm text-gray-500">학번: {req.studentId}</p>
                     <div className="text-sm text-gray-600 space-y-1">
-                      {req.updates.map((update) => (
-                        <p key={update.field}>
-                          변경 요청: <span className="font-medium text-gray-900">{update.field === 'name' ? '이름' : '학번'}</span>{' '}
-                          <span className="font-medium text-gray-500">{update.currentValue}</span> →{' '}
-                          <span className="font-medium text-blue-600">{update.newValue}</span>
-                        </p>
-                      ))}
+                      {req.updates.map((update) => {
+                        const hasStudentIdUpdate = req.updates.some((item) => item.field === 'student_id')
+                        const currentValue = update.currentValue.trim()
+                        const nextValue = update.newValue.trim()
+                        const isUnknownCurrent = !currentValue || currentValue === '-'
+                        const isUnknownNext = !nextValue || nextValue === '-'
+                        const valueUnchanged =
+                          isUnknownNext
+                          || (!isUnknownCurrent && currentValue === nextValue)
+                          || (update.field === 'name' && isUnknownCurrent && hasStudentIdUpdate)
+                        const displayedCurrentValue = currentValue || '-'
+                        const displayedNewValue = valueUnchanged ? '미변경' : (update.newValue || '-')
+
+                        return (
+                          <p key={update.field}>
+                            변경 요청: <span className="font-medium text-gray-900">{update.field === 'name' ? '이름' : '학번'}</span>{' '}
+                            <span className="font-medium text-gray-500">{displayedCurrentValue}</span>{' '}
+                            →{' '}
+                            <span className="font-medium text-blue-600">{displayedNewValue}</span>
+                          </p>
+                        )
+                      })}
                     </div>
                     <p className="text-xs text-gray-400">요청일: {req.requestedAt}</p>
                   </div>
@@ -351,7 +394,8 @@ function AdminProfileUpdatesPage() {
                   )}
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
           {statusFilter !== 'all' && !error && (
             <div className="px-6 py-4 border-t border-gray-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -474,11 +518,14 @@ function normalizeDateKey(date: string) {
   if (!date) return 'no-date'
   const parsed = new Date(date)
   if (Number.isNaN(parsed.getTime())) return date
-  const year = parsed.getFullYear()
-  const month = String(parsed.getMonth() + 1).padStart(2, '0')
-  const day = String(parsed.getDate()).padStart(2, '0')
-  const hour = String(parsed.getHours()).padStart(2, '0')
-  const minute = String(parsed.getMinutes()).padStart(2, '0')
+  // Bucket requests within 2 minutes so multi-field updates show together.
+  const bucketMs = 2 * 60 * 1000
+  const bucketed = new Date(Math.floor(parsed.getTime() / bucketMs) * bucketMs)
+  const year = bucketed.getFullYear()
+  const month = String(bucketed.getMonth() + 1).padStart(2, '0')
+  const day = String(bucketed.getDate()).padStart(2, '0')
+  const hour = String(bucketed.getHours()).padStart(2, '0')
+  const minute = String(bucketed.getMinutes()).padStart(2, '0')
   return `${year}-${month}-${day} ${hour}:${minute}`
 }
 

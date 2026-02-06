@@ -86,6 +86,7 @@ export function EditProfileModal({ onClose, initialName = '', initialStudentId =
     const trimmedStudentId = studentId.trim()
     const nameChanged = trimmedName !== initialName
     const studentIdChanged = trimmedStudentId !== initialStudentId
+    const sendNameForStudentIdOnly = studentIdChanged && !nameChanged && trimmedName.length > 0
 
     if (!nameChanged && !studentIdChanged) {
       setError('변경할 이름 또는 학번을 입력해주세요.')
@@ -104,7 +105,7 @@ export function EditProfileModal({ onClose, initialName = '', initialStudentId =
       const verificationImageUrl = await readFileAsDataUrl(file)
       const requests: Array<Promise<unknown>> = []
 
-      if (nameChanged) {
+      if (nameChanged || sendNameForStudentIdOnly) {
         requests.push(
           mypageApi.requestProfileUpdate({
             field_name: 'name',
