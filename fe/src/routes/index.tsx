@@ -26,6 +26,7 @@ import type { ActivityListItem } from '../types/activities'
 import { getActivityStatus } from '../types/activities'
 import type { NoticeListItem } from '../types/posts'
 import { LoadingSpinner } from '../components/common/LoadingSpinner'
+import { SEO } from '../components/common/SEO'
 
 export const Route = createFileRoute('/')({
     component: Index,
@@ -85,6 +86,11 @@ function Index() {
 
     return (
         <div className="pb-20 space-y-12">
+            <SEO
+                title="홈"
+                description="서울과학기술대학교 컴퓨터공학과 학생회 공식 홈페이지입니다."
+                url="/"
+            />
             {/* Bento Grid Hero Layout */}
             <section className="container mx-auto px-4 pt-6 pb-12">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px]">

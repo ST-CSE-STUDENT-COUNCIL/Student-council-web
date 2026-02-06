@@ -6,6 +6,7 @@ import { ActivityCard } from '../../components/activities/ActivityCard'
 import { activityApi } from '../../lib/api/activities'
 import type { ActivityListItem, Activity } from '../../types/activities'
 import { getActivityStatus } from '../../types/activities'
+import { SEO } from '../../components/common/SEO'
 
 export const Route = createFileRoute('/activities/')({
     component: ActivitiesPage,
@@ -107,6 +108,11 @@ function ActivitiesPage() {
 
     return (
         <div className="container mx-auto px-4 py-8">
+            <SEO
+                title="사업 신청"
+                description="학생회 행사 및 사업 신청"
+                url="/activities"
+            />
             {loading ? (
                 <div className="flex justify-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
