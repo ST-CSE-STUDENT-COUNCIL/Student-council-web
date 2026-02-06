@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ShieldCheck, UserRoundPen } from 'lucide-react'
 import { adminApi } from '../../lib/api/admin'
 
@@ -14,7 +14,7 @@ type ProfileUpdateRequest = {
   requestIds: Array<string>
   name: string
   studentId: string
-  updates: Array<{ field: UpdateField; newValue: string }>
+  updates: Array<{ field: UpdateField; newValue: string; currentValue: string }>
   requestedAt: string
   status: 'pending' | 'approved' | 'rejected'
   verificationImageUrl: string
@@ -24,9 +24,19 @@ type RawProfileUpdateItem = {
   id?: string | number
   user_id?: string
   name?: string
+  user_name?: string
+  user?: {
+    name?: string
+    student_id?: string
+  }
+  users?: {
+    name?: string
+    student_id?: string
+  }
   student_id?: string
   field_name?: string
   new_value?: string
+  current_value?: string
   status?: string
   created_at?: string
   requested_at?: string
@@ -37,30 +47,36 @@ function AdminProfileUpdatesPage() {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const [requests, setRequests] = useState<ProfileUpdateRequest[]>([])
-  const [allRequests, setAllRequests] = useState<ProfileUpdateRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
-  const userLookupRef = useRef<Map<string, { name: string; student_id: string }> | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState<number | null>(null)
+  const [pageSize, setPageSize] = useState(20)
 
-  const buildRequests = (
-    items: RawProfileUpdateItem[],
-    userLookup: Map<string, { name: string; student_id: string }> = new Map()
-  ) => {
+  const buildRequests = (items: RawProfileUpdateItem[]) => {
     const groups = new Map<string, ProfileUpdateRequest>()
 
     items.forEach((item, index) => {
       const field: UpdateField = item.field_name === 'student_id' ? 'student_id' : 'name'
       const createdAt = item.created_at || item.requested_at || ''
-      const fallbackUser = item.user_id ? userLookup.get(item.user_id) : undefined
       const groupKey = `${item.user_id ?? 'unknown'}-${normalizeDateKey(createdAt)}`
 
       const existing = groups.get(groupKey)
       const base = existing ?? {
         id: String(item.id ?? item.user_id ?? index),
         requestIds: [],
-        name: item.name ?? fallbackUser?.name ?? '이름 미등록',
-        studentId: item.student_id ?? fallbackUser?.student_id ?? '-',
+        name: item.users?.name
+          ?? item.user?.name
+          ?? item.name
+          ?? item.user_name
+          ?? (field === 'name' ? item.current_value : undefined)
+          ?? '이름 미등록',
+        studentId: item.users?.student_id
+          ?? item.user?.student_id
+          ?? item.student_id
+          ?? '-',
         updates: [],
         requestedAt: createdAt ? formatDateTime(createdAt) : '-',
         status: normalizeStatus(item.status),
@@ -73,8 +89,12 @@ function AdminProfileUpdatesPage() {
         : base.requestIds
 
       const updates = base.updates.some((u) => u.field === field)
-        ? base.updates.map((u) => (u.field === field ? { field, newValue: item.new_value ?? '- ' } : u))
-        : [...base.updates, { field, newValue: item.new_value ?? '- ' }]
+        ? base.updates.map((u) => (
+          u.field === field
+            ? { field, newValue: item.new_value ?? '- ', currentValue: item.current_value ?? '-' }
+            : u
+        ))
+        : [...base.updates, { field, newValue: item.new_value ?? '- ', currentValue: item.current_value ?? '-' }]
 
       const nextStatus = mergeStatus(base.status, normalizeStatus(item.status))
       const nextRequestedAt = createdAt && base.requestedAt === '-'
@@ -95,16 +115,33 @@ function AdminProfileUpdatesPage() {
   }
 
   useEffect(() => {
+    setPage(1)
+    setRequests([])
+    setTotal(null)
+  }, [statusFilter, pageSize])
+
+  useEffect(() => {
     let cancelled = false
 
     async function fetchRequests() {
+      if (statusFilter === 'all') {
+        setRequests([])
+        return
+      }
+
       setLoading(true)
       setError(null)
 
       try {
-        const data = await adminApi.getProfileUpdates({
-          status_filter: statusFilter === 'all' ? null : statusFilter,
-        })
+        const data = statusFilter === 'approved'
+          ? await adminApi.getApprovedProfileUpdates({ page, page_size: pageSize })
+          : statusFilter === 'rejected'
+            ? await adminApi.getRejectedProfileUpdates({ page, page_size: pageSize })
+            : await adminApi.getProfileUpdates({
+              status_filter: 'pending',
+              page,
+              page_size: pageSize,
+            })
 
         if (cancelled) return
 
@@ -114,36 +151,13 @@ function AdminProfileUpdatesPage() {
           Array.isArray((data as { requests?: unknown })?.requests) ? (data as { requests: unknown[] }).requests :
           []
 
+        const rawTotal = (data as { total?: number | string })?.total
+        const nextTotal = typeof rawTotal === 'string' ? Number.parseInt(rawTotal, 10) : rawTotal
         const allRawItems = payload as RawProfileUpdateItem[]
+        const mapped = buildRequests(allRawItems)
 
-        const needsUserLookup = allRawItems.some((item) =>
-          Boolean(item.user_id) && (!item.name || !item.student_id)
-        )
-
-        let userLookup = userLookupRef.current ?? new Map<string, { name: string; student_id: string }>()
-
-        if (needsUserLookup && userLookupRef.current === null) {
-          const usersData = await adminApi.getUsers()
-          if (cancelled) return
-
-          userLookup = new Map(
-            (usersData.users || []).map((user) => [
-              user.id,
-              { name: user.name, student_id: user.student_id },
-            ])
-          )
-          userLookupRef.current = userLookup
-        }
-
-        const mapped = buildRequests(allRawItems, userLookup)
-        const filtered = statusFilter === 'all'
-          ? mapped
-          : mapped.filter((item) => item.status === statusFilter)
-
-        setAllRequests((prev) => (
-          statusFilter === 'all' || prev.length === 0 ? mapped : prev
-        ))
-        setRequests(filtered)
+        setTotal(Number.isFinite(nextTotal) ? (nextTotal as number) : null)
+        setRequests(mapped)
       } catch (err) {
         console.error('프로필 변경 요청 조회 실패:', err)
         if (!cancelled) {
@@ -159,7 +173,21 @@ function AdminProfileUpdatesPage() {
     return () => {
       cancelled = true
     }
-  }, [statusFilter])
+  }, [statusFilter, page, pageSize])
+
+  async function handlePreviewImage(verificationImageUrl: string) {
+    if (!verificationImageUrl || previewLoading) return
+    setPreviewLoading(true)
+    try {
+      const { signed_url } = await adminApi.getStorageSignedUrl(verificationImageUrl)
+      setPreviewImageUrl(signed_url || verificationImageUrl)
+    } catch (err) {
+      console.error('학적인증 이미지 조회 실패:', err)
+      setPreviewImageUrl(verificationImageUrl)
+    } finally {
+      setPreviewLoading(false)
+    }
+  }
 
   async function handleApprove(requestId: string, requestIds: Array<string>) {
     if (actionLoadingId) return
@@ -169,9 +197,6 @@ function AdminProfileUpdatesPage() {
       const targets = requestIds.length > 0 ? requestIds : [requestId]
       await Promise.all(targets.map((id) => adminApi.approveProfileUpdate(id)))
       setRequests((prev) => prev.map((req) =>
-        req.id === requestId ? { ...req, status: 'approved' } : req
-      ))
-      setAllRequests((prev) => prev.map((req) =>
         req.id === requestId ? { ...req, status: 'approved' } : req
       ))
     } catch (err) {
@@ -195,15 +220,20 @@ function AdminProfileUpdatesPage() {
       setRequests((prev) => prev.map((req) =>
         req.id === requestId ? { ...req, status: 'rejected' } : req
       ))
-      setAllRequests((prev) => prev.map((req) =>
-        req.id === requestId ? { ...req, status: 'rejected' } : req
-      ))
     } catch (err) {
       console.error('프로필 변경 반려 실패:', err)
       setError('반려 처리에 실패했습니다.')
     } finally {
       setActionLoadingId(null)
     }
+  }
+
+  const totalPages = total !== null ? Math.max(1, Math.ceil(total / pageSize)) : null
+
+  function handlePageChange(nextPage: number) {
+    if (loading) return
+    if (totalPages !== null && (nextPage < 1 || nextPage > totalPages)) return
+    setPage(nextPage)
   }
 
   return (
@@ -259,7 +289,10 @@ function AdminProfileUpdatesPage() {
               <div className="px-6 py-10 text-center text-sm text-gray-500">표시할 요청이 없습니다.</div>
             )}
             {!loading && !error && requests.map((req) => (
-              <div key={req.id} className="px-6 py-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div
+                key={req.id}
+                className={`px-6 py-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 ${getRequestCardClass(req.status)}`}
+              >
                 <div className="flex items-start gap-4 flex-1">
                   <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-lg">🧑‍🎓</div>
                   <div className="space-y-1">
@@ -271,7 +304,8 @@ function AdminProfileUpdatesPage() {
                     <div className="text-sm text-gray-600 space-y-1">
                       {req.updates.map((update) => (
                         <p key={update.field}>
-                          변경 요청: <span className="font-medium text-gray-900">{update.field === 'name' ? '이름' : '학번'}</span> →{' '}
+                          변경 요청: <span className="font-medium text-gray-900">{update.field === 'name' ? '이름' : '학번'}</span>{' '}
+                          <span className="font-medium text-gray-500">{update.currentValue}</span> →{' '}
                           <span className="font-medium text-blue-600">{update.newValue}</span>
                         </p>
                       ))}
@@ -284,37 +318,84 @@ function AdminProfileUpdatesPage() {
                   <button
                     type="button"
                     className="px-3 py-2 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50"
-                    onClick={() => setPreviewImageUrl(req.verificationImageUrl)}
-                    disabled={!req.verificationImageUrl}
+                    onClick={() => handlePreviewImage(req.verificationImageUrl)}
+                    disabled={!req.verificationImageUrl || previewLoading}
                   >
-                    인증 이미지 보기
+                    {previewLoading ? '불러오는 중...' : '인증 이미지 보기'}
                   </button>
-                  <button
-                    type="button"
-                    disabled={req.status !== 'pending' || actionLoadingId === req.id}
-                          onClick={() => handleApprove(req.id, req.requestIds)}
-                    className={`px-3 py-2 text-sm font-medium text-white rounded-lg ${req.status !== 'pending' || actionLoadingId === req.id
-                      ? 'bg-emerald-500/60 cursor-not-allowed'
-                      : 'bg-emerald-500 hover:bg-emerald-600'
-                      }`}
-                  >
-                    {actionLoadingId === req.id ? '처리 중...' : '승인'}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={req.status !== 'pending' || actionLoadingId === req.id}
-                          onClick={() => handleReject(req.id, req.requestIds)}
-                    className={`px-3 py-2 text-sm font-medium text-white rounded-lg ${req.status !== 'pending' || actionLoadingId === req.id
-                      ? 'bg-rose-500/60 cursor-not-allowed'
-                      : 'bg-rose-500 hover:bg-rose-600'
-                      }`}
-                  >
-                    {actionLoadingId === req.id ? '처리 중...' : '반려'}
-                  </button>
+                  {statusFilter === 'pending' && (
+                    <>
+                      <button
+                        type="button"
+                        disabled={req.status !== 'pending' || actionLoadingId === req.id}
+                        onClick={() => handleApprove(req.id, req.requestIds)}
+                        className={`px-3 py-2 text-sm font-medium text-white rounded-lg ${req.status !== 'pending' || actionLoadingId === req.id
+                          ? 'bg-emerald-500/60 cursor-not-allowed'
+                          : 'bg-emerald-500 hover:bg-emerald-600'
+                          }`}
+                      >
+                        {actionLoadingId === req.id ? '처리 중...' : '승인'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={req.status !== 'pending' || actionLoadingId === req.id}
+                        onClick={() => handleReject(req.id, req.requestIds)}
+                        className={`px-3 py-2 text-sm font-medium text-white rounded-lg ${req.status !== 'pending' || actionLoadingId === req.id
+                          ? 'bg-rose-500/60 cursor-not-allowed'
+                          : 'bg-rose-500 hover:bg-rose-600'
+                          }`}
+                      >
+                        {actionLoadingId === req.id ? '처리 중...' : '반려'}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
           </div>
+          {statusFilter !== 'all' && !error && (
+            <div className="px-6 py-4 border-t border-gray-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="text-sm text-gray-500">
+                표시 {requests.length}건{total !== null ? ` · 전체 ${total}건` : ''}
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <select
+                  value={pageSize}
+                  onChange={(event) => setPageSize(Number(event.target.value))}
+                  className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-gray-600"
+                >
+                  {[10, 20, 50].map((size) => (
+                    <option key={size} value={size}>{size}개씩</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={loading || page <= 1}
+                  className={`px-3 py-2 border rounded-lg ${page <= 1 || loading
+                    ? 'border-gray-200 text-gray-300 cursor-not-allowed'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                >
+                  이전
+                </button>
+                <span className="text-gray-500">
+                  {totalPages ? `${page} / ${totalPages}` : '-'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={loading || (totalPages !== null && page >= totalPages)}
+                  className={`px-3 py-2 border rounded-lg ${loading || (totalPages !== null && page >= totalPages)
+                    ? 'border-gray-200 text-gray-300 cursor-not-allowed'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                >
+                  다음
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
 
@@ -360,6 +441,16 @@ function StatusPill({ status }: StatusPillProps) {
       {label}
     </span>
   )
+}
+
+function getRequestCardClass(status: 'pending' | 'approved' | 'rejected') {
+  if (status === 'approved') {
+    return 'bg-emerald-50/40'
+  }
+  if (status === 'rejected') {
+    return 'bg-rose-50/50 border-l-4 border-rose-200'
+  }
+  return 'bg-white'
 }
 
 function normalizeStatus(status?: string | null): 'pending' | 'approved' | 'rejected' {
