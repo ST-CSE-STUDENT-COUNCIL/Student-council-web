@@ -2,24 +2,13 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { ShieldCheck, UserRoundPen } from 'lucide-react'
 import { adminApi } from '../../lib/api/admin'
+import { ProfileUpdateCard } from '../../components/admin/profile-updates/ProfileUpdateCard'
+import { ProfileUpdatesFilter } from '../../components/admin/profile-updates/ProfileUpdatesFilter'
+import type { ProfileUpdateRequest, StatusFilter, UpdateField } from '../../components/admin/profile-updates/types'
 
 export const Route = createFileRoute('/admin/profile-updates')({
   component: AdminProfileUpdatesPage,
 })
-
-type UpdateField = 'name' | 'student_id'
-
-type ProfileUpdateRequest = {
-  id: string
-  requestIds: Array<string>
-  name: string
-  studentId: string
-  updates: Array<{ field: UpdateField; newValue: string; currentValue: string }>
-  requestedAt: string
-  requestedAtRaw: string
-  status: 'pending' | 'approved' | 'rejected'
-  verificationImageUrl: string
-}
 
 type RawProfileUpdateItem = {
   id?: string | number
@@ -46,7 +35,7 @@ type RawProfileUpdateItem = {
 
 function AdminProfileUpdatesPage() {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
-  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected'>('pending')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('pending')
   const [requests, setRequests] = useState<ProfileUpdateRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -280,21 +269,10 @@ function AdminProfileUpdatesPage() {
               <h2 className="text-lg font-semibold text-gray-900">요청 목록</h2>
               <p className="text-sm text-gray-500">최근 요청부터 표시됩니다.</p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              {(['pending', 'approved', 'rejected'] as const).map((status) => (
-                <button
-                  key={status}
-                  type="button"
-                  onClick={() => setStatusFilter(status)}
-                  className={`px-3 py-2 rounded-lg border text-sm font-medium transition ${statusFilter === status
-                    ? 'border-blue-600 bg-blue-50 text-blue-600'
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                    }`}
-                >
-                  {status === 'pending' ? '요청' : status === 'approved' ? '승인' : '반려'}
-                </button>
-              ))}
-            </div>
+            <ProfileUpdatesFilter
+              statusFilter={statusFilter}
+              onChange={setStatusFilter}
+            />
           </div>
 
           <div className="divide-y divide-gray-100">
@@ -307,90 +285,18 @@ function AdminProfileUpdatesPage() {
             {!loading && !error && requests.length === 0 && (
               <div className="px-6 py-10 text-center text-sm text-gray-500">표시할 요청이 없습니다.</div>
             )}
-            {!loading && !error && requests.map((req) => {
-              const nameUpdate = req.updates.find((update) => update.field === 'name')
-              const currentName = nameUpdate?.currentValue?.trim()
-              const displayName = (currentName && currentName !== '-' ? currentName : req.name) || '이름 미등록'
-
-              return (
-              <div
+            {!loading && !error && requests.map((req) => (
+              <ProfileUpdateCard
                 key={req.id}
-                className={`px-6 py-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 ${getRequestCardClass(req.status)}`}
-              >
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-lg">🧑‍🎓</div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900">{displayName}의 요청</h3>
-                      <StatusPill status={req.status} />
-                    </div>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      {req.updates.map((update) => {
-                        const hasStudentIdUpdate = req.updates.some((item) => item.field === 'student_id')
-                        const currentValue = update.currentValue.trim()
-                        const nextValue = update.newValue.trim()
-                        const isUnknownCurrent = !currentValue || currentValue === '-'
-                        const isUnknownNext = !nextValue || nextValue === '-'
-                        const valueUnchanged =
-                          isUnknownNext
-                          || (!isUnknownCurrent && currentValue === nextValue)
-                          || (update.field === 'name' && isUnknownCurrent && hasStudentIdUpdate)
-                        const displayedCurrentValue = currentValue || '-'
-                        const displayedNewValue = valueUnchanged ? '미변경' : (update.newValue || '-')
-
-                        return (
-                          <p key={update.field}>
-                            변경 요청: <span className="font-medium text-gray-900">{update.field === 'name' ? '이름' : '학번'}</span>{' '}
-                            <span className="font-medium text-gray-500">{displayedCurrentValue}</span>{' '}
-                            →{' '}
-                            <span className="font-medium text-blue-600">{displayedNewValue}</span>
-                          </p>
-                        )
-                      })}
-                    </div>
-                    <p className="text-xs text-gray-400">요청일: {req.requestedAt}</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    className="px-3 py-2 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50"
-                    onClick={() => handlePreviewImage(req.verificationImageUrl)}
-                    disabled={!req.verificationImageUrl || previewLoading}
-                  >
-                    {previewLoading ? '불러오는 중...' : '인증 이미지 보기'}
-                  </button>
-                  {statusFilter === 'pending' && (
-                    <>
-                      <button
-                        type="button"
-                        disabled={req.status !== 'pending' || actionLoadingId === req.id}
-                        onClick={() => handleApprove(req.id, req.requestIds)}
-                        className={`px-3 py-2 text-sm font-medium text-white rounded-lg ${req.status !== 'pending' || actionLoadingId === req.id
-                          ? 'bg-emerald-500/60 cursor-not-allowed'
-                          : 'bg-emerald-500 hover:bg-emerald-600'
-                          }`}
-                      >
-                        {actionLoadingId === req.id ? '처리 중...' : '승인'}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={req.status !== 'pending' || actionLoadingId === req.id}
-                        onClick={() => handleReject(req.id, req.requestIds)}
-                        className={`px-3 py-2 text-sm font-medium text-white rounded-lg ${req.status !== 'pending' || actionLoadingId === req.id
-                          ? 'bg-rose-500/60 cursor-not-allowed'
-                          : 'bg-rose-500 hover:bg-rose-600'
-                          }`}
-                      >
-                        {actionLoadingId === req.id ? '처리 중...' : '반려'}
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-              )
-            })}
+                request={req}
+                statusFilter={statusFilter}
+                actionLoadingId={actionLoadingId}
+                previewLoading={previewLoading}
+                onPreviewImage={handlePreviewImage}
+                onApprove={handleApprove}
+                onReject={handleReject}
+              />
+            ))}
           </div>
           {!error && (
             <div className="px-6 py-4 border-t border-gray-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -462,35 +368,6 @@ function AdminProfileUpdatesPage() {
   )
 }
 
-type StatusPillProps = {
-  status: 'pending' | 'approved' | 'rejected'
-}
-
-function StatusPill({ status }: StatusPillProps) {
-  const config = {
-    pending: { label: '대기', bg: 'bg-amber-100', text: 'text-amber-700' },
-    approved: { label: '승인', bg: 'bg-emerald-100', text: 'text-emerald-700' },
-    rejected: { label: '반려', bg: 'bg-rose-100', text: 'text-rose-700' },
-  }
-
-  const { label, bg, text } = config[status]
-
-  return (
-    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${bg} ${text}`}>
-      {label}
-    </span>
-  )
-}
-
-function getRequestCardClass(status: 'pending' | 'approved' | 'rejected') {
-  if (status === 'approved') {
-    return 'bg-emerald-50/40'
-  }
-  if (status === 'rejected') {
-    return 'bg-rose-50/50 border-l-4 border-rose-200'
-  }
-  return 'bg-white'
-}
 
 function normalizeStatus(status?: string | null): 'pending' | 'approved' | 'rejected' {
   const normalized = (status ?? '').toLowerCase().trim()
