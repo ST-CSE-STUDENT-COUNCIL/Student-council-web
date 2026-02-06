@@ -3,7 +3,7 @@ FastAPI 메인 애플리케이션
 """
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -65,3 +65,8 @@ async def health_check():
         "service": "seoultechcom-backend",
         "version": "1.0.0"
     }
+
+@app.get("/robots.txt", response_class=PlainTextResponse, tags=["기타"])
+async def robots_txt():
+    """검색 엔진 크롤링 방지 (API 서버)"""
+    return "User-agent: *\nDisallow: /"

@@ -66,7 +66,40 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
                 detail="사용자를 찾을 수 없습니다"
             )
         
-        return user_result.data
+        user_data = user_result.data
+        
+        # [중복 로그인 방지] 토큰 발급 시각(iat) 확인
+        # 로그인 시 last_login_at을 갱신하므로, 그보다 이전에 발급된 토큰은 거부됨
+        import jwt
+        try:
+            # 토큰 디코딩 (서명 검증은 위 get_user에서 이미 함)
+            # options={"verify_signature": False} 대신 decode의 verify=False 사용
+            decoded = jwt.decode(access_token, options={"verify_signature": False})
+            iat = decoded.get("iat")
+            
+            if iat and user_data.get("last_login_at"):
+                from datetime import datetime
+                # DB의 last_login_at은 ISO 문자열 (KST or UTC)
+                last_login_str = user_data.get("last_login_at")
+                
+                # 문자열을 timestamp로 변환 (약간의 오차 허용 2초)
+                last_login_dt = datetime.fromisoformat(last_login_str.replace('Z', '+00:00'))
+                last_login_ts = last_login_dt.timestamp()
+                
+                # 토큰 발급 시각이 마지막 로그인 시각보다 2초 이상 이전이면 거부
+                if iat < (last_login_ts - 2):
+                     raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="다른 기기에서 로그인되어 자동으로 로그아웃되었습니다."
+                    )
+        except HTTPException:
+            raise
+        except Exception as e:
+            # 토큰 파싱 실패 등은 무시 (일반 검증으로 넘어감)
+            print(f"[AUTH WARNING] iat check failed: {e}")
+            pass
+        
+        return user_data
     
     except HTTPException:
         raise
