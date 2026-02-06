@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { introductionApi } from '../lib/api/introductions'
 import type { IntroductionImage } from '../types/introductions'
+import { SEO } from '../components/common/SEO'
 
 export const Route = createFileRoute('/intro')({
   component: Intro,
@@ -59,6 +60,11 @@ function Intro() {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-slate-900">
+      <SEO
+        title="학생회 소개"
+        description="컴퓨터공학과 학생회를 소개합니다."
+        url="/intro"
+      />
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">학생회 소개</h1>

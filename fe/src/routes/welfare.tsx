@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 import { CategoryFilter, LockerActions, RentalCard } from '../components/welfare'
+import { SEO } from '../components/common/SEO'
 import { welfareApi, type WelfareRental, type LockerInfo, type PrinterInfo, type GuidebookInfo } from '../lib/api/welfare'
 
 export const Route = createFileRoute('/welfare')({
@@ -185,6 +186,11 @@ function Welfare() {
 
   return (
     <div className="w-full px-[5%] lg:px-[10%] py-12">
+      <SEO
+        title="복지사업"
+        description="학생회의 복지사업(물품 대여, 사물함, 프린터, 가이드북)을 확인하세요."
+        url="/welfare"
+      />
       {/* Page Title */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">복지사업</h1>

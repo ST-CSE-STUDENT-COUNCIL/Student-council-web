@@ -3,6 +3,7 @@ import React from 'react'
 import { clubApi } from '../lib/api/clubs'
 import { ClubsHeader, ClubCard, ClubDetailModal } from '../components/clubs'
 import type { Club } from '../types/clubs'
+import { SEO } from '../components/common/SEO'
 
 export const Route = createFileRoute('/clubs')({
   component: Clubs,
@@ -38,6 +39,11 @@ function Clubs() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      <SEO
+        title="동아리"
+        description="컴퓨터공학과 동아리를 소개합니다."
+        url="/clubs"
+      />
       <ClubsHeader />
 
       {clubs.length > 0 ? (
