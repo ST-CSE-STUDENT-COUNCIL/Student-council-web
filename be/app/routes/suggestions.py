@@ -65,11 +65,13 @@ async def create_suggestion(
         limit_time = (datetime.now(timezone.utc) - timedelta(seconds=5)).isoformat()
         
         # 최근 5초 내 작성된 글이 있는지 확인
-        recent_check = supabase.table("suggestions")\
-            .select("id", count="exact")\
-            .eq("author_id", current_user["id"])\
-            .gte("created_at", limit_time)\
+        recent_check = (
+            supabase.table("suggestions")
+            .select("id", count="exact")  # type: ignore
+            .eq("author_id", current_user["id"])
+            .gte("created_at", limit_time)
             .execute()
+        )
             
         if recent_check.count and recent_check.count > 0:
              raise HTTPException(
@@ -124,9 +126,10 @@ async def create_suggestion(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] 건의함 작성 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"건의함 작성 실패: {str(e)}"
+            detail="건의함 작성 실패"
         )
 
 
@@ -167,12 +170,12 @@ async def get_suggestions(
             )
         
         # 전체 개수 조회
-        count_query = supabase.table("suggestions").select("id")
+        count_query = supabase.table("suggestions").select("id", count="exact")  # type: ignore
         if status_filter:
             count_query = count_query.eq("status", status_filter)
         
         count_result = count_query.execute()
-        total = len(count_result.data) if count_result.data else 0
+        total = count_result.count if count_result.count is not None else 0
         
         # 목록 조회
         query = supabase.table("suggestions")\
@@ -250,9 +253,10 @@ async def get_suggestions(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] 건의함 목록 조회 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"건의함 목록 조회 실패: {str(e)}"
+            detail="건의함 목록 조회 실패"
         )
 
 
@@ -339,9 +343,10 @@ async def get_suggestion(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] 건의함 조회 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"건의함 조회 실패: {str(e)}"
+            detail="건의함 조회 실패"
         )
 
 
@@ -443,9 +448,10 @@ async def update_suggestion_status(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] 건의함 상태 변경 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"건의함 상태 변경 실패: {str(e)}"
+            detail="건의함 상태 변경 실패"
         )
 
 
@@ -498,7 +504,8 @@ async def delete_suggestion(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] 건의함 삭제 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"건의함 삭제 실패: {str(e)}"
+            detail="건의함 삭제 실패"
         )

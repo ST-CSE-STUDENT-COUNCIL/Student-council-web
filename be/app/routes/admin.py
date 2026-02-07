@@ -4,7 +4,7 @@
 """
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from app.schemas.admin import (
     UserListResponse,
     PendingUserListResponse,
@@ -115,7 +115,7 @@ async def get_pending_users(
         print(f"[API ERROR] get_pending_users: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"승인 대기 목록 조회 실패: {str(e)}"
+            detail="승인 대기 목록 조회 실패"
         )
 
 
@@ -167,7 +167,7 @@ async def get_rejected_users(
         print(f"[API ERROR] get_rejected_users: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"거절된 회원 목록 조회 실패: {str(e)}"
+            detail="거절된 회원 목록 조회 실패"
         )
 
 @router.get(
@@ -232,7 +232,7 @@ async def get_all_users(
         print(f"[API ERROR] get_users: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"회원 목록 조회 실패: {str(e)}"
+            detail="회원 목록 조회 실패"
         )
 
 
@@ -318,7 +318,7 @@ async def approve_user(user_id: str):
         print(f"[API ERROR] approve_user: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"회원 승인 실패: {str(e)}"
+            detail="회원 승인 실패"
         )
 
 
@@ -407,7 +407,7 @@ async def reject_user(user_id: str, request: RejectUserRequest):
         print(f"[API ERROR] reject: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"회원 거부 실패: {str(e)}"
+            detail="회원 거부 실패"
         )
 
 
@@ -501,7 +501,7 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest):
         print(f"[API ERROR] update_user_role: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"역할 변경 실패: {str(e)}"
+            detail="역할 변경 실패"
         )
 
 
@@ -574,7 +574,7 @@ async def update_membership_status(user_id: str, request: UpdateMembershipReques
         print(f"[API ERROR] update_membership_status: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"회비 상태 변경 실패: {str(e)}"
+            detail="회비 상태 변경 실패"
         )
 
 
@@ -690,7 +690,7 @@ async def get_blocked_users():
         print(f"[API ERROR] get_blocked_users: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"차단 목록 조회 실패: {str(e)}"
+            detail="차단 목록 조회 실패"
         )
 
 
@@ -739,7 +739,7 @@ async def unblock_user_by_admin(student_id: str):
         print(f"[API ERROR] unblock_user_login: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"차단 해제 실패: {str(e)}"
+            detail="차단 해제 실패"
         )
 
 
@@ -799,7 +799,7 @@ async def get_profile_update_requests(
         print(f"[API ERROR] get_profile_update_requests: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"조회 실패: {str(e)}"
+            detail="조회 실패"
         )
 
 
@@ -840,9 +840,10 @@ async def get_rejected_profile_updates(
         return {"requests": requests, "total": -1}
     
     except Exception as e:
+        print(f"[API ERROR] get_rejected_profile_updates: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"조회 실패: {str(e)}"
+            detail="조회 실패"
         )
 
 
@@ -883,9 +884,10 @@ async def get_approved_profile_updates(
         return {"requests": requests, "total": -1}
     
     except Exception as e:
+        print(f"[API ERROR] get_approved_profile_updates: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"조회 실패: {str(e)}"
+            detail="조회 실패"
         )
 
 
@@ -923,6 +925,14 @@ async def approve_profile_update(
         
         request_data = req_result.data
         
+        # 허용된 필드만 수정 가능 (보안)
+        ALLOWED_PROFILE_FIELDS = ['name', 'student_id']
+        if request_data['field_name'] not in ALLOWED_PROFILE_FIELDS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"허용되지 않은 필드입니다: {request_data['field_name']}"
+            )
+        
         # 사용자 정보 업데이트
         admin_supabase.table('users')\
             .update({request_data['field_name']: request_data['new_value']})\
@@ -952,7 +962,7 @@ async def approve_profile_update(
         print(f"[API ERROR] approve_profile_update: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"승인 처리 실패: {str(e)}"
+            detail="승인 처리 실패"
         )
 
 
@@ -1021,7 +1031,7 @@ async def reject_profile_update(
         print(f"[API ERROR] reject_profile_update: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"거부 처리 실패: {str(e)}"
+            detail="거부 처리 실패"
         )
 
 
@@ -1046,9 +1056,10 @@ async def get_privacy_officer_info():
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] get_privacy_officer_info: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"조회 실패: {str(e)}"
+            detail="조회 실패"
         )
 
 
@@ -1083,7 +1094,7 @@ async def update_privacy_officer_info(
         if not update_data:
             raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
         
-        update_data['updated_at'] = datetime.utcnow().isoformat()
+        update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
         
         result = admin_supabase.table('privacy_officer_info').update(update_data).eq('id', 1).execute()
         
@@ -1094,7 +1105,8 @@ async def update_privacy_officer_info(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] update_privacy_officer_info: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"수정 실패: {str(e)}"
+            detail="수정 실패"
         )

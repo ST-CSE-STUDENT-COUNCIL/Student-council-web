@@ -19,6 +19,39 @@ logger = logging.getLogger(__name__)
 
 GMAIL_SEND_SCOPE = "https://www.googleapis.com/auth/gmail.send"
 
+# 일일 이메일 발송 제한
+DAILY_EMAIL_LIMIT = 300
+
+
+def _check_daily_email_limit() -> bool:
+    """
+    일일 이메일 발송 한도 확인
+    
+    Returns:
+        bool: 발송 가능하면 True, 한도 초과면 False
+    """
+    try:
+        from datetime import date
+        today = date.today().isoformat()
+        
+        # 오늘 발송된 이메일 수 조회 (email_verifications + password_resets)
+        email_count = supabase.table('email_verifications')\
+            .select('id', count='exact')\
+            .gte('created_at', today)\
+            .execute()
+        
+        reset_count = supabase.table('password_resets')\
+            .select('id', count='exact')\
+            .gte('created_at', today)\
+            .execute()
+        
+        total = (email_count.count or 0) + (reset_count.count or 0)
+        return total < DAILY_EMAIL_LIMIT
+    except Exception as e:
+        logger.error(f"일일 이메일 한도 확인 실패: {e}")
+        # 오류 시 안전하게 발송 허용 (서비스 중단 방지)
+        return True
+
 
 def _generate_verification_code() -> str:
     """
@@ -128,12 +161,16 @@ def send_verification_email(to_email: str, code: str) -> None:
     이메일 인증번호 발송
     
     Args:
-        to_email: 수신자 이메일 (@seoultech.ac.kr)
+        to_email: 수신자 이메일
         code: 6자리 인증번호
     
     Raises:
         Exception: 이메일 발송 실패 시
     """
+    # 일일 발송 한도 체크
+    if not _check_daily_email_limit():
+        raise Exception("일일 이메일 발송 한도(300통)를 초과했습니다. 내일 다시 시도해주세요.")
+    
     try:
         message = _build_email_message(to_email, code)
         credentials = _get_gmail_credentials()
@@ -338,6 +375,10 @@ def send_password_reset_email(email: str, code: str) -> None:
     Raises:
         Exception: 이메일 발송 실패 시
     """
+    # 일일 발송 한도 체크
+    if not _check_daily_email_limit():
+        raise Exception("일일 이메일 발송 한도(300통)를 초과했습니다. 내일 다시 시도해주세요.")
+    
     try:
         message = _build_password_reset_message(email, code)
         credentials = _get_gmail_credentials()
