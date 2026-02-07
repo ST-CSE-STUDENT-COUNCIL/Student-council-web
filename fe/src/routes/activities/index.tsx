@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useSearch } from '@tanstack/react-router'
 import { useEffect, useState, useMemo } from 'react'
 import { ActivityFilter, type SortOption, type StatusOption, type TypeOption } from '../../components/activities/ActivityFilter'
 import { ActivityList } from '../../components/activities/ActivityList'
@@ -13,6 +13,8 @@ export const Route = createFileRoute('/activities/')({
 })
 
 function ActivitiesPage() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { id: queryId } = useSearch({ strict: false }) as any
     const [activities, setActivities] = useState<ActivityListItem[]>([])
     const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
     const [loading, setLoading] = useState(true)
@@ -38,7 +40,9 @@ function ActivitiesPage() {
             setActivities(response.activities)
 
             if (response.activities.length > 0) {
-                const detail = await activityApi.getById(response.activities[0].id)
+                // URL에 id가 있고 목록에 존재하면 그 활동 선택, 아니면 첫 번째 활동 선택
+                const targetId = queryId || response.activities[0].id
+                const detail = await activityApi.getById(targetId)
                 setSelectedActivity(detail)
             }
         } catch (error) {
@@ -47,6 +51,13 @@ function ActivitiesPage() {
             setLoading(false)
         }
     }
+
+    // URL id가 변경되면 해당 활동 선택 (단, 초기 로딩 이후)
+    useEffect(() => {
+        if (queryId && !loading && activities.length > 0) {
+            activityApi.getById(queryId).then(setSelectedActivity).catch(console.error)
+        }
+    }, [queryId])
 
     const selectActivity = async (activity: ActivityListItem) => {
         try {

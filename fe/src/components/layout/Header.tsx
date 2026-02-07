@@ -2,8 +2,9 @@ import { Link, useNavigate, useLocation } from '@tanstack/react-router'
 import { useAuthStore } from '../../store/useAuthStore'
 import { authApi } from '../../lib/api/auth'
 import { navItems } from './Menu'
+import { ADMIN_MENU_ITEMS } from './AdminSidebar'
 import Menu from './Menu'
-import { Code2, LogOut, LogIn, UserPlus, Menu as MenuIcon, X } from 'lucide-react'
+import { Code2, LogOut, LogIn, UserPlus, Menu as MenuIcon, X, Search } from 'lucide-react'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ThemeToggle } from '../common/ThemeToggle'
@@ -132,6 +133,27 @@ export default function Header() {
                             </button>
                         </div>
 
+                        {/* Search Bar */}
+                        <div className="px-5 pb-2 pt-2">
+                            <div className="relative group">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+                                <input
+                                    type="text"
+                                    placeholder="통합 검색..."
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-100 dark:bg-white/5 border border-transparent focus:bg-white dark:focus:bg-[#020617] focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 transition-all outline-none"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const val = e.currentTarget.value
+                                            if (val.trim()) {
+                                                navigate({ to: '/search', search: { q: val } })
+                                                closeMenu()
+                                            }
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
+
                         <div className="flex-1 p-4 space-y-1">
                             {navItems.map((item) => (
                                 <Link
@@ -182,13 +204,22 @@ export default function Header() {
                                     </div>
 
                                     {(user?.role === 'admin' || user?.role === 'council') && (
-                                        <Link
-                                            to="/admin"
-                                            onClick={closeMenu}
-                                            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 font-semibold hover:bg-blue-100 dark:hover:bg-blue-500/20 transition"
-                                        >
-                                            <span>⚙️ 관리자 페이지</span>
-                                        </Link>
+                                        <div className="space-y-1 pt-2 border-t border-gray-100 dark:border-white/5 mt-2">
+                                            <p className="px-2 py-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                                                관리자 메뉴
+                                            </p>
+                                            {ADMIN_MENU_ITEMS.map((item) => (
+                                                <Link
+                                                    key={item.href}
+                                                    to={item.href}
+                                                    onClick={closeMenu}
+                                                    className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors"
+                                                >
+                                                    <item.icon className="w-4 h-4" />
+                                                    {item.label}
+                                                </Link>
+                                            ))}
+                                        </div>
                                     )}
 
                                     <div className="grid grid-cols-2 gap-3">
