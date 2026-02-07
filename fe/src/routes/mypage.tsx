@@ -75,7 +75,6 @@ function MyPage() {
       }
 
       if (registrationsResult.status === 'fulfilled') {
-        console.log('마이페이지 행사 목록:', registrationsResult.value.items)
         setMyRegistrations(registrationsResult.value.items)
       } else {
         console.error('Failed to load registrations', registrationsResult.reason)
@@ -229,7 +228,7 @@ function MyPage() {
               : 'name'
       const createdAt = item.created_at || item.requested_at || ''
       const rejectionReason = item.rejection_reason || item.reason || ''
-      const groupKey = normalizeDateKey(createdAt)
+      const groupKey = `${normalizeDateKey(createdAt)}-${item.status ?? 'pending'}`
 
       const existing = groups.get(groupKey)
       const base = existing ?? {
