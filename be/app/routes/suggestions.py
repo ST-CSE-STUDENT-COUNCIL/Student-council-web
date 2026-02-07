@@ -416,17 +416,29 @@ async def update_suggestion_status(
             update_data["rejection_reason"] = None
             update_data["resolution_note"] = None
         
-        # 업데이트 실행
+        # 업데이트 실행 (같은 상태로의 중복 변경 방지)
         admin_supabase = get_supabase_admin()
         result = admin_supabase.table("suggestions")\
             .update(update_data)\
             .eq("id", suggestion_id)\
+            .neq("status", body.status)\
             .execute()
         
         if not result.data:
+            # 건의함이 없거나 이미 같은 상태
+            check = admin_supabase.table("suggestions")\
+                .select("id, status")\
+                .eq("id", suggestion_id)\
+                .execute()
+            
+            if not check.data:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="건의함을 찾을 수 없습니다"
+                )
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="건의함을 찾을 수 없습니다"
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 동일한 상태입니다"
             )
         
         updated = result.data[0]

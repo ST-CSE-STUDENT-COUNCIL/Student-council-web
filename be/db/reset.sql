@@ -42,6 +42,7 @@ TRUNCATE TABLE activities CASCADE;
 
 -- 복지 관련
 TRUNCATE TABLE rental_items CASCADE;
+TRUNCATE TABLE rental_config CASCADE;
 TRUNCATE TABLE locker_info CASCADE;
 TRUNCATE TABLE print_welfare_info CASCADE;
 TRUNCATE TABLE guidebook_info CASCADE;
@@ -87,7 +88,8 @@ DELETE FROM auth.users;  -- 모든 Auth 사용자 삭제
 -- ============================================================================
 -- 참고: rental_items와 locker_info는 구글 시트 연동 방식이므로
 --      별도 status 컬럼이 없고, 데이터를 유지합니다.
-
+-- rental_config 싱글톤 재생성
+INSERT INTO rental_config (id) VALUES (1) ON CONFLICT DO NOTHING;
 -- 기존 게시판 삭제
 TRUNCATE TABLE boards RESTART IDENTITY CASCADE;
 

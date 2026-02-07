@@ -1030,7 +1030,16 @@ async def update_registration_status(
                 detail="신청 정보를 찾을 수 없습니다"
             )
         
-        # 상태 업데이트
+        current_status = existing.data[0].get('status')
+        
+        # 같은 상태로 변경 시도 시 무시
+        if current_status == body.status:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 동일한 상태입니다"
+            )
+        
+        # 상태 업데이트 (이전 상태 조건으로 race condition 방지)
         update_data = {"status": body.status}
         if body.admin_note:
             update_data["admin_note"] = body.admin_note
@@ -1038,7 +1047,14 @@ async def update_registration_status(
         result = admin_supabase.table("activity_registrations")\
             .update(update_data)\
             .eq("id", registration_id)\
+            .eq("status", current_status)\
             .execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 처리된 요청입니다"
+            )
         
         if not result.data:
             raise HTTPException(
@@ -1559,7 +1575,7 @@ async def attend_by_student_id(
             .select('id, attended')\
             .eq('activity_id', activity_id)\
             .eq('student_id', body.student_id)\
-            .single()\
+            .maybe_single()\
             .execute()
         
         if not registration_result.data:
@@ -1686,7 +1702,7 @@ async def admin_mark_attendance(
         
         # 신청 내역 확인
         reg_result = admin_supabase.table('activity_registrations')\
-            .select('id')\
+            .select('id, attended')\
             .eq('id', registration_id)\
             .eq('activity_id', activity_id)\
             .single()\
@@ -1695,14 +1711,20 @@ async def admin_mark_attendance(
         if not reg_result.data:
             raise HTTPException(status_code=404, detail="신청 내역을 찾을 수 없습니다")
         
-        # 출석 체크
+        if reg_result.data.get('attended'):
+            raise HTTPException(status_code=409, detail="이미 출석 체크가 완료되었습니다")
+        
+        # 출석 체크 (attended=False 조건으로 race condition 방지)
         from datetime import timezone
         now = datetime.now(timezone.utc)
         
-        admin_supabase.table('activity_registrations').update({
+        update_result = admin_supabase.table('activity_registrations').update({
             'attended': True,
             'attended_at': now.isoformat()
-        }).eq('id', registration_id).execute()
+        }).eq('id', registration_id).eq('attended', False).execute()
+        
+        if not update_result.data:
+            raise HTTPException(status_code=409, detail="이미 출석 체크가 완료되었습니다")
         
         return AttendanceCheckResponse(
             message="출석 처리가 완료되었습니다",
