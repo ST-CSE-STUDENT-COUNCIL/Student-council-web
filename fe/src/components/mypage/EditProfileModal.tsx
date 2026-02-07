@@ -1,5 +1,4 @@
-import React from 'react'
-import type { ChangeEvent, DragEvent } from 'react'
+import { useState, useRef, useEffect, type ChangeEvent, type DragEvent } from 'react'
 import { toast } from 'sonner'
 import { mypageApi } from '../../lib/api/mypage'
 
@@ -8,23 +7,18 @@ type EditProfileModalProps = {
   onClose: () => void
   initialName?: string
   initialStudentId?: string
-  verificationStatus?: string
+
 }
 
-export function EditProfileModal({
-  onClose,
-  initialName = '',
-  initialStudentId = '',
-  verificationStatus,
-}: EditProfileModalProps) {
-  const [name, setName] = React.useState(initialName)
-  const [studentId, setStudentId] = React.useState(initialStudentId)
-  const [file, setFile] = React.useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
-  const [isDragging, setIsDragging] = React.useState(false)
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
-  const inputRef = React.useRef<HTMLInputElement>(null)
+export function EditProfileModal({ onClose, initialName = '', initialStudentId = '' }: EditProfileModalProps) {
+  const [name, setName] = useState(initialName)
+  const [studentId, setStudentId] = useState(initialStudentId)
+  const [file, setFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   function setFileWithPreview(f: File) {
     if (previewUrl) URL.revokeObjectURL(previewUrl)
@@ -56,7 +50,7 @@ export function EditProfileModal({
     setIsDragging(false)
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl)
     }

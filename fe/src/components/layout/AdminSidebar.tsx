@@ -1,17 +1,5 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import {
-    LayoutDashboard,
-    Megaphone,
-    Calendar,
-    Gift,
-    Users,
-    FileText,
-    MessageSquare,
-    BarChart3,
-    MessageCircle,
-    Shield,
-    UserRoundPen,
-} from 'lucide-react'
+import { LayoutDashboard, Megaphone, Calendar, Gift, Users, FileText, MessageSquare, BarChart3, MessageCircle, Shield, UserRoundPen } from 'lucide-react'
 
 const MENU_ITEMS = [
     { label: '대시보드', href: '/admin', icon: LayoutDashboard },

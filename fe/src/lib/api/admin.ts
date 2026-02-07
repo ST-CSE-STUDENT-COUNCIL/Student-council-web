@@ -83,4 +83,8 @@ export const adminApi = {
         })
         return response.data
     },
+    getSignedUrl: async (path: string) => {
+        const response = await api.get<{ signed_url: string }>('/admin/storage/signed-url', { params: { path } })
+        return response.data
+    },
 }
