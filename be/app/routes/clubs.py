@@ -1,7 +1,7 @@
 """
 동아리 관련 API 엔드포인트
 """
-from fastapi import APIRouter, HTTPException, status, Depends, File, UploadFile, Form
+from fastapi import APIRouter, HTTPException, status, Depends, File, UploadFile, Form, Response
 from typing import Optional
 from datetime import datetime
 from app.schemas.clubs import (
@@ -41,7 +41,7 @@ router = APIRouter(tags=["동아리"])
         500: {"model": ErrorResponse, "description": "서버 오류"}
     }
 )
-async def get_clubs():
+async def get_clubs(response: Response):
     """
     동아리 목록 조회
     
@@ -55,6 +55,7 @@ async def get_clubs():
         
         clubs = result.data if result.data else []
         
+        response.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=600"
         return ClubListResponse(
             clubs=clubs,
             total=len(clubs)
