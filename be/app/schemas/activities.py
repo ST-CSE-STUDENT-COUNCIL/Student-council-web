@@ -162,6 +162,7 @@ class ActivityResponse(BaseModel):
     images: List[Dict[str, Any]] = Field(default_factory=list, description="활동 이미지 목록")
     is_active: bool
     is_anonymous: bool = Field(default=False, description="익명 여부 (true: 익명, false: 기명)")
+    attendance_open: bool = Field(default=False, description="출석 체크 활성화 여부")
     created_by: Optional[str]
     created_at: datetime
     updated_at: datetime
@@ -186,6 +187,7 @@ class ActivityListItem(BaseModel):
     current_count: int
     thumbnail_url: Optional[str]
     is_active: bool
+    attendance_open: bool = Field(default=False, description="출석 체크 활성화 여부")
     created_at: datetime
     
     # 신청 가능 여부
