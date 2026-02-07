@@ -46,6 +46,7 @@ class RentalConfig(BaseModel):
     """대여사업 설정 (싱글톤)"""
     id: int = 1
     sheet_url: Optional[str] = Field(None, description="구글 스프레드시트 URL (재고 조회용, 전체 물품 공유)")
+    application_form_url: Optional[str] = Field(None, description="신청 폼 URL (구글폼 등, 전체 물품 공유)")
     updated_at: datetime = Field(..., description="마지막 수정 시각")
 
     class Config:
@@ -55,6 +56,7 @@ class RentalConfig(BaseModel):
 class RentalConfigUpdate(BaseModel):
     """대여사업 설정 수정 (관리자용)"""
     sheet_url: Optional[str] = Field(None, description="구글 스프레드시트 URL")
+    application_form_url: Optional[str] = Field(None, description="신청 폼 URL")
 
 
 class RentalItemCreate(BaseModel):
@@ -63,7 +65,6 @@ class RentalItemCreate(BaseModel):
     quantity_cell_range: str = Field(..., description="재고 셀 위치 (예: C2)")
     category: Optional[str] = Field(None, description="분류")
     image_url: Optional[str] = Field(None, description="물품 이미지 URL (Presigned URL로 업로드 후 받은 public_url)")
-    application_form_url: Optional[str] = Field(None, description="신청 폼 URL (구글폼 등)")
 
 
 class RentalItem(BaseModel):
@@ -73,7 +74,6 @@ class RentalItem(BaseModel):
     category: Optional[str] = Field(None, description="분류 (우산, 돗자리 등)")
 
     image_url: Optional[str] = Field(None, description="물품 이미지 URL")
-    application_form_url: Optional[str] = Field(None, description="신청 폼 URL")
     available_quantity: Optional[int] = Field(None, description="현재 재고 (스프레드시트에서 조회)")
     is_active: bool = Field(True, description="대여 가능 여부")
     updated_at: datetime = Field(..., description="마지막 수정 시각")
@@ -87,7 +87,6 @@ class RentalItemUpdate(BaseModel):
     item_name: Optional[str] = None
     category: Optional[str] = None
     image_url: Optional[str] = None
-    application_form_url: Optional[str] = None
     quantity_sheet_name: Optional[str] = None
     quantity_cell_range: Optional[str] = None
     is_active: Optional[bool] = None

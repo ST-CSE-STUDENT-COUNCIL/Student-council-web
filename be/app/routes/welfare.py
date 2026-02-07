@@ -421,7 +421,7 @@ async def update_locker_info(
 @router.get("/welfare/rental_config", summary="대여사업 설정 조회 (공개)")
 async def get_rental_config():
     """
-    대여사업 설정(시트 URL 등)을 조회합니다.
+    대여사업 설정(시트 URL, 신청 폼 URL)을 조회합니다.
     
     - **공개 API**: 인증 불필요
     """
@@ -429,7 +429,7 @@ async def get_rental_config():
     result = supabase.table('rental_config').select('*').eq('id', 1).single().execute()
     
     if not result.data:
-        return {"id": 1, "sheet_url": None, "updated_at": None}
+        return {"id": 1, "sheet_url": None, "application_form_url": None, "updated_at": None}
     
     return result.data
 
@@ -440,8 +440,8 @@ async def update_rental_config(
     current_user: dict = Depends(require_admin)
 ):
     """
-    대여사업 설정(구글 스프레드시트 URL)을 수정합니다.
-    이 시트 URL은 전체 물품의 재고 조회에 공통으로 사용됩니다.
+    대여사업 설정(시트 URL, 신청 폼 URL)을 수정합니다.
+    한 번 설정하면 전체 물품에 공통 적용됩니다.
     
     - **관리자 전용**: admin 권한 필요
     """

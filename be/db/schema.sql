@@ -402,13 +402,15 @@ CREATE TABLE rental_config (
   id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
   sheet_url TEXT,  -- 구글 스프레드시트 URL (전체 물품 공유)
   spreadsheet_id TEXT,  -- sheet_url에서 자동 추출된 ID
+  application_form_url TEXT,  -- 신청 폼 URL (구글폼 등, 전체 물품 공유)
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 INSERT INTO rental_config (id) VALUES (1) ON CONFLICT DO NOTHING;
 
-COMMENT ON TABLE rental_config IS '[싱글톤] 대여사업 설정 (시트 URL 등)';
+COMMENT ON TABLE rental_config IS '[싱글톤] 대여사업 설정 (시트 URL, 신청 폼 URL 등)';
 COMMENT ON COLUMN rental_config.sheet_url IS '구글 스프레드시트 URL (재고 조회용, 전체 물품 공유)';
+COMMENT ON COLUMN rental_config.application_form_url IS '신청 폼 URL (구글폼 등, 전체 물품 공유)';
 
 CREATE TABLE rental_items (
   id SERIAL PRIMARY KEY,
@@ -416,7 +418,6 @@ CREATE TABLE rental_items (
   category VARCHAR(50),  -- 분류 (우산, 돗자리 등)
 
   image_url TEXT,  -- 물품 이미지 URL
-  application_form_url TEXT,  -- 신청 폼 URL (물품별 구글폼 등)
   
   -- 구글 시트 재고 연동 (시트 URL은 rental_config에서 가져옴)
   quantity_sheet_name VARCHAR(100) DEFAULT '물품표',  -- 시트 이름
