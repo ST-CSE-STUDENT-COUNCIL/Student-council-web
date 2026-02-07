@@ -35,15 +35,19 @@ def _check_daily_email_limit() -> bool:
         today = date.today().isoformat()
         
         # 오늘 발송된 이메일 수 조회 (email_verifications + password_resets)
-        email_count = supabase.table('email_verifications')\
-            .select('id', count='exact')\
-            .gte('created_at', today)\
+        email_count = (
+            supabase.table('email_verifications')
+            .select('id', count='exact')  # type: ignore
+            .gte('created_at', today)
             .execute()
+        )
         
-        reset_count = supabase.table('password_resets')\
-            .select('id', count='exact')\
-            .gte('created_at', today)\
+        reset_count = (
+            supabase.table('password_resets')
+            .select('id', count='exact')  # type: ignore
+            .gte('created_at', today)
             .execute()
+        )
         
         total = (email_count.count or 0) + (reset_count.count or 0)
         return total < DAILY_EMAIL_LIMIT

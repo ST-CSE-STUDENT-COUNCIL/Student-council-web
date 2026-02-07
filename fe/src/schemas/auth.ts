@@ -8,7 +8,8 @@ export const signupFormSchema = z.object({
         .min(1, '이름을 입력해주세요'),
 
     student_id: z.string()
-        .length(8, '학번 8자리를 정확히 입력해주세요')
+        .min(8, '학번은 8자리 이상이어야 합니다')
+        .max(15, '학번은 15자리 이하여야 합니다')
         .regex(/^\d+$/, '학번은 숫자만 입력해주세요'),
 
     email: z.string()

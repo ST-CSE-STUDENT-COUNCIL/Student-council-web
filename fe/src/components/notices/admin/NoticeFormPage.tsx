@@ -162,30 +162,35 @@ export function NoticeFormPage({ editingPost, onSuccess, onCancel }: NoticeFormP
                 toast.success('공지사항이 수정되었습니다.')
             } else {
                 // 생성 모드
-                // 1. Draft 생성
-                const { post_id } = await postApi.createDraft(formData.board_id)
+                let post_id: number | undefined
 
-                // 2. 파일 업로드
+                // 1. 파일이 있는 경우에만 Draft 생성 및 업로드
                 const uploadedAttachments = []
-                for (const file of localFiles) {
-                    const contentType = file.type || 'application/octet-stream'
-                    const { presigned_url, public_url } = await postApi.getPresignedUrl(file.name, post_id, contentType)
+                if (localFiles.length > 0) {
+                    const draft = await postApi.createDraft(formData.board_id)
+                    post_id = draft.post_id
 
-                    await fetch(presigned_url, {
-                        method: 'PUT',
-                        body: file,
-                        headers: { 'Content-Type': contentType }
-                    })
+                    // 2. 파일 업로드
+                    for (const file of localFiles) {
+                        const contentType = file.type || 'application/octet-stream'
+                        const { presigned_url, public_url } = await postApi.getPresignedUrl(file.name, post_id, contentType)
 
-                    uploadedAttachments.push({
-                        filename: file.name,
-                        public_url,
-                        file_size: file.size,
-                        mime_type: contentType
-                    })
+                        await fetch(presigned_url, {
+                            method: 'PUT',
+                            body: file,
+                            headers: { 'Content-Type': contentType }
+                        })
+
+                        uploadedAttachments.push({
+                            filename: file.name,
+                            public_url,
+                            file_size: file.size,
+                            mime_type: contentType
+                        })
+                    }
                 }
 
-                // 3. 최종 생성
+                // 3. 최종 생성 (파일이 없으면 post_id는 undefined로 전달됨)
                 await postApi.create({
                     post_id,
                     title: formData.title,
@@ -412,8 +417,8 @@ export function NoticeFormPage({ editingPost, onSuccess, onCancel }: NoticeFormP
                                 onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
                                 className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${isDragging
-                                        ? 'border-blue-500 bg-blue-50'
-                                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                     }`}
                             >
                                 <input

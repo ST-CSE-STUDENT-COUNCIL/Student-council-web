@@ -14,11 +14,9 @@ import {
     ChevronRight,
     ChevronLeft,
     MonitorCheck,
-    Flag,
-    Phone,
     GraduationCap,
     Laptop,
-    Instagram
+    Mail
 } from 'lucide-react'
 import { activityApi } from '../lib/api/activities'
 import { postApi } from '../lib/api/notices'
@@ -40,9 +38,7 @@ const PORTALS = [
     { name: '학생포탈', icon: GraduationCap, url: 'https://stportal.seoultech.ac.kr/', color: 'text-violet-600', bg: 'bg-violet-50' },
     { name: '도서관', icon: BookOpen, url: 'https://library.seoultech.ac.kr/#/', color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { name: '생활관', icon: Building, url: 'https://domi.seoultech.ac.kr/', color: 'text-orange-600', bg: 'bg-orange-50' },
-    { name: '총학생회', icon: Flag, url: 'https://gwack2.seoultech.ac.kr/', color: 'text-rose-600', bg: 'bg-rose-50' },
-    { name: '교내연락', icon: Phone, url: 'https://www.seoultech.ac.kr/intro/campinfo/interph/', color: 'text-green-600', bg: 'bg-green-50' },
-    { name: '인스타그램', icon: Instagram, url: 'https://www.instagram.com/seoultech_com/', color: 'text-pink-600', bg: 'bg-pink-50' },
+    { name: '웹메일', icon: Mail, url: 'https://zm937.mailplug.com/member/login', color: 'text-rose-600', bg: 'bg-rose-50' },
 ]
 
 const getSubCategoryLabel = (sub: string) => {

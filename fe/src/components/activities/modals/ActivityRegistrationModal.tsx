@@ -213,7 +213,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         // 학번 입력 필드: 숫자만 허용, 최대 8자리
         if (name === 'student_id') {
             const numbers = value.replace(/\D/g, '') // 숫자만 추출
-            const limited = numbers.slice(0, 8) // 최대 8자리
+            const limited = numbers.slice(0, 15) // 최대 15자리
             setFormData(prev => ({ ...prev, [name]: limited }))
             return
         }
@@ -255,8 +255,8 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             toast.error('학번을 입력해주세요.')
             return false
         }
-        if (formData.student_id.length !== 8) {
-            toast.error('학번 8자리를 정확히 입력해주세요.')
+        if (formData.student_id.length < 8 || formData.student_id.length > 15) {
+            toast.error('학번은 8~15자리여야 합니다.')
             return false
         }
 
@@ -446,7 +446,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     name="student_id"
                                                     value={formData.student_id}
                                                     onChange={handleChange}
-                                                    maxLength={8}
+                                                    maxLength={15}
                                                     inputMode="numeric"
                                                     pattern="[0-9]*"
                                                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder-gray-500"

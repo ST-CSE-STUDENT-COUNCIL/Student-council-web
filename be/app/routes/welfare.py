@@ -17,6 +17,7 @@ from app.schemas.welfare import (
     GuidebookInfoUpdate
 )
 from datetime import datetime, timezone
+import re
 from app.database import get_supabase, get_supabase_admin
 from app.utils.auth import get_current_user, require_admin
 from app.utils.sheets import get_sheet_value
@@ -445,22 +446,30 @@ async def get_rental_items():
     for item in result.data:
         available_quantity = None
         
-        # 스프레드시트 ID가 있으면 재고 조회 시도
-        if item.get('spreadsheet_id'):
-            sheet_name = item.get('quantity_sheet_name', 'Sheet1')
-            cell_range = item.get('quantity_cell_range', 'B2')
+        # application_sheet_url에서 spreadsheet_id 자동 추출 (DB에 별도 저장 불필요)
+        spreadsheet_id = item.get('spreadsheet_id') or None
+        if not spreadsheet_id:
+            url = item.get('application_sheet_url', '')
+            match = re.search(r'/spreadsheets/d/([a-zA-Z0-9_-]+)', url)
+            if match:
+                spreadsheet_id = match.group(1)
+        
+        if spreadsheet_id:
+            # 빈 문자열이면 기본값 적용: 시트 이름은 물품명, 셀은 B2
+            sheet_name = item.get('quantity_sheet_name') or item.get('item_name', 'Sheet1')
+            cell_range = item.get('quantity_cell_range') or 'B2'
             # 시트 이름에 특수문자(괄호, +, 공백 등)가 포함되면 작은따옴표로 감싸야 함
             if not sheet_name.startswith("'"):
                 sheet_name = f"'{sheet_name}'"
             range_notation = f"{sheet_name}!{cell_range}"
-            cache_key = f"{item['spreadsheet_id']}:{range_notation}"
+            cache_key = f"{spreadsheet_id}:{range_notation}"
             
             # 캐시 확인
             if cache_key in get_rental_items.cache:
                 available_quantity = get_rental_items.cache[cache_key]
             else:
                 try:
-                    available_quantity = get_sheet_value(item['spreadsheet_id'], range_notation)
+                    available_quantity = get_sheet_value(spreadsheet_id, range_notation)
                     # 성공 시 캐시에 저장
                     get_rental_items.cache[cache_key] = available_quantity
                 except Exception as e:

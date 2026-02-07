@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useLocation } from '@tanstack/react-router'
 import { AlertCircle, ArrowRight } from 'lucide-react'
 import { useAuthStore } from '../../store/useAuthStore'
 import { Modal } from '../common/Modal'
@@ -8,6 +8,8 @@ export function VerificationPromptModal() {
     const navigate = useNavigate()
     const { user, isAuthenticated } = useAuthStore()
     const [isOpen, setIsOpen] = useState(false)
+
+    const location = useLocation()
 
     useEffect(() => {
         if (isAuthenticated && user) {
@@ -23,6 +25,12 @@ export function VerificationPromptModal() {
                 (user.verification_status === 'pending' && !user.verification_image_url)
 
             if (needsVerification) {
+                // If user is already on MyPage, don't show the modal
+                if (location.pathname === '/mypage') {
+                    setIsOpen(false)
+                    return
+                }
+
                 const dismissed = sessionStorage.getItem('verification_prompt_dismissed')
                 if (!dismissed) {
                     setIsOpen(true)
@@ -31,7 +39,7 @@ export function VerificationPromptModal() {
                 setIsOpen(false)
             }
         }
-    }, [isAuthenticated, user])
+    }, [isAuthenticated, user, location.pathname])
 
     const handleClose = () => {
         setIsOpen(false)
