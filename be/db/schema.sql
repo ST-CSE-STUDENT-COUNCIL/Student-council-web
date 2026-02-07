@@ -357,7 +357,7 @@ CREATE TABLE rental_items (
   
   -- 구글 시트 연동
   application_sheet_url TEXT NOT NULL,  -- 구글 시트 URL (물품별로 다른 시트 가능)
-  spreadsheet_id TEXT DEFAULT '1r4MXOaZ-Pp-PYIUcjscWhnyz0hLwrcqpcut2oKDles8',  -- 고정: 대여사업 스프레드시트 ID
+  spreadsheet_id TEXT,  -- (사용 안 함) application_sheet_url에서 자동 추출
   quantity_sheet_name VARCHAR(100) DEFAULT '물품표',  -- 고정: 시트 이름
   quantity_cell_range VARCHAR(20) NOT NULL,  -- 물품별 재고 셀 위치 (예: C2, C4, C6)
   
