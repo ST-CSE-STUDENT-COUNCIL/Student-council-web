@@ -180,7 +180,7 @@ function MyPage() {
   const mappedProfileUpdates = React.useMemo(() => {
     const groups = new Map<string, {
       id: string
-      updates: Array<{ field: 'name' | 'student_id'; newValue: string }>
+      updates: Array<{ field: 'name' | 'student_id' | 'email' | 'phone'; newValue: string }>
       statusLabel: string
       requestedAt: string
       rejectionReason: string
@@ -235,8 +235,13 @@ function MyPage() {
     setContactPhone(currentUser.phone)
   }, [currentUser, isEditingContact])
 
-  const emailChanged = contactEmail.trim().length > 0 && contactEmail.trim() !== currentUser.email
-  const phoneChanged = normalizePhone(contactPhone) !== normalizePhone(currentUser.phone)
+  const safeUser = currentUser
+  if (!safeUser) {
+    return null
+  }
+
+  const emailChanged = contactEmail.trim().length > 0 && contactEmail.trim() !== safeUser.email
+  const phoneChanged = normalizePhone(contactPhone) !== normalizePhone(safeUser.phone)
   const canSendEmailVerification =
     emailChanged
     && EMAIL_REGEX.test(contactEmail.trim())
@@ -250,7 +255,7 @@ function MyPage() {
       return
     }
 
-    if (nextEmail === currentUser.email) {
+    if (nextEmail === safeUser.email) {
       setContactError('현재 이메일과 동일합니다.')
       return
     }
