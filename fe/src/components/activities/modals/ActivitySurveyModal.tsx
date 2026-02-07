@@ -14,8 +14,16 @@ type ActivitySurveyModalProps = {
 
 export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: ActivitySurveyModalProps) => {
     const [surveyResponses, setSurveyResponses] = useState<Record<string, any>>({})
+    const [step, setStep] = useState(1)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    // 모달이 열릴 때 초기화
+    useState(() => {
+        if (isOpen) {
+            setStep(1)
+        }
+    })
 
     // 설문 질문 데이터 정규화 (form_fields 또는 config.questions 지원)
     const formFields = useMemo(() => {
@@ -38,8 +46,80 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
         return []
     }, [activity])
 
+    // 섹션별로 필드 그룹화
+    const sections = useMemo(() => {
+        if (!formFields || formFields.length === 0) return []
+
+        const result: { title: string; fields: any[] }[] = []
+        let currentSection: { title: string; fields: any[] } = {
+            title: '설문조사',
+            fields: []
+        }
+
+        // 섹터가 하나도 없으면 기본 섹션 하나에 다 넣음
+        const hasSectionBreak = formFields.some((f: any) => f.type === 'section')
+        if (!hasSectionBreak) {
+            return [{ title: '설문조사', fields: formFields }]
+        }
+
+        formFields.forEach((field: any) => {
+            if (field.type === 'section') {
+                if (currentSection.fields.length > 0 || result.length > 0) {
+                    result.push(currentSection)
+                }
+                currentSection = { title: field.label, fields: [] }
+            } else {
+                currentSection.fields.push(field)
+            }
+        })
+        result.push(currentSection)
+        return result
+    }, [formFields])
+
+    const totalSteps = sections.length > 0 ? sections.length : 1
+    const currentSection = sections.length > 0 ? sections[step - 1] : { title: '', fields: [] }
+
+    const validateStep = () => {
+        // 필드가 없는 경우 (기본 텍스트 입력)
+        if (formFields.length === 0) {
+            return !!surveyResponses['feedback']
+        }
+
+        // 현재 섹션 필드 검사
+        if (!currentSection) return true
+
+        for (const field of currentSection.fields) {
+            if (field.required) {
+                const value = surveyResponses[field.name]
+                if (!value || (Array.isArray(value) && value.length === 0)) {
+                    toast.error(`${field.label} 항목을 입력해주세요.`)
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    const handleNext = () => {
+        if (validateStep()) {
+            setStep(prev => prev + 1)
+        }
+    }
+
+    const handlePrev = () => {
+        setStep(prev => prev - 1)
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        if (step < totalSteps) {
+            handleNext()
+            return
+        }
+
+        if (!validateStep()) return
+
         setLoading(true)
         setError(null)
 
@@ -76,6 +156,7 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
             onClose()
             toast.success('제출이 완료되었습니다.\n참여해주셔서 감사합니다.')
             setSurveyResponses({})
+            setStep(1)
         } catch (err: any) {
             const errorMessage = err.response?.data?.detail || '제출 중 오류가 발생했습니다.'
             setError(errorMessage)
@@ -102,35 +183,64 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
     }
 
     return (
-        <Modal 
-            isOpen={isOpen} 
-            onClose={onClose} 
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
             title={getTitle()}
             footer={
                 <div className="flex gap-3">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
-                    >
-                        취소
-                    </button>
-                    <button
-                        type="submit"
-                        form="survey-form"
-                        disabled={loading}
-                        className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
-                    >
-                        {loading ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : '제출하기'}
-                    </button>
+                    {step === 1 ? (
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                        >
+                            취소
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={handlePrev}
+                            className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                        >
+                            이전
+                        </button>
+                    )}
+
+                    {step < totalSteps ? (
+                        <button
+                            type="button"
+                            onClick={handleNext}
+                            className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
+                        >
+                            다음
+                        </button>
+                    ) : (
+                        <button
+                            type="submit"
+                            form="survey-form"
+                            disabled={loading}
+                            className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center"
+                        >
+                            {loading ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : '제출하기'}
+                        </button>
+                    )}
                 </div>
             }
         >
             <form id="survey-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
+                {totalSteps > 1 && (
+                    <div className="flex items-center gap-2 mb-2">
+                        {Array.from({ length: totalSteps }).map((_, i) => (
+                            <div key={i} className={`flex-1 h-2 rounded-full transition-colors ${step >= i + 1 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                        ))}
+                    </div>
+                )}
+
                 <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-800 mb-2">
-                    <p className="font-bold mb-1">{activity.title}</p>
+                    <p className="font-bold mb-1">{currentSection?.title || activity.title}</p>
                     <p>여러분의 소중한 의견을 들려주세요. (철저한 익명 보장)</p>
                 </div>
 
@@ -143,7 +253,7 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
                 {/* 질문이 있는 경우 동적 렌더링 */}
                 {formFields.length > 0 ? (
                     <div className="space-y-6">
-                        {formFields.map((field: any, index: number) => (
+                        {currentSection?.fields?.map((field: any, index: number) => (
                             <motion.div
                                 key={field.name || index}
                                 className="border-b border-gray-100 pb-4 last:border-0"
@@ -152,6 +262,7 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
                                 transition={{ delay: 0.1 + (index * 0.08) }}
                             >
                                 <label className="block text-sm font-semibold text-gray-800 mb-2">
+                                    {/* 섹션 내 순서로 표시 */}
                                     {index + 1}. {field.label}
                                     {field.required && <span className="text-red-500 ml-1">*</span>}
                                 </label>

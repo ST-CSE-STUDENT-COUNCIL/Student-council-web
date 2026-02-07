@@ -77,3 +77,36 @@ class RentalItemUpdate(BaseModel):
     quantity_sheet_name: Optional[str] = None
     quantity_cell_range: Optional[str] = None
     is_active: Optional[bool] = None
+
+
+# ============================================================================
+# 프린트 복지사업 (Print Welfare)
+# ============================================================================
+
+class PrintWelfareInfo(BaseModel):
+    """프린트 복지사업 정보"""
+    id: int
+    image_url: Optional[str] = Field(None, description="프린트 관련 이미지 URL")
+    description: Optional[str] = Field(None, description="설명")
+    google_form_url: Optional[str] = Field(None, description="신청 구글폼 URL")
+    updated_at: datetime = Field(..., description="마지막 수정 시각")
+
+    class Config:
+        from_attributes = True
+
+
+class PrintWelfareInfoUpdate(BaseModel):
+    """프린트 복지사업 정보 수정 (관리자용)"""
+    description: Optional[str] = Field(None, description="설명")
+    google_form_url: Optional[str] = Field(None, description="신청 구글폼 URL")
+
+
+# ============================================================================
+# 신입생 가이드북 (Freshman Guidebook)
+# ============================================================================
+
+class GuidebookInfoUpdate(BaseModel):
+    """신입생 가이드북 정보 수정 (관리자용)"""
+    notion_url: Optional[str] = Field(None, description="노션 페이지 URL")
+    title: Optional[str] = Field(None, description="제목")
+    description: Optional[str] = Field(None, description="설명")

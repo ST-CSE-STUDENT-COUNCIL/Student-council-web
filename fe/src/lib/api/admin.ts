@@ -2,8 +2,8 @@ import { api } from '../axios'
 import type { PendingUserItem, UserListItem, RejectedUserItem, BlockedUserItem } from '../../types/users'
 
 export const adminApi = {
-    getPendingUsers: async () => {
-        const response = await api.get<{ users: PendingUserItem[]; total: number }>('/admin/users/pending')
+    getPendingUsers: async (params?: { page?: number; limit?: number }) => {
+        const response = await api.get<{ users: PendingUserItem[]; total: number }>('/admin/users/pending', { params })
         return response.data
     },
     approveUser: async (userId: string) => {
@@ -14,7 +14,13 @@ export const adminApi = {
         const response = await api.post<{ message: string }>(`/admin/users/${userId}/reject`, { reason })
         return response.data
     },
-    getUsers: async (params?: { role?: string | null; verification_status?: string | null; membership_paid?: boolean | null }) => {
+    getUsers: async (params?: {
+        role?: string | null
+        verification_status?: string | null
+        membership_paid?: boolean | null
+        page?: number
+        limit?: number
+    }) => {
         const response = await api.get<{ users: UserListItem[]; total: number }>('/admin/users', { params })
         return response.data
     },
@@ -75,6 +81,8 @@ export const adminApi = {
         const response = await api.post(`/admin/profile-updates/${requestId}/reject`, null, {
             params: { reason },
         })
+    getSignedUrl: async (path: string) => {
+        const response = await api.get<{ signed_url: string }>('/admin/storage/signed-url', { params: { path } })
         return response.data
     },
 }

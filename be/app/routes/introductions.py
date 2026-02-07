@@ -27,6 +27,37 @@ import os
 router = APIRouter(tags=["학생회 소개"])
 
 
+# ============================================================================
+# 개인정보 총책임자 정보 (공개)
+# ============================================================================
+
+@router.get(
+    "/privacy-officer",
+    summary="개인정보 총책임자 정보 조회 (공개)",
+    description="개인정보 총책임자(학생회장) 정보를 조회합니다. 로그인 불필요."
+)
+async def get_privacy_officer_info_public():
+    """개인정보 총책임자 정보 조회 (공개)"""
+    try:
+        result = supabase.table('privacy_officer_info').select('*').eq('id', 1).single().execute()
+        
+        if not result.data:
+            return {
+                "name": None,
+                "phone": None,
+                "email": None,
+                "office_address": None,
+                "description": None
+            }
+        
+        return result.data
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"조회 실패: {str(e)}"
+        )
+
+
 @router.get(
     "/introductions/images",
     response_model=IntroductionImageListResponse,

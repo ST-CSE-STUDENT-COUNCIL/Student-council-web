@@ -54,5 +54,15 @@ export const authApi = {
     resetPassword: async (data: { student_id: string; new_password: string }) => {
         const response = await api.post<{ message: string }>(`${API_BASE_URL}/reset-password`, data)
         return response.data
+    },
+
+    // 토큰 갱신 (HttpOnly 쿠키의 refresh_token 사용)
+    refresh: async (): Promise<{ access_token: string; token_type: string }> => {
+        const response = await api.post<{ access_token: string; token_type: string }>(
+            `${API_BASE_URL}/refresh`,
+            null,
+            { withCredentials: true }  // 쿠키 전송 필수
+        )
+        return response.data
     }
 }
