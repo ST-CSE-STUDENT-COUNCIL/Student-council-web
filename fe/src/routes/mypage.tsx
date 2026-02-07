@@ -3,9 +3,9 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Key, UserX } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { mypageApi } from '../lib/api/mypage'
-import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, ChangePasswordModal, WithdrawModal } from '../components/mypage'
+import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, EditProfileModal, ChangePasswordModal, WithdrawModal, ProfileInfoHeader, ProfileUpdateSection } from '../components/mypage'
 import type { User } from '../types/users'
-import type { MyRegistration } from '../lib/api/mypage'
+import type { MyRegistration, ProfileUpdateRequest } from '../lib/api/mypage'
 
 export const Route = createFileRoute('/mypage')({
   component: MyPage,
@@ -16,9 +16,12 @@ function MyPage() {
   const [profile, setProfile] = React.useState<User | null>(user)
   const [activeTab, setActiveTab] = React.useState<'info' | 'events'>('info')
   const [showVerifyModal, setShowVerifyModal] = React.useState(false)
+  const [showEditProfileModal, setShowEditProfileModal] = React.useState(false)
   const [showPasswordModal, setShowPasswordModal] = React.useState(false)
   const [showWithdrawModal, setShowWithdrawModal] = React.useState(false)
   const [myRegistrations, setMyRegistrations] = React.useState<MyRegistration[]>([])
+  const [profileUpdateRequests, setProfileUpdateRequests] = React.useState<ProfileUpdateRequest[]>([])
+  const [profileUpdateError, setProfileUpdateError] = React.useState<string | null>(null)
   const currentUser = profile ?? user
 
   const handleWithdraw = React.useCallback(() => {
@@ -41,20 +44,42 @@ function MyPage() {
     let cancelled = false
 
     async function loadData() {
-      try {
-        const [profileData, registrationsData] = await Promise.all([
-          mypageApi.getProfile(),
-          mypageApi.getMyRegistrations()
-        ])
+      const results = await Promise.allSettled([
+        mypageApi.getProfile(),
+        mypageApi.getMyRegistrations(),
+        mypageApi.getProfileUpdateRequests(),
+      ])
 
-        if (cancelled) return
+      if (cancelled) return
 
-        setProfile(profileData)
-        setUser(profileData)
-        setMyRegistrations(registrationsData.items)
-      } catch (err) {
-        if (cancelled) return
-        console.error('Failed to load profile or registrations', err)
+      const [profileResult, registrationsResult, updatesResult] = results
+
+      if (profileResult.status === 'fulfilled') {
+        setProfile(profileResult.value)
+        setUser(profileResult.value)
+      } else {
+        console.error('Failed to load profile', profileResult.reason)
+      }
+
+      if (registrationsResult.status === 'fulfilled') {
+        setMyRegistrations(registrationsResult.value.items)
+      } else {
+        console.error('Failed to load registrations', registrationsResult.reason)
+      }
+
+      if (updatesResult.status === 'fulfilled') {
+        const data = updatesResult.value
+        const payload =
+          Array.isArray(data) ? data :
+          Array.isArray((data as { items?: unknown })?.items) ? (data as { items: unknown[] }).items :
+          Array.isArray((data as { requests?: unknown })?.requests) ? (data as { requests: unknown[] }).requests :
+          []
+
+        setProfileUpdateRequests(payload as ProfileUpdateRequest[])
+        setProfileUpdateError(null)
+      } else {
+        console.error('Failed to load profile update requests', updatesResult.reason)
+        setProfileUpdateError('프로필 변경 요청 내역을 불러오지 못했습니다.')
       }
     }
 
@@ -70,7 +95,6 @@ function MyPage() {
 
     return myRegistrations
       .filter(reg => {
-        if (reg.status === 'cancelled') return false
         if (!reg.activity) return false
 
         const endDate = reg.activity.registration_end
@@ -93,7 +117,6 @@ function MyPage() {
     return myRegistrations
       .filter(reg => {
         if (!reg.activity) return false
-        if (reg.status === 'cancelled') return false
 
         const endDate = reg.activity.registration_end
         if (!endDate) return false // 종료일 없으면 완료되지 않음 (상시)
@@ -103,6 +126,10 @@ function MyPage() {
       .map(reg => ({
         title: reg.activity!.title,
         date: formatDate(reg.activity!.registration_end || reg.registered_at),
+        status: reg.status === 'rejected' || reg.status === 'cancelled'
+          ? getStatusLabel(reg.status)
+          : '마감',
+        rawStatus: reg.status,
       }))
   }, [myRegistrations])
 
@@ -136,6 +163,54 @@ function MyPage() {
     { id: 'info', label: '내 정보' },
     { id: 'events', label: '행사' },
   ]
+
+  const mappedProfileUpdates = React.useMemo(() => {
+    const groups = new Map<string, {
+      id: string
+      updates: Array<{ field: 'name' | 'student_id'; newValue: string }>
+      statusLabel: string
+      requestedAt: string
+      rejectionReason: string
+    }>()
+
+    profileUpdateRequests.forEach((item, index) => {
+      const field: 'name' | 'student_id' = item.field_name === 'student_id' ? 'student_id' : 'name'
+      const createdAt = item.created_at || item.requested_at || ''
+      const rejectionReason = item.rejection_reason || item.reason || ''
+      const groupKey = normalizeDateKey(createdAt)
+
+      const existing = groups.get(groupKey)
+      const base = existing ?? {
+        id: String(item.id ?? index),
+        updates: [],
+        statusLabel: getProfileUpdateStatusLabel(item.status),
+        requestedAt: createdAt ? formatDateTime(createdAt) : '-',
+        rejectionReason,
+      }
+
+      const updates = base.updates.some((u) => u.field === field)
+        ? base.updates.map((u) => (u.field === field ? { field, newValue: item.new_value ?? '-' } : u))
+        : [...base.updates, { field, newValue: item.new_value ?? '-' }]
+
+      const nextStatus = mergeStatusLabel(base.statusLabel, getProfileUpdateStatusLabel(item.status))
+      const nextReason = base.rejectionReason || rejectionReason
+
+      groups.set(groupKey, {
+        ...base,
+        updates,
+        statusLabel: nextStatus,
+        rejectionReason: nextReason,
+      })
+    })
+
+    return Array.from(groups.values())
+  }, [profileUpdateRequests])
+
+  const hasPendingProfileUpdate = React.useMemo(() => {
+    return profileUpdateRequests.some(
+      (item) => item.status === 'pending' || item.status === 'submitted'
+    )
+  }, [profileUpdateRequests])
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -212,7 +287,11 @@ function MyPage() {
         <main className="flex-1 space-y-6">
           {activeTab === 'info' && (
             <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">내 정보</h2>
+              <ProfileInfoHeader
+                hasPendingProfileUpdate={hasPendingProfileUpdate}
+                onEditProfile={() => setShowEditProfileModal(true)}
+              />
+
               <div className="space-y-4">
                 <InfoLine label="이름" value={currentUser.name} />
                 <InfoLine label="학번" value={currentUser.student_id} />
@@ -224,6 +303,11 @@ function MyPage() {
                   <Badge tone={getMembershipStatus(currentUser)} />
                 </div>
               </div>
+
+              <ProfileUpdateSection
+                error={profileUpdateError}
+                items={mappedProfileUpdates}
+              />
             </section>
           )}
 
@@ -260,7 +344,7 @@ function MyPage() {
                     <div key={event.title} className="border border-gray-100 dark:border-slate-700 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm text-gray-500 dark:text-gray-400">{event.date}</p>
-                        <StatusPill status="마감" />
+                        <StatusPill status={event.status} />
                       </div>
                       <p className="font-semibold text-gray-900 dark:text-white">{event.title}</p>
                     </div>
@@ -275,6 +359,14 @@ function MyPage() {
         </main>
 
         {showVerifyModal && <VerifyModal onClose={() => setShowVerifyModal(false)} onUploaded={handleVerificationUploaded} />}
+        {showEditProfileModal && (
+          <EditProfileModal
+            onClose={() => setShowEditProfileModal(false)}
+            initialName={currentUser.name}
+            initialStudentId={currentUser.student_id}
+            verificationStatus={currentUser.verification_status}
+          />
+        )}
         {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
         {showWithdrawModal && <WithdrawModal onClose={() => setShowWithdrawModal(false)} />}
       </div>
@@ -306,11 +398,44 @@ function formatDate(dateStr: string) {
   }
 }
 
+function formatDateTime(dateStr: string) {
+  if (!dateStr) return '-'
+  const parsed = new Date(dateStr)
+  if (Number.isNaN(parsed.getTime())) return dateStr
+  return parsed.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+}
+
+function getProfileUpdateStatusLabel(status?: string | null) {
+  const normalized = (status ?? '').toLowerCase().trim()
+  if (normalized === 'approved' || normalized === 'approve') return '승인'
+  if (normalized === 'rejected' || normalized === 'reject' || normalized === 'denied') return '반려'
+  if (normalized === 'pending' || normalized === 'submitted') return '대기'
+  return status || '대기'
+}
+
+function mergeStatusLabel(current: string, incoming: string) {
+  if (current === '반려' || incoming === '반려') return '반려'
+  if (current === '대기' || incoming === '대기') return '대기'
+  return '승인'
+}
+
+function normalizeDateKey(dateStr: string) {
+  if (!dateStr) return 'no-date'
+  const parsed = new Date(dateStr)
+  if (Number.isNaN(parsed.getTime())) return dateStr
+  const year = parsed.getFullYear()
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const hour = String(parsed.getHours()).padStart(2, '0')
+  const minute = String(parsed.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hour}:${minute}`
+}
+
 function getStatusLabel(status: string) {
   switch (status) {
     case 'pending': return '신청 대기'
     case 'approved': return '신청 승인'
-    case 'rejected': return '반려됨'
+    case 'rejected': return '신청 거절'
     case 'cancelled': return '취소됨'
     default: return status
   }

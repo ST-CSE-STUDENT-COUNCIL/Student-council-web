@@ -9,6 +9,7 @@ const MENU_ITEMS = [
     { label: '행사·공지 신청', href: '/admin/events', icon: Calendar },
     { label: '수요조사·설문조사', href: '/admin/surveys', icon: BarChart3 },
     { label: '카톡방 초대', href: '/admin/kakaotalk', icon: MessageCircle },
+    { label: '프로필 변경 요청', href: '/admin/profile-updates', icon: UserRoundPen },
     { label: '복지 사업 관리', href: '/admin/welfare', icon: Gift },
     { label: '동아리 관리', href: '/admin/clubs', icon: Users },
     { label: '건의함 관리', href: '/admin/suggestions', icon: MessageSquare },
