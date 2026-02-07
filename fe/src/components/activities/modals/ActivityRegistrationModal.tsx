@@ -162,19 +162,28 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         // 제출 전 유효성 검사 (현재 단계)
         if (!validateStep()) return
 
+        // 비회원 Turnstile 검증
+        if (isNonMember && !turnstileToken) {
+            toast.error('보안 검증을 완료해주세요.')
+            return
+        }
+
         setLoading(true)
         setError(null)
 
         try {
             // 수요조사일 경우 익명성을 위해 더미 데이터 사용
-            const submissionData = isAnonymousType ? {
-                ...formData,
-                name: '익명',
-                phone: '010-0000-0000',
-                student_id: '00000000',
-                department: '익명',
-                email: 'anonymous@example.com', // API 필수값 충족용
-            } : formData
+            const submissionData = {
+                ...(isAnonymousType ? {
+                    ...formData,
+                    name: '익명',
+                    phone: '010-0000-0000',
+                    student_id: '00000000',
+                    department: '익명',
+                    email: 'anonymous@example.com',
+                } : formData),
+                turnstile_token: turnstileToken || undefined
+            }
 
             await activityApi.register(activity.id, submissionData)
             await onSubmit(submissionData)
@@ -227,11 +236,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
     // 1단계 유효성 검사
     const validateStep1 = () => {
-        // 비회원 Turnstile 검증 (모든 타입에서 비회원이면 검증)
-        if (isNonMember && !turnstileToken) {
-            toast.error('보안 검증을 완료해주세요.')
-            return false
-        }
+
 
         if (isAnonymousType) return true
 
@@ -547,15 +552,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                     </div>
                                 )}
 
-                                {/* 비회원 Turnstile (비회원인 경우 항상 표시) */}
-                                {isNonMember && (
-                                    <div className="flex justify-center mt-4">
-                                        <Turnstile
-                                            onVerify={(token) => setTurnstileToken(token)}
-                                            onExpire={() => setTurnstileToken(null)}
-                                        />
-                                    </div>
-                                )}
+
                             </motion.div>
                         )}
 
@@ -716,6 +713,15 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                             </motion.div>
                         )}
                     </AnimatePresence>
+                    {/* 비회원 Turnstile (마지막 단계에서 표시) */}
+                    {step === totalSteps && isNonMember && (
+                        <div className="flex justify-center mt-4">
+                            <Turnstile
+                                onVerify={(token) => setTurnstileToken(token)}
+                                onExpire={() => setTurnstileToken(null)}
+                            />
+                        </div>
+                    )}
                 </form>
             )}
         </Modal>
