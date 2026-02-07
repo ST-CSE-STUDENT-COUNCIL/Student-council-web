@@ -470,7 +470,6 @@ class AttendanceSearchRequest(BaseModel):
 class AttendanceCheckRequest(BaseModel):
     """출석 체크 요청"""
     student_id: str = Field(..., description="학번")
-    turnstile_token: str = Field(..., description="Turnstile 인증 토큰")
 
 
 class AttendanceCheckResponse(BaseModel):

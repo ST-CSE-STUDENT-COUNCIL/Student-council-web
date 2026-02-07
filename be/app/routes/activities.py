@@ -1552,10 +1552,6 @@ async def attend_by_student_id(
 ):
     """학번으로 출석 체크 (로그인 불필요)"""
     try:
-        # Turnstile 봇 방지 검증
-        from app.utils.turnstile import verify_turnstile
-        await verify_turnstile(token=body.turnstile_token)
-        
         admin_supabase = get_supabase_admin()
         
         # 학번으로 신청 내역 조회
@@ -1574,14 +1570,18 @@ async def attend_by_student_id(
         if reg.get('attended'):
             raise HTTPException(status_code=409, detail="이미 출석 체크가 완료되었습니다")
         
-        # 출석 체크
+        # 출석 체크 (attended=False 조건으로 race condition 방지)
         from datetime import timezone
         now = datetime.now(timezone.utc)
         
-        admin_supabase.table('activity_registrations').update({
+        update_result = admin_supabase.table('activity_registrations').update({
             'attended': True,
             'attended_at': now.isoformat()
-        }).eq('id', reg['id']).execute()
+        }).eq('id', reg['id']).eq('attended', False).execute()
+        
+        # 동시 요청으로 이미 처리된 경우
+        if not update_result.data:
+            raise HTTPException(status_code=409, detail="이미 출석 체크가 완료되었습니다")
         
         return AttendanceCheckResponse(
             registration_id=reg['id'],
