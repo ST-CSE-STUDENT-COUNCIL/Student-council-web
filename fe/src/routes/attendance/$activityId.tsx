@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SEO } from '../../components/common/SEO'
+import { activityApi } from '../../lib/api/activities'
 
 export const Route = createFileRoute('/attendance/$activityId')({
     component: AttendancePage,
@@ -9,13 +10,30 @@ export const Route = createFileRoute('/attendance/$activityId')({
 function AttendancePage() {
     const { activityId } = Route.useParams()
     const [studentId, setStudentId] = useState('')
-    const [submitted, setSubmitted] = useState(false)
+    const [submittedMessage, setSubmittedMessage] = useState<string | null>(null)
+    const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const canSubmit = studentId.trim().length > 0
+    const activityIdNumber = useMemo(() => Number(activityId), [activityId])
 
-    const handleSubmit = () => {
-        if (!canSubmit) return
-        setSubmitted(true)
+    const canSubmit = studentId.trim().length > 0 && !Number.isNaN(activityIdNumber)
+
+    const handleSubmit = async () => {
+        if (!canSubmit || isSubmitting) return
+        try {
+            setIsSubmitting(true)
+            setErrorMessage(null)
+            setSubmittedMessage(null)
+            const response = await activityApi.attendByStudentId(activityIdNumber, {
+                student_id: studentId.trim(),
+            })
+            setSubmittedMessage(response.message || '출석이 등록되었습니다.')
+        } catch (error) {
+            console.error('Attendance check failed', error)
+            setErrorMessage('출석 등록에 실패했습니다. 학번을 확인해주세요.')
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (
@@ -38,7 +56,8 @@ function AttendancePage() {
                             value={studentId}
                             onChange={(event) => {
                                 setStudentId(event.target.value)
-                                setSubmitted(false)
+                                setSubmittedMessage(null)
+                                setErrorMessage(null)
                             }}
                             placeholder="예) 20201234"
                             className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
@@ -49,16 +68,20 @@ function AttendancePage() {
                     <button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={!canSubmit}
+                        disabled={!canSubmit || isSubmitting}
                         className="mt-6 w-full rounded-2xl bg-emerald-600 text-white py-3 font-semibold shadow-md shadow-emerald-200 hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        출석 등록
+                        {isSubmitting ? '처리 중...' : '출석 등록'}
                     </button>
 
                     <div className="mt-6 rounded-2xl border border-dashed border-slate-200 p-4 text-sm">
-                        {submitted ? (
+                        {errorMessage ? (
+                            <div className="text-rose-600 font-semibold">
+                                {errorMessage}
+                            </div>
+                        ) : submittedMessage ? (
                             <div className="text-emerald-700 font-semibold">
-                                출석이 등록되었습니다.
+                                {submittedMessage}
                             </div>
                         ) : (
                             <div className="text-slate-500">
