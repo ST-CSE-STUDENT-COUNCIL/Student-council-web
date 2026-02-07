@@ -86,6 +86,7 @@ export type ActivityCreateRequest = {
     thumbnail_url?: string
     image_urls?: { public_url: string }[]
     is_active?: boolean
+    is_anonymous?: boolean
 }
 
 // 활동 수정 요청
@@ -101,6 +102,7 @@ export type ActivityUpdateRequest = {
     thumbnail_url?: string
     image_urls?: { public_url: string }[]
     is_active?: boolean
+    is_anonymous?: boolean
 }
 
 
@@ -114,6 +116,7 @@ export type ActivityRegistrationRequest = {
     verification_image_url?: string
     form_responses?: Record<string, any>
     kakao_id?: string
+    turnstile_token?: string
 }
 
 // 활동 신청 응답
@@ -152,6 +155,7 @@ export type SurveySubmitRequest = {
     phone?: string
     email?: string
     survey_responses: Record<string, any>
+    turnstile_token?: string
 }
 
 // 활동 상태 (UI용)
