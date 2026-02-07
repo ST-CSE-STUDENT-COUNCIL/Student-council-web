@@ -109,9 +109,10 @@ def generate_presigned_url(
         )
         return presigned_url
     except Exception as e:
+        print(f"[UTIL ERROR] generate_presigned_url: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Presigned URL 생성 실패: {str(e)}"
+            detail="Presigned URL 생성 실패"
         )
 
 
@@ -146,9 +147,10 @@ def generate_presigned_url_with_content_type(
         )
         return presigned_url
     except Exception as e:
+        print(f"[UTIL ERROR] generate_presigned_url_with_content_type: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Presigned URL 생성 실패: {str(e)}"
+            detail="Presigned URL 생성 실패"
         )
 
 
@@ -221,16 +223,18 @@ async def upload_file_to_r2(
         return public_url
     
     except ClientError as e:
+        print(f"[UTIL ERROR] upload_file_to_r2 ClientError: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"R2 업로드 실패: {str(e)}"
+            detail="R2 업로드 실패"
         )
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[UTIL ERROR] upload_file_to_r2: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"파일 처리 실패: {str(e)}"
+            detail="파일 처리 실패"
         )
 
 
@@ -338,16 +342,18 @@ async def upload_post_attachment(file: UploadFile, post_id: int) -> dict:
         }
     
     except ClientError as e:
+        print(f"[UTIL ERROR] upload_post_file_to_r2 ClientError: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"R2 업로드 실패: {str(e)}"
+            detail="R2 업로드 실패"
         )
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[UTIL ERROR] upload_post_file_to_r2: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"파일 처리 실패: {str(e)}"
+            detail="파일 처리 실패"
         )
 
 

@@ -88,7 +88,7 @@ async def get_activities(
             count_query = count_query.eq("type", type_filter)
         
         count_result = count_query.execute()
-        total = len(count_result.data) if count_result.data else 0
+        total = count_result.count if count_result.count is not None else 0
         
         # 목록 조회
         query = supabase.table("activities")\
@@ -162,7 +162,7 @@ async def get_activities(
         print(f"[API ERROR] get_activities: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"활동 목록 조회 실패: {str(e)}"
+            detail="활동 목록 조회 실패"
         )
 
 
@@ -239,6 +239,7 @@ async def get_activity(
             thumbnail_url=activity.get("thumbnail_url"),
             images=images,
             is_active=activity["is_active"],
+            is_anonymous=activity.get("is_anonymous", True),
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(activity["updated_at"].replace('Z', '+00:00')),
@@ -252,7 +253,7 @@ async def get_activity(
         print(f"[API ERROR] get_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"활동 조회 실패: {str(e)}"
+            detail="활동 조회 실패"
         )
 
 
@@ -315,7 +316,7 @@ async def register_for_activity(
     try:
         # 활동 정보 조회
         activity_result = supabase.table("activities")\
-            .select("type, require_membership, registration_start, registration_end, max_capacity, current_count")\
+            .select("type, require_membership, registration_start, registration_end, max_capacity, current_count, is_anonymous")\
             .eq("id", activity_id)\
             .eq("is_deleted", False)\
             .eq("is_active", True)\
@@ -348,8 +349,10 @@ async def register_for_activity(
             from app.utils.turnstile import verify_turnstile
             await verify_turnstile(token=body.turnstile_token)
             
-            # 필수 정보 확인
-            if not all([body.name, body.student_id, body.department, body.phone]):
+            # 필수 정보 확인 (is_anonymous=true인 활동은 익명 허용)
+            is_anonymous_allowed = activity.get("is_anonymous", True)
+            
+            if not is_anonymous_allowed and not all([body.name, body.student_id, body.department, body.phone]):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="비회원은 이름, 학번, 학과, 전화번호를 모두 입력해야 합니다"
@@ -357,11 +360,27 @@ async def register_for_activity(
         
         # 회원 정보 가져오기
         user_id = current_user["id"] if current_user else None
-        name = body.name or (current_user.get("name") if current_user else None)
-        student_id = body.student_id or (current_user.get("student_id") if current_user else None)
-        department = body.department or (current_user.get("department") if current_user else None)
-        phone = body.phone or (current_user.get("phone") if current_user else None)
-        email = body.email or (current_user.get("email") if current_user else None)
+        
+        # 익명 참여인 경우 개인정보는 None 또는 "익명" 처리
+        if activity.get("is_anonymous", True) and not body.name:
+             name = "익명"
+             student_id = None
+             department = None
+             phone = None
+             email = None
+        elif activity.get("is_anonymous", True) and current_user:
+             # 익명 모드에서 회원이 신청해도 "익명" 처리
+             name = "익명"
+             student_id = None
+             department = None
+             phone = None
+             email = None
+        else:
+            name = body.name or (current_user.get("name") if current_user else None)
+            student_id = body.student_id or (current_user.get("student_id") if current_user else None)
+            department = body.department or (current_user.get("department") if current_user else None)
+            phone = body.phone or (current_user.get("phone") if current_user else None)
+            email = body.email or (current_user.get("email") if current_user else None)
         
         # PostgreSQL 함수 호출
         rpc_result = supabase.rpc(
@@ -425,7 +444,7 @@ async def register_for_activity(
         print(f"[API ERROR] register_for_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"활동 신청 실패: {str(e)}"
+            detail="활동 신청 실패"
         )
 
 
@@ -493,7 +512,7 @@ async def cancel_activity_registration(
         print(f"[API ERROR] cancel_activity_registration: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"신청 취소 실패: {str(e)}"
+            detail="신청 취소 실패"
         )
 
 
@@ -512,16 +531,18 @@ async def cancel_activity_registration(
         404: {"model": ErrorResponse, "description": "활동 없음"}
     }
 )
+@limiter.limit("10/minute")
 async def submit_survey(
     activity_id: int,
     body: SurveySubmitRequest,
-    current_user: dict = Depends(require_verified_user)
+    request: Request,
+    current_user: Optional[dict] = Depends(optional_current_user)
 ):
-    """설문조사 제출"""
+    """설문조사 제출 (회원/비회원)"""
     try:
         # 활동 존재 및 타입 확인
         activity_result = supabase.table("activities")\
-            .select("type")\
+            .select("type, is_anonymous")\
             .eq("id", activity_id)\
             .eq("type", "survey")\
             .eq("is_deleted", False)\
@@ -534,32 +555,94 @@ async def submit_survey(
                 detail="설문조사를 찾을 수 없습니다"
             )
         
-        # 기존 응답 확인
-        existing = supabase.table("activity_registrations")\
-            .select("id")\
-            .eq("activity_id", activity_id)\
-            .eq("user_id", current_user["id"])\
-            .execute()
+        is_anonymous = activity_result.data.get("is_anonymous", True)
         
-        if existing.data:
-            # 업데이트
-            supabase.table("activity_registrations")\
-                .update({"survey_responses": body.survey_responses})\
-                .eq("id", existing.data[0]["id"])\
-                .execute()
-        else:
-            # 신규 등록
+        # 비회원 처리
+        if not current_user:
+            # Turnstile 검증
+            if not body.turnstile_token:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="비회원 참여는 Turnstile 인증이 필요합니다"
+                )
+            
+            from app.utils.turnstile import verify_turnstile
+            await verify_turnstile(token=body.turnstile_token)
+            
+            # 익명 모드: 이름을 "익명" 처리
+            if is_anonymous:
+                name = "익명"
+                reg_student_id = None
+                reg_department = None
+                reg_phone = None
+                reg_email = None
+            else:
+                # 기명 모드: 필수 정보 확인
+                if not all([body.name, body.student_id]):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="기명 설문조사는 이름과 학번을 입력해야 합니다"
+                    )
+                name = body.name
+                reg_student_id = body.student_id
+                reg_department = body.department
+                reg_phone = body.phone
+                reg_email = body.email
+            
+            # 신규 등록 (비회원 중복 체크 없음)
             supabase.table("activity_registrations").insert({
                 "activity_id": activity_id,
-                "user_id": current_user["id"],
-                "name": current_user.get("name"),
-                "student_id": current_user.get("student_id"),
-                "department": current_user.get("department"),
-                "phone": current_user.get("phone"),
-                "email": current_user.get("email"),
+                "user_id": None,
+                "name": name,
+                "student_id": reg_student_id,
+                "department": reg_department,
+                "phone": reg_phone,
+                "email": reg_email,
                 "survey_responses": body.survey_responses,
                 "status": "pending"
             }).execute()
+
+        else:
+            # 회원 처리 (기존 응답 확인)
+            existing = supabase.table("activity_registrations")\
+                .select("id")\
+                .eq("activity_id", activity_id)\
+                .eq("user_id", current_user["id"])\
+                .execute()
+            
+            # 익명 모드일 때 회원도 익명 처리
+            if is_anonymous:
+                reg_name = "익명"
+                reg_student_id = None
+                reg_department = None
+                reg_phone = None
+                reg_email = None
+            else:
+                reg_name = current_user.get("name")
+                reg_student_id = current_user.get("student_id")
+                reg_department = current_user.get("department")
+                reg_phone = current_user.get("phone")
+                reg_email = current_user.get("email")
+            
+            if existing.data:
+                # 업데이트
+                supabase.table("activity_registrations")\
+                    .update({"survey_responses": body.survey_responses})\
+                    .eq("id", existing.data[0]["id"])\
+                    .execute()
+            else:
+                # 신규 등록
+                supabase.table("activity_registrations").insert({
+                    "activity_id": activity_id,
+                    "user_id": current_user["id"],
+                    "name": reg_name,
+                    "student_id": reg_student_id,
+                    "department": reg_department,
+                    "phone": reg_phone,
+                    "email": reg_email,
+                    "survey_responses": body.survey_responses,
+                    "status": "pending"
+                }).execute()
         
         return {"message": "설문조사가 제출되었습니다"}
     
@@ -569,7 +652,7 @@ async def submit_survey(
         print(f"[API ERROR] submit_survey: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"설문조사 제출 실패: {str(e)}"
+            detail="설문조사 제출 실패"
         )
 
 
@@ -608,20 +691,7 @@ async def create_activity(
             "form_fields": [f.model_dump() for f in body.form_fields],
             "thumbnail_url": body.thumbnail_url,
             "is_active": body.is_active,
-            "created_by": current_user["id"]
-        }
-        activity_data = {
-            "type": body.type,
-            "title": body.title,
-            "description": body.description,
-            "registration_start": body.registration_start.isoformat() if body.registration_start else None,
-            "registration_end": body.registration_end.isoformat() if body.registration_end else None,
-            "max_capacity": body.max_capacity,
-            "require_membership": body.require_membership,
-            "config": body.config,
-            "form_fields": [f.model_dump() for f in body.form_fields],
-            "thumbnail_url": body.thumbnail_url,
-            "is_active": body.is_active,
+            "is_anonymous": body.is_anonymous,
             "created_by": current_user["id"]
         }
         
@@ -661,6 +731,7 @@ async def create_activity(
             form_fields=activity.get("form_fields", []),
             thumbnail_url=activity.get("thumbnail_url"),
             is_active=activity["is_active"],
+            is_anonymous=activity.get("is_anonymous", True),
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(activity["updated_at"].replace('Z', '+00:00')),
@@ -674,7 +745,7 @@ async def create_activity(
         print(f"[API ERROR] create_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"활동 생성 실패: {str(e)}"
+            detail="활동 생성 실패"
         )
 
 
@@ -721,6 +792,8 @@ async def update_activity(
             update_data["thumbnail_url"] = body.thumbnail_url
         if body.is_active is not None:
             update_data["is_active"] = body.is_active
+        if body.is_anonymous is not None:
+            update_data["is_anonymous"] = body.is_anonymous
         
         # image_urls가 있으면 check 플래그만 세팅 (아래에서 처리)
         has_image_updates = body.image_urls is not None
@@ -788,6 +861,7 @@ async def update_activity(
             form_fields=activity.get("form_fields", []),
             thumbnail_url=activity.get("thumbnail_url"),
             is_active=activity["is_active"],
+            is_anonymous=activity.get("is_anonymous", True),
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(activity["updated_at"].replace('Z', '+00:00')),
@@ -801,7 +875,7 @@ async def update_activity(
         print(f"[API ERROR] update_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"활동 수정 실패: {str(e)}"
+            detail="활동 수정 실패"
         )
 
 
@@ -849,7 +923,7 @@ async def delete_activity(
         print(f"[API ERROR] delete_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"활동 삭제 실패: {str(e)}"
+            detail="활동 삭제 실패"
         )
 
 
@@ -877,7 +951,7 @@ async def get_activity_registrations(
         # type: ignore는 count 파라미터의 타입 힌트 오류를 무시합니다
         count_result = supabase.table("activity_registrations").select("id", count="exact").eq("activity_id", activity_id).execute()  # type: ignore
         
-        total = len(count_result.data) if count_result.data else 0  # type: ignore
+        total = count_result.count if count_result.count is not None else 0
         
         # 목록 조회
         offset = (page - 1) * page_size
@@ -922,7 +996,7 @@ async def get_activity_registrations(
         print(f"[API ERROR] get_activity_registrations: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"신청자 목록 조회 실패: {str(e)}"
+            detail="신청자 목록 조회 실패"
         )
 
 
@@ -1002,7 +1076,7 @@ async def update_registration_status(
         print(f"[API ERROR] update_registration_status: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"상태 변경 실패: {str(e)}"
+            detail="상태 변경 실패"
         )
 
 
@@ -1129,7 +1203,7 @@ async def get_survey_stats(
         print(f"[API ERROR] get_survey_stats: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"설문조사 통계 조회 실패: {str(e)}"
+            detail="설문조사 통계 조회 실패"
         )
 
 
@@ -1160,7 +1234,7 @@ async def get_demand_survey_stats(
     try:
         # 수요조사 확인
         activity_result = supabase.table("activities")\
-            .select("form_fields, title")\
+            .select("form_fields, title, is_anonymous")\
             .eq("id", activity_id)\
             .eq("type", "demand_survey")\
             .eq("is_deleted", False)\
@@ -1183,6 +1257,7 @@ async def get_demand_survey_stats(
         
         total_responses = len(responses_result.data) if responses_result.data else 0
         form_fields = activity_result.data.get("form_fields", [])
+        is_anonymous = activity_result.data.get("is_anonymous", True)
         
         # 객관식/주관식 분류
         objective_stats = []  # 객관식 (select, radio, checkbox)
@@ -1239,9 +1314,14 @@ async def get_demand_survey_stats(
                     answer = form_resp.get(field_name)
                     
                     if answer is not None and str(answer).strip():
+                        # 익명 모드일 때는 응답자 정보를 "익명"으로 표시
+                        if is_anonymous:
+                            respondent = "익명"
+                        else:
+                            respondent = resp.get("name") or f"학번 {resp.get('student_id', '미상')}"
                         answers.append({
                             "answer": answer,
-                            "respondent": resp.get("name") or f"학번 {resp.get('student_id', '미상')}",
+                            "respondent": respondent,
                             "created_at": resp.get("created_at")
                         })
                 
@@ -1267,7 +1347,7 @@ async def get_demand_survey_stats(
         print(f"[API ERROR] get_demand_survey_stats: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"수요조사 통계 조회 실패: {str(e)}"
+            detail="수요조사 통계 조회 실패"
         )
 
 
@@ -1347,7 +1427,7 @@ async def add_activity_image(
         print(f"[API ERROR] add_activity_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 추가 실패: {str(e)}"
+            detail="이미지 추가 실패"
         )
 
 
@@ -1405,7 +1485,7 @@ async def delete_activity_image(
         print(f"[API ERROR] delete_activity_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 삭제 실패: {str(e)}"
+            detail="이미지 삭제 실패"
         )
 
 
@@ -1458,7 +1538,8 @@ async def search_attendance_by_student_id(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"출석 정보 조회 실패: {str(e)}")
+        print(f"[API ERROR] search_attendance_by_student_id: {str(e)}")
+        raise HTTPException(status_code=500, detail="출석 정보 조회 실패")
 
 
 @router.post(
@@ -1477,6 +1558,10 @@ async def attend_by_student_id(
 ):
     """학번으로 출석 체크 (로그인 불필요)"""
     try:
+        # Turnstile 봇 방지 검증
+        from app.utils.turnstile import verify_turnstile
+        await verify_turnstile(token=body.turnstile_token)
+        
         admin_supabase = get_supabase_admin()
         
         # 학번으로 신청 내역 조회
@@ -1512,7 +1597,8 @@ async def attend_by_student_id(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"출석 체크 실패: {str(e)}")
+        print(f"[API ERROR] attend_by_student_id: {str(e)}")
+        raise HTTPException(status_code=500, detail="출석 체크 실패")
 
 
 @router.get(
@@ -1580,7 +1666,8 @@ async def get_attendance_list(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"출석 현황 조회 실패: {str(e)}")
+        print(f"[API ERROR] get_attendance_list: {str(e)}")
+        raise HTTPException(status_code=500, detail="출석 현황 조회 실패")
 
 
 @router.post(
@@ -1632,7 +1719,8 @@ async def admin_mark_attendance(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"출석 체크 실패: {str(e)}")
+        print(f"[API ERROR] admin_mark_attendance: {str(e)}")
+        raise HTTPException(status_code=500, detail="출석 체크 실패")
 
 
 @router.delete(
@@ -1677,4 +1765,5 @@ async def admin_cancel_attendance(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"출석 취소 실패: {str(e)}")
+        print(f"[API ERROR] admin_cancel_attendance: {str(e)}")
+        raise HTTPException(status_code=500, detail="출석 취소 실패")

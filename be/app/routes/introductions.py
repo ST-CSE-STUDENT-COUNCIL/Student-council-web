@@ -52,9 +52,10 @@ async def get_privacy_officer_info_public():
         
         return result.data
     except Exception as e:
+        print(f"[API ERROR] get_privacy_officer_info_public: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"조회 실패: {str(e)}"
+            detail="조회 실패"
         )
 
 
@@ -91,7 +92,7 @@ async def get_introduction_images(
         print(f"[API ERROR] get_introduction_images: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 목록 조회 실패: {str(e)}"
+            detail="이미지 목록 조회 실패"
         )
 
 
@@ -167,7 +168,7 @@ async def create_introduction_image(
         print(f"[API ERROR] create_introduction_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 업로드 실패: {str(e)}"
+            detail="이미지 업로드 실패"
         )
 
 
@@ -229,7 +230,7 @@ async def update_introduction_image(
         print(f"[API ERROR] update_introduction_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 수정 실패: {str(e)}"
+            detail="이미지 수정 실패"
         )
 
 
@@ -279,5 +280,5 @@ async def delete_introduction_image(
         print(f"[API ERROR] delete_introduction_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 삭제 실패: {str(e)}"
+            detail="이미지 삭제 실패"
         )

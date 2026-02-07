@@ -9,6 +9,7 @@ export type ProfileUpdateRequest = {
   requestedAt: string
   requestedAtRaw: string
   status: 'pending' | 'approved' | 'rejected'
+  rejectionReason: string
   verificationImageUrl: string
 }
 

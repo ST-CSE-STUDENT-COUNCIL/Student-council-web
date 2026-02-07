@@ -221,7 +221,7 @@ async def get_notices(
         print(f"[NOTICES ERROR] {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"공지사항 조회 실패: {str(e)}"
+            detail="공지사항 조회 실패"
         )
 
 
@@ -291,9 +291,10 @@ async def get_notice(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] get_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"공지사항 조회 실패: {str(e)}"
+            detail="공지사항 조회 실패"
         )
 
 
@@ -354,11 +355,13 @@ async def create_draft_notice(
         limit_time = (datetime.now(timezone.utc) - timedelta(seconds=3)).isoformat()
         
         # 최근 3초 내 작성된 글이 있는지 확인 (Draft 포함 모든 글)
-        recent_check = supabase.table("posts")\
-            .select("id", count="exact")\
-            .eq("author_id", current_user["id"])\
-            .gte("created_at", limit_time)\
+        recent_check = (
+            supabase.table("posts")
+            .select("id", count="exact")  # type: ignore
+            .eq("author_id", current_user["id"])
+            .gte("created_at", limit_time)
             .execute()
+        )
             
         if recent_check.count and recent_check.count > 0:
              raise HTTPException(
@@ -404,9 +407,10 @@ async def create_draft_notice(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] create_draft_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Draft 생성 실패: {str(e)}"
+            detail="Draft 생성 실패"
         )
 
 
@@ -433,11 +437,13 @@ async def create_notice(
         limit_time = (datetime.now(timezone.utc) - timedelta(seconds=3)).isoformat()
         
         # Draft가 아닌 실제 글 작성만 체크 (posts 테이블)
-        recent_check = supabase.table("posts")\
-            .select("id", count="exact")\
-            .eq("author_id", current_user["id"])\
-            .gte("created_at", limit_time)\
+        recent_check = (
+            supabase.table("posts")
+            .select("id", count="exact")  # type: ignore
+            .eq("author_id", current_user["id"])
+            .gte("created_at", limit_time)
             .execute()
+        )
             
         if recent_check.count and recent_check.count > 0:
              raise HTTPException(
@@ -528,9 +534,10 @@ async def create_notice(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] create_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"공지사항 작성 실패: {str(e)}"
+            detail="공지사항 작성 실패"
         )
 
 
@@ -606,9 +613,10 @@ async def update_notice(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] update_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"공지사항 수정 실패: {str(e)}"
+            detail="공지사항 수정 실패"
         )
 
 
@@ -670,7 +678,8 @@ async def delete_notice(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] delete_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"공지사항 삭제 실패: {str(e)}"
+            detail="공지사항 삭제 실패"
         )

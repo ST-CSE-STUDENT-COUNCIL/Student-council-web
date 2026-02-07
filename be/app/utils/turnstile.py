@@ -61,7 +61,8 @@ async def verify_turnstile(token: str, remote_ip: Optional[str] = None) -> bool:
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[UTIL ERROR] verify_turnstile: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Turnstile 검증 중 오류 발생: {str(e)}"
+            detail="Turnstile 검증 중 오류 발생"
         )

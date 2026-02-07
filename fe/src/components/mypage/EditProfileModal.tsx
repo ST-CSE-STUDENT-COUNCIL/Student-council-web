@@ -76,15 +76,16 @@ export function EditProfileModal({ onClose, initialName = '', initialStudentId =
     })
   }
 
-  const isReady = name.trim().length > 0 && studentId.trim().length > 0 && Boolean(file)
+  const trimmedName = name.trim()
+  const trimmedStudentId = studentId.trim()
+
+  const nameChanged = trimmedName !== initialName
+  const studentIdChanged = trimmedStudentId !== initialStudentId
+  const isReady = trimmedName.length > 0 && trimmedStudentId.length > 0 && Boolean(file)
 
   async function handleSubmit() {
     if (!file || isSubmitting) return
 
-    const trimmedName = name.trim()
-    const trimmedStudentId = studentId.trim()
-    const nameChanged = trimmedName !== initialName
-    const studentIdChanged = trimmedStudentId !== initialStudentId
     const sendNameForStudentIdOnly = studentIdChanged && !nameChanged && trimmedName.length > 0
 
     if (!nameChanged && !studentIdChanged) {

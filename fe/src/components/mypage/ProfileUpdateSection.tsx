@@ -3,7 +3,7 @@
 
 type ProfileUpdateItem = {
   id: string
-  updates: Array<{ field: 'name' | 'student_id'; newValue: string }>
+  updates: Array<{ field: 'name' | 'student_id' | 'email' | 'phone'; newValue: string }>
   statusLabel: string
   requestedAt: string
   rejectionReason: string
@@ -36,7 +36,7 @@ export function ProfileUpdateSection({ error, items }: ProfileUpdateSectionProps
                 <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
                   {req.updates.map((update) => (
                     <p key={update.field}>
-                      변경 요청: <span className="font-semibold text-gray-900 dark:text-white">{update.field === 'name' ? '이름' : '학번'}</span> →{' '}
+                      변경 요청: <span className="font-semibold text-gray-900 dark:text-white">{getFieldLabel(update.field)}</span> →{' '}
                       <span className="font-semibold text-blue-600 dark:text-blue-400">{update.newValue}</span>
                     </p>
                   ))}
@@ -56,4 +56,19 @@ export function ProfileUpdateSection({ error, items }: ProfileUpdateSectionProps
       )}
     </div>
   )
+}
+
+function getFieldLabel(field: ProfileUpdateItem['updates'][number]['field']) {
+  switch (field) {
+    case 'name':
+      return '이름'
+    case 'student_id':
+      return '학번'
+    case 'email':
+      return '이메일'
+    case 'phone':
+      return '전화번호'
+    default:
+      return '정보'
+  }
 }
