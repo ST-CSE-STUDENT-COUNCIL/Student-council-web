@@ -2,18 +2,18 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useState, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { authApi } from '../lib/api/auth'
+import { authApi } from '../../../../lib/api/auth'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import { CheckCircle, Eye, EyeOff } from 'lucide-react'
 
-import { PhoneInput } from '../components/common/PhoneInput'
-import { Turnstile } from '../components/common/Turnstile'
-import { signupFormSchema, type SignupFormData } from '../schemas/auth'
-import { useEmailVerification } from '../hooks/useEmailVerification'
-import { useStudentIdCheck } from '../hooks/useStudentIdCheck'
+import { PhoneInput } from '../../../../components/common/PhoneInput'
+import { Turnstile } from '../../../../components/common/Turnstile'
+import { signupFormSchema, type SignupFormData } from '../../../../schemas/auth'
+import { useEmailVerification } from '../../../../hooks/useEmailVerification'
+import { useStudentIdCheck } from '../../../../hooks/useStudentIdCheck'
 
-export const Route = createFileRoute('/signup')({
+export const Route = createFileRoute('/_main/(auth)/signup/')({
     component: SignUp,
 })
 
@@ -137,7 +137,6 @@ function SignUp() {
                     </p>
                 </div>
             </div>
-
             {/* Right Section - Form */}
             <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-12 lg:p-24 bg-white dark:bg-slate-900 overflow-y-auto">
                 <div className="w-full max-w-xl space-y-10">
@@ -307,7 +306,7 @@ function SignUp() {
                                         <div className="pb-6">
                                             <PhoneInput
                                                 value={watch('phone')}
-                                                onChange={(value) => setValue('phone', value, { shouldValidate: true })}
+                                                onChange={(value: string) => setValue('phone', value, { shouldValidate: true })}
                                                 required
                                                 showValidation={true}
                                             />
@@ -391,7 +390,7 @@ function SignUp() {
                                     {/* Turnstile */}
                                     <div className="sm:col-span-2 py-2">
                                         <Turnstile
-                                            onVerify={(token) => setTurnstileToken(token)}
+                                            onVerify={(token: string) => setTurnstileToken(token)}
                                             onExpire={() => setTurnstileToken(null)}
                                         />
                                     </div>

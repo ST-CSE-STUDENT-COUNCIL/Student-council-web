@@ -1,13 +1,13 @@
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { authApi } from '../lib/api/auth'
+import { authApi } from '../../../../lib/api/auth'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import { User, Lock, Key, CheckCircle2, ChevronLeft, Mail, CheckCircle, Eye, EyeOff } from 'lucide-react'
-import { Turnstile } from '../components/common/Turnstile'
+import { Turnstile } from '../../../../components/common/Turnstile'
 
-export const Route = createFileRoute('/reset-password')({
+export const Route = createFileRoute('/_main/(auth)/reset-password/')({
     component: ResetPassword,
 })
 
@@ -164,7 +164,6 @@ function ResetPassword() {
                     </p>
                 </div>
             </div>
-
             {/* Right Section - Form */}
             <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-24 bg-white dark:bg-slate-900">
                 <div className="w-full max-w-sm">

@@ -9,28 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WelfareRouteImport } from './routes/welfare'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SuggestionRouteImport } from './routes/suggestion'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as NoticesRouteImport } from './routes/notices'
-import { Route as NonMemberPolicyRouteImport } from './routes/non-member-policy'
-import { Route as MypageRouteImport } from './routes/mypage'
 import { Route as MaintenanceRouteImport } from './routes/maintenance'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as IntroRouteImport } from './routes/intro'
 import { Route as ErrorRouteImport } from './routes/error'
-import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as SearchIndexRouteImport } from './routes/search/index'
-import { Route as NoticesIndexRouteImport } from './routes/notices/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as ActivitiesIndexRouteImport } from './routes/activities/index'
-import { Route as NoticesNoticeIdRouteImport } from './routes/notices/$noticeId'
-import { Route as AttendanceActivityIdRouteImport } from './routes/attendance/$activityId'
+import { Route as MainIndexRouteImport } from './routes/_main/index'
 import { Route as AdminWelfareRouteImport } from './routes/admin/welfare'
 import { Route as AdminSuggestionsRouteImport } from './routes/admin/suggestions'
 import { Route as AdminProfileUpdatesRouteImport } from './routes/admin/profile-updates'
@@ -47,71 +30,33 @@ import { Route as AdminSurveysCreateRouteImport } from './routes/admin/surveys/c
 import { Route as AdminNoticesCreateRouteImport } from './routes/admin/notices/create'
 import { Route as AdminKakaotalkCreateRouteImport } from './routes/admin/kakaotalk/create'
 import { Route as AdminEventsCreateRouteImport } from './routes/admin/events/create'
+import { Route as MaininfoNoticesRouteImport } from './routes/_main/(info)/notices'
 import { Route as AdminSurveysActivityIdIndexRouteImport } from './routes/admin/surveys/$activityId/index'
 import { Route as AdminEventsEventIdIndexRouteImport } from './routes/admin/events/$eventId/index'
+import { Route as MainserviceWelfareIndexRouteImport } from './routes/_main/(service)/welfare/index'
+import { Route as MainserviceSuggestionIndexRouteImport } from './routes/_main/(service)/suggestion/index'
+import { Route as MainserviceSearchIndexRouteImport } from './routes/_main/(service)/search/index'
+import { Route as MainserviceActivitiesIndexRouteImport } from './routes/_main/(service)/activities/index'
+import { Route as MainpolicyTermsIndexRouteImport } from './routes/_main/(policy)/terms/index'
+import { Route as MainpolicyPrivacyIndexRouteImport } from './routes/_main/(policy)/privacy/index'
+import { Route as MainpolicyNonMemberPolicyIndexRouteImport } from './routes/_main/(policy)/non-member-policy/index'
+import { Route as MaininfoNoticesIndexRouteImport } from './routes/_main/(info)/notices/index'
+import { Route as MaininfoIntroIndexRouteImport } from './routes/_main/(info)/intro/index'
+import { Route as MaininfoClubsIndexRouteImport } from './routes/_main/(info)/clubs/index'
+import { Route as MainauthSignupIndexRouteImport } from './routes/_main/(auth)/signup/index'
+import { Route as MainauthResetPasswordIndexRouteImport } from './routes/_main/(auth)/reset-password/index'
+import { Route as MainauthMypageIndexRouteImport } from './routes/_main/(auth)/mypage/index'
+import { Route as MainauthLoginIndexRouteImport } from './routes/_main/(auth)/login/index'
 import { Route as AdminSurveysActivityIdEditRouteImport } from './routes/admin/surveys/$activityId/edit'
 import { Route as AdminNoticesNoticeIdEditRouteImport } from './routes/admin/notices/$noticeId/edit'
 import { Route as AdminKakaotalkActivityIdEditRouteImport } from './routes/admin/kakaotalk/$activityId/edit'
 import { Route as AdminEventsEventIdEditRouteImport } from './routes/admin/events/$eventId/edit'
+import { Route as MainserviceAttendanceActivityIdRouteImport } from './routes/_main/(service)/attendance/$activityId'
+import { Route as MaininfoNoticesNoticeIdRouteImport } from './routes/_main/(info)/notices/$noticeId'
 
-const WelfareRoute = WelfareRouteImport.update({
-  id: '/welfare',
-  path: '/welfare',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SuggestionRoute = SuggestionRouteImport.update({
-  id: '/suggestion',
-  path: '/suggestion',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NoticesRoute = NoticesRouteImport.update({
-  id: '/notices',
-  path: '/notices',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NonMemberPolicyRoute = NonMemberPolicyRouteImport.update({
-  id: '/non-member-policy',
-  path: '/non-member-policy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MypageRoute = MypageRouteImport.update({
-  id: '/mypage',
-  path: '/mypage',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MaintenanceRoute = MaintenanceRouteImport.update({
   id: '/maintenance',
   path: '/maintenance',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IntroRoute = IntroRouteImport.update({
-  id: '/intro',
-  path: '/intro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ErrorRoute = ErrorRouteImport.update({
@@ -119,49 +64,19 @@ const ErrorRoute = ErrorRouteImport.update({
   path: '/error',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ClubsRoute = ClubsRouteImport.update({
-  id: '/clubs',
-  path: '/clubs',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SearchIndexRoute = SearchIndexRouteImport.update({
-  id: '/search/',
-  path: '/search/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NoticesIndexRoute = NoticesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => NoticesRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const ActivitiesIndexRoute = ActivitiesIndexRouteImport.update({
-  id: '/activities/',
-  path: '/activities/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
-  id: '/$noticeId',
-  path: '/$noticeId',
-  getParentRoute: () => NoticesRoute,
-} as any)
-const AttendanceActivityIdRoute = AttendanceActivityIdRouteImport.update({
-  id: '/attendance/$activityId',
-  path: '/attendance/$activityId',
+const MainIndexRoute = MainIndexRouteImport.update({
+  id: '/_main/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminWelfareRoute = AdminWelfareRouteImport.update({
@@ -244,6 +159,11 @@ const AdminEventsCreateRoute = AdminEventsCreateRouteImport.update({
   path: '/events/create',
   getParentRoute: () => AdminRoute,
 } as any)
+const MaininfoNoticesRoute = MaininfoNoticesRouteImport.update({
+  id: '/_main/(info)/notices',
+  path: '/notices',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSurveysActivityIdIndexRoute =
   AdminSurveysActivityIdIndexRouteImport.update({
     id: '/surveys/$activityId/',
@@ -254,6 +174,80 @@ const AdminEventsEventIdIndexRoute = AdminEventsEventIdIndexRouteImport.update({
   id: '/events/$eventId/',
   path: '/events/$eventId/',
   getParentRoute: () => AdminRoute,
+} as any)
+const MainserviceWelfareIndexRoute = MainserviceWelfareIndexRouteImport.update({
+  id: '/_main/(service)/welfare/',
+  path: '/welfare/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainserviceSuggestionIndexRoute =
+  MainserviceSuggestionIndexRouteImport.update({
+    id: '/_main/(service)/suggestion/',
+    path: '/suggestion/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const MainserviceSearchIndexRoute = MainserviceSearchIndexRouteImport.update({
+  id: '/_main/(service)/search/',
+  path: '/search/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainserviceActivitiesIndexRoute =
+  MainserviceActivitiesIndexRouteImport.update({
+    id: '/_main/(service)/activities/',
+    path: '/activities/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const MainpolicyTermsIndexRoute = MainpolicyTermsIndexRouteImport.update({
+  id: '/_main/(policy)/terms/',
+  path: '/terms/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainpolicyPrivacyIndexRoute = MainpolicyPrivacyIndexRouteImport.update({
+  id: '/_main/(policy)/privacy/',
+  path: '/privacy/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainpolicyNonMemberPolicyIndexRoute =
+  MainpolicyNonMemberPolicyIndexRouteImport.update({
+    id: '/_main/(policy)/non-member-policy/',
+    path: '/non-member-policy/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const MaininfoNoticesIndexRoute = MaininfoNoticesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MaininfoNoticesRoute,
+} as any)
+const MaininfoIntroIndexRoute = MaininfoIntroIndexRouteImport.update({
+  id: '/_main/(info)/intro/',
+  path: '/intro/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MaininfoClubsIndexRoute = MaininfoClubsIndexRouteImport.update({
+  id: '/_main/(info)/clubs/',
+  path: '/clubs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainauthSignupIndexRoute = MainauthSignupIndexRouteImport.update({
+  id: '/_main/(auth)/signup/',
+  path: '/signup/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainauthResetPasswordIndexRoute =
+  MainauthResetPasswordIndexRouteImport.update({
+    id: '/_main/(auth)/reset-password/',
+    path: '/reset-password/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const MainauthMypageIndexRoute = MainauthMypageIndexRouteImport.update({
+  id: '/_main/(auth)/mypage/',
+  path: '/mypage/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainauthLoginIndexRoute = MainauthLoginIndexRouteImport.update({
+  id: '/_main/(auth)/login/',
+  path: '/login/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminSurveysActivityIdEditRoute =
   AdminSurveysActivityIdEditRouteImport.update({
@@ -278,24 +272,22 @@ const AdminEventsEventIdEditRoute = AdminEventsEventIdEditRouteImport.update({
   path: '/events/$eventId/edit',
   getParentRoute: () => AdminRoute,
 } as any)
+const MainserviceAttendanceActivityIdRoute =
+  MainserviceAttendanceActivityIdRouteImport.update({
+    id: '/_main/(service)/attendance/$activityId',
+    path: '/attendance/$activityId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const MaininfoNoticesNoticeIdRoute = MaininfoNoticesNoticeIdRouteImport.update({
+  id: '/$noticeId',
+  path: '/$noticeId',
+  getParentRoute: () => MaininfoNoticesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/clubs': typeof ClubsRoute
   '/error': typeof ErrorRoute
-  '/intro': typeof IntroRoute
-  '/login': typeof LoginRoute
   '/maintenance': typeof MaintenanceRoute
-  '/mypage': typeof MypageRoute
-  '/non-member-policy': typeof NonMemberPolicyRoute
-  '/notices': typeof NoticesRouteWithChildren
-  '/privacy': typeof PrivacyRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/signup': typeof SignupRoute
-  '/suggestion': typeof SuggestionRoute
-  '/terms': typeof TermsRoute
-  '/welfare': typeof WelfareRoute
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/clubs': typeof AdminClubsRoute
@@ -304,12 +296,9 @@ export interface FileRoutesByFullPath {
   '/admin/profile-updates': typeof AdminProfileUpdatesRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
-  '/attendance/$activityId': typeof AttendanceActivityIdRoute
-  '/notices/$noticeId': typeof NoticesNoticeIdRoute
-  '/activities': typeof ActivitiesIndexRoute
+  '/': typeof MainIndexRoute
   '/admin/': typeof AdminIndexRoute
-  '/notices/': typeof NoticesIndexRoute
-  '/search': typeof SearchIndexRoute
+  '/notices': typeof MaininfoNoticesRouteWithChildren
   '/admin/events/create': typeof AdminEventsCreateRoute
   '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
   '/admin/notices/create': typeof AdminNoticesCreateRoute
@@ -318,28 +307,32 @@ export interface FileRoutesByFullPath {
   '/admin/kakaotalk': typeof AdminKakaotalkIndexRoute
   '/admin/notices': typeof AdminNoticesIndexRoute
   '/admin/surveys': typeof AdminSurveysIndexRoute
+  '/notices/$noticeId': typeof MaininfoNoticesNoticeIdRoute
+  '/attendance/$activityId': typeof MainserviceAttendanceActivityIdRoute
   '/admin/events/$eventId/edit': typeof AdminEventsEventIdEditRoute
   '/admin/kakaotalk/$activityId/edit': typeof AdminKakaotalkActivityIdEditRoute
   '/admin/notices/$noticeId/edit': typeof AdminNoticesNoticeIdEditRoute
   '/admin/surveys/$activityId/edit': typeof AdminSurveysActivityIdEditRoute
+  '/login': typeof MainauthLoginIndexRoute
+  '/mypage': typeof MainauthMypageIndexRoute
+  '/reset-password': typeof MainauthResetPasswordIndexRoute
+  '/signup': typeof MainauthSignupIndexRoute
+  '/clubs': typeof MaininfoClubsIndexRoute
+  '/intro': typeof MaininfoIntroIndexRoute
+  '/notices/': typeof MaininfoNoticesIndexRoute
+  '/non-member-policy': typeof MainpolicyNonMemberPolicyIndexRoute
+  '/privacy': typeof MainpolicyPrivacyIndexRoute
+  '/terms': typeof MainpolicyTermsIndexRoute
+  '/activities': typeof MainserviceActivitiesIndexRoute
+  '/search': typeof MainserviceSearchIndexRoute
+  '/suggestion': typeof MainserviceSuggestionIndexRoute
+  '/welfare': typeof MainserviceWelfareIndexRoute
   '/admin/events/$eventId': typeof AdminEventsEventIdIndexRoute
   '/admin/surveys/$activityId': typeof AdminSurveysActivityIdIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/clubs': typeof ClubsRoute
   '/error': typeof ErrorRoute
-  '/intro': typeof IntroRoute
-  '/login': typeof LoginRoute
   '/maintenance': typeof MaintenanceRoute
-  '/mypage': typeof MypageRoute
-  '/non-member-policy': typeof NonMemberPolicyRoute
-  '/privacy': typeof PrivacyRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/signup': typeof SignupRoute
-  '/suggestion': typeof SuggestionRoute
-  '/terms': typeof TermsRoute
-  '/welfare': typeof WelfareRoute
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/clubs': typeof AdminClubsRoute
@@ -348,12 +341,8 @@ export interface FileRoutesByTo {
   '/admin/profile-updates': typeof AdminProfileUpdatesRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
-  '/attendance/$activityId': typeof AttendanceActivityIdRoute
-  '/notices/$noticeId': typeof NoticesNoticeIdRoute
-  '/activities': typeof ActivitiesIndexRoute
+  '/': typeof MainIndexRoute
   '/admin': typeof AdminIndexRoute
-  '/notices': typeof NoticesIndexRoute
-  '/search': typeof SearchIndexRoute
   '/admin/events/create': typeof AdminEventsCreateRoute
   '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
   '/admin/notices/create': typeof AdminNoticesCreateRoute
@@ -362,31 +351,34 @@ export interface FileRoutesByTo {
   '/admin/kakaotalk': typeof AdminKakaotalkIndexRoute
   '/admin/notices': typeof AdminNoticesIndexRoute
   '/admin/surveys': typeof AdminSurveysIndexRoute
+  '/notices/$noticeId': typeof MaininfoNoticesNoticeIdRoute
+  '/attendance/$activityId': typeof MainserviceAttendanceActivityIdRoute
   '/admin/events/$eventId/edit': typeof AdminEventsEventIdEditRoute
   '/admin/kakaotalk/$activityId/edit': typeof AdminKakaotalkActivityIdEditRoute
   '/admin/notices/$noticeId/edit': typeof AdminNoticesNoticeIdEditRoute
   '/admin/surveys/$activityId/edit': typeof AdminSurveysActivityIdEditRoute
+  '/login': typeof MainauthLoginIndexRoute
+  '/mypage': typeof MainauthMypageIndexRoute
+  '/reset-password': typeof MainauthResetPasswordIndexRoute
+  '/signup': typeof MainauthSignupIndexRoute
+  '/clubs': typeof MaininfoClubsIndexRoute
+  '/intro': typeof MaininfoIntroIndexRoute
+  '/notices': typeof MaininfoNoticesIndexRoute
+  '/non-member-policy': typeof MainpolicyNonMemberPolicyIndexRoute
+  '/privacy': typeof MainpolicyPrivacyIndexRoute
+  '/terms': typeof MainpolicyTermsIndexRoute
+  '/activities': typeof MainserviceActivitiesIndexRoute
+  '/search': typeof MainserviceSearchIndexRoute
+  '/suggestion': typeof MainserviceSuggestionIndexRoute
+  '/welfare': typeof MainserviceWelfareIndexRoute
   '/admin/events/$eventId': typeof AdminEventsEventIdIndexRoute
   '/admin/surveys/$activityId': typeof AdminSurveysActivityIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/clubs': typeof ClubsRoute
   '/error': typeof ErrorRoute
-  '/intro': typeof IntroRoute
-  '/login': typeof LoginRoute
   '/maintenance': typeof MaintenanceRoute
-  '/mypage': typeof MypageRoute
-  '/non-member-policy': typeof NonMemberPolicyRoute
-  '/notices': typeof NoticesRouteWithChildren
-  '/privacy': typeof PrivacyRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/signup': typeof SignupRoute
-  '/suggestion': typeof SuggestionRoute
-  '/terms': typeof TermsRoute
-  '/welfare': typeof WelfareRoute
   '/admin/activities': typeof AdminActivitiesRoute
   '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/clubs': typeof AdminClubsRoute
@@ -395,12 +387,9 @@ export interface FileRoutesById {
   '/admin/profile-updates': typeof AdminProfileUpdatesRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
-  '/attendance/$activityId': typeof AttendanceActivityIdRoute
-  '/notices/$noticeId': typeof NoticesNoticeIdRoute
-  '/activities/': typeof ActivitiesIndexRoute
+  '/_main/': typeof MainIndexRoute
   '/admin/': typeof AdminIndexRoute
-  '/notices/': typeof NoticesIndexRoute
-  '/search/': typeof SearchIndexRoute
+  '/_main/(info)/notices': typeof MaininfoNoticesRouteWithChildren
   '/admin/events/create': typeof AdminEventsCreateRoute
   '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
   '/admin/notices/create': typeof AdminNoticesCreateRoute
@@ -409,32 +398,35 @@ export interface FileRoutesById {
   '/admin/kakaotalk/': typeof AdminKakaotalkIndexRoute
   '/admin/notices/': typeof AdminNoticesIndexRoute
   '/admin/surveys/': typeof AdminSurveysIndexRoute
+  '/_main/(info)/notices/$noticeId': typeof MaininfoNoticesNoticeIdRoute
+  '/_main/(service)/attendance/$activityId': typeof MainserviceAttendanceActivityIdRoute
   '/admin/events/$eventId/edit': typeof AdminEventsEventIdEditRoute
   '/admin/kakaotalk/$activityId/edit': typeof AdminKakaotalkActivityIdEditRoute
   '/admin/notices/$noticeId/edit': typeof AdminNoticesNoticeIdEditRoute
   '/admin/surveys/$activityId/edit': typeof AdminSurveysActivityIdEditRoute
+  '/_main/(auth)/login/': typeof MainauthLoginIndexRoute
+  '/_main/(auth)/mypage/': typeof MainauthMypageIndexRoute
+  '/_main/(auth)/reset-password/': typeof MainauthResetPasswordIndexRoute
+  '/_main/(auth)/signup/': typeof MainauthSignupIndexRoute
+  '/_main/(info)/clubs/': typeof MaininfoClubsIndexRoute
+  '/_main/(info)/intro/': typeof MaininfoIntroIndexRoute
+  '/_main/(info)/notices/': typeof MaininfoNoticesIndexRoute
+  '/_main/(policy)/non-member-policy/': typeof MainpolicyNonMemberPolicyIndexRoute
+  '/_main/(policy)/privacy/': typeof MainpolicyPrivacyIndexRoute
+  '/_main/(policy)/terms/': typeof MainpolicyTermsIndexRoute
+  '/_main/(service)/activities/': typeof MainserviceActivitiesIndexRoute
+  '/_main/(service)/search/': typeof MainserviceSearchIndexRoute
+  '/_main/(service)/suggestion/': typeof MainserviceSuggestionIndexRoute
+  '/_main/(service)/welfare/': typeof MainserviceWelfareIndexRoute
   '/admin/events/$eventId/': typeof AdminEventsEventIdIndexRoute
   '/admin/surveys/$activityId/': typeof AdminSurveysActivityIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/admin'
-    | '/clubs'
     | '/error'
-    | '/intro'
-    | '/login'
     | '/maintenance'
-    | '/mypage'
-    | '/non-member-policy'
-    | '/notices'
-    | '/privacy'
-    | '/reset-password'
-    | '/signup'
-    | '/suggestion'
-    | '/terms'
-    | '/welfare'
     | '/admin/activities'
     | '/admin/attendance'
     | '/admin/clubs'
@@ -443,12 +435,9 @@ export interface FileRouteTypes {
     | '/admin/profile-updates'
     | '/admin/suggestions'
     | '/admin/welfare'
-    | '/attendance/$activityId'
-    | '/notices/$noticeId'
-    | '/activities'
+    | '/'
     | '/admin/'
-    | '/notices/'
-    | '/search'
+    | '/notices'
     | '/admin/events/create'
     | '/admin/kakaotalk/create'
     | '/admin/notices/create'
@@ -457,28 +446,32 @@ export interface FileRouteTypes {
     | '/admin/kakaotalk'
     | '/admin/notices'
     | '/admin/surveys'
+    | '/notices/$noticeId'
+    | '/attendance/$activityId'
     | '/admin/events/$eventId/edit'
     | '/admin/kakaotalk/$activityId/edit'
     | '/admin/notices/$noticeId/edit'
     | '/admin/surveys/$activityId/edit'
+    | '/login'
+    | '/mypage'
+    | '/reset-password'
+    | '/signup'
+    | '/clubs'
+    | '/intro'
+    | '/notices/'
+    | '/non-member-policy'
+    | '/privacy'
+    | '/terms'
+    | '/activities'
+    | '/search'
+    | '/suggestion'
+    | '/welfare'
     | '/admin/events/$eventId'
     | '/admin/surveys/$activityId'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/clubs'
     | '/error'
-    | '/intro'
-    | '/login'
     | '/maintenance'
-    | '/mypage'
-    | '/non-member-policy'
-    | '/privacy'
-    | '/reset-password'
-    | '/signup'
-    | '/suggestion'
-    | '/terms'
-    | '/welfare'
     | '/admin/activities'
     | '/admin/attendance'
     | '/admin/clubs'
@@ -487,12 +480,8 @@ export interface FileRouteTypes {
     | '/admin/profile-updates'
     | '/admin/suggestions'
     | '/admin/welfare'
-    | '/attendance/$activityId'
-    | '/notices/$noticeId'
-    | '/activities'
+    | '/'
     | '/admin'
-    | '/notices'
-    | '/search'
     | '/admin/events/create'
     | '/admin/kakaotalk/create'
     | '/admin/notices/create'
@@ -501,30 +490,33 @@ export interface FileRouteTypes {
     | '/admin/kakaotalk'
     | '/admin/notices'
     | '/admin/surveys'
+    | '/notices/$noticeId'
+    | '/attendance/$activityId'
     | '/admin/events/$eventId/edit'
     | '/admin/kakaotalk/$activityId/edit'
     | '/admin/notices/$noticeId/edit'
     | '/admin/surveys/$activityId/edit'
+    | '/login'
+    | '/mypage'
+    | '/reset-password'
+    | '/signup'
+    | '/clubs'
+    | '/intro'
+    | '/notices'
+    | '/non-member-policy'
+    | '/privacy'
+    | '/terms'
+    | '/activities'
+    | '/search'
+    | '/suggestion'
+    | '/welfare'
     | '/admin/events/$eventId'
     | '/admin/surveys/$activityId'
   id:
     | '__root__'
-    | '/'
     | '/admin'
-    | '/clubs'
     | '/error'
-    | '/intro'
-    | '/login'
     | '/maintenance'
-    | '/mypage'
-    | '/non-member-policy'
-    | '/notices'
-    | '/privacy'
-    | '/reset-password'
-    | '/signup'
-    | '/suggestion'
-    | '/terms'
-    | '/welfare'
     | '/admin/activities'
     | '/admin/attendance'
     | '/admin/clubs'
@@ -533,12 +525,9 @@ export interface FileRouteTypes {
     | '/admin/profile-updates'
     | '/admin/suggestions'
     | '/admin/welfare'
-    | '/attendance/$activityId'
-    | '/notices/$noticeId'
-    | '/activities/'
+    | '/_main/'
     | '/admin/'
-    | '/notices/'
-    | '/search/'
+    | '/_main/(info)/notices'
     | '/admin/events/create'
     | '/admin/kakaotalk/create'
     | '/admin/notices/create'
@@ -547,120 +536,59 @@ export interface FileRouteTypes {
     | '/admin/kakaotalk/'
     | '/admin/notices/'
     | '/admin/surveys/'
+    | '/_main/(info)/notices/$noticeId'
+    | '/_main/(service)/attendance/$activityId'
     | '/admin/events/$eventId/edit'
     | '/admin/kakaotalk/$activityId/edit'
     | '/admin/notices/$noticeId/edit'
     | '/admin/surveys/$activityId/edit'
+    | '/_main/(auth)/login/'
+    | '/_main/(auth)/mypage/'
+    | '/_main/(auth)/reset-password/'
+    | '/_main/(auth)/signup/'
+    | '/_main/(info)/clubs/'
+    | '/_main/(info)/intro/'
+    | '/_main/(info)/notices/'
+    | '/_main/(policy)/non-member-policy/'
+    | '/_main/(policy)/privacy/'
+    | '/_main/(policy)/terms/'
+    | '/_main/(service)/activities/'
+    | '/_main/(service)/search/'
+    | '/_main/(service)/suggestion/'
+    | '/_main/(service)/welfare/'
     | '/admin/events/$eventId/'
     | '/admin/surveys/$activityId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
-  ClubsRoute: typeof ClubsRoute
   ErrorRoute: typeof ErrorRoute
-  IntroRoute: typeof IntroRoute
-  LoginRoute: typeof LoginRoute
   MaintenanceRoute: typeof MaintenanceRoute
-  MypageRoute: typeof MypageRoute
-  NonMemberPolicyRoute: typeof NonMemberPolicyRoute
-  NoticesRoute: typeof NoticesRouteWithChildren
-  PrivacyRoute: typeof PrivacyRoute
-  ResetPasswordRoute: typeof ResetPasswordRoute
-  SignupRoute: typeof SignupRoute
-  SuggestionRoute: typeof SuggestionRoute
-  TermsRoute: typeof TermsRoute
-  WelfareRoute: typeof WelfareRoute
-  AttendanceActivityIdRoute: typeof AttendanceActivityIdRoute
-  ActivitiesIndexRoute: typeof ActivitiesIndexRoute
-  SearchIndexRoute: typeof SearchIndexRoute
+  MainIndexRoute: typeof MainIndexRoute
+  MaininfoNoticesRoute: typeof MaininfoNoticesRouteWithChildren
+  MainserviceAttendanceActivityIdRoute: typeof MainserviceAttendanceActivityIdRoute
+  MainauthLoginIndexRoute: typeof MainauthLoginIndexRoute
+  MainauthMypageIndexRoute: typeof MainauthMypageIndexRoute
+  MainauthResetPasswordIndexRoute: typeof MainauthResetPasswordIndexRoute
+  MainauthSignupIndexRoute: typeof MainauthSignupIndexRoute
+  MaininfoClubsIndexRoute: typeof MaininfoClubsIndexRoute
+  MaininfoIntroIndexRoute: typeof MaininfoIntroIndexRoute
+  MainpolicyNonMemberPolicyIndexRoute: typeof MainpolicyNonMemberPolicyIndexRoute
+  MainpolicyPrivacyIndexRoute: typeof MainpolicyPrivacyIndexRoute
+  MainpolicyTermsIndexRoute: typeof MainpolicyTermsIndexRoute
+  MainserviceActivitiesIndexRoute: typeof MainserviceActivitiesIndexRoute
+  MainserviceSearchIndexRoute: typeof MainserviceSearchIndexRoute
+  MainserviceSuggestionIndexRoute: typeof MainserviceSuggestionIndexRoute
+  MainserviceWelfareIndexRoute: typeof MainserviceWelfareIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/welfare': {
-      id: '/welfare'
-      path: '/welfare'
-      fullPath: '/welfare'
-      preLoaderRoute: typeof WelfareRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/suggestion': {
-      id: '/suggestion'
-      path: '/suggestion'
-      fullPath: '/suggestion'
-      preLoaderRoute: typeof SuggestionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notices': {
-      id: '/notices'
-      path: '/notices'
-      fullPath: '/notices'
-      preLoaderRoute: typeof NoticesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/non-member-policy': {
-      id: '/non-member-policy'
-      path: '/non-member-policy'
-      fullPath: '/non-member-policy'
-      preLoaderRoute: typeof NonMemberPolicyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mypage': {
-      id: '/mypage'
-      path: '/mypage'
-      fullPath: '/mypage'
-      preLoaderRoute: typeof MypageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/maintenance': {
       id: '/maintenance'
       path: '/maintenance'
       fullPath: '/maintenance'
       preLoaderRoute: typeof MaintenanceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/intro': {
-      id: '/intro'
-      path: '/intro'
-      fullPath: '/intro'
-      preLoaderRoute: typeof IntroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/error': {
@@ -670,40 +598,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ErrorRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/clubs': {
-      id: '/clubs'
-      path: '/clubs'
-      fullPath: '/clubs'
-      preLoaderRoute: typeof ClubsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin': {
       id: '/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/search/': {
-      id: '/search/'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notices/': {
-      id: '/notices/'
-      path: '/'
-      fullPath: '/notices/'
-      preLoaderRoute: typeof NoticesIndexRouteImport
-      parentRoute: typeof NoticesRoute
     }
     '/admin/': {
       id: '/admin/'
@@ -712,25 +612,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/activities/': {
-      id: '/activities/'
-      path: '/activities'
-      fullPath: '/activities'
-      preLoaderRoute: typeof ActivitiesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notices/$noticeId': {
-      id: '/notices/$noticeId'
-      path: '/$noticeId'
-      fullPath: '/notices/$noticeId'
-      preLoaderRoute: typeof NoticesNoticeIdRouteImport
-      parentRoute: typeof NoticesRoute
-    }
-    '/attendance/$activityId': {
-      id: '/attendance/$activityId'
-      path: '/attendance/$activityId'
-      fullPath: '/attendance/$activityId'
-      preLoaderRoute: typeof AttendanceActivityIdRouteImport
+    '/_main/': {
+      id: '/_main/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof MainIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/welfare': {
@@ -845,6 +731,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEventsCreateRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_main/(info)/notices': {
+      id: '/_main/(info)/notices'
+      path: '/notices'
+      fullPath: '/notices'
+      preLoaderRoute: typeof MaininfoNoticesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/surveys/$activityId/': {
       id: '/admin/surveys/$activityId/'
       path: '/surveys/$activityId'
@@ -858,6 +751,104 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/events/$eventId'
       preLoaderRoute: typeof AdminEventsEventIdIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/_main/(service)/welfare/': {
+      id: '/_main/(service)/welfare/'
+      path: '/welfare'
+      fullPath: '/welfare'
+      preLoaderRoute: typeof MainserviceWelfareIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(service)/suggestion/': {
+      id: '/_main/(service)/suggestion/'
+      path: '/suggestion'
+      fullPath: '/suggestion'
+      preLoaderRoute: typeof MainserviceSuggestionIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(service)/search/': {
+      id: '/_main/(service)/search/'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof MainserviceSearchIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(service)/activities/': {
+      id: '/_main/(service)/activities/'
+      path: '/activities'
+      fullPath: '/activities'
+      preLoaderRoute: typeof MainserviceActivitiesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(policy)/terms/': {
+      id: '/_main/(policy)/terms/'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof MainpolicyTermsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(policy)/privacy/': {
+      id: '/_main/(policy)/privacy/'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof MainpolicyPrivacyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(policy)/non-member-policy/': {
+      id: '/_main/(policy)/non-member-policy/'
+      path: '/non-member-policy'
+      fullPath: '/non-member-policy'
+      preLoaderRoute: typeof MainpolicyNonMemberPolicyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(info)/notices/': {
+      id: '/_main/(info)/notices/'
+      path: '/'
+      fullPath: '/notices/'
+      preLoaderRoute: typeof MaininfoNoticesIndexRouteImport
+      parentRoute: typeof MaininfoNoticesRoute
+    }
+    '/_main/(info)/intro/': {
+      id: '/_main/(info)/intro/'
+      path: '/intro'
+      fullPath: '/intro'
+      preLoaderRoute: typeof MaininfoIntroIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(info)/clubs/': {
+      id: '/_main/(info)/clubs/'
+      path: '/clubs'
+      fullPath: '/clubs'
+      preLoaderRoute: typeof MaininfoClubsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(auth)/signup/': {
+      id: '/_main/(auth)/signup/'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof MainauthSignupIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(auth)/reset-password/': {
+      id: '/_main/(auth)/reset-password/'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof MainauthResetPasswordIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(auth)/mypage/': {
+      id: '/_main/(auth)/mypage/'
+      path: '/mypage'
+      fullPath: '/mypage'
+      preLoaderRoute: typeof MainauthMypageIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(auth)/login/': {
+      id: '/_main/(auth)/login/'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof MainauthLoginIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/surveys/$activityId/edit': {
       id: '/admin/surveys/$activityId/edit'
@@ -886,6 +877,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/events/$eventId/edit'
       preLoaderRoute: typeof AdminEventsEventIdEditRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/_main/(service)/attendance/$activityId': {
+      id: '/_main/(service)/attendance/$activityId'
+      path: '/attendance/$activityId'
+      fullPath: '/attendance/$activityId'
+      preLoaderRoute: typeof MainserviceAttendanceActivityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(info)/notices/$noticeId': {
+      id: '/_main/(info)/notices/$noticeId'
+      path: '/$noticeId'
+      fullPath: '/notices/$noticeId'
+      preLoaderRoute: typeof MaininfoNoticesNoticeIdRouteImport
+      parentRoute: typeof MaininfoNoticesRoute
     }
   }
 }
@@ -944,39 +949,40 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface NoticesRouteChildren {
-  NoticesNoticeIdRoute: typeof NoticesNoticeIdRoute
-  NoticesIndexRoute: typeof NoticesIndexRoute
+interface MaininfoNoticesRouteChildren {
+  MaininfoNoticesNoticeIdRoute: typeof MaininfoNoticesNoticeIdRoute
+  MaininfoNoticesIndexRoute: typeof MaininfoNoticesIndexRoute
 }
 
-const NoticesRouteChildren: NoticesRouteChildren = {
-  NoticesNoticeIdRoute: NoticesNoticeIdRoute,
-  NoticesIndexRoute: NoticesIndexRoute,
+const MaininfoNoticesRouteChildren: MaininfoNoticesRouteChildren = {
+  MaininfoNoticesNoticeIdRoute: MaininfoNoticesNoticeIdRoute,
+  MaininfoNoticesIndexRoute: MaininfoNoticesIndexRoute,
 }
 
-const NoticesRouteWithChildren =
-  NoticesRoute._addFileChildren(NoticesRouteChildren)
+const MaininfoNoticesRouteWithChildren = MaininfoNoticesRoute._addFileChildren(
+  MaininfoNoticesRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
-  ClubsRoute: ClubsRoute,
   ErrorRoute: ErrorRoute,
-  IntroRoute: IntroRoute,
-  LoginRoute: LoginRoute,
   MaintenanceRoute: MaintenanceRoute,
-  MypageRoute: MypageRoute,
-  NonMemberPolicyRoute: NonMemberPolicyRoute,
-  NoticesRoute: NoticesRouteWithChildren,
-  PrivacyRoute: PrivacyRoute,
-  ResetPasswordRoute: ResetPasswordRoute,
-  SignupRoute: SignupRoute,
-  SuggestionRoute: SuggestionRoute,
-  TermsRoute: TermsRoute,
-  WelfareRoute: WelfareRoute,
-  AttendanceActivityIdRoute: AttendanceActivityIdRoute,
-  ActivitiesIndexRoute: ActivitiesIndexRoute,
-  SearchIndexRoute: SearchIndexRoute,
+  MainIndexRoute: MainIndexRoute,
+  MaininfoNoticesRoute: MaininfoNoticesRouteWithChildren,
+  MainserviceAttendanceActivityIdRoute: MainserviceAttendanceActivityIdRoute,
+  MainauthLoginIndexRoute: MainauthLoginIndexRoute,
+  MainauthMypageIndexRoute: MainauthMypageIndexRoute,
+  MainauthResetPasswordIndexRoute: MainauthResetPasswordIndexRoute,
+  MainauthSignupIndexRoute: MainauthSignupIndexRoute,
+  MaininfoClubsIndexRoute: MaininfoClubsIndexRoute,
+  MaininfoIntroIndexRoute: MaininfoIntroIndexRoute,
+  MainpolicyNonMemberPolicyIndexRoute: MainpolicyNonMemberPolicyIndexRoute,
+  MainpolicyPrivacyIndexRoute: MainpolicyPrivacyIndexRoute,
+  MainpolicyTermsIndexRoute: MainpolicyTermsIndexRoute,
+  MainserviceActivitiesIndexRoute: MainserviceActivitiesIndexRoute,
+  MainserviceSearchIndexRoute: MainserviceSearchIndexRoute,
+  MainserviceSuggestionIndexRoute: MainserviceSuggestionIndexRoute,
+  MainserviceWelfareIndexRoute: MainserviceWelfareIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

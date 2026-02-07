@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { isAxiosError } from 'axios'
-import { SEO } from '../../components/common/SEO'
-import { AttendanceCheckCard } from '../../components/activities/AttendanceCheckCard'
-import { activityApi } from '../../lib/api/activities'
+import { SEO } from '../../../../components/common/SEO'
+import { AttendanceCheckCard } from '../../../../components/activities/AttendanceCheckCard'
+import { activityApi } from '../../../../lib/api/activities'
 
-export const Route = createFileRoute('/attendance/$activityId')({
+export const Route = createFileRoute('/_main/(service)/attendance/$activityId')({
     component: AttendancePage,
 })
 
@@ -58,7 +58,7 @@ function AttendancePage() {
                     isSubmitting={isSubmitting}
                     errorMessage={errorMessage}
                     submittedMessage={submittedMessage}
-                    onStudentIdChange={(value) => {
+                    onStudentIdChange={(value: string) => {
                         setStudentId(value)
                         setSubmittedMessage(null)
                         setErrorMessage(null)

@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect, useRef } from 'react'
-import { PostFilter } from '../../components/notices/PostFilter'
-import { PostList } from '../../components/notices/PostList'
-import type { NoticeListItem } from '../../types/posts'
-import { SEO } from '../../components/common/SEO'
+import { PostFilter } from '../../../../components/notices/PostFilter'
+import { PostList } from '../../../../components/notices/PostList'
+import type { NoticeListItem } from '../../../../types/posts'
+import { SEO } from '../../../../components/common/SEO'
 
 type PostSearch = {
   board_id: number
@@ -13,7 +13,7 @@ type PostSearch = {
   page: number
 }
 
-export const Route = createFileRoute('/notices/')({
+export const Route = createFileRoute('/_main/(info)/notices/')({
   component: Notices,
   validateSearch: (search: Record<string, unknown>): PostSearch => {
     return {
@@ -50,7 +50,7 @@ function Notices() {
       setLoading(true)
       // Map board_id to mainCategory for backend
       const mainCategory = board_id === 1 ? 'student_council' : board_id === 2 ? 'democracy' : undefined
-      const { postApi } = await import('../../lib/api/notices')
+      const { postApi } = await import('../../../../lib/api/notices')
       const { posts: data, pagination } = await postApi.getAll({
         // @ts-ignore - Backend expects mainCategory string
         mainCategory,

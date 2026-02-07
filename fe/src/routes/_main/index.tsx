@@ -18,15 +18,15 @@ import {
     Laptop,
     Mail
 } from 'lucide-react'
-import { activityApi } from '../lib/api/activities'
-import { postApi } from '../lib/api/notices'
-import type { ActivityListItem } from '../types/activities'
-import { getActivityStatus } from '../types/activities'
-import type { NoticeListItem } from '../types/posts'
-import { LoadingSpinner } from '../components/common/LoadingSpinner'
-import { SEO } from '../components/common/SEO'
+import { activityApi } from '../../lib/api/activities'
+import { postApi } from '../../lib/api/notices'
+import type { ActivityListItem } from '../../types/activities'
+import { getActivityStatus } from '../../types/activities'
+import type { NoticeListItem } from '../../types/posts'
+import { LoadingSpinner } from '../../components/common/LoadingSpinner'
+import { SEO } from '../../components/common/SEO'
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute('/_main/')({
     component: Index,
 })
 

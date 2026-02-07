@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/terms')({
+export const Route = createFileRoute('/_main/(policy)/terms/')({
     component: TermsOfService,
 })
 

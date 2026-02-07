@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
-import { clubApi } from '../lib/api/clubs'
-import { ClubsHeader, ClubCard, ClubDetailModal } from '../components/clubs'
-import type { Club } from '../types/clubs'
-import { SEO } from '../components/common/SEO'
+import { clubApi } from '../../../../lib/api/clubs'
+import { ClubsHeader, ClubCard, ClubDetailModal } from '../../../../components/clubs'
+import type { Club } from '../../../../types/clubs'
+import { SEO } from '../../../../components/common/SEO'
 
-export const Route = createFileRoute('/clubs')({
+export const Route = createFileRoute('/_main/(info)/clubs/')({
   component: Clubs,
 })
 

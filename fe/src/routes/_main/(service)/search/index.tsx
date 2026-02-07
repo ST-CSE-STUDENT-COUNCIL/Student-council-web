@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useSearch } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { searchApi } from '../../lib/api/search'
-import { getImageUrl } from '../../lib/utils'
+import { searchApi } from '../../../../lib/api/search'
+import { getImageUrl } from '../../../../lib/utils'
 import { Calendar, Megaphone, Users, Search as SearchIcon, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 
-export const Route = createFileRoute('/search/')({
+export const Route = createFileRoute('/_main/(service)/search/')({
     component: SearchPage,
     validateSearch: (search: Record<string, unknown>) => {
         return {
@@ -16,7 +16,7 @@ export const Route = createFileRoute('/search/')({
 })
 
 function SearchPage() {
-    const { q } = useSearch({ from: '/search/' })
+    const { q } = useSearch({ from: '/_main/(service)/search/' })
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['search', q],

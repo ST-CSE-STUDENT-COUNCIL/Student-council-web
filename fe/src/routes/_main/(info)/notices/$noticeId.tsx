@@ -1,8 +1,8 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState, useEffect, useRef } from 'react'
-import type { NoticeDetailResponse } from '../../types/posts'
+import type { NoticeDetailResponse } from '../../../../types/posts'
 
-export const Route = createFileRoute('/notices/$noticeId')({
+export const Route = createFileRoute('/_main/(info)/notices/$noticeId')({
     component: PostDetail,
 })
 
@@ -21,7 +21,7 @@ function PostDetail() {
 
             try {
                 setLoading(true)
-                const { postApi } = await import('../../lib/api/notices')
+                const { postApi } = await import('../../../../lib/api/notices')
                 const data = await postApi.getById(Number(id))
 
                 // Type assertion/casting might be needed if api returns Post not Notice yet

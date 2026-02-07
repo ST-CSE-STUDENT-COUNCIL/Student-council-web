@@ -3,11 +3,11 @@ import { useEffect, useState } from 'react'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import { User, Lock, AlertCircle, Clock, Eye, EyeOff } from 'lucide-react'
-import { useAuthStore } from '../store/useAuthStore'
-import { authApi } from '../lib/api/auth'
-import { Turnstile } from '../components/common/Turnstile'
+import { useAuthStore } from '../../../../store/useAuthStore'
+import { authApi } from '../../../../lib/api/auth'
+import { Turnstile } from '../../../../components/common/Turnstile'
 
-export const Route = createFileRoute('/login')({
+export const Route = createFileRoute('/_main/(auth)/login/')({
   component: Login,
 })
 
@@ -122,7 +122,6 @@ function Login() {
           </p>
         </div>
       </div>
-
       {/* Right Section - Form */}
       <div className="w-full lg:w-7/12 flex items-center justify-center p-8 sm:p-24 bg-white dark:bg-slate-900">
         <div className="w-full max-w-sm space-y-10">

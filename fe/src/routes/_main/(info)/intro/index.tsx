@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { introductionApi } from '../lib/api/introductions'
-import type { IntroductionImage } from '../types/introductions'
-import { SEO } from '../components/common/SEO'
+import { introductionApi } from '../../../../lib/api/introductions'
+import type { IntroductionImage } from '../../../../types/introductions'
+import { SEO } from '../../../../components/common/SEO'
 
-export const Route = createFileRoute('/intro')({
+export const Route = createFileRoute('/_main/(info)/intro/')({
   component: Intro,
 })
 

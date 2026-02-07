@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { privacyOfficerApi } from '../lib/api/privacyOfficer'
+import { privacyOfficerApi } from '../../../../lib/api/privacyOfficer'
 
-export const Route = createFileRoute('/privacy')({
+export const Route = createFileRoute('/_main/(policy)/privacy/')({
     component: PrivacyPolicy,
 })
 

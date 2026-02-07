@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
-import { CategoryFilter, LockerActions, RentalCard } from '../components/welfare'
-import { SEO } from '../components/common/SEO'
-import { welfareApi, type WelfareRental, type LockerInfo, type PrinterInfo, type GuidebookInfo } from '../lib/api/welfare'
+import { CategoryFilter, LockerActions, RentalCard } from '../../../../components/welfare'
+import { SEO } from '../../../../components/common/SEO'
+import { welfareApi, type WelfareRental, type LockerInfo, type PrinterInfo, type GuidebookInfo } from '../../../../lib/api/welfare'
 
-export const Route = createFileRoute('/welfare')({
+export const Route = createFileRoute('/_main/(service)/welfare/')({
   component: Welfare,
 })
 

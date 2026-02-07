@@ -2,14 +2,14 @@ import React from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Key, UserX } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAuthStore } from '../store/useAuthStore'
-import { mypageApi } from '../lib/api/mypage'
-import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, EditProfileModal, ChangePasswordModal, WithdrawModal, ProfileInfoHeader, ProfileUpdateSection, ContactSection } from '../components/mypage'
-import type { User } from '../types/users'
-import type { MyRegistration, ProfileUpdateRequest } from '../lib/api/mypage'
-import { useTimer } from '../hooks/useTimer'
+import { useAuthStore } from '../../../../store/useAuthStore'
+import { mypageApi } from '../../../../lib/api/mypage'
+import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, EditProfileModal, ChangePasswordModal, WithdrawModal, ProfileInfoHeader, ProfileUpdateSection, ContactSection } from '../../../../components/mypage'
+import type { User } from '../../../../types/users'
+import type { MyRegistration, ProfileUpdateRequest } from '../../../../lib/api/mypage'
+import { useTimer } from '../../../../hooks/useTimer'
 
-export const Route = createFileRoute('/mypage')({
+export const Route = createFileRoute('/_main/(auth)/mypage/')({
   component: MyPage,
 })
 

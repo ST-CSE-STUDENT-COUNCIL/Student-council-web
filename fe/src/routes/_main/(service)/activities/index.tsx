@@ -1,14 +1,14 @@
 import { createFileRoute, useSearch } from '@tanstack/react-router'
 import { useEffect, useState, useMemo } from 'react'
-import { ActivityFilter, type SortOption, type StatusOption, type TypeOption } from '../../components/activities/ActivityFilter'
-import { ActivityList } from '../../components/activities/ActivityList'
-import { ActivityCard } from '../../components/activities/ActivityCard'
-import { activityApi } from '../../lib/api/activities'
-import type { ActivityListItem, Activity } from '../../types/activities'
-import { getActivityStatus } from '../../types/activities'
-import { SEO } from '../../components/common/SEO'
+import { ActivityFilter, type SortOption, type StatusOption, type TypeOption } from '../../../../components/activities/ActivityFilter'
+import { ActivityList } from '../../../../components/activities/ActivityList'
+import { ActivityCard } from '../../../../components/activities/ActivityCard'
+import { activityApi } from '../../../../lib/api/activities'
+import type { ActivityListItem, Activity } from '../../../../types/activities'
+import { getActivityStatus } from '../../../../types/activities'
+import { SEO } from '../../../../components/common/SEO'
 
-export const Route = createFileRoute('/activities/')({
+export const Route = createFileRoute('/_main/(service)/activities/')({
     component: ActivitiesPage,
 })
 

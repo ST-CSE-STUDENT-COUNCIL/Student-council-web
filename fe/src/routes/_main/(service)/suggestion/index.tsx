@@ -3,9 +3,9 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { LockKeyhole } from 'lucide-react'
 
-import type { Suggestion, SuggestionListItem } from '../types/suggestions'
-import { suggestionApi } from '../lib/api/suggestions'
-import { useAuthStore } from '../store/useAuthStore'
+import type { Suggestion, SuggestionListItem } from '../../../../types/suggestions'
+import { suggestionApi } from '../../../../lib/api/suggestions'
+import { useAuthStore } from '../../../../store/useAuthStore'
 import {
     SuggestionCreateModal,
     SuggestionDetailModal,
@@ -14,10 +14,10 @@ import {
     SuggestionList,
     SuggestionPageSizeSelect,
     SuggestionPagination,
-} from '../components/suggestions'
-import { SEO } from '../components/common/SEO'
+} from '../../../../components/suggestions'
+import { SEO } from '../../../../components/common/SEO'
 
-export const Route = createFileRoute('/suggestion')({
+export const Route = createFileRoute('/_main/(service)/suggestion/')({
     component: SuggestionPage,
 })
 
