@@ -414,6 +414,55 @@ async def create_draft_notice(
         )
 
 
+@router.delete(
+    "/admin/notices/draft/{post_id}",
+    summary="Draft 게시글 삭제 (관리자)",
+    description="파일 업로드 실패 등으로 불필요해진 draft를 삭제합니다",
+    responses={
+        404: {"model": ErrorResponse, "description": "Draft를 찾을 수 없음"}
+    }
+)
+async def delete_draft_notice(
+    post_id: int,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    Draft 삭제 API
+    
+    파일 업로드 실패, 글 작성 취소 등의 상황에서
+    프론트엔드가 호출하여 고아 draft를 정리합니다.
+    is_draft=True인 게시글만 삭제 가능합니다.
+    """
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # 본인이 작성한 draft만 삭제 가능
+        result = admin_supabase.table('posts')\
+            .delete()\
+            .eq('id', post_id)\
+            .eq('author_id', str(current_user["id"]))\
+            .eq('is_draft', True)\
+            .execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="삭제할 Draft를 찾을 수 없습니다"
+            )
+        
+        print(f"[CLEANUP] Draft {post_id} 삭제 완료 (by {current_user['id']})")
+        return {"message": "Draft가 삭제되었습니다"}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[API ERROR] delete_draft_notice: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Draft 삭제 실패"
+        )
+
+
 @router.post(
     "/admin/notices",
     response_model=NoticeDetailResponse,
