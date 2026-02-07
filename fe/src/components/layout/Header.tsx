@@ -122,6 +122,7 @@ export default function Header() {
                                 to={item.to}
                                 search={item.search}
                                 onClick={closeMenu}
+                                activeOptions={{ includeSearch: false }}
                                 className="px-4 py-3 text-base font-medium text-gray-600 dark:text-slate-400 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 hover:text-indigo-600 dark:hover:text-indigo-400 [&.active]:text-indigo-700 dark:[&.active]:text-indigo-400 [&.active]:bg-indigo-50 dark:[&.active]:bg-indigo-500/10 transition-all flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
                                 {item.label}
