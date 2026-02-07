@@ -64,15 +64,11 @@ function Welfare() {
       setError(null)
       setLockerError(null)
       setPrinterError(null)
-      const [rentalsResult, lockerResult, printerResult, rentalConfigResult] = await Promise.allSettled([
+      const [rentalsResult, lockerResult, printerResult, rentalConfigResult, guidebookResult] = await Promise.allSettled([
         welfareApi.getRentals(),
         welfareApi.getLockerInfo(),
         welfareApi.getPrinterInfo(),
-        welfareApi.getRentalConfig()
-      const [rentalsResult, lockerResult, printerResult, guidebookResult] = await Promise.allSettled([
-        welfareApi.getRentals(),
-        welfareApi.getLockerInfo(),
-        welfareApi.getPrinterInfo(),
+        welfareApi.getRentalConfig(),
         welfareApi.getGuidebookInfo()
       ])
 
@@ -106,6 +102,8 @@ function Welfare() {
           ? rentalConfigResult.reason
           : rentalConfigResult.value)
         setRentalFormUrl('')
+      }
+
       if (guidebookResult.status === 'fulfilled') {
         setGuidebookInfo(guidebookResult.value)
       } else {

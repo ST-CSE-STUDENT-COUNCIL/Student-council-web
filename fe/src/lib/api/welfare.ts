@@ -47,6 +47,11 @@ export type GuidebookInfo = {
     description?: string;
 };
 
+export type RentalConfig = {
+    sheet_url: string;
+    application_form_url: string;
+};
+
 export const welfareApi = {
     /**
      * Presigned URL을 획득합니다.
@@ -229,6 +234,12 @@ export const welfareApi = {
         application_form_url: string;
     }, token?: string | null): Promise<RentalConfig> => {
         const response = await axios.put(`${API_BASE_URL}/admin/welfare/rental_config`, data, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return response.data;
+    },
+
+    /**
      * 신입생 가이드북 정보를 가져옵니다.
      */
     getGuidebookInfo: async (): Promise<GuidebookInfo> => {

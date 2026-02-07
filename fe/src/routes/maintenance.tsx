@@ -1,11 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ServerOff, RefreshCw, Mail } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/maintenance')({
     component: MaintenancePage,
 })
 
 function MaintenancePage() {
+    const navigate = useNavigate()
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white px-4">
             <div className="max-w-md w-full text-center">
@@ -26,7 +28,7 @@ function MaintenancePage() {
 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <button
-                        onClick={() => window.location.reload()}
+                        onClick={() => navigate({ to: '/' })}
                         className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
                     >
                         <RefreshCw size={20} />
