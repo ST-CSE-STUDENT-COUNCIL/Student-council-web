@@ -1,4 +1,4 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
 import Header from '../components/layout/Header'
 import Footer from '../components/layout/Footer'
@@ -20,6 +20,9 @@ const TanStackRouterDevtools = import.meta.env.DEV
 // 앱 초기화를 처리하는 래퍼 컴포넌트
 function RootComponent() {
     const { isInitialized } = useAuthInit()
+    const location = useLocation()
+    const isAttendancePage = location.pathname.startsWith('/attendance/')
+    const showDevtools = import.meta.env.DEV && !isAttendancePage
 
     // 인증 초기화 중에는 로딩 표시
     if (!isInitialized) {
@@ -37,17 +40,19 @@ function RootComponent() {
         <>
             <SEO title="홈" />
             <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#020617] font-sans selection:bg-blue-100 dark:selection:bg-indigo-900/50 selection:text-blue-900 dark:selection:text-indigo-100 transition-colors">
-                <Header />
+                {!isAttendancePage && <Header />}
                 <main className="flex-1 w-full">
                     <Outlet />
                 </main>
-                <Footer />
+                {!isAttendancePage && <Footer />}
             </div>
             <VerificationPromptModal />
             <Toaster richColors position="top-center" closeButton />
-            <Suspense fallback={null}>
-                <TanStackRouterDevtools position="bottom-right" />
-            </Suspense>
+            {showDevtools && (
+                <Suspense fallback={null}>
+                    <TanStackRouterDevtools position="bottom-right" />
+                </Suspense>
+            )}
         </>
     )
 }
