@@ -13,14 +13,7 @@ class UploadVerificationImageResponse(BaseModel):
 
 class SendVerificationRequest(BaseModel):
     """이메일 인증번호 발송 요청"""
-    email: EmailStr = Field(..., description="서울과기대 이메일")
-    
-    @field_validator('email')
-    @classmethod
-    def validate_email_domain(cls, v: str) -> str:
-        if not v.endswith('@seoultech.ac.kr'):
-            raise ValueError('서울과기대 이메일(@seoultech.ac.kr)만 사용 가능합니다')
-        return v
+    email: EmailStr = Field(..., description="이메일 주소")
 
 
 class SendVerificationResponse(BaseModel):
@@ -31,15 +24,8 @@ class SendVerificationResponse(BaseModel):
 
 class VerifyEmailRequest(BaseModel):
     """이메일 인증 확인 요청"""
-    email: EmailStr = Field(..., description="서울과기대 이메일")
+    email: EmailStr = Field(..., description="이메일 주소")
     code: str = Field(..., min_length=6, max_length=6, description="6자리 인증번호")
-    
-    @field_validator('email')
-    @classmethod
-    def validate_email_domain(cls, v: str) -> str:
-        if not v.endswith('@seoultech.ac.kr'):
-            raise ValueError('서울과기대 이메일(@seoultech.ac.kr)만 사용 가능합니다')
-        return v
 
 
 class VerifyEmailResponse(BaseModel):
@@ -61,7 +47,7 @@ class CheckStudentIdResponse(BaseModel):
 
 class SignupRequest(BaseModel):
     """회원가입 요청"""
-    email: EmailStr = Field(..., description="인증 완료된 서울과기대 이메일")
+    email: EmailStr = Field(..., description="인증 완료된 이메일")
     password: str = Field(
         ..., 
         min_length=8, 
@@ -84,13 +70,6 @@ class SignupRequest(BaseModel):
             raise ValueError('비밀번호는 숫자를 포함해야 합니다')
         if not any(c in '!@#$%^&*()_+-=[]{}|;:,.<>?' for c in v):
             raise ValueError('비밀번호는 특수문자를 포함해야 합니다')
-        return v
-    
-    @field_validator('email')
-    @classmethod
-    def validate_email_domain(cls, v: str) -> str:
-        if not v.endswith('@seoultech.ac.kr'):
-            raise ValueError('서울과기대 이메일(@seoultech.ac.kr)만 사용 가능합니다')
         return v
     
     @field_validator('phone')

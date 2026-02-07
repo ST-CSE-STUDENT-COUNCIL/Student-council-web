@@ -106,9 +106,10 @@ async def change_password(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] change_password: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"비밀번호 변경 중 오류 발생: {str(e)}"
+            detail="비밀번호 변경 중 오류 발생"
         )
 
 
@@ -166,9 +167,10 @@ async def upload_verification_image_direct(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] upload_verification_image_direct: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 업로드 실패: {str(e)}"
+            detail="이미지 업로드 실패"
         )
 
 
@@ -220,7 +222,7 @@ async def withdraw(
             print(f"[WITHDRAW ERROR] RPC 삭제 실패: {str(rpc_error)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"회원탈퇴 처리 실패: {str(rpc_error)}"
+                detail="회원탈퇴 처리 실패"
             )
         
         # 3. email_verifications 삭제 (재가입 허용)
@@ -237,9 +239,10 @@ async def withdraw(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] withdraw: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"회원탈퇴 처리 중 오류 발생: {str(e)}"
+            detail="회원탈퇴 처리 중 오류 발생"
         )
 
 
@@ -292,7 +295,7 @@ async def get_my_activities(
         # 전체 개수 조회
         count_result = supabase.table("activity_registrations")\
             .select("id", count="exact")\
-            .eq("user_id", user_id)
+            .eq("user_id", user_id)  # type: ignore
         
         if status_filter and status_filter in ['pending', 'approved', 'rejected', 'cancelled']:
             count_result = count_result.eq("status", status_filter)
@@ -341,9 +344,10 @@ async def get_my_activities(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] get_my_activities: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"활동 목록 조회 실패: {str(e)}"
+            detail="활동 목록 조회 실패"
         )
 
 
@@ -389,9 +393,10 @@ async def upload_profile_update_image(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] upload_profile_update_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 업로드 실패: {str(e)}"
+            detail="이미지 업로드 실패"
         )
 
 
@@ -419,7 +424,7 @@ async def request_profile_update(
             .select("id", count="exact")\
             .eq("user_id", current_user["id"])\
             .gte("created_at", limit_time)\
-            .execute()
+            .execute()  # type: ignore
             
         if recent_check.count and recent_check.count > 0:
             raise HTTPException(
@@ -484,9 +489,10 @@ async def request_profile_update(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] request_profile_update: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"변경 요청 실패: {str(e)}"
+            detail="변경 요청 실패"
         )
 
 
@@ -512,9 +518,10 @@ async def get_my_profile_updates(
         return {"requests": result.data or []}
     
     except Exception as e:
+        print(f"[API ERROR] get_my_profile_updates: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"조회 실패: {str(e)}"
+            detail="조회 실패"
         )
 
 
@@ -572,9 +579,10 @@ async def send_email_change_verification(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] send_email_change_verification: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"인증번호 발송 실패: {str(e)}"
+            detail="인증번호 발송 실패"
         )
 
 
@@ -634,9 +642,10 @@ async def verify_email_change(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] verify_email_change: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이메일 변경 실패: {str(e)}"
+            detail="이메일 변경 실패"
         )
 
 
@@ -692,7 +701,8 @@ async def change_phone(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] change_phone: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"전화번호 변경 실패: {str(e)}"
+            detail="전화번호 변경 실패"
         )

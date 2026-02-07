@@ -104,9 +104,10 @@ async def upload_verification_image(file: UploadFile, user_id: str, folder: Opti
                 detail="빈 파일은 업로드할 수 없습니다"
             )
     except Exception as e:
+        print(f"[UTIL ERROR] upload_verification_image read: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"파일 읽기 실패: {str(e)}"
+            detail="파일 읽기 실패"
         )
     
     # 3. 고유한 파일명 생성 (UUID + 확장자)
@@ -270,9 +271,10 @@ async def upload_post_attachment(file: UploadFile, post_id: int) -> dict:
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[UTIL ERROR] upload_post_attachment read: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"파일 읽기 실패: {str(e)}"
+            detail="파일 읽기 실패"
         )
     
     filename = file.filename or "unknown"
@@ -306,9 +308,10 @@ async def upload_post_attachment(file: UploadFile, post_id: int) -> dict:
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[UTIL ERROR] upload_post_attachment upload: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Storage 업로드 실패: {str(e)}"
+            detail="Storage 업로드 실패"
         )
 
 
@@ -413,9 +416,10 @@ async def upload_file_to_supabase(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[UTIL ERROR] upload_file_to_supabase read: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"파일 읽기 실패: {str(e)}"
+            detail="파일 읽기 실패"
         )
     
     # 고유 파일명 생성
@@ -446,7 +450,8 @@ async def upload_file_to_supabase(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[UTIL ERROR] upload_file_to_supabase upload: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Storage 업로드 실패: {str(e)}"
+            detail="Storage 업로드 실패"
         )

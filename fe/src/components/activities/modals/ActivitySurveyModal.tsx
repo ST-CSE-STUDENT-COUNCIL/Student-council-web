@@ -23,10 +23,28 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
     const isNonMember = user?.verification_status !== 'approved'
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
 
+    const [userInfo, setUserInfo] = useState({
+        name: user?.name || '',
+        student_id: user?.student_id || '',
+        department: user?.department || '',
+        phone: user?.phone || '',
+        email: user?.email || ''
+    })
+
     // 모달이 열릴 때 초기화
     useState(() => {
         if (isOpen) {
             setStep(1)
+            // user 정보가 늦게 로드될 경우를 대비
+            if (user) {
+                setUserInfo({
+                    name: user.name || '',
+                    student_id: user.student_id || '',
+                    department: user.department || '',
+                    phone: user.phone || '',
+                    email: user.email || ''
+                })
+            }
         }
     })
 
@@ -84,7 +102,21 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
     const totalSteps = sections.length > 0 ? sections.length : 1
     const currentSection = sections.length > 0 ? sections[step - 1] : { title: '', fields: [] }
 
+    // 익명 여부 확인
+    const isAnonymous = useMemo(() => {
+        const config = (activity as any).config
+        return config?.is_anonymous ?? true
+    }, [activity])
+
     const validateStep = () => {
+        // 기명 설문이고 비로그인 상태일 때 인적사항 체크 (첫 단계에서)
+        if (step === 1 && !isAnonymous && !user) {
+            if (!userInfo.name || !userInfo.student_id || !userInfo.department || !userInfo.phone) {
+                toast.error('참여자 정보를 모두 입력해주세요.')
+                return false
+            }
+        }
+
         // 필드가 없는 경우 (기본 텍스트 입력)
         if (formFields.length === 0) {
             return !!surveyResponses['feedback']
@@ -126,39 +158,50 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
         if (!validateStep()) return
 
         // 캡차 검증 추가
-        if (isNonMember && !turnstileToken) {
-            toast.error('보안 검증을 완료해주세요.')
-            return
+        if (isNonMember && !user && !turnstileToken) {
+            // 비로그인 상태일 때만 캡차 필수 (준회원은 캡차 생략 가능할 수 있으나 안전을 위해 isNonMember 체크 유지)
+            if (isNonMember && !turnstileToken) {
+                toast.error('보안 검증을 완료해주세요.')
+                return
+            }
         }
 
         setLoading(true)
         setError(null)
 
         try {
+            // 제출 데이터 준비 (기명/익명 분기)
+            // 기명이면 userInfo state 사용 (회원이면 readonly 값이, 비회원이면 입력값이 들어있음)
+            const submitName = !isAnonymous ? userInfo.name : '익명'
+            const submitStudentId = !isAnonymous ? userInfo.student_id : '00000000'
+            const submitDepartment = !isAnonymous ? userInfo.department : '익명'
+            const submitPhone = !isAnonymous ? userInfo.phone : '010-0000-0000'
+            const submitEmail = !isAnonymous ? userInfo.email : 'anonymous@example.com'
+
             if (activity.type === 'demand_survey') {
                 // 수요조사는 '신청(register)' API 사용 -> form_responses로 전송
-                // 완전 익명: 모든 개인정보 필드를 더미 데이터로 채움
                 const data = {
-                    name: '익명',
-                    phone: '010-0000-0000',
-                    student_id: '00000000',
-                    department: '익명',
-                    email: 'anonymous@example.com',
+                    name: submitName,
+                    phone: submitPhone,
+                    student_id: submitStudentId,
+                    department: submitDepartment,
+                    email: submitEmail,
                     form_responses: surveyResponses,
+                    turnstile_token: turnstileToken || undefined
                 }
                 await activityApi.register(activity.id, data)
                 // 상위 컴포넌트에는 통일된 형태로 전달
                 await onSubmit({ survey_responses: surveyResponses })
             } else {
                 // 설문조사는 '설문(submitSurvey)' API 사용 -> survey_responses로 전송
-                // 익명성 보장: 프론트엔드에서 더미 데이터 전송
                 const data: SurveySubmitRequest = {
-                    name: '익명',
-                    student_id: '00000000',
-                    department: '익명',
-                    phone: '010-0000-0000',
-                    email: 'anonymous@example.com',
-                    survey_responses: surveyResponses
+                    name: submitName,
+                    student_id: submitStudentId,
+                    department: submitDepartment,
+                    phone: submitPhone,
+                    email: submitEmail,
+                    survey_responses: surveyResponses,
+                    turnstile_token: turnstileToken || undefined
                 }
                 await activityApi.submitSurvey(activity.id, data)
                 await onSubmit(data)
@@ -252,8 +295,71 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
 
                 <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-800 mb-2">
                     <p className="font-bold mb-1">{currentSection?.title || activity.title}</p>
-                    <p>여러분의 소중한 의견을 들려주세요. (철저한 익명 보장)</p>
+                    <p>
+                        여러분의 소중한 의견을 들려주세요.
+                        <span className="block mt-1 font-semibold text-blue-900 opacity-80">
+                            {isAnonymous
+                                ? '(* 본 설문은 철저한 익명으로 진행됩니다)'
+                                : '(* 본 설문은 기명으로 진행되며, 이름과 학번이 수집됩니다)'}
+                        </span>
+                    </p>
                 </div>
+
+                {/* 기명 설문일 경우 참여자 정보 표시/입력 (첫 단계) */}
+                {!isAnonymous && step === 1 && (
+                    <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50">
+                        <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            참여자 정보
+                            {user && <span className="text-xs font-normal text-gray-500 bg-white px-2 py-0.5 rounded-full border border-gray-200">회원 정보 자동 입력됨</span>}
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-1">이름</label>
+                                <input
+                                    type="text"
+                                    value={userInfo.name}
+                                    onChange={e => setUserInfo(prev => ({ ...prev, name: e.target.value }))}
+                                    disabled={!!user}
+                                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500 transition-all"
+                                    placeholder="이름"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-1">학번</label>
+                                <input
+                                    type="text"
+                                    value={userInfo.student_id}
+                                    onChange={e => setUserInfo(prev => ({ ...prev, student_id: e.target.value }))}
+                                    disabled={!!user}
+                                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500 transition-all"
+                                    placeholder="학번 (예: 20240001)"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-1">학과</label>
+                                <input
+                                    type="text"
+                                    value={userInfo.department}
+                                    onChange={e => setUserInfo(prev => ({ ...prev, department: e.target.value }))}
+                                    disabled={!!user}
+                                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500 transition-all"
+                                    placeholder="학과"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1.5 ml-1">전화번호</label>
+                                <input
+                                    type="tel"
+                                    value={userInfo.phone}
+                                    onChange={e => setUserInfo(prev => ({ ...prev, phone: e.target.value }))}
+                                    disabled={!!user}
+                                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500 transition-all"
+                                    placeholder="010-0000-0000"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {error && (
                     <div className="bg-red-50 p-4 rounded-xl text-sm text-red-800">

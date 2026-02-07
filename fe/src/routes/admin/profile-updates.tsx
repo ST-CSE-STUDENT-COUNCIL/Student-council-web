@@ -31,6 +31,8 @@ type RawProfileUpdateItem = {
   created_at?: string
   requested_at?: string
   verification_image_url?: string
+  rejection_reason?: string
+  reason?: string
 }
 
 function AdminProfileUpdatesPage() {
@@ -44,6 +46,7 @@ function AdminProfileUpdatesPage() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState<number | null>(null)
   const [pageSize, setPageSize] = useState(20)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const buildRequests = (items: RawProfileUpdateItem[]) => {
     const groups = new Map<string, ProfileUpdateRequest>()
@@ -60,6 +63,7 @@ function AdminProfileUpdatesPage() {
       const approvedCurrentName =
         field === 'name' && item.status === 'approved' ? item.current_value : undefined
       const createdAt = item.created_at || item.requested_at || ''
+      const rejectionReason = item.rejection_reason || item.reason || ''
       const groupKey = `${item.user_id ?? 'unknown'}-${normalizeDateKey(createdAt)}`
 
       const existing = groups.get(groupKey)
@@ -82,6 +86,7 @@ function AdminProfileUpdatesPage() {
         requestedAt: createdAt ? formatDateTime(createdAt) : '-',
         requestedAtRaw: createdAt,
         status: normalizeStatus(item.status),
+        rejectionReason,
         verificationImageUrl: item.verification_image_url ?? '',
       }
 
@@ -113,6 +118,7 @@ function AdminProfileUpdatesPage() {
         status: nextStatus,
         requestedAt: nextRequestedAt,
         requestedAtRaw: nextRequestedAtRaw,
+        rejectionReason: base.rejectionReason || rejectionReason,
         verificationImageUrl: base.verificationImageUrl || item.verification_image_url || '',
       })
     })
@@ -181,7 +187,7 @@ function AdminProfileUpdatesPage() {
     return () => {
       cancelled = true
     }
-  }, [statusFilter, page, pageSize])
+  }, [statusFilter, page, pageSize, refreshKey])
 
   async function handlePreviewImage(verificationImageUrl: string) {
     if (!verificationImageUrl || previewLoading) return
@@ -204,9 +210,7 @@ function AdminProfileUpdatesPage() {
     try {
       const targets = requestIds.length > 0 ? requestIds : [requestId]
       await Promise.all(targets.map((id) => adminApi.approveProfileUpdate(id)))
-      setRequests((prev) => prev.map((req) =>
-        req.id === requestId ? { ...req, status: 'approved' } : req
-      ))
+      setRefreshKey((prev) => prev + 1)
     } catch (err) {
       console.error('프로필 변경 승인 실패:', err)
       setError('승인 처리에 실패했습니다.')
@@ -225,9 +229,7 @@ function AdminProfileUpdatesPage() {
     try {
       const targets = requestIds.length > 0 ? requestIds : [requestId]
       await Promise.all(targets.map((id) => adminApi.rejectProfileUpdate(id, reason.trim())))
-      setRequests((prev) => prev.map((req) =>
-        req.id === requestId ? { ...req, status: 'rejected' } : req
-      ))
+      setRefreshKey((prev) => prev + 1)
     } catch (err) {
       console.error('프로필 변경 반려 실패:', err)
       setError('반려 처리에 실패했습니다.')

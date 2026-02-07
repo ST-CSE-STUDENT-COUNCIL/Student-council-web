@@ -34,7 +34,7 @@ export type MyRegistrationsResponse = {
 
 export type ProfileUpdateRequest = {
     id?: string | number
-    field_name?: 'name' | 'student_id'
+    field_name?: 'name' | 'student_id' | 'email' | 'phone'
     new_value?: string
     status?: string
     rejection_reason?: string
@@ -94,7 +94,7 @@ export const mypageApi = {
     },
 
     requestProfileUpdate: async (data: {
-        field_name: 'name' | 'student_id'
+        field_name: 'name' | 'student_id' | 'email' | 'phone'
         new_value: string
         verification_image_url: string
     }) => {
@@ -103,6 +103,29 @@ export const mypageApi = {
     },
     getProfileUpdateRequests: async () => {
         const response = await api.get(`${API_BASE_URL}/profile-update`)
+        return response.data
+    },
+
+    sendEmailChangeVerification: async (newEmail: string) => {
+        const response = await api.post(`${API_BASE_URL}/email/send-verification`, {
+            new_email: newEmail,
+        })
+        return response.data
+    },
+
+    verifyEmailChange: async (newEmail: string, code: string) => {
+        const response = await api.post(`${API_BASE_URL}/email/verify`, {
+            new_email: newEmail,
+            code,
+        })
+        return response.data
+    },
+
+    changePhone: async (newPhone: string, password: string) => {
+        const response = await api.patch(`${API_BASE_URL}/phone`, {
+            new_phone: newPhone,
+            password,
+        })
         return response.data
     },
 }

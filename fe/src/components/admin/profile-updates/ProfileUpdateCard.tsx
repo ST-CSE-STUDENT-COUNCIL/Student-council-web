@@ -64,6 +64,9 @@ export function ProfileUpdateCard({
               )
             })}
           </div>
+          {request.status === 'rejected' && request.rejectionReason && (
+            <p className="text-xs text-rose-600">반려 사유: {request.rejectionReason}</p>
+          )}
           <p className="text-xs text-gray-400">요청일: {request.requestedAt}</p>
         </div>
       </div>

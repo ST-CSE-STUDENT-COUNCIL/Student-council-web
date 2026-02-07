@@ -60,6 +60,8 @@ export const SurveyRegistrationsPanel = ({
     onPageChange,
     onStatusChange
 }: SurveyRegistrationsPanelProps) => {
+    const isAnonymous = ['survey', 'demand_survey'].includes(activityDetail?.type) && (activityDetail?.config?.is_anonymous ?? true)
+
     return (
         <>
             <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6 shadow-sm">
@@ -95,7 +97,7 @@ export const SurveyRegistrationsPanel = ({
 
             <div className="bg-white rounded-xl border border-gray-100 p-4 mb-6 shadow-sm">
                 <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-                    {!['survey', 'demand_survey'].includes(activityDetail?.type) ? (
+                    {!isAnonymous ? (
                         <div className="flex-1 relative max-w-md w-full">
                             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
@@ -259,7 +261,7 @@ export const SurveyRegistrationsPanel = ({
                                     </div>
 
                                     <div className="p-5 flex-1 space-y-4">
-                                        {!['survey', 'demand_survey'].includes(activityDetail?.type) && (
+                                        {!isAnonymous && (
                                             <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-50">
                                                 <div className="font-bold text-gray-900">{reg.name}</div>
                                                 <div className="text-xs text-gray-500">{reg.department} {reg.student_id}</div>

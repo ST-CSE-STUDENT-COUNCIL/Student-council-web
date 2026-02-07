@@ -87,7 +87,7 @@ export function SurveyForm({ editingActivity, onSuccess, onCancel }: SurveyFormP
             is_active: true,
             thumbnail_url: '',
             form_fields: [],
-            config: {}
+            config: { is_anonymous: true }
         }
     })
 
@@ -180,6 +180,8 @@ export function SurveyForm({ editingActivity, onSuccess, onCancel }: SurveyFormP
                     is_active: formData.is_active,
                     thumbnail_url: thumbnailUrl || undefined,
                     form_fields: formData.form_fields,
+                    config: formData.config,
+                    is_anonymous: formData.config?.is_anonymous ?? true,
                     image_urls: imageUrls.length > 0 ? imageUrls : undefined
                 })
                 toast.success('설문이 수정되었습니다.')
@@ -433,6 +435,42 @@ export function SurveyForm({ editingActivity, onSuccess, onCancel }: SurveyFormP
                                 </div>
                             </div>
                         </div>
+
+                        <div className="mt-4">
+                            <div
+                                onClick={() => setFormData(prev => {
+                                    const nextIsAnonymous = !(prev.config?.is_anonymous ?? true)
+                                    return {
+                                        ...prev,
+                                        is_anonymous: nextIsAnonymous,
+                                        config: { ...prev.config, is_anonymous: nextIsAnonymous }
+                                    }
+                                })}
+                                className={`w-full p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-center justify-between group ${(formData.config?.is_anonymous ?? true)
+                                    ? 'border-gray-500 bg-gray-50/30'
+                                    : 'border-blue-500 bg-blue-50/30'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-xl transition-colors ${(formData.config?.is_anonymous ?? true) ? 'bg-gray-200 text-gray-600' : 'bg-blue-100 text-blue-600'}`}>
+                                        {(formData.config?.is_anonymous ?? true) ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </div>
+                                    <div>
+                                        <div className={`font-bold transition-colors ${(formData.config?.is_anonymous ?? true) ? 'text-gray-700' : 'text-blue-900'}`}>
+                                            {(formData.config?.is_anonymous ?? true) ? '익명으로 진행' : '기명으로 진행'}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                            {(formData.config?.is_anonymous ?? true)
+                                                ? '참여자의 이름, 학번 등 개인정보를 수집하지 않습니다'
+                                                : '참여자의 실명과 학번을 수집합니다'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={`px-3 py-1 rounded-full text-xs font-bold ${(formData.config?.is_anonymous ?? true) ? 'bg-gray-200 text-gray-600' : 'bg-blue-100 text-blue-600'}`}>
+                                    {(formData.config?.is_anonymous ?? true) ? '익명' : '기명'}
+                                </div>
+                            </div>
+                        </div>
                     </section>
 
                     {/* Additional Fields Section */}
@@ -482,7 +520,7 @@ export function SurveyForm({ editingActivity, onSuccess, onCancel }: SurveyFormP
                 </form>
             </div>
             {/* Helper for caret position */}
-        </div>
+        </div >
     )
 }
 

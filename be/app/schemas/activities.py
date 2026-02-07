@@ -123,6 +123,7 @@ class ActivityCreateRequest(BaseModel):
     thumbnail_url: Optional[str] = Field(None, description="썸네일 URL")
     image_urls: Optional[List[Dict[str, str]]] = Field(None, description="이미지 URL 리스트")
     is_active: bool = Field(default=True, description="활성화 여부")
+    is_anonymous: bool = Field(default=True, description="익명 여부 (true: 익명 모드, false: 기명 모드). 설문조사/수요조사에서 주로 사용")
 
 
 class ActivityUpdateRequest(BaseModel):
@@ -138,6 +139,7 @@ class ActivityUpdateRequest(BaseModel):
     thumbnail_url: Optional[str] = None
     image_urls: Optional[List[Dict[str, str]]] = Field(None, description="이미지 URL 리스트")
     is_active: Optional[bool] = None
+    is_anonymous: Optional[bool] = Field(None, description="익명 여부 (true: 익명 모드, false: 기명 모드)")
 
 
 # ============================================================================
@@ -159,6 +161,7 @@ class ActivityResponse(BaseModel):
     thumbnail_url: Optional[str]
     images: List[Dict[str, Any]] = Field(default_factory=list, description="활동 이미지 목록")
     is_active: bool
+    is_anonymous: bool = Field(default=True, description="익명 여부 (true: 익명, false: 기명)")
     created_by: Optional[str]
     created_at: datetime
     updated_at: datetime
@@ -259,6 +262,23 @@ class SurveySubmitRequest(BaseModel):
     """설문조사 제출 요청"""
     survey_responses: Dict[str, Any] = Field(..., description="설문 응답")
     
+    # 비회원 정보 (회원은 선택사항, 비회원은 필수)
+    name: Optional[str] = Field(None, max_length=100, description="이름")
+    student_id: Optional[str] = Field(None, pattern=r'^\d{8,20}$', description="학번/수험번호")
+    department: Optional[str] = Field(None, max_length=100, description="학과")
+    phone: Optional[str] = Field(None, pattern=r'^010-?\d{4}-?\d{4}$', description="전화번호")
+    email: Optional[str] = Field(None, description="이메일")
+    
+    # Turnstile 토큰 (비회원 필수)
+    turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile 토큰 (비회원 신청 시 필수)")
+    
+    @field_validator('phone')
+    @classmethod
+    def normalize_phone(cls, v: Optional[str]) -> Optional[str]:
+        if v:
+            return v.replace('-', '')
+        return v
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -266,7 +286,11 @@ class SurveySubmitRequest(BaseModel):
                     "1": "매우 만족",
                     "2": "음식이 더 다양했으면 좋겠습니다",
                     "3": 5
-                }
+                },
+                "name": "홍길동",
+                "student_id": "20241234",
+                "department": "컴퓨터공학과",
+                "phone": "01012345678"
             }
         }
 
@@ -446,6 +470,7 @@ class AttendanceSearchRequest(BaseModel):
 class AttendanceCheckRequest(BaseModel):
     """출석 체크 요청"""
     student_id: str = Field(..., description="학번")
+    turnstile_token: str = Field(..., description="Turnstile 인증 토큰")
 
 
 class AttendanceCheckResponse(BaseModel):
