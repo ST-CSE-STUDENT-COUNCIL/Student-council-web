@@ -88,7 +88,15 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
     // 추가 질문 여부 확인 (detailActivity 기준) - Removed
     // const hasAdditionalFields = detailActivity?.form_fields && detailActivity.form_fields.length > 0 --> logic moved below as sections check
-    const isAnonymousType = activity.type === 'demand_survey' || activity.type === 'survey'
+
+    // 익명 여부 확인 (설문/수요조사 타입이면서 config.is_anonymous가 true인 경우)
+    const isAnonymousType = useMemo(() => {
+        const target = detailActivity || activity
+        const isSurveyOrDemand = target.type === 'demand_survey' || target.type === 'survey'
+        const config = (target as any).config
+        return isSurveyOrDemand && (config?.is_anonymous ?? true)
+    }, [detailActivity, activity])
+
     const isNonMember = user?.verification_status !== 'approved' // 비회원 여부 확인
 
     // 섹션별로 필드 그룹화 (섹션 기능 복구됨)
