@@ -361,15 +361,9 @@ async def register_for_activity(
         # 회원 정보 가져오기
         user_id = current_user["id"] if current_user else None
         
-        # 익명 참여인 경우 개인정보는 None 또는 "익명" 처리
-        if activity.get("is_anonymous", True) and not body.name:
-             name = "익명"
-             student_id = None
-             department = None
-             phone = None
-             email = None
-        elif activity.get("is_anonymous", True) and current_user:
-             # 익명 모드에서 회원이 신청해도 "익명" 처리
+        # 익명 활동이면 무조건 개인정보 제거 (프론트에서 임시값을 보내도 무시)
+        # student_id=None이어야 DB 유니크 인덱스에 걸리지 않음
+        if activity.get("is_anonymous", True):
              name = "익명"
              student_id = None
              department = None
