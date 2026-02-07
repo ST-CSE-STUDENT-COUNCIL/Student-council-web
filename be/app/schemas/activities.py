@@ -494,12 +494,12 @@ class AttendanceListItem(BaseModel):
     """출석 목록 항목"""
     registration_id: int
     user_id: Optional[str]
-    user_name: str
-    student_id: str
-    phone: Optional[str]
+    user_name: Optional[str] = None
+    student_id: Optional[str] = None
+    phone: Optional[str] = None
     registered_at: datetime
     attended: bool
-    attended_at: Optional[datetime]
+    attended_at: Optional[datetime] = None
 
 
 class AttendanceListResponse(BaseModel):
