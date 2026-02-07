@@ -41,6 +41,11 @@ export type PrinterInfo = {
     updated_at: string;
 };
 
+export type RentalConfig = {
+    sheet_url: string;
+    application_form_url: string;
+};
+
 export const welfareApi = {
     /**
      * Presigned URL을 획득합니다.
@@ -142,6 +147,14 @@ export const welfareApi = {
     },
 
     /**
+     * 대여사업 공통 시트/신청 폼 URL을 조회합니다.
+     */
+    getRentalConfig: async (): Promise<RentalConfig> => {
+        const response = await axios.get(`${API_BASE_URL}/welfare/rental_config`);
+        return response.data;
+    },
+
+    /**
      * 특정 복지 물품 정보를 가져옵니다.
      */
     getRentalById: async (id: number): Promise<WelfareRental> => {
@@ -202,6 +215,19 @@ export const welfareApi = {
      */
     updatePrinterInfo: async (data: { description?: string | null }, token?: string | null): Promise<PrinterInfo> => {
         const response = await axios.put(`${API_BASE_URL}/admin/welfare/print`, data, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return response.data;
+    },
+
+    /**
+     * 대여사업 공통 시트/신청 폼 URL을 수정합니다.
+     */
+    updateRentalConfig: async (data: {
+        sheet_url: string;
+        application_form_url: string;
+    }, token?: string | null): Promise<RentalConfig> => {
+        const response = await axios.put(`${API_BASE_URL}/admin/welfare/rental_config`, data, {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return response.data;
