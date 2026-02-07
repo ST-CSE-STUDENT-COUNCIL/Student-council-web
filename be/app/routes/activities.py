@@ -141,7 +141,6 @@ async def get_activities(
                 current_count=activity.get("current_count", 0),
                 thumbnail_url=activity.get("thumbnail_url"),
                 is_active=activity["is_active"],
-                attendance_open=activity.get("attendance_open", False),
                 created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
                 is_registration_open=is_registration_open,
                 is_full=is_full
@@ -241,7 +240,6 @@ async def get_activity(
             images=images,
             is_active=activity["is_active"],
             is_anonymous=activity.get("is_anonymous", False),
-            attendance_open=activity.get("attendance_open", False),
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(activity["updated_at"].replace('Z', '+00:00')),
@@ -728,7 +726,6 @@ async def create_activity(
             thumbnail_url=activity.get("thumbnail_url"),
             is_active=activity["is_active"],
             is_anonymous=activity.get("is_anonymous", False),
-            attendance_open=activity.get("attendance_open", False),
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(activity["updated_at"].replace('Z', '+00:00')),
@@ -859,7 +856,6 @@ async def update_activity(
             thumbnail_url=activity.get("thumbnail_url"),
             is_active=activity["is_active"],
             is_anonymous=activity.get("is_anonymous", False),
-            attendance_open=activity.get("attendance_open", False),
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(activity["updated_at"].replace('Z', '+00:00')),
@@ -945,17 +941,18 @@ async def get_activity_registrations(
 ):
     """활동 신청자 목록 조회 (관리자 전용)"""
     try:
-        # 전체 개수
+        # 전체 개수 (승인된 신청만)
         # type: ignore는 count 파라미터의 타입 힌트 오류를 무시합니다
-        count_result = supabase.table("activity_registrations").select("id", count="exact").eq("activity_id", activity_id).execute()  # type: ignore
+        count_result = supabase.table("activity_registrations").select("id", count="exact").eq("activity_id", activity_id).eq("registration_status", "approved").execute()  # type: ignore
         
         total = count_result.count if count_result.count is not None else 0
         
-        # 목록 조회
+        # 목록 조회 (승인된 신청만)
         offset = (page - 1) * page_size
         result = supabase.table("activity_registrations")\
             .select("*")\
             .eq("activity_id", activity_id)\
+            .eq("registration_status", "approved")\
             .order("created_at", desc=True)\
             .range(offset, offset + page_size - 1)\
             .execute()
@@ -1504,48 +1501,6 @@ async def delete_activity_image(
 
 
 # ============================================================================
-# 출석 시작/마감 API
-# ============================================================================
-
-@router.patch(
-    "/admin/{activity_id}/attendance/toggle",
-    summary="출석 시작/마감 토글 (관리자)",
-    description="출석 체크를 시작하거나 마감합니다",
-    responses={
-        401: {"model": ErrorResponse, "description": "인증 필요"},
-        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
-        404: {"model": ErrorResponse, "description": "활동 없음"}
-    }
-)
-async def toggle_attendance(
-    activity_id: int,
-    open: bool = Query(..., description="true: 출석 시작, false: 출석 마감"),
-    current_user: dict = Depends(require_admin)
-):
-    """출석 시작/마감 토글"""
-    try:
-        admin_supabase = get_supabase_admin()
-        
-        result = admin_supabase.table('activities')\
-            .update({'attendance_open': open})\
-            .eq('id', activity_id)\
-            .eq('is_deleted', False)\
-            .execute()
-        
-        if not result.data:
-            raise HTTPException(status_code=404, detail="활동을 찾을 수 없습니다")
-        
-        status_text = "시작" if open else "마감"
-        return {"message": f"출석이 {status_text}되었습니다", "attendance_open": open}
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"[API ERROR] toggle_attendance: {str(e)}")
-        raise HTTPException(status_code=500, detail="출석 상태 변경 실패")
-
-
-# ============================================================================
 # 출석 체크 API
 # ============================================================================
 
@@ -1615,19 +1570,6 @@ async def attend_by_student_id(
     """학번으로 출석 체크 (로그인 불필요)"""
     try:
         admin_supabase = get_supabase_admin()
-        
-        # 출석 활성화 여부 확인
-        activity_result = admin_supabase.table('activities')\
-            .select('attendance_open')\
-            .eq('id', activity_id)\
-            .single()\
-            .execute()
-        
-        if not activity_result.data:
-            raise HTTPException(status_code=404, detail="활동을 찾을 수 없습니다")
-        
-        if not activity_result.data.get('attendance_open'):
-            raise HTTPException(status_code=400, detail="출석 체크가 시작되지 않았거나 마감되었습니다")
         
         # 학번으로 신청 내역 조회
         registration_result = admin_supabase.table('activity_registrations')\
@@ -1758,16 +1700,6 @@ async def admin_mark_attendance(
     """관리자가 출석 체크"""
     try:
         admin_supabase = get_supabase_admin()
-        
-        # 출석 활성화 여부 확인
-        activity_check = admin_supabase.table('activities')\
-            .select('attendance_open')\
-            .eq('id', activity_id)\
-            .single()\
-            .execute()
-        
-        if activity_check.data and not activity_check.data.get('attendance_open'):
-            raise HTTPException(status_code=400, detail="출석 체크가 시작되지 않았거나 마감되었습니다")
         
         # 신청 내역 확인
         reg_result = admin_supabase.table('activity_registrations')\

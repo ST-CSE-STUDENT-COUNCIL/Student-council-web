@@ -555,7 +555,6 @@ CREATE TABLE activities (
   thumbnail_url TEXT,
   is_active BOOLEAN DEFAULT true,
   is_anonymous BOOLEAN DEFAULT false,  -- 익명 여부 (true: 익명 모드, false: 기명 모드) 설문/수요조사는 생성 시 true로 설정
-  attendance_open BOOLEAN DEFAULT false,  -- 출석 체크 활성화 여부 (true: 진행 중, false: 시작 전/마감)
   is_deleted BOOLEAN DEFAULT false,
   deleted_at TIMESTAMPTZ,
   deleted_by UUID REFERENCES users(id),
