@@ -71,9 +71,9 @@ function MyPage() {
         const data = updatesResult.value
         const payload =
           Array.isArray(data) ? data :
-          Array.isArray((data as { items?: unknown })?.items) ? (data as { items: unknown[] }).items :
-          Array.isArray((data as { requests?: unknown })?.requests) ? (data as { requests: unknown[] }).requests :
-          []
+            Array.isArray((data as { items?: unknown })?.items) ? (data as { items: unknown[] }).items :
+              Array.isArray((data as { requests?: unknown })?.requests) ? (data as { requests: unknown[] }).requests :
+                []
 
         setProfileUpdateRequests(payload as ProfileUpdateRequest[])
         setProfileUpdateError(null)
@@ -364,7 +364,7 @@ function MyPage() {
             onClose={() => setShowEditProfileModal(false)}
             initialName={currentUser.name}
             initialStudentId={currentUser.student_id}
-            verificationStatus={currentUser.verification_status}
+
           />
         )}
         {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}

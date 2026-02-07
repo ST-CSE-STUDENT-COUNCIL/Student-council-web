@@ -81,6 +81,8 @@ export const adminApi = {
         const response = await api.post(`/admin/profile-updates/${requestId}/reject`, null, {
             params: { reason },
         })
+        return response.data
+    },
     getSignedUrl: async (path: string) => {
         const response = await api.get<{ signed_url: string }>('/admin/storage/signed-url', { params: { path } })
         return response.data
