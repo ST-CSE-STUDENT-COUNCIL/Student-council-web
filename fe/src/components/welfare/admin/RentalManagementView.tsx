@@ -26,6 +26,11 @@ const createEmptyFormState = (): RentalFormState => ({
 export function RentalManagementView({ items, loading, error, onRefresh }: RentalManagementViewProps) {
     const accessToken = useAuthStore((state) => state.accessToken)
 
+    const [rentalSheetUrl, setRentalSheetUrl] = React.useState('')
+    const [rentalFormUrl, setRentalFormUrl] = React.useState('')
+    const [isConfigSubmitting, setIsConfigSubmitting] = React.useState(false)
+    const [isConfigLoading, setIsConfigLoading] = React.useState(false)
+
     const [showAddModal, setShowAddModal] = React.useState(false)
     const [addImageFile, setAddImageFile] = React.useState<File | null>(null)
     const [addImagePreview, setAddImagePreview] = React.useState('')
@@ -39,6 +44,28 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
     const [isSubmitting, setIsSubmitting] = React.useState(false)
 
     const initialBodyOverflow = React.useRef<string | null>(null)
+    React.useEffect(() => {
+        const fetchRentalConfig = async () => {
+            setIsConfigLoading(true)
+            try {
+                const response = await welfareApi.getRentalConfig()
+                if (typeof response === 'string') {
+                    setRentalSheetUrl('')
+                    setRentalFormUrl('')
+                    return
+                }
+                setRentalSheetUrl(response.sheet_url ?? '')
+                setRentalFormUrl(response.application_form_url ?? '')
+            } catch (fetchError) {
+                console.error('대여사업 링크 조회 실패:', fetchError)
+                toast.error('대여사업 링크를 불러오지 못했습니다.')
+            } finally {
+                setIsConfigLoading(false)
+            }
+        }
+
+        fetchRentalConfig()
+    }, [])
     React.useEffect(() => {
         if (initialBodyOverflow.current === null) {
             initialBodyOverflow.current = document.body.style.overflow
@@ -119,10 +146,6 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
             toast.error('물품명을 입력해주세요.')
             return
         }
-        if (!addItem.application_sheet_url.trim()) {
-            toast.error('신청 시트 URL을 입력해주세요.')
-            return
-        }
         if (!addItem.quantity_cell_range.trim()) {
             toast.error('재고 셀 위치를 입력해주세요.')
             return
@@ -150,7 +173,6 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
             // 4. 물품 생성 요청 (image_url 포함)
             const payload: Partial<typeof addItem> = {
                 item_name: addItem.item_name,
-                application_sheet_url: addItem.application_sheet_url,
                 quantity_cell_range: addItem.quantity_cell_range,
             }
 
@@ -207,15 +229,10 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
         }
 
         const itemName = editItem.item_name.trim() || editingItem.item_name
-        const sheetUrl = editItem.application_sheet_url.trim() || editingItem.application_sheet_url
         const category = editItem.category.trim() || editingItem.category || ''
 
         if (!itemName) {
             toast.error('물품명을 입력해주세요.')
-            return
-        }
-        if (!sheetUrl) {
-            toast.error('신청 시트 URL을 입력해주세요.')
             return
         }
 
@@ -236,7 +253,7 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
             const cellRange = editItem.quantity_cell_range?.trim() || ''
             const payload: Record<string, any> = {
                 item_name: itemName,
-                application_sheet_url: sheetUrl,
+                application_sheet_url: editingItem.application_sheet_url,
                 category,
                 image_url: imageUrl,
                 spreadsheet_id: editingItem.spreadsheet_id,
@@ -309,16 +326,99 @@ export function RentalManagementView({ items, loading, error, onRefresh }: Renta
         }
     }
 
+    const handleUpdateRentalConfig = async () => {
+        if (isConfigSubmitting) {
+            return
+        }
+
+        const sheetUrl = rentalSheetUrl.trim()
+        const formUrl = rentalFormUrl.trim()
+
+        if (!sheetUrl) {
+            toast.error('시트 URL을 입력해주세요.')
+            return
+        }
+
+        if (!formUrl) {
+            toast.error('신청 폼 URL을 입력해주세요.')
+            return
+        }
+
+        setIsConfigSubmitting(true)
+        try {
+            await welfareApi.updateRentalConfig({
+                sheet_url: sheetUrl,
+                application_form_url: formUrl,
+            }, accessToken)
+            toast.success('대여사업 링크가 저장되었습니다.')
+        } catch (error: any) {
+            let errorMessage = '대여사업 링크 저장에 실패했습니다.'
+
+            if (error.response?.status === 403) {
+                errorMessage = error.response?.data?.detail || '권한이 없습니다. 학생회 권한이 필요합니다.'
+            } else if (error.response?.status === 401) {
+                errorMessage = '로그인이 필요합니다. 다시 로그인해주세요.'
+            } else if (error.response?.data?.detail) {
+                errorMessage = error.response.data.detail
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message
+            }
+
+            toast.error(`링크 저장 실패: ${errorMessage}`)
+        } finally {
+            setIsConfigSubmitting(false)
+        }
+    }
+
     return (
         <div>
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">대여사업</h2>
-                <button
-                    onClick={() => setShowAddModal(true)}
-                    className="bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-                >
-                    + 새 물품 추가
-                </button>
+            <div className="flex flex-col gap-4 mb-6">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-gray-900">대여사업</h2>
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                    >
+                        + 새 물품 추가
+                    </button>
+                </div>
+
+                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div>
+                            <p className="text-sm font-semibold text-gray-900">대여사업 링크 설정</p>
+                            <p className="text-xs text-gray-500">대여 시트와 신청 폼 URL을 저장합니다.</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleUpdateRentalConfig}
+                            disabled={isConfigSubmitting || isConfigLoading}
+                            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
+                        >
+                            {isConfigSubmitting ? '저장 중...' : isConfigLoading ? '불러오는 중...' : '링크 저장'}
+                        </button>
+                    </div>
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        <div>
+                            <label className="text-xs font-semibold text-gray-600">대여 시트 URL</label>
+                            <input
+                                value={rentalSheetUrl}
+                                onChange={(event) => setRentalSheetUrl(event.target.value)}
+                                placeholder="https://docs.google.com/spreadsheets/..."
+                                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-gray-600">대여 신청 폼 URL</label>
+                            <input
+                                value={rentalFormUrl}
+                                onChange={(event) => setRentalFormUrl(event.target.value)}
+                                placeholder="https://docs.google.com/forms/..."
+                                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <RentalAddModal

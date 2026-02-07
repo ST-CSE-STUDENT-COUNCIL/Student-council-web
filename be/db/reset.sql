@@ -22,8 +22,7 @@
 -- 유지되는 것:
 -- - 테이블 구조 (스키마)
 -- - boards 기본 데이터 (재생성)
--- - rental_items 마스터 데이터
--- - locker_info 마스터 데이터
+-- - 싱글 행 설정 테이블 빈 행 (print_welfare_info, guidebook_info, privacy_officer_info)
 -- ============================================================================
 
 -- ============================================================================
@@ -41,12 +40,20 @@ TRUNCATE TABLE activities CASCADE;
 -- TRUNCATE TABLE event_images CASCADE;
 -- TRUNCATE TABLE events CASCADE;
 
--- 복지 관련 (rental_items, locker_info 포함 전체 삭제)
+-- 복지 관련
 TRUNCATE TABLE rental_items CASCADE;
+TRUNCATE TABLE rental_config CASCADE;
 TRUNCATE TABLE locker_info CASCADE;
+TRUNCATE TABLE print_welfare_info CASCADE;
+TRUNCATE TABLE guidebook_info CASCADE;
+TRUNCATE TABLE privacy_officer_info CASCADE;
 
 -- 동아리
+TRUNCATE TABLE club_introduction_images CASCADE;
 TRUNCATE TABLE clubs CASCADE;
+
+-- 프로필 변경 요청
+TRUNCATE TABLE profile_update_requests CASCADE;
 
 -- 게시판 관련
 TRUNCATE TABLE suggestions CASCADE;
@@ -81,7 +88,8 @@ DELETE FROM auth.users;  -- 모든 Auth 사용자 삭제
 -- ============================================================================
 -- 참고: rental_items와 locker_info는 구글 시트 연동 방식이므로
 --      별도 status 컬럼이 없고, 데이터를 유지합니다.
-
+-- rental_config 싱글톤 재생성
+INSERT INTO rental_config (id) VALUES (1) ON CONFLICT DO NOTHING;
 -- 기존 게시판 삭제
 TRUNCATE TABLE boards RESTART IDENTITY CASCADE;
 
@@ -116,19 +124,33 @@ ALTER SEQUENCE activity_registrations_id_seq RESTART WITH 1;
 
 -- 동아리
 ALTER SEQUENCE clubs_id_seq RESTART WITH 1;
+ALTER SEQUENCE club_introduction_images_id_seq RESTART WITH 1;
 
--- 복지 (rental_items, locker_info는 마스터 데이터이므로 시퀀스 초기화 안 함)
+-- 프로필 변경 요청
+ALTER SEQUENCE profile_update_requests_id_seq RESTART WITH 1;
+
+-- 복지 마스터 데이터
+ALTER SEQUENCE rental_items_id_seq RESTART WITH 1;
+
+-- ============================================================================
+-- 5단계: 싱글 행 설정 테이블 재생성
+-- ============================================================================
+-- TRUNCATE 했으므로 초기 행 재생성
+INSERT INTO print_welfare_info (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO guidebook_info (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO privacy_officer_info (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- 완료! 이제 회원가입부터 다시 시작할 수 있습니다.
 -- ============================================================================
 -- 확인 쿼리:
--- SELECT COUNT(*) FROM auth.users;      -- 0이어야 함 (Auth 사용자 삭제 시)
--- SELECT COUNT(*) FROM users;           -- 0이어야 함
--- SELECT COUNT(*) FROM posts;           -- 0이어야 함
--- SELECT COUNT(*) FROM activities;      -- 0이어야 함
--- SELECT COUNT(*) FROM boards;          -- 3이어야 함
--- SELECT * FROM boards ORDER BY id;     -- 3개 게시판 확인
--- SELECT * FROM rental_items;           -- 복지 대여 정보 (유지됨)
--- SELECT * FROM locker_info;            -- 사물함 정보 (유지됨)
+-- SELECT COUNT(*) FROM auth.users;           -- 0이어야 함 (Auth 사용자 삭제 시)
+-- SELECT COUNT(*) FROM users;                -- 0이어야 함
+-- SELECT COUNT(*) FROM posts;                -- 0이어야 함
+-- SELECT COUNT(*) FROM activities;           -- 0이어야 함
+-- SELECT COUNT(*) FROM boards;               -- 3이어야 함
+-- SELECT * FROM boards ORDER BY id;          -- 3개 게시판 확인
+-- SELECT COUNT(*) FROM print_welfare_info;   -- 1이어야 함 (빈 행)
+-- SELECT COUNT(*) FROM guidebook_info;       -- 1이어야 함 (빈 행)
+-- SELECT COUNT(*) FROM privacy_officer_info; -- 1이어야 함 (빈 행)
 -- ============================================================================

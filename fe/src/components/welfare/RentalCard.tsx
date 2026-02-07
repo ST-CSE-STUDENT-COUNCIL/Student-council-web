@@ -3,11 +3,11 @@ import type { WelfareRental } from '../../lib/api/welfare'
 
 type RentalCardProps = {
     item: WelfareRental
+    applicationUrl: string
     onApply: (url: string) => void
 }
 
-export function RentalCard({ item, onApply }: RentalCardProps) {
-    const applicationUrl = item.application_sheet_url?.trim() || ''
+export function RentalCard({ item, applicationUrl, onApply }: RentalCardProps) {
     const isDisabled = !applicationUrl || item.is_active === false
     const availableQuantity = Number.isFinite(Number(item.available_quantity))
         ? Number(item.available_quantity)

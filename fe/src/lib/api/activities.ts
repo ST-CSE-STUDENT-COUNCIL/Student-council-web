@@ -79,6 +79,17 @@ export const activityApi = {
     },
 
     /**
+     * 학번 출석 체크 (공개)
+     */
+    attendByStudentId: async (
+        activityId: number,
+        data: { student_id: string }
+    ): Promise<{ message: string; registration_id: number; attended_at: string }> => {
+        const response = await api.post(`/${activityId}/attend`, data)
+        return response.data
+    },
+
+    /**
      * 파일 업로드용 Presigned URL 발급
      */
     getPresignedUrl: async (activityId: number, filename: string): Promise<{ presigned_url: string; public_url: string; file_key: string }> => {

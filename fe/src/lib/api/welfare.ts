@@ -148,6 +148,14 @@ export const welfareApi = {
     },
 
     /**
+     * 대여사업 공통 시트/신청 폼 URL을 조회합니다.
+     */
+    getRentalConfig: async (): Promise<RentalConfig> => {
+        const response = await axios.get(`${API_BASE_URL}/welfare/rental_config`);
+        return response.data;
+    },
+
+    /**
      * 특정 복지 물품 정보를 가져옵니다.
      */
     getRentalById: async (id: number): Promise<WelfareRental> => {
@@ -214,6 +222,13 @@ export const welfareApi = {
     },
 
     /**
+     * 대여사업 공통 시트/신청 폼 URL을 수정합니다.
+     */
+    updateRentalConfig: async (data: {
+        sheet_url: string;
+        application_form_url: string;
+    }, token?: string | null): Promise<RentalConfig> => {
+        const response = await axios.put(`${API_BASE_URL}/admin/welfare/rental_config`, data, {
      * 신입생 가이드북 정보를 가져옵니다.
      */
     getGuidebookInfo: async (): Promise<GuidebookInfo> => {

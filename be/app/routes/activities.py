@@ -239,7 +239,7 @@ async def get_activity(
             thumbnail_url=activity.get("thumbnail_url"),
             images=images,
             is_active=activity["is_active"],
-            is_anonymous=activity.get("is_anonymous", True),
+            is_anonymous=activity.get("is_anonymous", False),
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(activity["updated_at"].replace('Z', '+00:00')),
@@ -349,8 +349,8 @@ async def register_for_activity(
             from app.utils.turnstile import verify_turnstile
             await verify_turnstile(token=body.turnstile_token)
             
-            # 필수 정보 확인 (is_anonymous=true인 활동은 익명 허용)
-            is_anonymous_allowed = activity.get("is_anonymous", True)
+            # 필수 정보 확인 (is_anonymous=true인 활동만 익명 허용)
+            is_anonymous_allowed = activity.get("is_anonymous", False)
             
             if not is_anonymous_allowed and not all([body.name, body.student_id, body.department, body.phone]):
                 raise HTTPException(
@@ -363,7 +363,7 @@ async def register_for_activity(
         
         # 익명 활동이면 무조건 개인정보 제거 (프론트에서 임시값을 보내도 무시)
         # student_id=None이어야 DB 유니크 인덱스에 걸리지 않음
-        if activity.get("is_anonymous", True):
+        if activity.get("is_anonymous", False):
              name = "익명"
              student_id = None
              department = None
@@ -703,7 +703,7 @@ async def create_activity(
         
         # 이미지 정보 저장 (선택적)
         if body.image_urls:
-            for idx, img in enumerate(body.image_urls):
+            for idx, img in enumerate(body.image_urls or []):
                 image_data = {
                     'activity_id': activity_id,
                     'image_url': img.get("public_url"),
@@ -725,7 +725,7 @@ async def create_activity(
             form_fields=activity.get("form_fields", []),
             thumbnail_url=activity.get("thumbnail_url"),
             is_active=activity["is_active"],
-            is_anonymous=activity.get("is_anonymous", True),
+            is_anonymous=activity.get("is_anonymous", False),
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(activity["updated_at"].replace('Z', '+00:00')),
@@ -824,7 +824,7 @@ async def update_activity(
                 .execute()
             
             # 새 이미지 추가
-            for idx, img in enumerate(body.image_urls):
+            for idx, img in enumerate(body.image_urls or []):
                 image_data = {
                     'activity_id': activity_id,
                     'image_url': img.get("public_url") or img.get("image_url"),
@@ -855,7 +855,7 @@ async def update_activity(
             form_fields=activity.get("form_fields", []),
             thumbnail_url=activity.get("thumbnail_url"),
             is_active=activity["is_active"],
-            is_anonymous=activity.get("is_anonymous", True),
+            is_anonymous=activity.get("is_anonymous", False),
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(activity["updated_at"].replace('Z', '+00:00')),
@@ -1030,7 +1030,16 @@ async def update_registration_status(
                 detail="신청 정보를 찾을 수 없습니다"
             )
         
-        # 상태 업데이트
+        current_status = existing.data[0].get('status')
+        
+        # 같은 상태로 변경 시도 시 무시
+        if current_status == body.status:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 동일한 상태입니다"
+            )
+        
+        # 상태 업데이트 (이전 상태 조건으로 race condition 방지)
         update_data = {"status": body.status}
         if body.admin_note:
             update_data["admin_note"] = body.admin_note
@@ -1038,7 +1047,14 @@ async def update_registration_status(
         result = admin_supabase.table("activity_registrations")\
             .update(update_data)\
             .eq("id", registration_id)\
+            .eq("status", current_status)\
             .execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 처리된 요청입니다"
+            )
         
         if not result.data:
             raise HTTPException(
@@ -1509,7 +1525,7 @@ async def search_attendance_by_student_id(
         
         # 학번으로 신청 내역 조회
         registration_result = supabase.table('activity_registrations')\
-            .select('id, user_name, student_id, attended, attended_at')\
+            .select('id, name, student_id, attended, attended_at')\
             .eq('activity_id', activity_id)\
             .eq('student_id', student_id)\
             .single()\
@@ -1523,7 +1539,7 @@ async def search_attendance_by_student_id(
         return AttendanceInfoResponse(
             registration_id=reg['id'],
             activity_title=activity_result.data['title'],
-            user_name=reg['user_name'],
+            user_name=reg['name'],
             student_id=reg['student_id'],
             already_attended=reg.get('attended', False),
             attended_at=reg.get('attended_at')
@@ -1552,10 +1568,6 @@ async def attend_by_student_id(
 ):
     """학번으로 출석 체크 (로그인 불필요)"""
     try:
-        # Turnstile 봇 방지 검증
-        from app.utils.turnstile import verify_turnstile
-        await verify_turnstile(token=body.turnstile_token)
-        
         admin_supabase = get_supabase_admin()
         
         # 학번으로 신청 내역 조회
@@ -1563,7 +1575,7 @@ async def attend_by_student_id(
             .select('id, attended')\
             .eq('activity_id', activity_id)\
             .eq('student_id', body.student_id)\
-            .single()\
+            .maybe_single()\
             .execute()
         
         if not registration_result.data:
@@ -1574,14 +1586,18 @@ async def attend_by_student_id(
         if reg.get('attended'):
             raise HTTPException(status_code=409, detail="이미 출석 체크가 완료되었습니다")
         
-        # 출석 체크
+        # 출석 체크 (attended=False 조건으로 race condition 방지)
         from datetime import timezone
         now = datetime.now(timezone.utc)
         
-        admin_supabase.table('activity_registrations').update({
+        update_result = admin_supabase.table('activity_registrations').update({
             'attended': True,
             'attended_at': now.isoformat()
-        }).eq('id', reg['id']).execute()
+        }).eq('id', reg['id']).eq('attended', False).execute()
+        
+        # 동시 요청으로 이미 처리된 경우
+        if not update_result.data:
+            raise HTTPException(status_code=409, detail="이미 출석 체크가 완료되었습니다")
         
         return AttendanceCheckResponse(
             registration_id=reg['id'],
@@ -1621,7 +1637,7 @@ async def get_attendance_list(
         
         # 신청자 목록 조회 (users 조인)
         registrations_result = admin_supabase.table('activity_registrations')\
-            .select('id, user_id, user_name, student_id, phone, created_at, attended, attended_at')\
+            .select('id, user_id, name, student_id, phone, created_at, attended, attended_at')\
             .eq('activity_id', activity_id)\
             .order('created_at')\
             .execute()
@@ -1638,7 +1654,7 @@ async def get_attendance_list(
             AttendanceListItem(
                 registration_id=r['id'],
                 user_id=r.get('user_id'),
-                user_name=r['user_name'],
+                user_name=r['name'],
                 student_id=r['student_id'],
                 phone=r.get('phone'),
                 registered_at=r['created_at'],
@@ -1686,7 +1702,7 @@ async def admin_mark_attendance(
         
         # 신청 내역 확인
         reg_result = admin_supabase.table('activity_registrations')\
-            .select('id')\
+            .select('id, attended')\
             .eq('id', registration_id)\
             .eq('activity_id', activity_id)\
             .single()\
@@ -1695,14 +1711,20 @@ async def admin_mark_attendance(
         if not reg_result.data:
             raise HTTPException(status_code=404, detail="신청 내역을 찾을 수 없습니다")
         
-        # 출석 체크
+        if reg_result.data.get('attended'):
+            raise HTTPException(status_code=409, detail="이미 출석 체크가 완료되었습니다")
+        
+        # 출석 체크 (attended=False 조건으로 race condition 방지)
         from datetime import timezone
         now = datetime.now(timezone.utc)
         
-        admin_supabase.table('activity_registrations').update({
+        update_result = admin_supabase.table('activity_registrations').update({
             'attended': True,
             'attended_at': now.isoformat()
-        }).eq('id', registration_id).execute()
+        }).eq('id', registration_id).eq('attended', False).execute()
+        
+        if not update_result.data:
+            raise HTTPException(status_code=409, detail="이미 출석 체크가 완료되었습니다")
         
         return AttendanceCheckResponse(
             message="출석 처리가 완료되었습니다",
