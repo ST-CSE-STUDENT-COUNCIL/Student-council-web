@@ -5,6 +5,8 @@ export function StatusPill({ status }: { status: string }) {
     '신청 거절': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
     '취소됨': 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400',
     '마감': 'bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-gray-400',
+    '설문 완료': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    '조사 완료': 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300',
   }
 
   const colorClass = colors[status] || 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300'

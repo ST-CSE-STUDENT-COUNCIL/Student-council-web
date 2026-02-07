@@ -75,6 +75,7 @@ function MyPage() {
       }
 
       if (registrationsResult.status === 'fulfilled') {
+        console.log('마이페이지 행사 목록:', registrationsResult.value.items)
         setMyRegistrations(registrationsResult.value.items)
       } else {
         console.error('Failed to load registrations', registrationsResult.reason)
@@ -109,6 +110,7 @@ function MyPage() {
     return myRegistrations
       .filter(reg => {
         if (!reg.activity) return false
+        if (reg.activity.type === 'demand_survey' || reg.activity.type === 'survey') return false
 
         const endDate = reg.activity.registration_end
           ? reg.activity.registration_end
@@ -120,8 +122,14 @@ function MyPage() {
         title: reg.activity!.title,
         date: formatDate(reg.registered_at),
         status: getStatusLabel(reg.status),
-        rawStatus: reg.status
+        rawStatus: reg.status,
+        rawDate: reg.registered_at,
       }))
+      .sort((a, b) => {
+        const statusDiff = getEventStatusPriority(a.rawStatus) - getEventStatusPriority(b.rawStatus)
+        if (statusDiff !== 0) return statusDiff
+        return new Date(b.rawDate).getTime() - new Date(a.rawDate).getTime()
+      })
   }, [myRegistrations])
 
   const completedEvents = React.useMemo(() => {
@@ -130,6 +138,7 @@ function MyPage() {
     return myRegistrations
       .filter(reg => {
         if (!reg.activity) return false
+        if (reg.activity.type === 'demand_survey' || reg.activity.type === 'survey') return false
 
         const endDate = reg.activity.registration_end
         if (!endDate) return false // 종료일 없으면 완료되지 않음 (상시)
@@ -143,6 +152,32 @@ function MyPage() {
           ? getStatusLabel(reg.status)
           : '마감',
         rawStatus: reg.status,
+        rawDate: reg.activity!.registration_end || reg.registered_at,
+      }))
+      .sort((a, b) => {
+        const statusDiff = getEventStatusPriority(a.rawStatus) - getEventStatusPriority(b.rawStatus)
+        if (statusDiff !== 0) return statusDiff
+        return new Date(b.rawDate).getTime() - new Date(a.rawDate).getTime()
+      })
+  }, [myRegistrations])
+
+  const surveys = React.useMemo(() => {
+    return myRegistrations
+      .filter((reg) => reg.activity?.type === 'survey')
+      .map((reg) => ({
+        title: reg.activity!.title,
+        date: formatDate(reg.registered_at),
+        status: '설문 완료',
+      }))
+  }, [myRegistrations])
+
+  const demandSurveys = React.useMemo(() => {
+    return myRegistrations
+      .filter((reg) => reg.activity?.type === 'demand_survey')
+      .map((reg) => ({
+        title: reg.activity!.title,
+        date: formatDate(reg.registered_at),
+        status: '조사 완료',
       }))
   }, [myRegistrations])
 
@@ -525,9 +560,57 @@ function MyPage() {
                 </div>
               </section>
 
+              <div className="grid gap-6 lg:grid-cols-2">
+                <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">설문조사</h2>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">별도 표시</span>
+                  </div>
+                  <div className="grid gap-4">
+                    {surveys.map((survey) => (
+                      <div key={`${survey.title}-${survey.date}`} className="border border-gray-100 dark:border-slate-700 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{survey.date}</p>
+                          <StatusPill status={survey.status} />
+                        </div>
+                        <p className="font-semibold text-gray-900 dark:text-white">{survey.title}</p>
+                      </div>
+                    ))}
+                    {surveys.length === 0 && (
+                      <div className="rounded-lg border border-dashed border-gray-200 dark:border-slate-700 p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                        참여한 설문조사 내역이 없습니다.
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">수요조사</h2>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">별도 표시</span>
+                  </div>
+                  <div className="grid gap-4">
+                    {demandSurveys.map((survey) => (
+                      <div key={`${survey.title}-${survey.date}`} className="border border-gray-100 dark:border-slate-700 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{survey.date}</p>
+                          <StatusPill status={survey.status} />
+                        </div>
+                        <p className="font-semibold text-gray-900 dark:text-white">{survey.title}</p>
+                      </div>
+                    ))}
+                    {demandSurveys.length === 0 && (
+                      <div className="rounded-lg border border-dashed border-gray-200 dark:border-slate-700 p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                        참여한 수요조사 내역이 없습니다.
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </div>
+
               <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">참여 완료 행사</h2>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">종료된 행사</h2>
                   <Link to="/activities" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">지난 행사 보기</Link>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -629,6 +712,19 @@ function getStatusLabel(status: string) {
     case 'rejected': return '신청 거절'
     case 'cancelled': return '취소됨'
     default: return status
+  }
+}
+
+function getEventStatusPriority(status: string) {
+  switch (status) {
+    case 'approved':
+      return 0
+    case 'pending':
+      return 1
+    case 'rejected':
+      return 2
+    default:
+      return 3
   }
 }
 
