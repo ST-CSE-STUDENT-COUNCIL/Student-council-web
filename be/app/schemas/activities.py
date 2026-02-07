@@ -123,7 +123,7 @@ class ActivityCreateRequest(BaseModel):
     thumbnail_url: Optional[str] = Field(None, description="썸네일 URL")
     image_urls: Optional[List[Dict[str, str]]] = Field(None, description="이미지 URL 리스트")
     is_active: bool = Field(default=True, description="활성화 여부")
-    is_anonymous: bool = Field(default=True, description="익명 여부 (true: 익명 모드, false: 기명 모드). 설문조사/수요조사에서 주로 사용")
+    is_anonymous: bool = Field(default=False, description="익명 여부 (true: 익명 모드, false: 기명 모드). 설문조사/수요조사 생성 시 true로 설정")
 
 
 class ActivityUpdateRequest(BaseModel):
@@ -161,7 +161,7 @@ class ActivityResponse(BaseModel):
     thumbnail_url: Optional[str]
     images: List[Dict[str, Any]] = Field(default_factory=list, description="활동 이미지 목록")
     is_active: bool
-    is_anonymous: bool = Field(default=True, description="익명 여부 (true: 익명, false: 기명)")
+    is_anonymous: bool = Field(default=False, description="익명 여부 (true: 익명, false: 기명)")
     created_by: Optional[str]
     created_at: datetime
     updated_at: datetime

@@ -703,7 +703,7 @@ async def create_activity(
         
         # 이미지 정보 저장 (선택적)
         if body.image_urls:
-            for idx, img in enumerate(body.image_urls):
+            for idx, img in enumerate(body.image_urls or []):
                 image_data = {
                     'activity_id': activity_id,
                     'image_url': img.get("public_url"),
@@ -824,7 +824,7 @@ async def update_activity(
                 .execute()
             
             # 새 이미지 추가
-            for idx, img in enumerate(body.image_urls):
+            for idx, img in enumerate(body.image_urls or []):
                 image_data = {
                     'activity_id': activity_id,
                     'image_url': img.get("public_url") or img.get("image_url"),

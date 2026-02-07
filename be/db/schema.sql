@@ -543,7 +543,7 @@ CREATE TABLE activities (
   form_fields JSONB DEFAULT '[]',
   thumbnail_url TEXT,
   is_active BOOLEAN DEFAULT true,
-  is_anonymous BOOLEAN DEFAULT true,  -- 익명 여부 (true: 익명 모드, false: 기명 모드)
+  is_anonymous BOOLEAN DEFAULT false,  -- 익명 여부 (true: 익명 모드, false: 기명 모드) 설문/수요조사는 생성 시 true로 설정
   is_deleted BOOLEAN DEFAULT false,
   deleted_at TIMESTAMPTZ,
   deleted_by UUID REFERENCES users(id),
