@@ -20,7 +20,6 @@ import { Route as AdminserviceSurveysIndexRouteImport } from './routes/admin/(se
 import { Route as AdminserviceSuggestionsIndexRouteImport } from './routes/admin/(service)/suggestions/index'
 import { Route as AdminserviceKakaotalkIndexRouteImport } from './routes/admin/(service)/kakaotalk/index'
 import { Route as AdminserviceEventsIndexRouteImport } from './routes/admin/(service)/events/index'
-import { Route as AdminserviceAttendanceIndexRouteImport } from './routes/admin/(service)/attendance/index'
 import { Route as AdminserviceActivitiesIndexRouteImport } from './routes/admin/(service)/activities/index'
 import { Route as AdminmanageProfileUpdatesIndexRouteImport } from './routes/admin/(manage)/profile-updates/index'
 import { Route as AdmininfoPrivacyOfficerIndexRouteImport } from './routes/admin/(info)/privacy-officer/index'
@@ -52,6 +51,7 @@ import { Route as AdminserviceEventsEventIdIndexRouteImport } from './routes/adm
 import { Route as AdminserviceSurveysActivityIdEditRouteImport } from './routes/admin/(service)/surveys/$activityId/edit'
 import { Route as AdminserviceKakaotalkActivityIdEditRouteImport } from './routes/admin/(service)/kakaotalk/$activityId/edit'
 import { Route as AdminserviceEventsEventIdEditRouteImport } from './routes/admin/(service)/events/$eventId/edit'
+import { Route as AdminserviceEventsEventIdAttendanceRouteImport } from './routes/admin/(service)/events/$eventId/attendance'
 import { Route as AdmininfoNoticesNoticeIdEditRouteImport } from './routes/admin/(info)/notices/$noticeId/edit'
 
 const MaintenanceRoute = MaintenanceRouteImport.update({
@@ -113,12 +113,6 @@ const AdminserviceEventsIndexRoute = AdminserviceEventsIndexRouteImport.update({
   path: '/events/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminserviceAttendanceIndexRoute =
-  AdminserviceAttendanceIndexRouteImport.update({
-    id: '/(service)/attendance/',
-    path: '/attendance/',
-    getParentRoute: () => AdminRoute,
-  } as any)
 const AdminserviceActivitiesIndexRoute =
   AdminserviceActivitiesIndexRouteImport.update({
     id: '/(service)/activities/',
@@ -290,6 +284,12 @@ const AdminserviceEventsEventIdEditRoute =
     path: '/events/$eventId/edit',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminserviceEventsEventIdAttendanceRoute =
+  AdminserviceEventsEventIdAttendanceRouteImport.update({
+    id: '/(service)/events/$eventId/attendance',
+    path: '/events/$eventId/attendance',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdmininfoNoticesNoticeIdEditRoute =
   AdmininfoNoticesNoticeIdEditRouteImport.update({
     id: '/(info)/notices/$noticeId/edit',
@@ -330,13 +330,13 @@ export interface FileRoutesByFullPath {
   '/admin/privacy-officer': typeof AdmininfoPrivacyOfficerIndexRoute
   '/admin/profile-updates': typeof AdminmanageProfileUpdatesIndexRoute
   '/admin/activities': typeof AdminserviceActivitiesIndexRoute
-  '/admin/attendance': typeof AdminserviceAttendanceIndexRoute
   '/admin/events': typeof AdminserviceEventsIndexRoute
   '/admin/kakaotalk': typeof AdminserviceKakaotalkIndexRoute
   '/admin/suggestions': typeof AdminserviceSuggestionsIndexRoute
   '/admin/surveys': typeof AdminserviceSurveysIndexRoute
   '/admin/welfare': typeof AdminserviceWelfareIndexRoute
   '/admin/notices/$noticeId/edit': typeof AdmininfoNoticesNoticeIdEditRoute
+  '/admin/events/$eventId/attendance': typeof AdminserviceEventsEventIdAttendanceRoute
   '/admin/events/$eventId/edit': typeof AdminserviceEventsEventIdEditRoute
   '/admin/kakaotalk/$activityId/edit': typeof AdminserviceKakaotalkActivityIdEditRoute
   '/admin/surveys/$activityId/edit': typeof AdminserviceSurveysActivityIdEditRoute
@@ -374,13 +374,13 @@ export interface FileRoutesByTo {
   '/admin/privacy-officer': typeof AdmininfoPrivacyOfficerIndexRoute
   '/admin/profile-updates': typeof AdminmanageProfileUpdatesIndexRoute
   '/admin/activities': typeof AdminserviceActivitiesIndexRoute
-  '/admin/attendance': typeof AdminserviceAttendanceIndexRoute
   '/admin/events': typeof AdminserviceEventsIndexRoute
   '/admin/kakaotalk': typeof AdminserviceKakaotalkIndexRoute
   '/admin/suggestions': typeof AdminserviceSuggestionsIndexRoute
   '/admin/surveys': typeof AdminserviceSurveysIndexRoute
   '/admin/welfare': typeof AdminserviceWelfareIndexRoute
   '/admin/notices/$noticeId/edit': typeof AdmininfoNoticesNoticeIdEditRoute
+  '/admin/events/$eventId/attendance': typeof AdminserviceEventsEventIdAttendanceRoute
   '/admin/events/$eventId/edit': typeof AdminserviceEventsEventIdEditRoute
   '/admin/kakaotalk/$activityId/edit': typeof AdminserviceKakaotalkActivityIdEditRoute
   '/admin/surveys/$activityId/edit': typeof AdminserviceSurveysActivityIdEditRoute
@@ -421,13 +421,13 @@ export interface FileRoutesById {
   '/admin/(info)/privacy-officer/': typeof AdmininfoPrivacyOfficerIndexRoute
   '/admin/(manage)/profile-updates/': typeof AdminmanageProfileUpdatesIndexRoute
   '/admin/(service)/activities/': typeof AdminserviceActivitiesIndexRoute
-  '/admin/(service)/attendance/': typeof AdminserviceAttendanceIndexRoute
   '/admin/(service)/events/': typeof AdminserviceEventsIndexRoute
   '/admin/(service)/kakaotalk/': typeof AdminserviceKakaotalkIndexRoute
   '/admin/(service)/suggestions/': typeof AdminserviceSuggestionsIndexRoute
   '/admin/(service)/surveys/': typeof AdminserviceSurveysIndexRoute
   '/admin/(service)/welfare/': typeof AdminserviceWelfareIndexRoute
   '/admin/(info)/notices/$noticeId/edit': typeof AdmininfoNoticesNoticeIdEditRoute
+  '/admin/(service)/events/$eventId/attendance': typeof AdminserviceEventsEventIdAttendanceRoute
   '/admin/(service)/events/$eventId/edit': typeof AdminserviceEventsEventIdEditRoute
   '/admin/(service)/kakaotalk/$activityId/edit': typeof AdminserviceKakaotalkActivityIdEditRoute
   '/admin/(service)/surveys/$activityId/edit': typeof AdminserviceSurveysActivityIdEditRoute
@@ -469,13 +469,13 @@ export interface FileRouteTypes {
     | '/admin/privacy-officer'
     | '/admin/profile-updates'
     | '/admin/activities'
-    | '/admin/attendance'
     | '/admin/events'
     | '/admin/kakaotalk'
     | '/admin/suggestions'
     | '/admin/surveys'
     | '/admin/welfare'
     | '/admin/notices/$noticeId/edit'
+    | '/admin/events/$eventId/attendance'
     | '/admin/events/$eventId/edit'
     | '/admin/kakaotalk/$activityId/edit'
     | '/admin/surveys/$activityId/edit'
@@ -513,13 +513,13 @@ export interface FileRouteTypes {
     | '/admin/privacy-officer'
     | '/admin/profile-updates'
     | '/admin/activities'
-    | '/admin/attendance'
     | '/admin/events'
     | '/admin/kakaotalk'
     | '/admin/suggestions'
     | '/admin/surveys'
     | '/admin/welfare'
     | '/admin/notices/$noticeId/edit'
+    | '/admin/events/$eventId/attendance'
     | '/admin/events/$eventId/edit'
     | '/admin/kakaotalk/$activityId/edit'
     | '/admin/surveys/$activityId/edit'
@@ -559,13 +559,13 @@ export interface FileRouteTypes {
     | '/admin/(info)/privacy-officer/'
     | '/admin/(manage)/profile-updates/'
     | '/admin/(service)/activities/'
-    | '/admin/(service)/attendance/'
     | '/admin/(service)/events/'
     | '/admin/(service)/kakaotalk/'
     | '/admin/(service)/suggestions/'
     | '/admin/(service)/surveys/'
     | '/admin/(service)/welfare/'
     | '/admin/(info)/notices/$noticeId/edit'
+    | '/admin/(service)/events/$eventId/attendance'
     | '/admin/(service)/events/$eventId/edit'
     | '/admin/(service)/kakaotalk/$activityId/edit'
     | '/admin/(service)/surveys/$activityId/edit'
@@ -672,13 +672,6 @@ declare module '@tanstack/react-router' {
       path: '/events'
       fullPath: '/admin/events'
       preLoaderRoute: typeof AdminserviceEventsIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/(service)/attendance/': {
-      id: '/admin/(service)/attendance/'
-      path: '/attendance'
-      fullPath: '/admin/attendance'
-      preLoaderRoute: typeof AdminserviceAttendanceIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/(service)/activities/': {
@@ -898,6 +891,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminserviceEventsEventIdEditRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/(service)/events/$eventId/attendance': {
+      id: '/admin/(service)/events/$eventId/attendance'
+      path: '/events/$eventId/attendance'
+      fullPath: '/admin/events/$eventId/attendance'
+      preLoaderRoute: typeof AdminserviceEventsEventIdAttendanceRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/(info)/notices/$noticeId/edit': {
       id: '/admin/(info)/notices/$noticeId/edit'
       path: '/notices/$noticeId/edit'
@@ -920,13 +920,13 @@ interface AdminRouteChildren {
   AdmininfoPrivacyOfficerIndexRoute: typeof AdmininfoPrivacyOfficerIndexRoute
   AdminmanageProfileUpdatesIndexRoute: typeof AdminmanageProfileUpdatesIndexRoute
   AdminserviceActivitiesIndexRoute: typeof AdminserviceActivitiesIndexRoute
-  AdminserviceAttendanceIndexRoute: typeof AdminserviceAttendanceIndexRoute
   AdminserviceEventsIndexRoute: typeof AdminserviceEventsIndexRoute
   AdminserviceKakaotalkIndexRoute: typeof AdminserviceKakaotalkIndexRoute
   AdminserviceSuggestionsIndexRoute: typeof AdminserviceSuggestionsIndexRoute
   AdminserviceSurveysIndexRoute: typeof AdminserviceSurveysIndexRoute
   AdminserviceWelfareIndexRoute: typeof AdminserviceWelfareIndexRoute
   AdmininfoNoticesNoticeIdEditRoute: typeof AdmininfoNoticesNoticeIdEditRoute
+  AdminserviceEventsEventIdAttendanceRoute: typeof AdminserviceEventsEventIdAttendanceRoute
   AdminserviceEventsEventIdEditRoute: typeof AdminserviceEventsEventIdEditRoute
   AdminserviceKakaotalkActivityIdEditRoute: typeof AdminserviceKakaotalkActivityIdEditRoute
   AdminserviceSurveysActivityIdEditRoute: typeof AdminserviceSurveysActivityIdEditRoute
@@ -946,13 +946,14 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdmininfoPrivacyOfficerIndexRoute: AdmininfoPrivacyOfficerIndexRoute,
   AdminmanageProfileUpdatesIndexRoute: AdminmanageProfileUpdatesIndexRoute,
   AdminserviceActivitiesIndexRoute: AdminserviceActivitiesIndexRoute,
-  AdminserviceAttendanceIndexRoute: AdminserviceAttendanceIndexRoute,
   AdminserviceEventsIndexRoute: AdminserviceEventsIndexRoute,
   AdminserviceKakaotalkIndexRoute: AdminserviceKakaotalkIndexRoute,
   AdminserviceSuggestionsIndexRoute: AdminserviceSuggestionsIndexRoute,
   AdminserviceSurveysIndexRoute: AdminserviceSurveysIndexRoute,
   AdminserviceWelfareIndexRoute: AdminserviceWelfareIndexRoute,
   AdmininfoNoticesNoticeIdEditRoute: AdmininfoNoticesNoticeIdEditRoute,
+  AdminserviceEventsEventIdAttendanceRoute:
+    AdminserviceEventsEventIdAttendanceRoute,
   AdminserviceEventsEventIdEditRoute: AdminserviceEventsEventIdEditRoute,
   AdminserviceKakaotalkActivityIdEditRoute:
     AdminserviceKakaotalkActivityIdEditRoute,

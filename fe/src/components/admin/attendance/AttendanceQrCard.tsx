@@ -1,3 +1,5 @@
+import { ExternalLink } from 'lucide-react'
+
 type AttendanceQrCardProps = {
     qrDataUrl: string | null
     qrError: string | null
@@ -34,8 +36,16 @@ export function AttendanceQrCard({ qrDataUrl, qrError, qrUrl }: AttendanceQrCard
                         QR 다운로드
                     </a>
                 )}
-                <div className="w-full rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-600 break-all text-center">
-                    {qrUrl || '행사를 선택해주세요'}
+                <div className="w-full rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-600 break-all text-center group relative">
+                    <a
+                        href={qrUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-1 hover:text-emerald-600 transition-colors"
+                    >
+                        {qrUrl || '행사를 선택해주세요'}
+                        {qrUrl && <ExternalLink size={12} />}
+                    </a>
                 </div>
             </div>
         </div>

@@ -479,6 +479,16 @@ function EventActivityDetailPage() {
             </p>
           </div>
         </div>
+
+        {activityDetail.type !== 'notice' && (
+          <button
+            onClick={() => navigate({ to: `/admin/events/${id}/attendance` })}
+            className="ml-auto px-4 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-purple-600 rounded-xl flex items-center gap-2 shadow-sm font-medium transition-all"
+          >
+            <ClipboardList size={18} />
+            출석 관리 페이지로 이동
+          </button>
+        )}
       </div>
       {/* Tabs */}
       <div className="flex gap-2 mb-6">

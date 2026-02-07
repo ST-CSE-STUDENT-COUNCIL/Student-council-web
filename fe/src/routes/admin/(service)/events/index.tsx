@@ -422,14 +422,24 @@ function AdminEventsPage() {
                                         {/* Actions */}
                                         <div className="flex gap-2 pt-4 border-t border-gray-100">
                                             {activity.type !== 'notice' && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => navigate({ to: `/admin/events/${activity.id}` })}
-                                                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all"
-                                                >
-                                                    <Eye size={14} />
-                                                    신청자 보기
-                                                </button>
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => navigate({ to: `/admin/events/${activity.id}/attendance` })}
+                                                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-all"
+                                                    >
+                                                        <ClipboardList size={14} />
+                                                        출석 관리
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => navigate({ to: `/admin/events/${activity.id}` })}
+                                                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all"
+                                                    >
+                                                        <Eye size={14} />
+                                                        신청자 보기
+                                                    </button>
+                                                </>
                                             )}
                                             <button
                                                 type="button"

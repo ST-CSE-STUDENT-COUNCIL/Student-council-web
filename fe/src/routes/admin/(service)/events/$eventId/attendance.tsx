@@ -1,22 +1,18 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { CalendarClock, ClipboardList } from 'lucide-react'
-import { SEO } from '../../../../components/common/SEO'
-import { AttendanceStats } from '../../../../components/admin/attendance/AttendanceStats'
-import { AttendanceTable } from '../../../../components/admin/attendance/AttendanceTable'
-import { AttendanceQrCard } from '../../../../components/admin/attendance/AttendanceQrCard'
-import { SelectedRegistrationCard } from '../../../../components/admin/attendance/SelectedRegistrationCard'
-import { activityAdminApi, activityApi } from '../../../../lib/api/activities'
-import { adminApi } from '../../../../lib/api/admin'
-import type { ActivityListItem, ActivityRegistrationResponse } from '../../../../types/activities'
-import type { AttendanceRegistration, AttendanceStatus, AttendanceSummary } from '../../../../types/attendance'
+import { CalendarClock, ClipboardList, ArrowLeft } from 'lucide-react'
+import { SEO } from '../../../../../components/common/SEO'
+import { AttendanceStats } from '../../../../../components/admin/attendance/AttendanceStats'
+import { AttendanceTable } from '../../../../../components/admin/attendance/AttendanceTable'
+import { AttendanceQrCard } from '../../../../../components/admin/attendance/AttendanceQrCard'
+import { SelectedRegistrationCard } from '../../../../../components/admin/attendance/SelectedRegistrationCard'
+import { activityAdminApi, activityApi } from '../../../../../lib/api/activities'
+import { adminApi } from '../../../../../lib/api/admin'
+import type { ActivityListItem, ActivityRegistrationResponse } from '../../../../../types/activities'
+import type { AttendanceRegistration, AttendanceStatus, AttendanceSummary } from '../../../../../types/attendance'
 import QRCode from 'qrcode'
 
-type ActivitySummary = {
-    id: number
-    title: string
-    date: string
-}
+
 
 type AttendanceRegistrationResponse = {
     registration_id: number
@@ -44,34 +40,27 @@ type RegistrationMeta = {
     phone?: string
 }
 
-export const Route = createFileRoute('/admin/(service)/attendance/')({
+export const Route = createFileRoute('/admin/(service)/events/$eventId/attendance')({
     component: AdminAttendancePage,
 })
 
 function AdminAttendancePage() {
-    const [activities, setActivities] = useState<ActivityListItem[]>([])
-    const [activityId, setActivityId] = useState<number | null>(null)
+    const navigate = useNavigate()
+    const { eventId } = Route.useParams()
+    const activityId = Number(eventId)
+    const [activity, setActivity] = useState<ActivityListItem | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [statusFilter, setStatusFilter] = useState<'all' | AttendanceStatus>('all')
     const [selectedRegistrationId, setSelectedRegistrationId] = useState<number | null>(null)
     const [registrations, setRegistrations] = useState<AttendanceRegistration[]>([])
     const [summary, setSummary] = useState<AttendanceSummary>({ total: 0, attended: 0, absent: 0, rate: 0 })
-    const [loadingActivities, setLoadingActivities] = useState(false)
-    const [loadingAttendance, setLoadingAttendance] = useState(false)
-    const [activityError, setActivityError] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
     const [attendanceError, setAttendanceError] = useState<string | null>(null)
     const [cancellingId, setCancellingId] = useState<number | null>(null)
     const [markingId, setMarkingId] = useState<number | null>(null)
     const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
     const [qrError, setQrError] = useState<string | null>(null)
-
-    const activityOptions = useMemo<ActivitySummary[]>(() => {
-        return activities.map((item) => ({
-            id: item.id,
-            title: item.title,
-            date: formatDateTime(item.registration_start ?? item.registration_end),
-        }))
-    }, [activities])
 
     const filteredRegistrations = useMemo(() => {
         const term = searchQuery.trim().toLowerCase()
@@ -91,8 +80,6 @@ function AdminAttendancePage() {
     }, [filteredRegistrations, selectedRegistrationId])
 
     const stats = useMemo(() => summary, [summary])
-
-    const activity = activityOptions.find((item) => item.id === activityId)
 
     const qrUrl = useMemo(() => {
         if (!activityId) return ''
@@ -121,28 +108,19 @@ function AdminAttendancePage() {
     }, [qrUrl])
 
     useEffect(() => {
-        const fetchActivities = async () => {
+        const fetchActivity = async () => {
+            if (!activityId) return
             try {
-                setLoadingActivities(true)
-                setActivityError(null)
-                const response = await activityApi.getAll({ is_active_only: false, page: 1, page_size: 100 })
-                const eventActivities = response.activities.filter((activity) => activity.type === 'event')
-                setActivities(eventActivities)
-                if (eventActivities.length > 0) {
-                    setActivityId((prev) => prev ?? eventActivities[0].id)
-                } else {
-                    setActivityId(null)
-                }
+                const data = await activityApi.getById(activityId)
+                setActivity(data as unknown as ActivityListItem)
+                setError(null)
             } catch (error) {
-                console.error('Failed to fetch activities for attendance', error)
-                setActivityError('행사 목록을 불러오지 못했습니다.')
-            } finally {
-                setLoadingActivities(false)
+                console.error('Failed to fetch activity', error)
+                setError('행사 정보를 불러오는데 실패했습니다.')
             }
         }
-
-        fetchActivities()
-    }, [])
+        fetchActivity()
+    }, [activityId])
 
     const buildRegistrationMeta = useCallback((items: ActivityRegistrationResponse[]) => {
         return items.reduce<Record<number, RegistrationMeta>>((acc, item) => {
@@ -157,7 +135,7 @@ function AdminAttendancePage() {
 
     const loadAttendance = useCallback(async (targetId: number) => {
         try {
-            setLoadingAttendance(true)
+            setLoading(true)
             setAttendanceError(null)
 
             const [attendanceResult, registrationsResult] = await Promise.allSettled([
@@ -195,6 +173,7 @@ function AdminAttendancePage() {
                 ? Number(attendanceData.attendance_rate)
                 : total > 0 ? Math.round((attended / total) * 100) : 0
             setSummary({ total, attended, absent, rate })
+
             setSelectedRegistrationId((prev) => {
                 if (!prev) return mapped[0]?.registration_id ?? null
                 return mapped.some((item) => item.registration_id === prev) ? prev : mapped[0]?.registration_id ?? null
@@ -205,7 +184,7 @@ function AdminAttendancePage() {
             setRegistrations([])
             setSummary({ total: 0, attended: 0, absent: 0, rate: 0 })
         } finally {
-            setLoadingAttendance(false)
+            setLoading(false)
         }
     }, [buildRegistrationMeta])
 
@@ -251,61 +230,51 @@ function AdminAttendancePage() {
             <SEO
                 title="출석 관리"
                 description="행사 출석을 확인하고 취소합니다"
-                url="/admin/attendance"
+                url={`/admin/events/${activityId}/attendance`}
             />
 
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
                 <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => navigate({ to: `/admin/events/${activityId}` })}
+                        className="p-2 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 transition-all"
+                    >
+                        <ArrowLeft size={20} className="text-gray-600" />
+                    </button>
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
                         <ClipboardList size={28} className="text-white" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">출석 관리</h1>
+                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                            {activity ? activity.title : '출석 관리'}
+                        </h1>
                         <p className="text-gray-500 mt-0.5">행사 출석 현황을 확인하고 관리합니다</p>
                     </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                    <select
-                        value={activityId ?? ''}
-                        onChange={(event) => {
-                            const nextValue = event.target.value
-                            setActivityId(nextValue ? Number(nextValue) : null)
-                            setSelectedRegistrationId(null)
-                        }}
-                        disabled={loadingActivities}
-                        className="min-w-[220px] rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold shadow-sm disabled:opacity-60"
-                    >
-                        {activityOptions.length === 0 ? (
-                            <option value="">
-                                {loadingActivities ? '행사 불러오는 중...' : '행사를 선택해주세요'}
-                            </option>
-                        ) : (
-                            activityOptions.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                    {item.title}
-                                </option>
-                            ))
-                        )}
-                    </select>
                     <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200 text-sm text-gray-600 shadow-sm">
                         <CalendarClock size={16} />
-                        {activity?.date ?? '-'}
+                        {activity ? formatDateTime(activity.registration_start ?? activity.registration_end) : '-'}
                     </div>
                 </div>
-            </div>
+            </div >
 
-            {activityError && (
+            {error && (
                 <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                    {activityError}
+                    {error}
                 </div>
-            )}
+            )
+            }
 
-            {attendanceError && (
-                <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                    {attendanceError}
-                </div>
-            )}
+            {
+                attendanceError && (
+                    <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        {attendanceError}
+                    </div>
+                )
+            }
+
 
             <AttendanceStats stats={stats} />
 
@@ -314,7 +283,7 @@ function AdminAttendancePage() {
                     searchQuery={searchQuery}
                     statusFilter={statusFilter}
                     rows={filteredRegistrations}
-                    loading={loadingAttendance}
+                    loading={loading}
                     selectedRegistrationId={selectedRegistration?.registration_id ?? null}
                     markingId={markingId}
                     cancellingId={cancellingId}
@@ -336,7 +305,7 @@ function AdminAttendancePage() {
                     />
                 </aside>
             </div>
-        </div>
+        </div >
     )
 }
 
