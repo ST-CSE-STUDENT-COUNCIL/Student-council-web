@@ -532,9 +532,33 @@ async def create_notice(
         # 생성된 공지사항 조회
         return await get_notice(post_id)
     
-    except HTTPException:
+    except HTTPException as he:
+        # publish 실패 시 draft 정리
+        if body.post_id:
+            try:
+                cleanup_supabase = get_supabase_admin()
+                cleanup_supabase.table('posts')\
+                    .delete()\
+                    .eq('id', body.post_id)\
+                    .eq('is_draft', True)\
+                    .execute()
+                print(f"[CLEANUP] Draft {body.post_id} 삭제 완료 (HTTPException)")
+            except Exception as cleanup_err:
+                print(f"[CLEANUP ERROR] Draft {body.post_id} 삭제 실패: {cleanup_err}")
         raise
     except Exception as e:
+        # publish 실패 시 draft 정리
+        if body.post_id:
+            try:
+                cleanup_supabase = get_supabase_admin()
+                cleanup_supabase.table('posts')\
+                    .delete()\
+                    .eq('id', body.post_id)\
+                    .eq('is_draft', True)\
+                    .execute()
+                print(f"[CLEANUP] Draft {body.post_id} 삭제 완료 (Exception)")
+            except Exception as cleanup_err:
+                print(f"[CLEANUP ERROR] Draft {body.post_id} 삭제 실패: {cleanup_err}")
         print(f"[API ERROR] create_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
