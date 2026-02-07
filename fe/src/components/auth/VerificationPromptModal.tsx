@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useLocation } from '@tanstack/react-router'
 import { AlertCircle, ArrowRight } from 'lucide-react'
 import { useAuthStore } from '../../store/useAuthStore'
 import { Modal } from '../common/Modal'
@@ -8,6 +8,8 @@ export function VerificationPromptModal() {
     const navigate = useNavigate()
     const { user, isAuthenticated } = useAuthStore()
     const [isOpen, setIsOpen] = useState(false)
+
+    const location = useLocation()
 
     useEffect(() => {
         if (isAuthenticated && user) {
@@ -23,6 +25,12 @@ export function VerificationPromptModal() {
                 (user.verification_status === 'pending' && !user.verification_image_url)
 
             if (needsVerification) {
+                // If user is already on MyPage, don't show the modal
+                if (location.pathname === '/mypage') {
+                    setIsOpen(false)
+                    return
+                }
+
                 const dismissed = sessionStorage.getItem('verification_prompt_dismissed')
                 if (!dismissed) {
                     setIsOpen(true)
@@ -31,7 +39,7 @@ export function VerificationPromptModal() {
                 setIsOpen(false)
             }
         }
-    }, [isAuthenticated, user])
+    }, [isAuthenticated, user, location.pathname])
 
     const handleClose = () => {
         setIsOpen(false)
@@ -85,7 +93,10 @@ export function VerificationPromptModal() {
                         <p className="text-gray-600 leading-relaxed break-keep">
                             {isRejected
                                 ? <>사유: {user.rejection_reason || '확인 불가'}<br />정보를 수정하여 다시 인증을 진행해주세요.</>
-                                : '원활한 서비스 이용을 위해 학적 인증을 진행해주세요. 학생증 또는 재학증명서를 업로드해야 합니다.'
+                                : <>
+                                    원활한 서비스 이용을 위해 학적 인증을 진행해주세요.<br />
+                                    학생증 또는 재학증명서를 업로드해야 합니다.
+                                </>
                             }
                         </p>
                     </div>

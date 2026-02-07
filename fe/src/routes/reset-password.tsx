@@ -4,7 +4,7 @@ import { authApi } from '../lib/api/auth'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
-import { User, Lock, Key, CheckCircle2, ChevronLeft, Mail, CheckCircle } from 'lucide-react'
+import { User, Lock, Key, CheckCircle2, ChevronLeft, Mail, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { Turnstile } from '../components/common/Turnstile'
 
 export const Route = createFileRoute('/reset-password')({
@@ -22,6 +22,8 @@ function ResetPassword() {
     const [isLoading, setIsLoading] = useState(false)
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
     const [timeLeft, setTimeLeft] = useState(0)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
     // 비밀번호 유효성 검사
     const passwordValidation = {
@@ -215,7 +217,7 @@ function ResetPassword() {
                                         <input
                                             type="text"
                                             required
-                                            maxLength={8}
+                                            maxLength={15}
                                             className="block w-full pl-10 py-3 border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800"
                                             placeholder="학번을 입력해주세요"
                                             value={studentId}
@@ -305,10 +307,10 @@ function ResetPassword() {
                                             <Lock className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                                         </div>
                                         <input
-                                            type="password"
+                                            type={showPassword ? 'text' : 'password'}
                                             required
                                             minLength={8}
-                                            className={`block w-full pl-10 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${password.length > 0 && isPasswordValid
+                                            className={`block w-full pl-10 pr-10 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${password.length > 0 && isPasswordValid
                                                 ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30'
                                                 : password.length > 0 && !isPasswordValid
                                                     ? 'border-amber-400 focus:border-amber-500 focus:ring-amber-200 dark:focus:ring-amber-900/30'
@@ -318,6 +320,13 @@ function ResetPassword() {
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                        </button>
                                     </div>
 
                                     {/* Password Requirements */}
@@ -349,9 +358,9 @@ function ResetPassword() {
                                             <CheckCircle2 className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                                         </div>
                                         <input
-                                            type="password"
+                                            type={showConfirmPassword ? 'text' : 'password'}
                                             required
-                                            className={`block w-full pl-10 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${confirmPassword && password !== confirmPassword
+                                            className={`block w-full pl-10 pr-10 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${confirmPassword && password !== confirmPassword
                                                 ? 'border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-900/30'
                                                 : confirmPassword && password === confirmPassword
                                                     ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30'
@@ -361,6 +370,13 @@ function ResetPassword() {
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                        >
+                                            {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                        </button>
                                     </div>
                                     {confirmPassword && password !== confirmPassword && (
                                         <p className="mt-2 text-sm text-red-600 dark:text-red-400">비밀번호가 일치하지 않습니다.</p>

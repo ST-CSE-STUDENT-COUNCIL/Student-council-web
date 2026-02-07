@@ -1,4 +1,5 @@
 import { api } from '../axios'
+import { useAuthStore } from '../../store/useAuthStore'
 import type { User } from '../../types/users'
 
 const API_BASE_URL = '/mypage'
@@ -31,6 +32,20 @@ export type MyRegistrationsResponse = {
     total_pages: number
 }
 
+export type ProfileUpdateRequest = {
+    id?: string | number
+    field_name?: 'name' | 'student_id' | 'email' | 'phone'
+    new_value?: string
+    status?: string
+    rejection_reason?: string
+    reason?: string
+    created_at?: string
+    requested_at?: string
+    verification_image_url?: string
+}
+
+
+
 export const mypageApi = {
     getProfile: async () => {
         const response = await api.get<User>(API_BASE_URL)
@@ -47,18 +62,6 @@ export const mypageApi = {
         return response.data
     },
 
-    uploadVerificationImage: async (file: File) => {
-        const formData = new FormData()
-        formData.append('file', file)
-
-        const response = await api.post<{ file_path: string }>(`${API_BASE_URL}/verification-image/upload`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        })
-        return response.data
-    },
-
     withdraw: async (password: string) => {
         const response = await api.delete<{ message: string }>(`${API_BASE_URL}`, {
             data: { password },
@@ -67,6 +70,63 @@ export const mypageApi = {
             }
         })
         return response.data
-    }
+    },
+
+    uploadVerificationImage: async (file: File): Promise<{ file_path: string; message: string }> => {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const accessToken = useAuthStore.getState().accessToken
+        const baseUrl = api.defaults.baseURL ?? ''
+        const response = await fetch(`${baseUrl}${API_BASE_URL}/verification-image/upload`, {
+            method: 'POST',
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+            body: formData,
+        })
+
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => 'No response body')
+            console.error('Verification image upload failed:', response.status, response.statusText, errorText)
+            throw new Error(`Verification image upload failed: ${response.status} ${response.statusText}`)
+        }
+
+        return response.json()
+    },
+
+    requestProfileUpdate: async (data: {
+        field_name: 'name' | 'student_id' | 'email' | 'phone'
+        new_value: string
+        verification_image_url: string
+    }) => {
+        const response = await api.post(`${API_BASE_URL}/profile-update`, data)
+        return response.data
+    },
+    getProfileUpdateRequests: async () => {
+        const response = await api.get(`${API_BASE_URL}/profile-update`)
+        return response.data
+    },
+
+    sendEmailChangeVerification: async (newEmail: string) => {
+        const response = await api.post(`${API_BASE_URL}/email/send-verification`, {
+            new_email: newEmail,
+        })
+        return response.data
+    },
+
+    verifyEmailChange: async (newEmail: string, code: string) => {
+        const response = await api.post(`${API_BASE_URL}/email/verify`, {
+            new_email: newEmail,
+            code,
+        })
+        return response.data
+    },
+
+    changePhone: async (newPhone: string, password: string) => {
+        const response = await api.patch(`${API_BASE_URL}/phone`, {
+            new_phone: newPhone,
+            password,
+        })
+        return response.data
+    },
 }
 

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Card } from '@tremor/react'
 import { BarChart3 } from 'lucide-react'
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import type { SurveyQuestionStat } from './surveyStatsTypes'
+import { QuestionJumpNav } from './QuestionJumpNav'
 
 const OBJECTIVE_TYPES = new Set(['multiple_choice', 'radio', 'checkbox'])
 const QUESTION_TYPE_LABELS: Record<string, string> = {
@@ -43,6 +44,11 @@ type SurveyStatsPanelProps = {
 export const SurveyStatsPanel = ({ loading, surveyStats, questionStats }: SurveyStatsPanelProps) => {
     const [statsFilter, setStatsFilter] = useState<'all' | 'objective' | 'subjective'>('all')
     const [expandedSubjective, setExpandedSubjective] = useState<Record<string, boolean>>({})
+    const [highlightedId, setHighlightedId] = useState<string | null>(null)
+    const highlightTimeoutRef = useRef<number | null>(null)
+    const pendingJumpIdRef = useRef<string | null>(null)
+    const scrollRafRef = useRef<number | null>(null)
+    const tryScrollPendingRef = useRef<() => void>(() => {})
 
     const objectiveQuestionCount = questionStats.filter(stat => OBJECTIVE_TYPES.has(stat.type)).length
     const subjectiveQuestionCount = questionStats.length - objectiveQuestionCount
@@ -51,6 +57,74 @@ export const SurveyStatsPanel = ({ loading, surveyStats, questionStats }: Survey
         if (statsFilter === 'subjective') return !OBJECTIVE_TYPES.has(stat.type)
         return true
     })
+
+    const questionIndexById = useMemo(() => {
+        const map = new Map<string, number>()
+        questionStats.forEach((stat, idx) => map.set(String(stat.question_id), idx + 1))
+        return map
+    }, [questionStats])
+
+    const allQuestionsForJump = useMemo(() => {
+        return questionStats.map((stat, idx) => {
+            const number = questionIndexById.get(String(stat.question_id)) ?? idx + 1
+            const typeLabel = QUESTION_TYPE_LABELS[stat.type] || '응답'
+            return {
+                id: String(stat.question_id),
+                label: `Q${number}. ${stat.question} (${typeLabel})`
+            }
+        })
+    }, [questionIndexById, questionStats])
+
+    const getQuestionElementId = useCallback((questionId: string) => `survey-question-${questionId}`, [])
+
+    const scrollToQuestion = useCallback((questionId: string) => {
+        const element = document.getElementById(getQuestionElementId(questionId))
+        if (!element) return false
+
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        setHighlightedId(questionId)
+
+        if (highlightTimeoutRef.current) window.clearTimeout(highlightTimeoutRef.current)
+        highlightTimeoutRef.current = window.setTimeout(() => setHighlightedId(null), 1800)
+
+        return true
+    }, [getQuestionElementId])
+
+    useEffect(() => {
+        tryScrollPendingRef.current = () => {
+            const id = pendingJumpIdRef.current
+            if (!id) return
+            if (scrollToQuestion(id)) {
+                pendingJumpIdRef.current = null
+                return
+            }
+            scrollRafRef.current = window.requestAnimationFrame(tryScrollPendingRef.current)
+        }
+    }, [scrollToQuestion])
+
+    const handleJump = useCallback((questionId: string) => {
+        const target = questionStats.find(stat => String(stat.question_id) === questionId)
+        if (!target) return
+
+        const shouldBeObjective = OBJECTIVE_TYPES.has(target.type)
+        const nextFilter = statsFilter === 'all'
+            ? 'all'
+            : shouldBeObjective
+                ? 'objective'
+                : 'subjective'
+
+        if (statsFilter !== nextFilter) setStatsFilter(nextFilter)
+        pendingJumpIdRef.current = questionId
+        if (scrollRafRef.current) window.cancelAnimationFrame(scrollRafRef.current)
+        scrollRafRef.current = window.requestAnimationFrame(tryScrollPendingRef.current)
+    }, [questionStats, statsFilter])
+
+    useEffect(() => {
+        return () => {
+            if (highlightTimeoutRef.current) window.clearTimeout(highlightTimeoutRef.current)
+            if (scrollRafRef.current) window.cancelAnimationFrame(scrollRafRef.current)
+        }
+    }, [])
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[400px]">
@@ -102,6 +176,14 @@ export const SurveyStatsPanel = ({ loading, surveyStats, questionStats }: Survey
                         </button>
                     </div>
 
+                    {allQuestionsForJump.length > 0 && (
+                        <QuestionJumpNav
+                            questions={allQuestionsForJump}
+                            onJump={handleJump}
+                            className="sticky top-4 z-10 mb-6"
+                        />
+                    )}
+
                     {filteredQuestionStats.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-gray-500">
                             <BarChart3 size={48} className="text-gray-300 mb-4" />
@@ -150,13 +232,21 @@ export const SurveyStatsPanel = ({ loading, surveyStats, questionStats }: Survey
                                         return b.count - a.count
                                     })
                                 const questionKey = String(stat.question_id)
+                                const questionNumber = questionIndexById.get(questionKey) ?? index + 1
                                 const isExpanded = expandedSubjective[questionKey]
                                 const visibleSubjective = isExpanded ? subjectiveSummary : subjectiveSummary.slice(0, 5)
 
                                 return (
-                                    <Card key={stat.question_id ?? index} className="space-y-4">
+                                    <Card
+                                        key={stat.question_id ?? index}
+                                        id={getQuestionElementId(questionKey)}
+                                        className={[
+                                            'space-y-4 scroll-mt-24 transition-shadow',
+                                            highlightedId === questionKey ? 'ring-2 ring-indigo-200 shadow-md' : ''
+                                        ].join(' ')}
+                                    >
                                         <div className="flex flex-wrap items-center gap-3">
-                                            <span className="text-xs font-semibold text-indigo-600 bg-indigo-100 rounded-full px-2 py-1">Q{index + 1}</span>
+                                            <span className="text-xs font-semibold text-indigo-600 bg-indigo-100 rounded-full px-2 py-1">Q{questionNumber}</span>
                                             <span className="text-xs px-2 py-1 rounded-full border border-gray-200 text-gray-500">
                                                 {QUESTION_TYPE_LABELS[stat.type] || '응답'}
                                             </span>

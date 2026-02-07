@@ -4,6 +4,7 @@ import React from 'react'
 import { LockerManagementView } from '../../components/welfare/admin/LockerManagementView'
 import { PrinterManagementView } from '../../components/welfare/admin/PrinterManagementView'
 import { RentalManagementView } from '../../components/welfare/admin/RentalManagementView'
+import { GuidebookManagementView } from '../../components/welfare/admin/GuidebookManagementView'
 import { welfareApi, type WelfareRental } from '../../lib/api/welfare'
 
 // Admin welfare route
@@ -13,7 +14,7 @@ export const Route = createFileRoute('/admin/welfare')({
 })
 
 function AdminWelfarePage() {
-    const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함' | '프린터'>('대여사업')
+    const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함' | '프린터' | '신입생 가이드북'>('대여사업')
     const [rentalItems, setRentalItems] = React.useState<WelfareRental[]>([])
     const [loading, setLoading] = React.useState(false)
     const [error, setError] = React.useState<string | null>(null)
@@ -49,10 +50,15 @@ function AdminWelfarePage() {
                 title: '사물함 관리',
                 description: '사물함 배정 및 신청을 관리합니다.',
             }
-        } else {
+        } else if (selectedCategory === '프린터') {
             return {
                 title: '프린터 관리',
                 description: '프린터 사용 안내 이미지를 관리합니다.',
+            }
+        } else {
+            return {
+                title: '신입생 가이드북 관리',
+                description: '신입생 가이드북 링크 및 정보를 관리합니다.',
             }
         }
     }
@@ -70,13 +76,13 @@ function AdminWelfarePage() {
 
             {/* Category Filter */}
             <div className="mb-6 flex flex-wrap gap-2">
-                {['대여사업', '사물함', '프린터'].map((category) => (
+                {['대여사업', '사물함', '프린터', '신입생 가이드북'].map((category) => (
                     <button
                         key={category}
-                        onClick={() => setSelectedCategory(category as '대여사업' | '사물함' | '프린터')}
+                        onClick={() => setSelectedCategory(category as any)}
                         className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${selectedCategory === category
-                                ? 'bg-gray-900 text-white border-gray-900'
-                                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                            ? 'bg-gray-900 text-white border-gray-900'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                             }`}
                     >
                         {category}
@@ -94,8 +100,10 @@ function AdminWelfarePage() {
                     />
                 ) : selectedCategory === '사물함' ? (
                     <LockerManagementView />
-                ) : (
+                ) : selectedCategory === '프린터' ? (
                     <PrinterManagementView />
+                ) : (
+                    <GuidebookManagementView />
                 )}
             </div>
         </div>

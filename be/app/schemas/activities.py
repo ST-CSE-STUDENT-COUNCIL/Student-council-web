@@ -16,15 +16,22 @@ from datetime import datetime
 # ============================================================================
 # Form Field 스키마 (추가 정보 수집 필드 정의)
 # ============================================================================
+class FormFieldCondition(BaseModel):
+    """조건부 필드/섹션 표시 조건"""
+    target: str = Field(..., description="조건을 검사할 대상 필드의 name")
+    value: str = Field(..., description="조건이 참이 되기 위한 값 (예: '참여')")
+
+
 class FormField(BaseModel):
     """추가 정보 수집 필드 정의"""
     name: str = Field(..., description="필드 이름 (영문)")
     label: str = Field(..., description="필드 라벨 (한글)")
-    type: Literal["text", "textarea", "select", "radio", "checkbox", "number", "date", "file"] = Field(..., description="입력 타입")
+    type: Literal["text", "textarea", "select", "radio", "checkbox", "number", "date", "file", "section"] = Field(..., description="입력 타입")
     options: Optional[List[str]] = Field(None, description="선택지 (select, radio, checkbox용)")
     required: bool = Field(default=False, description="필수 여부")
     placeholder: Optional[str] = Field(None, description="플레이스홀더")
     help_text: Optional[str] = Field(None, description="도움말")
+    condition: Optional[FormFieldCondition] = Field(None, description="이 필드(또는 섹션)가 표시될 조건")
 
 
 # ============================================================================
@@ -116,6 +123,7 @@ class ActivityCreateRequest(BaseModel):
     thumbnail_url: Optional[str] = Field(None, description="썸네일 URL")
     image_urls: Optional[List[Dict[str, str]]] = Field(None, description="이미지 URL 리스트")
     is_active: bool = Field(default=True, description="활성화 여부")
+    is_anonymous: bool = Field(default=False, description="익명 여부 (true: 익명 모드, false: 기명 모드). 설문조사/수요조사 생성 시 true로 설정")
 
 
 class ActivityUpdateRequest(BaseModel):
@@ -131,6 +139,7 @@ class ActivityUpdateRequest(BaseModel):
     thumbnail_url: Optional[str] = None
     image_urls: Optional[List[Dict[str, str]]] = Field(None, description="이미지 URL 리스트")
     is_active: Optional[bool] = None
+    is_anonymous: Optional[bool] = Field(None, description="익명 여부 (true: 익명 모드, false: 기명 모드)")
 
 
 # ============================================================================
@@ -152,6 +161,7 @@ class ActivityResponse(BaseModel):
     thumbnail_url: Optional[str]
     images: List[Dict[str, Any]] = Field(default_factory=list, description="활동 이미지 목록")
     is_active: bool
+    is_anonymous: bool = Field(default=False, description="익명 여부 (true: 익명, false: 기명)")
     created_by: Optional[str]
     created_at: datetime
     updated_at: datetime
@@ -208,6 +218,9 @@ class ActivityRegistrationRequest(BaseModel):
     # 카톡방 초대용
     kakao_id: Optional[str] = Field(None, max_length=100, description="카카오톡 ID")
     
+    # Turnstile 토큰 (비회원 필수)
+    turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile 토큰 (비회원 신청 시 필수)")
+    
     @field_validator('phone')
     @classmethod
     def normalize_phone(cls, v: Optional[str]) -> Optional[str]:
@@ -249,6 +262,23 @@ class SurveySubmitRequest(BaseModel):
     """설문조사 제출 요청"""
     survey_responses: Dict[str, Any] = Field(..., description="설문 응답")
     
+    # 비회원 정보 (회원은 선택사항, 비회원은 필수)
+    name: Optional[str] = Field(None, max_length=100, description="이름")
+    student_id: Optional[str] = Field(None, pattern=r'^\d{8,20}$', description="학번/수험번호")
+    department: Optional[str] = Field(None, max_length=100, description="학과")
+    phone: Optional[str] = Field(None, pattern=r'^010-?\d{4}-?\d{4}$', description="전화번호")
+    email: Optional[str] = Field(None, description="이메일")
+    
+    # Turnstile 토큰 (비회원 필수)
+    turnstile_token: Optional[str] = Field(None, description="Cloudflare Turnstile 토큰 (비회원 신청 시 필수)")
+    
+    @field_validator('phone')
+    @classmethod
+    def normalize_phone(cls, v: Optional[str]) -> Optional[str]:
+        if v:
+            return v.replace('-', '')
+        return v
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -256,7 +286,11 @@ class SurveySubmitRequest(BaseModel):
                     "1": "매우 만족",
                     "2": "음식이 더 다양했으면 좋겠습니다",
                     "3": 5
-                }
+                },
+                "name": "홍길동",
+                "student_id": "20241234",
+                "department": "컴퓨터공학과",
+                "phone": "01012345678"
             }
         }
 
@@ -423,3 +457,55 @@ class MyActivitiesResponse(BaseModel):
 class ErrorResponse(BaseModel):
     """에러 응답"""
     detail: str
+
+
+# ============================================================================
+# 출석 관련 스키마
+# ============================================================================
+class AttendanceSearchRequest(BaseModel):
+    """학번으로 출석 정보 검색 요청"""
+    student_id: str = Field(..., description="학번")
+
+
+class AttendanceCheckRequest(BaseModel):
+    """출석 체크 요청"""
+    student_id: str = Field(..., description="학번")
+
+
+class AttendanceCheckResponse(BaseModel):
+    """출석 체크 응답"""
+    message: str = Field(default="출석이 완료되었습니다", description="결과 메시지")
+    registration_id: int = Field(..., description="신청 ID")
+    attended_at: datetime = Field(..., description="출석 체크 시간")
+
+
+class AttendanceInfoResponse(BaseModel):
+    """출석 정보 응답 (참석자가 보는 화면)"""
+    registration_id: int = Field(..., description="신청 ID")
+    activity_title: str = Field(..., description="행사명")
+    user_name: str = Field(..., description="참석자 이름")
+    student_id: str = Field(..., description="학번")
+    already_attended: bool = Field(default=False, description="이미 출석 체크했는지")
+    attended_at: Optional[datetime] = Field(None, description="출석 시간")
+
+
+class AttendanceListItem(BaseModel):
+    """출석 목록 항목"""
+    registration_id: int
+    user_id: Optional[str]
+    user_name: Optional[str] = None
+    student_id: Optional[str] = None
+    phone: Optional[str] = None
+    registered_at: datetime
+    attended: bool
+    attended_at: Optional[datetime] = None
+
+
+class AttendanceListResponse(BaseModel):
+    """출석 현황 응답 (관리자용)"""
+    activity_id: int
+    activity_title: str
+    total_registrations: int = Field(..., description="총 신청자 수")
+    attended_count: int = Field(..., description="출석자 수")
+    attendance_rate: float = Field(..., description="출석률 (%)")
+    registrations: List[AttendanceListItem]

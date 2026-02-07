@@ -1,11 +1,13 @@
 import React from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Key, UserX } from 'lucide-react'
+import { toast } from 'sonner'
 import { useAuthStore } from '../store/useAuthStore'
 import { mypageApi } from '../lib/api/mypage'
-import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, ChangePasswordModal, WithdrawModal } from '../components/mypage'
+import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, EditProfileModal, ChangePasswordModal, WithdrawModal, ProfileInfoHeader, ProfileUpdateSection, ContactSection } from '../components/mypage'
 import type { User } from '../types/users'
-import type { MyRegistration } from '../lib/api/mypage'
+import type { MyRegistration, ProfileUpdateRequest } from '../lib/api/mypage'
+import { useTimer } from '../hooks/useTimer'
 
 export const Route = createFileRoute('/mypage')({
   component: MyPage,
@@ -16,9 +18,23 @@ function MyPage() {
   const [profile, setProfile] = React.useState<User | null>(user)
   const [activeTab, setActiveTab] = React.useState<'info' | 'events'>('info')
   const [showVerifyModal, setShowVerifyModal] = React.useState(false)
+  const [showEditProfileModal, setShowEditProfileModal] = React.useState(false)
   const [showPasswordModal, setShowPasswordModal] = React.useState(false)
   const [showWithdrawModal, setShowWithdrawModal] = React.useState(false)
   const [myRegistrations, setMyRegistrations] = React.useState<MyRegistration[]>([])
+  const [profileUpdateRequests, setProfileUpdateRequests] = React.useState<ProfileUpdateRequest[]>([])
+  const [profileUpdateError, setProfileUpdateError] = React.useState<string | null>(null)
+  const [isEditingContact, setIsEditingContact] = React.useState(false)
+  const [contactEmail, setContactEmail] = React.useState('')
+  const [contactPhone, setContactPhone] = React.useState('')
+  const [contactError, setContactError] = React.useState<string | null>(null)
+  const [contactPassword, setContactPassword] = React.useState('')
+  const [isPhoneSaving, setIsPhoneSaving] = React.useState(false)
+  const [emailCode, setEmailCode] = React.useState('')
+  const [emailStep, setEmailStep] = React.useState<'idle' | 'sent' | 'verified'>('idle')
+  const [isEmailSending, setIsEmailSending] = React.useState(false)
+  const [isEmailVerifying, setIsEmailVerifying] = React.useState(false)
+  const emailTimer = useTimer(0)
   const currentUser = profile ?? user
 
   const handleWithdraw = React.useCallback(() => {
@@ -41,20 +57,42 @@ function MyPage() {
     let cancelled = false
 
     async function loadData() {
-      try {
-        const [profileData, registrationsData] = await Promise.all([
-          mypageApi.getProfile(),
-          mypageApi.getMyRegistrations()
-        ])
+      const results = await Promise.allSettled([
+        mypageApi.getProfile(),
+        mypageApi.getMyRegistrations(),
+        mypageApi.getProfileUpdateRequests(),
+      ])
 
-        if (cancelled) return
+      if (cancelled) return
 
-        setProfile(profileData)
-        setUser(profileData)
-        setMyRegistrations(registrationsData.items)
-      } catch (err) {
-        if (cancelled) return
-        console.error('Failed to load profile or registrations', err)
+      const [profileResult, registrationsResult, updatesResult] = results
+
+      if (profileResult.status === 'fulfilled') {
+        setProfile(profileResult.value)
+        setUser(profileResult.value)
+      } else {
+        console.error('Failed to load profile', profileResult.reason)
+      }
+
+      if (registrationsResult.status === 'fulfilled') {
+        setMyRegistrations(registrationsResult.value.items)
+      } else {
+        console.error('Failed to load registrations', registrationsResult.reason)
+      }
+
+      if (updatesResult.status === 'fulfilled') {
+        const data = updatesResult.value
+        const payload =
+          Array.isArray(data) ? data :
+            Array.isArray((data as { items?: unknown })?.items) ? (data as { items: unknown[] }).items :
+              Array.isArray((data as { requests?: unknown })?.requests) ? (data as { requests: unknown[] }).requests :
+                []
+
+        setProfileUpdateRequests(payload as ProfileUpdateRequest[])
+        setProfileUpdateError(null)
+      } else {
+        console.error('Failed to load profile update requests', updatesResult.reason)
+        setProfileUpdateError('프로필 변경 요청 내역을 불러오지 못했습니다.')
       }
     }
 
@@ -70,8 +108,8 @@ function MyPage() {
 
     return myRegistrations
       .filter(reg => {
-        if (reg.status === 'cancelled') return false
         if (!reg.activity) return false
+        if (reg.activity.type === 'demand_survey' || reg.activity.type === 'survey') return false
 
         const endDate = reg.activity.registration_end
           ? reg.activity.registration_end
@@ -83,8 +121,14 @@ function MyPage() {
         title: reg.activity!.title,
         date: formatDate(reg.registered_at),
         status: getStatusLabel(reg.status),
-        rawStatus: reg.status
+        rawStatus: reg.status,
+        rawDate: reg.registered_at,
       }))
+      .sort((a, b) => {
+        const statusDiff = getEventStatusPriority(a.rawStatus) - getEventStatusPriority(b.rawStatus)
+        if (statusDiff !== 0) return statusDiff
+        return new Date(b.rawDate).getTime() - new Date(a.rawDate).getTime()
+      })
   }, [myRegistrations])
 
   const completedEvents = React.useMemo(() => {
@@ -93,7 +137,7 @@ function MyPage() {
     return myRegistrations
       .filter(reg => {
         if (!reg.activity) return false
-        if (reg.status === 'cancelled') return false
+        if (reg.activity.type === 'demand_survey' || reg.activity.type === 'survey') return false
 
         const endDate = reg.activity.registration_end
         if (!endDate) return false // 종료일 없으면 완료되지 않음 (상시)
@@ -103,6 +147,36 @@ function MyPage() {
       .map(reg => ({
         title: reg.activity!.title,
         date: formatDate(reg.activity!.registration_end || reg.registered_at),
+        status: reg.status === 'rejected' || reg.status === 'cancelled'
+          ? getStatusLabel(reg.status)
+          : '마감',
+        rawStatus: reg.status,
+        rawDate: reg.activity!.registration_end || reg.registered_at,
+      }))
+      .sort((a, b) => {
+        const statusDiff = getEventStatusPriority(a.rawStatus) - getEventStatusPriority(b.rawStatus)
+        if (statusDiff !== 0) return statusDiff
+        return new Date(b.rawDate).getTime() - new Date(a.rawDate).getTime()
+      })
+  }, [myRegistrations])
+
+  const surveys = React.useMemo(() => {
+    return myRegistrations
+      .filter((reg) => reg.activity?.type === 'survey')
+      .map((reg) => ({
+        title: reg.activity!.title,
+        date: formatDate(reg.registered_at),
+        status: '설문 완료',
+      }))
+  }, [myRegistrations])
+
+  const demandSurveys = React.useMemo(() => {
+    return myRegistrations
+      .filter((reg) => reg.activity?.type === 'demand_survey')
+      .map((reg) => ({
+        title: reg.activity!.title,
+        date: formatDate(reg.registered_at),
+        status: '조사 완료',
       }))
   }, [myRegistrations])
 
@@ -136,6 +210,179 @@ function MyPage() {
     { id: 'info', label: '내 정보' },
     { id: 'events', label: '행사' },
   ]
+
+  const mappedProfileUpdates = React.useMemo(() => {
+    const groups = new Map<string, {
+      id: string
+      updates: Array<{ field: 'name' | 'student_id' | 'email' | 'phone'; newValue: string }>
+      statusLabel: string
+      requestedAt: string
+      rejectionReason: string
+    }>()
+
+    profileUpdateRequests.forEach((item, index) => {
+      const field: 'name' | 'student_id' | 'email' | 'phone' =
+        item.field_name === 'student_id' ? 'student_id'
+          : item.field_name === 'email' ? 'email'
+            : item.field_name === 'phone' ? 'phone'
+              : 'name'
+      const createdAt = item.created_at || item.requested_at || ''
+      const rejectionReason = item.rejection_reason || item.reason || ''
+      const groupKey = `${normalizeDateKey(createdAt)}-${item.status ?? 'pending'}`
+
+      const existing = groups.get(groupKey)
+      const base = existing ?? {
+        id: String(item.id ?? index),
+        updates: [],
+        statusLabel: getProfileUpdateStatusLabel(item.status),
+        requestedAt: createdAt ? formatDateTime(createdAt) : '-',
+        rejectionReason,
+      }
+
+      const updates = base.updates.some((u) => u.field === field)
+        ? base.updates.map((u) => (u.field === field ? { field, newValue: item.new_value ?? '-' } : u))
+        : [...base.updates, { field, newValue: item.new_value ?? '-' }]
+
+      const nextStatus = mergeStatusLabel(base.statusLabel, getProfileUpdateStatusLabel(item.status))
+      const nextReason = base.rejectionReason || rejectionReason
+
+      groups.set(groupKey, {
+        ...base,
+        updates,
+        statusLabel: nextStatus,
+        rejectionReason: nextReason,
+      })
+    })
+
+    return Array.from(groups.values())
+  }, [profileUpdateRequests])
+
+  const hasPendingProfileUpdate = React.useMemo(() => {
+    return profileUpdateRequests.some(
+      (item) => item.status === 'pending' || item.status === 'submitted'
+    )
+  }, [profileUpdateRequests])
+
+  React.useEffect(() => {
+    if (!currentUser || isEditingContact) return
+    setContactEmail(currentUser.email)
+    setContactPhone(currentUser.phone)
+  }, [currentUser, isEditingContact])
+
+  const safeUser = currentUser
+  if (!safeUser) {
+    return null
+  }
+
+  const emailChanged = contactEmail.trim().length > 0 && contactEmail.trim() !== safeUser.email
+  const phoneChanged = normalizePhone(contactPhone) !== normalizePhone(safeUser.phone)
+  const canSendEmailVerification =
+    emailChanged
+    && EMAIL_REGEX.test(contactEmail.trim())
+    && !isEmailSending
+    && (emailStep !== 'sent' || emailTimer.isExpired)
+
+  async function handleSendEmailVerification() {
+    const nextEmail = contactEmail.trim()
+    if (!EMAIL_REGEX.test(nextEmail)) {
+      setContactError('올바른 이메일 형식을 입력해주세요.')
+      return
+    }
+
+    if (nextEmail === safeUser.email) {
+      setContactError('현재 이메일과 동일합니다.')
+      return
+    }
+
+    if (emailStep === 'sent' && !emailTimer.isExpired) {
+      setContactError('인증번호가 이미 발송되었습니다. 재발송을 기다려주세요.')
+      return
+    }
+
+    setContactError(null)
+    setIsEmailSending(true)
+
+    try {
+      await mypageApi.sendEmailChangeVerification(nextEmail)
+      setEmailStep('sent')
+      setEmailCode('')
+      emailTimer.start(300)
+      toast.success('인증번호가 발송되었습니다. 이메일을 확인해주세요.')
+    } catch (error) {
+      console.error('Email change verification send failed:', error)
+      setContactError('인증번호 발송에 실패했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setIsEmailSending(false)
+    }
+  }
+
+  async function handleVerifyEmailCode() {
+    if (emailCode.trim().length !== 6) {
+      setContactError('6자리 인증번호를 입력해주세요.')
+      return
+    }
+
+    if (emailTimer.isExpired) {
+      setContactError('인증 시간이 만료되었습니다. 인증번호를 재발송해주세요.')
+      return
+    }
+
+    setContactError(null)
+    setIsEmailVerifying(true)
+
+    try {
+      await mypageApi.verifyEmailChange(contactEmail.trim(), emailCode.trim())
+      setEmailStep('verified')
+      emailTimer.reset()
+      const profileData = await mypageApi.getProfile()
+      setProfile(profileData)
+      setUser(profileData)
+      setIsEditingContact(false)
+      toast.success('이메일이 변경되었습니다.')
+    } catch (error) {
+      console.error('Email change verification failed:', error)
+      setContactError('인증번호 확인에 실패했습니다. 다시 시도해주세요.')
+    } finally {
+      setIsEmailVerifying(false)
+    }
+  }
+
+  async function handleSavePhone() {
+    const nextPhone = normalizePhone(contactPhone)
+    if (!nextPhone) {
+      setContactError('전화번호를 입력해주세요.')
+      return
+    }
+
+    if (nextPhone.length !== 10 && nextPhone.length !== 11) {
+      setContactError('전화번호는 숫자 10~11자리여야 합니다.')
+      return
+    }
+
+    if (!contactPassword.trim()) {
+      setContactError('비밀번호를 입력해주세요.')
+      return
+    }
+
+    setContactError(null)
+    setIsPhoneSaving(true)
+
+    try {
+      await mypageApi.changePhone(nextPhone, contactPassword)
+      const profileData = await mypageApi.getProfile()
+      setProfile(profileData)
+      setUser(profileData)
+      setContactPassword('')
+      setIsEditingContact(false)
+      toast.success('전화번호가 변경되었습니다.')
+    } catch (error) {
+      console.error('Phone change failed:', error)
+      setContactError('전화번호 변경에 실패했습니다. 다시 시도해주세요.')
+    } finally {
+      setIsPhoneSaving(false)
+    }
+  }
+
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -212,18 +459,80 @@ function MyPage() {
         <main className="flex-1 space-y-6">
           {activeTab === 'info' && (
             <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">내 정보</h2>
+              <ProfileInfoHeader
+                hasPendingProfileUpdate={hasPendingProfileUpdate}
+                onEditProfile={() => setShowEditProfileModal(true)}
+              />
+
               <div className="space-y-4">
                 <InfoLine label="이름" value={currentUser.name} />
                 <InfoLine label="학번" value={currentUser.student_id} />
-                <InfoLine label="이메일" value={currentUser.email} />
-                <InfoLine label="전화번호" value={formatPhoneNumber(currentUser.phone)} />
                 <InfoLine label="학과" value={currentUser.department || '미등록'} />
                 <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-slate-700">
                   <span className="text-gray-600 dark:text-gray-400 font-medium">학생회비</span>
                   <Badge tone={getMembershipStatus(currentUser)} />
                 </div>
               </div>
+
+              <ContactSection
+                isEditing={isEditingContact}
+                currentEmail={currentUser.email}
+                currentPhone={currentUser.phone}
+                formattedPhone={formatPhoneNumber(currentUser.phone)}
+                contactEmail={contactEmail}
+                contactPhone={contactPhone}
+                contactPassword={contactPassword}
+                contactError={contactError}
+                emailStep={emailStep}
+                emailCode={emailCode}
+                emailTimer={emailTimer}
+                isEmailSending={isEmailSending}
+                isEmailVerifying={isEmailVerifying}
+                isPhoneSaving={isPhoneSaving}
+                canSendEmailVerification={canSendEmailVerification}
+                phoneChanged={phoneChanged}
+                onToggleEdit={() => {
+                  setContactError(null)
+                  const nextEditing = !isEditingContact
+                  setIsEditingContact(nextEditing)
+                  if (nextEditing) {
+                    setContactEmail(currentUser.email)
+                    setContactPhone(currentUser.phone)
+                    setEmailStep('idle')
+                    setEmailCode('')
+                    emailTimer.reset()
+                  }
+                }}
+                onEmailChange={(value) => {
+                  setContactEmail(value)
+                  if (emailStep !== 'idle') {
+                    setEmailStep('idle')
+                    setEmailCode('')
+                    emailTimer.reset()
+                  }
+                }}
+                onPhoneChange={setContactPhone}
+                onPasswordChange={setContactPassword}
+                onSendEmailVerification={handleSendEmailVerification}
+                onVerifyEmailCode={handleVerifyEmailCode}
+                onEmailCodeChange={setEmailCode}
+                onCancel={() => {
+                  setIsEditingContact(false)
+                  setContactError(null)
+                  setContactEmail(currentUser.email)
+                  setContactPhone(currentUser.phone)
+                  setContactPassword('')
+                  setEmailStep('idle')
+                  setEmailCode('')
+                  emailTimer.reset()
+                }}
+                onSavePhone={handleSavePhone}
+              />
+
+              <ProfileUpdateSection
+                error={profileUpdateError}
+                items={mappedProfileUpdates}
+              />
             </section>
           )}
 
@@ -250,9 +559,57 @@ function MyPage() {
                 </div>
               </section>
 
+              <div className="grid gap-6 lg:grid-cols-2">
+                <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">설문조사</h2>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">별도 표시</span>
+                  </div>
+                  <div className="grid gap-4">
+                    {surveys.map((survey) => (
+                      <div key={`${survey.title}-${survey.date}`} className="border border-gray-100 dark:border-slate-700 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{survey.date}</p>
+                          <StatusPill status={survey.status} />
+                        </div>
+                        <p className="font-semibold text-gray-900 dark:text-white">{survey.title}</p>
+                      </div>
+                    ))}
+                    {surveys.length === 0 && (
+                      <div className="rounded-lg border border-dashed border-gray-200 dark:border-slate-700 p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                        참여한 설문조사 내역이 없습니다.
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">수요조사</h2>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">별도 표시</span>
+                  </div>
+                  <div className="grid gap-4">
+                    {demandSurveys.map((survey) => (
+                      <div key={`${survey.title}-${survey.date}`} className="border border-gray-100 dark:border-slate-700 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{survey.date}</p>
+                          <StatusPill status={survey.status} />
+                        </div>
+                        <p className="font-semibold text-gray-900 dark:text-white">{survey.title}</p>
+                      </div>
+                    ))}
+                    {demandSurveys.length === 0 && (
+                      <div className="rounded-lg border border-dashed border-gray-200 dark:border-slate-700 p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                        참여한 수요조사 내역이 없습니다.
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </div>
+
               <section className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">참여 완료 행사</h2>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">종료된 행사</h2>
                   <Link to="/activities" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">지난 행사 보기</Link>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -260,7 +617,7 @@ function MyPage() {
                     <div key={event.title} className="border border-gray-100 dark:border-slate-700 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm text-gray-500 dark:text-gray-400">{event.date}</p>
-                        <StatusPill status="마감" />
+                        <StatusPill status={event.status} />
                       </div>
                       <p className="font-semibold text-gray-900 dark:text-white">{event.title}</p>
                     </div>
@@ -275,6 +632,14 @@ function MyPage() {
         </main>
 
         {showVerifyModal && <VerifyModal onClose={() => setShowVerifyModal(false)} onUploaded={handleVerificationUploaded} />}
+        {showEditProfileModal && (
+          <EditProfileModal
+            onClose={() => setShowEditProfileModal(false)}
+            initialName={currentUser.name}
+            initialStudentId={currentUser.student_id}
+
+          />
+        )}
         {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
         {showWithdrawModal && <WithdrawModal onClose={() => setShowWithdrawModal(false)} />}
       </div>
@@ -306,13 +671,59 @@ function formatDate(dateStr: string) {
   }
 }
 
+function formatDateTime(dateStr: string) {
+  if (!dateStr) return '-'
+  const parsed = new Date(dateStr)
+  if (Number.isNaN(parsed.getTime())) return dateStr
+  return parsed.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+}
+
+function getProfileUpdateStatusLabel(status?: string | null) {
+  const normalized = (status ?? '').toLowerCase().trim()
+  if (normalized === 'approved' || normalized === 'approve') return '승인'
+  if (normalized === 'rejected' || normalized === 'reject' || normalized === 'denied') return '반려'
+  if (normalized === 'pending' || normalized === 'submitted') return '대기'
+  return status || '대기'
+}
+
+function mergeStatusLabel(current: string, incoming: string) {
+  if (current === '반려' || incoming === '반려') return '반려'
+  if (current === '대기' || incoming === '대기') return '대기'
+  return '승인'
+}
+
+function normalizeDateKey(dateStr: string) {
+  if (!dateStr) return 'no-date'
+  const parsed = new Date(dateStr)
+  if (Number.isNaN(parsed.getTime())) return dateStr
+  const year = parsed.getFullYear()
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const hour = String(parsed.getHours()).padStart(2, '0')
+  const minute = String(parsed.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hour}:${minute}`
+}
+
 function getStatusLabel(status: string) {
   switch (status) {
     case 'pending': return '신청 대기'
     case 'approved': return '신청 승인'
-    case 'rejected': return '반려됨'
+    case 'rejected': return '신청 거절'
     case 'cancelled': return '취소됨'
     default: return status
+  }
+}
+
+function getEventStatusPriority(status: string) {
+  switch (status) {
+    case 'approved':
+      return 0
+    case 'pending':
+      return 1
+    case 'rejected':
+      return 2
+    default:
+      return 3
   }
 }
 
@@ -325,4 +736,10 @@ function formatPhoneNumber(phone: string) {
     return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`
   }
   return phone
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function normalizePhone(value: string) {
+  return value.replace(/\D/g, '')
 }

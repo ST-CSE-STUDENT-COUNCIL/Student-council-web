@@ -3,15 +3,32 @@ FastAPI 메인 애플리케이션
 """
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from contextlib import asynccontextmanager
 from app.config import settings
-from app.routes import auth, admin, users, suggestions, notices, clubs, welfare, introductions, activities
+from app.routes import auth, admin, users, suggestions, notices, clubs, welfare, introductions, activities, search
 
 # Rate limiter 설정
 limiter = Limiter(key_func=get_remote_address)
+
+
+# 서버 시작/종료 이벤트
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup: DB 커넥션 워밍업 (첫 요청 지연 방지)
+    try:
+        from app.database import get_supabase
+        supabase = get_supabase()
+        supabase.table("boards").select("id").limit(1).execute()
+        print("[STARTUP] DB 워밍업 완료")
+    except Exception as e:
+        print(f"[STARTUP] 워밍업 실패 (무시): {e}")
+    yield
+    # shutdown: 필요 시 정리 작업
+
 
 # FastAPI 앱 생성
 app = FastAPI(
@@ -20,7 +37,8 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    swagger_ui_parameters={"persistAuthorization": True}
+    swagger_ui_parameters={"persistAuthorization": True},
+    lifespan=lifespan
 )
 
 # Rate limiting 상태 저장
@@ -55,6 +73,8 @@ app.include_router(clubs.router)
 app.include_router(welfare.router)
 app.include_router(introductions.router)
 app.include_router(activities.router)
+app.include_router(search.router)
+
 
 # 헬스체크 엔드포인트
 @app.get("/", tags=["헬스체크"])
@@ -65,3 +85,8 @@ async def health_check():
         "service": "seoultechcom-backend",
         "version": "1.0.0"
     }
+
+@app.get("/robots.txt", response_class=PlainTextResponse, tags=["기타"])
+async def robots_txt():
+    """검색 엔진 크롤링 방지 (API 서버)"""
+    return "User-agent: *\nDisallow: /"

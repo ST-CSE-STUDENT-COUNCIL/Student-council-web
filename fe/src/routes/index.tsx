@@ -14,11 +14,9 @@ import {
     ChevronRight,
     ChevronLeft,
     MonitorCheck,
-    Flag,
-    Phone,
     GraduationCap,
     Laptop,
-    Instagram
+    Mail
 } from 'lucide-react'
 import { activityApi } from '../lib/api/activities'
 import { postApi } from '../lib/api/notices'
@@ -26,6 +24,7 @@ import type { ActivityListItem } from '../types/activities'
 import { getActivityStatus } from '../types/activities'
 import type { NoticeListItem } from '../types/posts'
 import { LoadingSpinner } from '../components/common/LoadingSpinner'
+import { SEO } from '../components/common/SEO'
 
 export const Route = createFileRoute('/')({
     component: Index,
@@ -39,9 +38,7 @@ const PORTALS = [
     { name: '학생포탈', icon: GraduationCap, url: 'https://stportal.seoultech.ac.kr/', color: 'text-violet-600', bg: 'bg-violet-50' },
     { name: '도서관', icon: BookOpen, url: 'https://library.seoultech.ac.kr/#/', color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { name: '생활관', icon: Building, url: 'https://domi.seoultech.ac.kr/', color: 'text-orange-600', bg: 'bg-orange-50' },
-    { name: '총학생회', icon: Flag, url: 'https://gwack2.seoultech.ac.kr/', color: 'text-rose-600', bg: 'bg-rose-50' },
-    { name: '교내연락', icon: Phone, url: 'https://www.seoultech.ac.kr/intro/campinfo/interph/', color: 'text-green-600', bg: 'bg-green-50' },
-    { name: '인스타그램', icon: Instagram, url: 'https://www.instagram.com/seoultech_com/', color: 'text-pink-600', bg: 'bg-pink-50' },
+    { name: '웹메일', icon: Mail, url: 'https://zm937.mailplug.com/member/login', color: 'text-rose-600', bg: 'bg-rose-50' },
 ]
 
 const getSubCategoryLabel = (sub: string) => {
@@ -85,6 +82,11 @@ function Index() {
 
     return (
         <div className="pb-20 space-y-12">
+            <SEO
+                title="홈"
+                description="서울과학기술대학교 컴퓨터공학과 학생회 공식 홈페이지입니다."
+                url="/"
+            />
             {/* Bento Grid Hero Layout */}
             <section className="container mx-auto px-4 pt-6 pb-12">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px]">
@@ -133,7 +135,7 @@ function Index() {
                                                                 ? 'bg-indigo-500 shadow-indigo-500/30'
                                                                 : 'bg-slate-500 shadow-slate-500/30'
                                                                 }`}>
-                                                                {getActivityStatus(activity) === 'active' ? '모집중' : '접수예정'}
+                                                                {getActivityStatus(activity) === 'active' ? '진행중' : '접수예정'}
                                                             </span>
 
                                                             <div className="space-y-4">
@@ -203,8 +205,8 @@ function Index() {
                             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
 
                             <div className="relative z-10">
-                                <h3 className="text-3xl font-bold leading-tight mb-2">
-                                    미래를 코딩하는<br />컴퓨터공학과 학생회
+                                <h3 className="text-3xl font-bold py-4 leading-tight mb-2">
+                                    컴퓨터공학과 학생회
                                 </h3>
                                 <p className="text-indigo-100 text-sm leading-relaxed mb-6">
                                     학우 여러분의 목소리에 귀 기울이고,<br />

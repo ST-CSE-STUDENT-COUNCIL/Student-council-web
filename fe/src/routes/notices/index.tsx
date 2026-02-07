@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { PostFilter } from '../../components/notices/PostFilter'
 import { PostList } from '../../components/notices/PostList'
 import type { NoticeListItem } from '../../types/posts'
+import { SEO } from '../../components/common/SEO'
 
 type PostSearch = {
   board_id: number
@@ -119,6 +120,11 @@ function Notices() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <SEO
+        title="공지사항"
+        description="학생회 공지사항 및 소식"
+        url="/notices"
+      />
       {/* Page Title */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">공지사항</h1>

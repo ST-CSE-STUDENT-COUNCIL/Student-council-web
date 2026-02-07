@@ -25,14 +25,19 @@ import { Route as ErrorRouteImport } from './routes/error'
 import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SearchIndexRouteImport } from './routes/search/index'
 import { Route as NoticesIndexRouteImport } from './routes/notices/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ActivitiesIndexRouteImport } from './routes/activities/index'
 import { Route as NoticesNoticeIdRouteImport } from './routes/notices/$noticeId'
+import { Route as AttendanceActivityIdRouteImport } from './routes/attendance/$activityId'
 import { Route as AdminWelfareRouteImport } from './routes/admin/welfare'
 import { Route as AdminSuggestionsRouteImport } from './routes/admin/suggestions'
+import { Route as AdminProfileUpdatesRouteImport } from './routes/admin/profile-updates'
+import { Route as AdminPrivacyOfficerRouteImport } from './routes/admin/privacy-officer'
 import { Route as AdminIntroRouteImport } from './routes/admin/intro'
 import { Route as AdminClubsRouteImport } from './routes/admin/clubs'
+import { Route as AdminAttendanceRouteImport } from './routes/admin/attendance'
 import { Route as AdminActivitiesRouteImport } from './routes/admin/activities'
 import { Route as AdminSurveysIndexRouteImport } from './routes/admin/surveys/index'
 import { Route as AdminNoticesIndexRouteImport } from './routes/admin/notices/index'
@@ -129,6 +134,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SearchIndexRoute = SearchIndexRouteImport.update({
+  id: '/search/',
+  path: '/search/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NoticesIndexRoute = NoticesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -149,6 +159,11 @@ const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
   path: '/$noticeId',
   getParentRoute: () => NoticesRoute,
 } as any)
+const AttendanceActivityIdRoute = AttendanceActivityIdRouteImport.update({
+  id: '/attendance/$activityId',
+  path: '/attendance/$activityId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminWelfareRoute = AdminWelfareRouteImport.update({
   id: '/welfare',
   path: '/welfare',
@@ -159,6 +174,16 @@ const AdminSuggestionsRoute = AdminSuggestionsRouteImport.update({
   path: '/suggestions',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminProfileUpdatesRoute = AdminProfileUpdatesRouteImport.update({
+  id: '/profile-updates',
+  path: '/profile-updates',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPrivacyOfficerRoute = AdminPrivacyOfficerRouteImport.update({
+  id: '/privacy-officer',
+  path: '/privacy-officer',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminIntroRoute = AdminIntroRouteImport.update({
   id: '/intro',
   path: '/intro',
@@ -167,6 +192,11 @@ const AdminIntroRoute = AdminIntroRouteImport.update({
 const AdminClubsRoute = AdminClubsRouteImport.update({
   id: '/clubs',
   path: '/clubs',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAttendanceRoute = AdminAttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminActivitiesRoute = AdminActivitiesRouteImport.update({
@@ -267,14 +297,19 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/welfare': typeof WelfareRoute
   '/admin/activities': typeof AdminActivitiesRoute
+  '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/clubs': typeof AdminClubsRoute
   '/admin/intro': typeof AdminIntroRoute
+  '/admin/privacy-officer': typeof AdminPrivacyOfficerRoute
+  '/admin/profile-updates': typeof AdminProfileUpdatesRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
+  '/attendance/$activityId': typeof AttendanceActivityIdRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
   '/activities': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/notices/': typeof NoticesIndexRoute
+  '/search': typeof SearchIndexRoute
   '/admin/events/create': typeof AdminEventsCreateRoute
   '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
   '/admin/notices/create': typeof AdminNoticesCreateRoute
@@ -306,14 +341,19 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/welfare': typeof WelfareRoute
   '/admin/activities': typeof AdminActivitiesRoute
+  '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/clubs': typeof AdminClubsRoute
   '/admin/intro': typeof AdminIntroRoute
+  '/admin/privacy-officer': typeof AdminPrivacyOfficerRoute
+  '/admin/profile-updates': typeof AdminProfileUpdatesRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
+  '/attendance/$activityId': typeof AttendanceActivityIdRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
   '/activities': typeof ActivitiesIndexRoute
   '/admin': typeof AdminIndexRoute
   '/notices': typeof NoticesIndexRoute
+  '/search': typeof SearchIndexRoute
   '/admin/events/create': typeof AdminEventsCreateRoute
   '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
   '/admin/notices/create': typeof AdminNoticesCreateRoute
@@ -348,14 +388,19 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/welfare': typeof WelfareRoute
   '/admin/activities': typeof AdminActivitiesRoute
+  '/admin/attendance': typeof AdminAttendanceRoute
   '/admin/clubs': typeof AdminClubsRoute
   '/admin/intro': typeof AdminIntroRoute
+  '/admin/privacy-officer': typeof AdminPrivacyOfficerRoute
+  '/admin/profile-updates': typeof AdminProfileUpdatesRoute
   '/admin/suggestions': typeof AdminSuggestionsRoute
   '/admin/welfare': typeof AdminWelfareRoute
+  '/attendance/$activityId': typeof AttendanceActivityIdRoute
   '/notices/$noticeId': typeof NoticesNoticeIdRoute
   '/activities/': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/notices/': typeof NoticesIndexRoute
+  '/search/': typeof SearchIndexRoute
   '/admin/events/create': typeof AdminEventsCreateRoute
   '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
   '/admin/notices/create': typeof AdminNoticesCreateRoute
@@ -391,14 +436,19 @@ export interface FileRouteTypes {
     | '/terms'
     | '/welfare'
     | '/admin/activities'
+    | '/admin/attendance'
     | '/admin/clubs'
     | '/admin/intro'
+    | '/admin/privacy-officer'
+    | '/admin/profile-updates'
     | '/admin/suggestions'
     | '/admin/welfare'
+    | '/attendance/$activityId'
     | '/notices/$noticeId'
     | '/activities'
     | '/admin/'
     | '/notices/'
+    | '/search'
     | '/admin/events/create'
     | '/admin/kakaotalk/create'
     | '/admin/notices/create'
@@ -430,14 +480,19 @@ export interface FileRouteTypes {
     | '/terms'
     | '/welfare'
     | '/admin/activities'
+    | '/admin/attendance'
     | '/admin/clubs'
     | '/admin/intro'
+    | '/admin/privacy-officer'
+    | '/admin/profile-updates'
     | '/admin/suggestions'
     | '/admin/welfare'
+    | '/attendance/$activityId'
     | '/notices/$noticeId'
     | '/activities'
     | '/admin'
     | '/notices'
+    | '/search'
     | '/admin/events/create'
     | '/admin/kakaotalk/create'
     | '/admin/notices/create'
@@ -471,14 +526,19 @@ export interface FileRouteTypes {
     | '/terms'
     | '/welfare'
     | '/admin/activities'
+    | '/admin/attendance'
     | '/admin/clubs'
     | '/admin/intro'
+    | '/admin/privacy-officer'
+    | '/admin/profile-updates'
     | '/admin/suggestions'
     | '/admin/welfare'
+    | '/attendance/$activityId'
     | '/notices/$noticeId'
     | '/activities/'
     | '/admin/'
     | '/notices/'
+    | '/search/'
     | '/admin/events/create'
     | '/admin/kakaotalk/create'
     | '/admin/notices/create'
@@ -512,7 +572,9 @@ export interface RootRouteChildren {
   SuggestionRoute: typeof SuggestionRoute
   TermsRoute: typeof TermsRoute
   WelfareRoute: typeof WelfareRoute
+  AttendanceActivityIdRoute: typeof AttendanceActivityIdRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
+  SearchIndexRoute: typeof SearchIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -629,6 +691,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/search/': {
+      id: '/search/'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notices/': {
       id: '/notices/'
       path: '/'
@@ -657,6 +726,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NoticesNoticeIdRouteImport
       parentRoute: typeof NoticesRoute
     }
+    '/attendance/$activityId': {
+      id: '/attendance/$activityId'
+      path: '/attendance/$activityId'
+      fullPath: '/attendance/$activityId'
+      preLoaderRoute: typeof AttendanceActivityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/welfare': {
       id: '/admin/welfare'
       path: '/welfare'
@@ -671,6 +747,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSuggestionsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/profile-updates': {
+      id: '/admin/profile-updates'
+      path: '/profile-updates'
+      fullPath: '/admin/profile-updates'
+      preLoaderRoute: typeof AdminProfileUpdatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/privacy-officer': {
+      id: '/admin/privacy-officer'
+      path: '/privacy-officer'
+      fullPath: '/admin/privacy-officer'
+      preLoaderRoute: typeof AdminPrivacyOfficerRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/intro': {
       id: '/admin/intro'
       path: '/intro'
@@ -683,6 +773,13 @@ declare module '@tanstack/react-router' {
       path: '/clubs'
       fullPath: '/admin/clubs'
       preLoaderRoute: typeof AdminClubsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/attendance': {
+      id: '/admin/attendance'
+      path: '/attendance'
+      fullPath: '/admin/attendance'
+      preLoaderRoute: typeof AdminAttendanceRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/activities': {
@@ -795,8 +892,11 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminActivitiesRoute: typeof AdminActivitiesRoute
+  AdminAttendanceRoute: typeof AdminAttendanceRoute
   AdminClubsRoute: typeof AdminClubsRoute
   AdminIntroRoute: typeof AdminIntroRoute
+  AdminPrivacyOfficerRoute: typeof AdminPrivacyOfficerRoute
+  AdminProfileUpdatesRoute: typeof AdminProfileUpdatesRoute
   AdminSuggestionsRoute: typeof AdminSuggestionsRoute
   AdminWelfareRoute: typeof AdminWelfareRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -818,8 +918,11 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminActivitiesRoute: AdminActivitiesRoute,
+  AdminAttendanceRoute: AdminAttendanceRoute,
   AdminClubsRoute: AdminClubsRoute,
   AdminIntroRoute: AdminIntroRoute,
+  AdminPrivacyOfficerRoute: AdminPrivacyOfficerRoute,
+  AdminProfileUpdatesRoute: AdminProfileUpdatesRoute,
   AdminSuggestionsRoute: AdminSuggestionsRoute,
   AdminWelfareRoute: AdminWelfareRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -871,7 +974,9 @@ const rootRouteChildren: RootRouteChildren = {
   SuggestionRoute: SuggestionRoute,
   TermsRoute: TermsRoute,
   WelfareRoute: WelfareRoute,
+  AttendanceActivityIdRoute: AttendanceActivityIdRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
+  SearchIndexRoute: SearchIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

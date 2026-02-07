@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useSearch } from '@tanstack/react-router'
 import { useEffect, useState, useMemo } from 'react'
 import { ActivityFilter, type SortOption, type StatusOption, type TypeOption } from '../../components/activities/ActivityFilter'
 import { ActivityList } from '../../components/activities/ActivityList'
@@ -6,12 +6,15 @@ import { ActivityCard } from '../../components/activities/ActivityCard'
 import { activityApi } from '../../lib/api/activities'
 import type { ActivityListItem, Activity } from '../../types/activities'
 import { getActivityStatus } from '../../types/activities'
+import { SEO } from '../../components/common/SEO'
 
 export const Route = createFileRoute('/activities/')({
     component: ActivitiesPage,
 })
 
 function ActivitiesPage() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { id: queryId } = useSearch({ strict: false }) as any
     const [activities, setActivities] = useState<ActivityListItem[]>([])
     const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
     const [loading, setLoading] = useState(true)
@@ -37,7 +40,9 @@ function ActivitiesPage() {
             setActivities(response.activities)
 
             if (response.activities.length > 0) {
-                const detail = await activityApi.getById(response.activities[0].id)
+                // URL에 id가 있고 목록에 존재하면 그 활동 선택, 아니면 첫 번째 활동 선택
+                const targetId = queryId || response.activities[0].id
+                const detail = await activityApi.getById(targetId)
                 setSelectedActivity(detail)
             }
         } catch (error) {
@@ -46,6 +51,13 @@ function ActivitiesPage() {
             setLoading(false)
         }
     }
+
+    // URL id가 변경되면 해당 활동 선택 (단, 초기 로딩 이후)
+    useEffect(() => {
+        if (queryId && !loading && activities.length > 0) {
+            activityApi.getById(queryId).then(setSelectedActivity).catch(console.error)
+        }
+    }, [queryId])
 
     const selectActivity = async (activity: ActivityListItem) => {
         try {
@@ -107,6 +119,11 @@ function ActivitiesPage() {
 
     return (
         <div className="container mx-auto px-4 py-8">
+            <SEO
+                title="사업 신청"
+                description="학생회 행사 및 사업 신청"
+                url="/activities"
+            />
             {loading ? (
                 <div className="flex justify-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -114,7 +131,7 @@ function ActivitiesPage() {
             ) : (
                 <div className="flex flex-col lg:flex-row gap-8 mt-6">
                     {/* Left Column: Large Selected Card */}
-                    <div className="w-full lg:w-2/3">
+                    <div className="w-full lg:w-2/3 lg:shrink-0 lg:grow-0">
                         <div className="sticky top-8">
                             {selectedActivity ? (
                                 <div className="transform transition-all duration-500 hover:scale-[1.01] animate-fade-in">
@@ -129,7 +146,7 @@ function ActivitiesPage() {
                     </div>
 
                     {/* Right Column: Filter & List */}
-                    <div className="w-full lg:w-1/3 flex flex-col sticky top-8 max-h-[calc(100vh-4rem)]">
+                    <div className="w-full lg:w-1/3 lg:shrink-0 lg:grow-0 flex flex-col sticky top-8 max-h-[calc(100vh-4rem)]">
                         <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-xl flex flex-col flex-1 min-h-0 border border-gray-100 dark:border-slate-800 shadow-sm">
                             <div className="mb-4 shrink-0">
                                 <ActivityFilter

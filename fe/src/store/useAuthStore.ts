@@ -8,26 +8,44 @@ type AuthState = {
     isAuthenticated: boolean
     accessToken: string | null
     rememberMe: boolean
+    isInitialized: boolean  // 초기화 완료 여부
     login: (user: User, accessToken: string, rememberMe?: boolean) => void
     setUser: (user: User | null) => void
+    setAccessToken: (token: string) => void
     logout: () => void
+    setInitialized: (value: boolean) => void
 }
 
-// rememberMe 상태에 따라 storage 선택
-const getStorage = () => {
-    // 먼저 localStorage에서 rememberMe 값 확인
-    try {
-        const stored = localStorage.getItem('auth-storage')
-        if (stored) {
-            const parsed = JSON.parse(stored)
-            if (parsed.state?.rememberMe === false) {
-                return sessionStorage
+// 커스텀 스토리지 구현: rememberMe 상태에 따라 저장소 결정
+const authStorage = {
+    getItem: (name: string) => {
+        // localStorage를 먼저 확인하고, 없으면 sessionStorage 확인
+        const local = localStorage.getItem(name)
+        if (local) return local
+        return sessionStorage.getItem(name)
+    },
+    setItem: (name: string, value: string) => {
+        try {
+            const parsed = JSON.parse(value)
+            const rememberMe = parsed.state?.rememberMe
+
+            if (rememberMe) {
+                localStorage.setItem(name, value)
+                sessionStorage.removeItem(name)
+            } else {
+                sessionStorage.setItem(name, value)
+                localStorage.removeItem(name)
             }
+        } catch (e) {
+            console.error('Failed to save auth state:', e)
+            // 에러 발생 시 localStorage에 저장 (fallback)
+            localStorage.setItem(name, value)
         }
-    } catch {
-        // ignore
-    }
-    return localStorage
+    },
+    removeItem: (name: string) => {
+        localStorage.removeItem(name)
+        sessionStorage.removeItem(name)
+    },
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -37,26 +55,30 @@ export const useAuthStore = create<AuthState>()(
             accessToken: null,
             isAuthenticated: false,
             rememberMe: true,
+            isInitialized: false,
             login: (user, accessToken, rememberMe = true) => {
-                // rememberMe가 false면 sessionStorage로 전환
-                if (!rememberMe) {
-                    // localStorage에서 제거하고 sessionStorage에 저장
-                    localStorage.removeItem('auth-storage')
-                }
-                set({ user, accessToken, isAuthenticated: true, rememberMe })
+                set({ user, accessToken, isAuthenticated: true, rememberMe, isInitialized: true })
             },
             setUser: (user) => set({ user }),
+            setAccessToken: (accessToken) => set({ accessToken }),
             logout: () => {
-                // 로그아웃 시 모든 storage 클리어
-                localStorage.removeItem('auth-storage')
-                sessionStorage.removeItem('auth-storage')
-                set({ user: null, accessToken: null, isAuthenticated: false, rememberMe: true })
+                set({ user: null, accessToken: null, isAuthenticated: false, rememberMe: true, isInitialized: true })
             },
+            setInitialized: (value) => set({ isInitialized: value }),
         }),
         {
             name: 'auth-storage',
-            storage: createJSONStorage(() => getStorage()),
+            storage: createJSONStorage(() => authStorage),
+            partialize: (state) => ({
+                user: state.user,
+                accessToken: state.accessToken,
+                isAuthenticated: state.isAuthenticated,
+                rememberMe: state.rememberMe,
+                // isInitialized는 저장하지 않음
+            }),
+            onRehydrateStorage: () => (state) => {
+                state?.setInitialized(true)
+            },
         },
     ),
 )
-

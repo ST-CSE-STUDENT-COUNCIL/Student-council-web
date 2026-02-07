@@ -27,6 +27,38 @@ import os
 router = APIRouter(tags=["학생회 소개"])
 
 
+# ============================================================================
+# 개인정보 총책임자 정보 (공개)
+# ============================================================================
+
+@router.get(
+    "/privacy-officer",
+    summary="개인정보 총책임자 정보 조회 (공개)",
+    description="개인정보 총책임자(학생회장) 정보를 조회합니다. 로그인 불필요."
+)
+async def get_privacy_officer_info_public():
+    """개인정보 총책임자 정보 조회 (공개)"""
+    try:
+        result = supabase.table('privacy_officer_info').select('*').eq('id', 1).single().execute()
+        
+        if not result.data:
+            return {
+                "name": None,
+                "phone": None,
+                "email": None,
+                "office_address": None,
+                "description": None
+            }
+        
+        return result.data
+    except Exception as e:
+        print(f"[API ERROR] get_privacy_officer_info_public: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="조회 실패"
+        )
+
+
 @router.get(
     "/introductions/images",
     response_model=IntroductionImageListResponse,
@@ -60,7 +92,7 @@ async def get_introduction_images(
         print(f"[API ERROR] get_introduction_images: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 목록 조회 실패: {str(e)}"
+            detail="이미지 목록 조회 실패"
         )
 
 
@@ -136,7 +168,7 @@ async def create_introduction_image(
         print(f"[API ERROR] create_introduction_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 업로드 실패: {str(e)}"
+            detail="이미지 업로드 실패"
         )
 
 
@@ -198,7 +230,7 @@ async def update_introduction_image(
         print(f"[API ERROR] update_introduction_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 수정 실패: {str(e)}"
+            detail="이미지 수정 실패"
         )
 
 
@@ -248,5 +280,5 @@ async def delete_introduction_image(
         print(f"[API ERROR] delete_introduction_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"이미지 삭제 실패: {str(e)}"
+            detail="이미지 삭제 실패"
         )

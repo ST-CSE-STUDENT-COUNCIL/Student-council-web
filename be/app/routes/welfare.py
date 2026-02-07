@@ -2,16 +2,23 @@
 복지사업 관련 API 라우트
 - 사물함: 배치도 + 구글폼 URL
 - 물품대여: 물품 목록 + 구글 스프레드시트 재고 조회
+- 프린트: 이미지 + 구글폼 URL
 """
 from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from typing import List, Optional
 from app.schemas.welfare import (
     LockerInfo,
     LockerInfoUpdate,
+    RentalConfigUpdate,
     RentalItem,
     RentalItemCreate,
-    RentalItemUpdate
+    RentalItemUpdate,
+    PrintWelfareInfo,
+    PrintWelfareInfoUpdate,
+    GuidebookInfoUpdate
 )
+from datetime import datetime, timezone
+import re
 from app.database import get_supabase, get_supabase_admin
 from app.utils.auth import get_current_user, require_admin
 from app.utils.sheets import get_sheet_value
@@ -27,6 +34,161 @@ import uuid
 import os
 
 router = APIRouter(tags=["복지사업"])
+
+
+# ============================================================================
+# 프린트 복지사업 (Print Welfare)
+# ============================================================================
+
+@router.get("/welfare/print", response_model=PrintWelfareInfo, summary="프린트 복지사업 정보 조회 (공개)")
+async def get_print_welfare_info():
+    """
+    프린트 복지사업 이미지 URL과 구글폼 URL을 조회합니다.
+    
+    - **공개 API**: 인증 불필요
+    """
+    supabase = get_supabase()
+    
+    result = supabase.table('print_welfare_info').select('*').eq('id', 1).limit(1).execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=404, detail="프린트 복지 정보가 없습니다")
+    
+    return result.data[0]
+
+
+@router.post("/admin/welfare/print/image/presigned-url", summary="프린트 복지 이미지 업로드용 Presigned URL 발급 (관리자)")
+async def get_print_welfare_presigned_url(
+    filename: str,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    프린트 복지사업 이미지 업로드를 위한 Presigned URL을 발급합니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    - **프로세스**:
+      1. 이 API로 Presigned URL 받기
+      2. 프론트에서 해당 URL로 직접 PUT 요청으로 이미지 업로드
+      3. /admin/welfare/print/image/complete API로 업로드 완료 알림
+    """
+    file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"print-welfare/{unique_filename}"
+    
+    presigned_url = generate_presigned_url(
+        bucket_name="welfare-images",
+        file_key=file_key,
+        expires_in=300  # 5분 유효
+    )
+    
+    base_url = get_bucket_url("welfare-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
+
+
+@router.post("/admin/welfare/print/image/complete", summary="프린트 복지 이미지 업로드 완료 처리 (관리자)")
+async def complete_print_welfare_image_upload(
+    public_url: str,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    프린트 복지사업 이미지 업로드 완료 후 DB에 저장합니다.
+    기존 이미지가 있으면 R2에서 삭제합니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    """
+    admin_supabase = get_supabase_admin()
+    
+    try:
+        # 기존 레코드 확인
+        existing = admin_supabase.table('print_welfare_info').select('*').eq('id', 1).execute()
+        
+        # 기존 이미지가 있으면 R2에서 삭제
+        if existing.data and existing.data[0].get('image_url'):
+            old_image_url = existing.data[0]['image_url']
+            if old_image_url and old_image_url != public_url:
+                await delete_file_from_r2(old_image_url, "welfare-images")
+        
+        # DB 업데이트
+        result = admin_supabase.table('print_welfare_info').update({
+            'image_url': public_url,
+            'updated_at': datetime.now(timezone.utc).isoformat()
+        }).eq('id', 1).execute()
+        
+        return {"image_url": public_url}
+    except Exception as e:
+        print(f"[API ERROR] complete_print_welfare_image_upload: {str(e)}")
+        raise HTTPException(status_code=500, detail="이미지 정보 저장 실패")
+
+
+@router.put("/admin/welfare/print", response_model=PrintWelfareInfo, summary="프린트 복지 정보 수정 (관리자)")
+async def update_print_welfare_info(
+    body: PrintWelfareInfoUpdate,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    프린트 복지사업 정보(설명, 구글폼 URL)를 수정합니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    - **이미지 업로드**: 별도 /admin/welfare/print/image/complete API 사용
+    """
+    admin_supabase = get_supabase_admin()
+    
+    update_data = body.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
+    
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
+    
+    result = admin_supabase.table('print_welfare_info').update(update_data).eq('id', 1).execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=500, detail="프린트 복지 정보 저장 실패")
+    
+    return result.data[0]
+
+
+# ============================================================================
+# 복지사업 이미지 (Generic Welfare Images) - 범용
+# ============================================================================
+
+@router.post("/admin/welfare/image/presigned-url", summary="복지사업 이미지 업로드용 Presigned URL 발급 (관리자)")
+async def get_welfare_image_presigned_url(
+    filename: str,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    복지사업 관련 이미지 업로드를 위한 Presigned URL을 발급합니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    - **프로세스**:
+      1. 이 API로 Presigned URL 받기
+      2. 프론트에서 해당 URL로 직접 PUT 요청으로 이미지 업로드
+      3. public_url을 프론트에서 저장/사용
+    """
+    file_ext = validate_file_extension(filename, BROAD_ALLOWED_EXTENSIONS)
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    file_key = f"welfare-general/{unique_filename}"
+    
+    presigned_url = generate_presigned_url(
+        bucket_name="welfare-images",
+        file_key=file_key,
+        expires_in=300  # 5분 유효
+    )
+    
+    base_url = get_bucket_url("welfare-images")
+    public_url = f"{base_url}/{file_key}"
+    
+    return {
+        "presigned_url": presigned_url,
+        "public_url": public_url,
+        "file_key": file_key
+    }
 
 
 # ============================================================================
@@ -130,7 +292,7 @@ async def complete_locker_image_upload(
         return {"image_url": public_url}
     except Exception as e:
         print(f"[API ERROR] complete_locker_image_upload: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"이미지 정보 저장 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail="이미지 정보 저장 실패")
 
 
 @router.post("/admin/welfare/locker_image", summary="[Deprecated] 사물함 배치도 이미지 업로드 (관리자)")
@@ -184,7 +346,7 @@ async def upload_locker_image(
         return {"image_url": image_url}
     except Exception as e:
         print(f"[API ERROR] upload_locker_image: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"이미지 업로드 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail="이미지 업로드 실패")
 
 
 @router.put("/admin/welfare/locker_periods", response_model=LockerInfo, summary="사물함 정보 수정/생성 (관리자)")
@@ -256,6 +418,57 @@ async def update_locker_info(
 # 물품대여 (Rental Items)
 # ============================================================================
 
+@router.get("/welfare/rental_config", summary="대여사업 설정 조회 (공개)")
+async def get_rental_config():
+    """
+    대여사업 설정(시트 URL, 신청 폼 URL)을 조회합니다.
+    
+    - **공개 API**: 인증 불필요
+    """
+    supabase = get_supabase()
+    result = supabase.table('rental_config').select('*').eq('id', 1).single().execute()
+    
+    if not result.data:
+        return {"id": 1, "sheet_url": None, "application_form_url": None, "updated_at": None}
+    
+    return result.data
+
+
+@router.put("/admin/welfare/rental_config", summary="대여사업 설정 수정 (관리자)")
+async def update_rental_config(
+    body: RentalConfigUpdate,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    대여사업 설정(시트 URL, 신청 폼 URL)을 수정합니다.
+    한 번 설정하면 전체 물품에 공통 적용됩니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    """
+    admin_supabase = get_supabase_admin()
+    
+    update_data = body.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
+    
+    # sheet_url에서 spreadsheet_id 자동 추출
+    if 'sheet_url' in update_data and update_data['sheet_url']:
+        match = re.search(r'/spreadsheets/d/([a-zA-Z0-9_-]+)', update_data['sheet_url'])
+        if match:
+            update_data['spreadsheet_id'] = match.group(1)
+        else:
+            update_data['spreadsheet_id'] = None
+    
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
+    
+    result = admin_supabase.table('rental_config').update(update_data).eq('id', 1).execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=500, detail="설정 저장 실패")
+    
+    return result.data[0]
+
+
 @router.get("/welfare/welfare_rentals", response_model=List[RentalItem], summary="대여 물품 목록 조회 (공개)")
 async def get_rental_items():
     """
@@ -263,24 +476,61 @@ async def get_rental_items():
     
     - **공개 API**: 인증 불필요
     - **현재 재고**: available_quantity는 구글 스프레드시트에서 실시간 조회
+    - **시트 URL**: rental_config에서 공통 시트 URL을 가져와 사용
     """
     supabase = get_supabase()
+    
+    # rental_config에서 공통 시트 URL 가져오기
+    config_result = supabase.table('rental_config').select('sheet_url, spreadsheet_id').eq('id', 1).single().execute()
+    spreadsheet_id = None
+    if config_result.data:
+        spreadsheet_id = config_result.data.get('spreadsheet_id')
+        if not spreadsheet_id and config_result.data.get('sheet_url'):
+            match = re.search(r'/spreadsheets/d/([a-zA-Z0-9_-]+)', config_result.data['sheet_url'])
+            if match:
+                spreadsheet_id = match.group(1)
     
     # rental_items 테이블에서 활성화된 물품만 조회
     result = supabase.table('rental_items').select('*').eq('is_active', True).order('category, item_name').execute()
     
     # 각 물품의 재고를 구글 스프레드시트에서 조회
+    from cachetools import TTLCache
+    
+    # 캐시 초기화 (최대 100개 항목, 5분 유효)
+    # 전역변수로 선언하여 요청 간 공유
+    if not hasattr(get_rental_items, "cache"):
+        get_rental_items.cache = TTLCache(maxsize=100, ttl=300)
+    
     items = []
+    
+    # 배치 처리를 위한 시트별 그룹화가 이상적이지만,
+    # 일단 캐싱으로 부하를 대폭 줄임
+    
     for item in result.data:
         available_quantity = None
         
-        # 스프레드시트 ID가 있으면 재고 조회 시도
-        if item.get('spreadsheet_id'):
-            sheet_name = item.get('quantity_sheet_name', 'Sheet1')
-            cell_range = item.get('quantity_cell_range', 'B2')
+        if spreadsheet_id:
+            # 빈 문자열이면 기본값 적용: 시트 이름은 물품명, 셀은 B2
+            sheet_name = item.get('quantity_sheet_name') or item.get('item_name', 'Sheet1')
+            cell_range = item.get('quantity_cell_range') or 'B2'
+            # 시트 이름에 특수문자(괄호, +, 공백 등)가 포함되면 작은따옴표로 감싸야 함
+            if not sheet_name.startswith("'"):
+                sheet_name = f"'{sheet_name}'"
             range_notation = f"{sheet_name}!{cell_range}"
+            cache_key = f"{spreadsheet_id}:{range_notation}"
             
-            available_quantity = get_sheet_value(item['spreadsheet_id'], range_notation)
+            # 캐시 확인
+            if cache_key in get_rental_items.cache:
+                available_quantity = get_rental_items.cache[cache_key]
+            else:
+                try:
+                    available_quantity = get_sheet_value(spreadsheet_id, range_notation)
+                    # 성공 시 캐시에 저장
+                    get_rental_items.cache[cache_key] = available_quantity
+                except Exception as e:
+                    print(f"재고 조회 실패 ({item['item_name']}): {e}")
+                    # 실패 시 캐시된 값이 있다면 그것이라도 사용 (없으면 None)
+                    pass
         
         items.append({
             **item,
@@ -367,7 +617,7 @@ async def update_rental_item(
         raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
     
     # updated_at 자동 갱신
-    update_data['updated_at'] = 'NOW()'
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
     
     # rental_items 업데이트
     result = admin_supabase.table('rental_items').update(update_data).eq('id', item_id).execute()
@@ -400,3 +650,70 @@ async def delete_rental_item(
         raise HTTPException(status_code=404, detail="물품을 찾을 수 없습니다")
     
     return None
+
+
+# ============================================================================
+# 신입생 가이드북 (Freshman Guidebook)
+# ============================================================================
+
+@router.get("/welfare/guidebook", summary="신입생 가이드북 정보 조회 (공개)")
+async def get_guidebook_info():
+    """
+    신입생 가이드북 노션 URL을 조회합니다.
+    
+    - **공개 API**: 인증 불필요
+    - **프론트**: 반환된 notion_url을 iframe으로 표시
+    """
+    supabase = get_supabase()
+    result = supabase.table('guidebook_info').select('*').eq('id', 1).single().execute()
+    
+    if not result.data or not result.data.get('notion_url'):
+        return {
+            "notion_url": None,
+            "message": "가이드북이 등록되지 않았습니다"
+        }
+    
+    data = result.data
+    
+    return {
+        "notion_url": data.get('notion_url'),
+        "title": data.get('title'),
+        "description": data.get('description'),
+        "updated_at": data.get('updated_at')
+    }
+
+
+@router.put("/admin/welfare/guidebook", summary="신입생 가이드북 정보 수정 (관리자)")
+async def update_guidebook_info(
+    body: GuidebookInfoUpdate,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    신입생 가이드북 정보를 수정합니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    """
+    from datetime import datetime, timezone, timedelta
+    
+    admin_supabase = get_supabase_admin()
+    
+    update_data = {}
+    if body.notion_url is not None:
+        update_data['notion_url'] = body.notion_url
+    if body.title is not None:
+        update_data['title'] = body.title
+    if body.description is not None:
+        update_data['description'] = body.description
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
+    
+    kst = timezone(timedelta(hours=9))
+    update_data['updated_at'] = datetime.now(kst).isoformat()
+    
+    result = admin_supabase.table('guidebook_info').update(update_data).eq('id', 1).execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=500, detail="수정 실패")
+    
+    return result.data[0]

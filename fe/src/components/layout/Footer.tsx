@@ -1,7 +1,22 @@
 import { Link } from '@tanstack/react-router'
 import { Instagram, Mail } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { privacyOfficerApi } from '../../lib/api/privacyOfficer'
 
 export default function Footer() {
+    // 개인정보 총책임자 정보 조회
+    const { data: officerInfo } = useQuery({
+        queryKey: ['privacyOfficerPublic'],
+        queryFn: privacyOfficerApi.getPublic,
+        staleTime: 1000 * 60 * 5, // 5분간 캐시
+        gcTime: 1000 * 60 * 10, // 10분간 메모리에 유지
+    })
+
+    // 주소: API에서 가져오거나 기본값 사용
+    const officeAddress = officerInfo?.office_address || '서울특별시 노원구 공릉로 232'
+    const officerPhone = officerInfo?.phone || '010-0000-0000'
+    const officerName = officerInfo?.name || '정학생회장'
+
     return (
         <footer className="border-t border-slate-800 bg-slate-900 text-slate-300 mt-auto">
             <div className="container mx-auto px-4 py-12">
@@ -16,14 +31,14 @@ export default function Footer() {
                             <a href="https://www.instagram.com/seoultech_com/" className="text-slate-400 hover:text-white transition-colors">
                                 <Instagram className="w-5 h-5" />
                             </a>
-                            <a href="mailto:seoultech.cs.42.compass@gmail.com" className="text-slate-400 hover:text-white transition-colors">
+                            <a href={`mailto:${officerInfo?.email}`} className="text-slate-400 hover:text-white transition-colors">
                                 <Mail className="w-5 h-5" />
                             </a>
                         </div>
                     </div>
 
                     {/* Quick Links */}
-                    <div>
+                    <div className="hidden md:block">
                         <h4 className="text-white font-semibold mb-4">바로가기</h4>
                         <ul className="space-y-2 text-sm">
                             <li><a href="/intro" className="hover:text-blue-400 transition-colors">학생회 소개</a></li>
@@ -36,7 +51,7 @@ export default function Footer() {
                     </div>
 
                     {/* Resources */}
-                    <div>
+                    <div className="hidden md:block">
                         <h4 className="text-white font-semibold mb-4">관련 사이트</h4>
                         <ul className="space-y-2 text-sm">
                             <li><a href="https://www.seoultech.ac.kr/index.jsp" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">서울과학기술대학교 홈페이지</a></li>
@@ -50,9 +65,16 @@ export default function Footer() {
                     <div>
                         <h4 className="text-white font-semibold mb-4">Contact</h4>
                         <div className="space-y-2 text-sm text-slate-400">
-                            <p>서울특별시 노원구 공릉로 232</p>
-                            <p>미래관 305-4호 학생회실</p>
-                            <p>Tel 정학생회장: 010-8338-1251</p>
+                            <p>{officeAddress.includes('미래관') ? officeAddress : `${officeAddress}`}</p>
+                            {!officeAddress.includes('미래관') && <p>미래관 305-4호 학생회실</p>}
+                            <p>Tel {officerName}: {officerPhone}</p>
+                            {officerInfo?.email && (
+                                <p>
+                                    <a href={`mailto:${officerInfo.email}`} className="hover:text-blue-400 transition-colors">
+                                        {officerInfo.email}
+                                    </a>
+                                </p>
+                            )}
                             <p className="pt-2 text-xs text-slate-500">
                                 © 2025 Computer Engineering Student Council.<br />All rights reserved.
                             </p>
@@ -74,3 +96,4 @@ export default function Footer() {
         </footer>
     )
 }
+

@@ -199,7 +199,7 @@ function SurveyActivityDetailPage() {
 
     const columns = useMemo(() => {
         if (!activityDetail) return []
-        const isAnonymous = ['survey', 'demand_survey'].includes(activityDetail.type)
+        const isAnonymous = ['survey', 'demand_survey'].includes(activityDetail.type) && (activityDetail.config?.is_anonymous ?? true)
 
         const cols: ColumnDef<ActivityRegistrationResponse, any>[] = [
             columnHelper.display({

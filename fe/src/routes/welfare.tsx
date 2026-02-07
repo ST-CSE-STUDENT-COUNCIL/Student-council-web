@@ -1,14 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 import { CategoryFilter, LockerActions, RentalCard } from '../components/welfare'
-import { welfareApi, type WelfareRental, type LockerInfo, type PrinterInfo } from '../lib/api/welfare'
+import { SEO } from '../components/common/SEO'
+import { welfareApi, type WelfareRental, type LockerInfo, type PrinterInfo, type GuidebookInfo } from '../lib/api/welfare'
 
 export const Route = createFileRoute('/welfare')({
   component: Welfare,
 })
 
 function Welfare() {
-  const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함' | '프린터'>('대여사업')
+  const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함' | '프린터' | '신입생 가이드북'>('대여사업')
   const [rentalItems, setRentalItems] = React.useState<WelfareRental[]>([])
   const [rentalCategoryFilter, setRentalCategoryFilter] = React.useState<string>('전체')
   const [rentalFormUrl, setRentalFormUrl] = React.useState('')
@@ -20,6 +21,8 @@ function Welfare() {
   const [printerLoading, setPrinterLoading] = React.useState(true)
   const [printerError, setPrinterError] = React.useState<string | null>(null)
   const [printerInfo, setPrinterInfo] = React.useState<PrinterInfo | null>(null)
+  const [guidebookLoading, setGuidebookLoading] = React.useState(true)
+  const [guidebookInfo, setGuidebookInfo] = React.useState<GuidebookInfo | null>(null)
   const today = React.useMemo(() => new Date().toISOString().slice(0, 10), [])
   const disabledClass = 'border-gray-200 opacity-60 cursor-not-allowed hover:-translate-y-0 hover:shadow-none'
 
@@ -57,6 +60,7 @@ function Welfare() {
       setLoading(true)
       setLockerLoading(true)
       setPrinterLoading(true)
+      setGuidebookLoading(true)
       setError(null)
       setLockerError(null)
       setPrinterError(null)
@@ -65,6 +69,11 @@ function Welfare() {
         welfareApi.getLockerInfo(),
         welfareApi.getPrinterInfo(),
         welfareApi.getRentalConfig()
+      const [rentalsResult, lockerResult, printerResult, guidebookResult] = await Promise.allSettled([
+        welfareApi.getRentals(),
+        welfareApi.getLockerInfo(),
+        welfareApi.getPrinterInfo(),
+        welfareApi.getGuidebookInfo()
       ])
 
       if (rentalsResult.status === 'fulfilled') {
@@ -97,6 +106,10 @@ function Welfare() {
           ? rentalConfigResult.reason
           : rentalConfigResult.value)
         setRentalFormUrl('')
+      if (guidebookResult.status === 'fulfilled') {
+        setGuidebookInfo(guidebookResult.value)
+      } else {
+        console.error('가이드북 정보 로드 실패:', guidebookResult.reason)
       }
     } catch (err) {
       console.error('복지사업 데이터 로드 실패:', err)
@@ -106,6 +119,7 @@ function Welfare() {
       setLoading(false)
       setLockerLoading(false)
       setPrinterLoading(false)
+      setGuidebookLoading(false)
     }
   }, [today])
 
@@ -185,11 +199,16 @@ function Welfare() {
   }, [groupedRentalSections, rentalCategoryFilter])
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="w-full px-4 sm:px-6 lg:px-[10%] py-8 sm:py-12">
+      <SEO
+        title="복지사업"
+        description="학생회의 복지사업(물품 대여, 사물함, 프린터, 가이드북)을 확인하세요."
+        url="/welfare"
+      />
       {/* Page Title */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">복지사업</h1>
-        <p className="text-gray-500 dark:text-gray-400">학생회의 복지사업을 확인하세요.</p>
+      <div className="text-center mb-8 sm:mb-12">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-2 sm:mb-4">복지사업</h1>
+        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">학생회의 복지사업을 확인하세요.</p>
       </div>
 
       <CategoryFilter selectedCategory={selectedCategory} onSelect={setSelectedCategory} />
@@ -199,7 +218,12 @@ function Welfare() {
         {selectedCategory === '대여사업' ? (
           <div>
             <div className="flex items-start justify-between gap-4 mb-6 flex-col sm:flex-row sm:items-center">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">대여사업</h2>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">대여사업</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  * 재고 정보는 최대 5분 간격으로 갱신됩니다.
+                </p>
+              </div>
               <div className="flex items-center gap-2">
                 <label htmlFor="rental-category-filter" className="text-sm text-gray-500 dark:text-gray-400">
                   카테고리
@@ -300,7 +324,7 @@ function Welfare() {
               )}
             </div>
           </div>
-        ) : (
+        ) : selectedCategory === '프린터' ? (
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">프린터</h2>
@@ -337,9 +361,27 @@ function Welfare() {
               )}
             </div>
           </div>
-        )}
-      </div>
+        ) : (
+          <div className="w-full h-[600px] sm:h-[800px] bg-white dark:bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center">
+            {
+              guidebookLoading ? (
+                <p className="text-gray-500 dark:text-gray-400" > 가이드북 정보를 불러오는 중입니다...</p>
+              ) : guidebookInfo?.notion_url ? (
+                <iframe
+                  src={guidebookInfo.notion_url}
+                  width="100%"
+                  height="100%"
+                  className="border-0 w-full h-full"
+                  title={guidebookInfo.title || "신입생 가이드북"}
+                />
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">등록된 가이드북 정보가 없습니다.</p>
+              )}
+          </div>
+        )
+        }
+      </div >
 
-    </div>
+    </div >
   )
 }

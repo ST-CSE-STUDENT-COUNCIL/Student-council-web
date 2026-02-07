@@ -3,7 +3,7 @@
 """
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import math
 from app.schemas.suggestions import (
     SuggestionCreateRequest,
@@ -49,7 +49,8 @@ def _get_author_name(author_id: str) -> str:
     description="건의함을 작성합니다. 작성자는 기본 익명 처리되며, 관리자만 작성자를 확인할 수 있습니다.",
     responses={
         401: {"model": ErrorResponse, "description": "인증 필요"},
-        403: {"model": ErrorResponse, "description": "승인 대기 중"}
+        403: {"model": ErrorResponse, "description": "승인 대기 중"},
+        429: {"model": ErrorResponse, "description": "요청이 너무 빠릅니다"}
     }
 )
 async def create_suggestion(
@@ -58,6 +59,33 @@ async def create_suggestion(
     current_user: dict = Depends(require_verified_user)
 ):
     """건의함 작성 (승인된 사용자만 가능)"""
+    # [Rate Limit] DB 기반 중복/연타 방지 (최근 5초 내 작성 금지)
+    try:
+        # UTC 기준 5초 전
+        limit_time = (datetime.now(timezone.utc) - timedelta(seconds=5)).isoformat()
+        
+        # 최근 5초 내 작성된 글이 있는지 확인
+        recent_check = (
+            supabase.table("suggestions")
+            .select("id", count="exact")  # type: ignore
+            .eq("author_id", current_user["id"])
+            .gte("created_at", limit_time)
+            .execute()
+        )
+            
+        if recent_check.count and recent_check.count > 0:
+             raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="잠시 후 다시 시도해주세요. (중복 제출 방지)"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Rate limit check failed: {e}")
+        # DB 오류시에는 진행 허용 (Fail Open) 또는 차단?
+        # 안전하게 진행 허용
+        pass
+
     try:
         # 1. Turnstile 검증
         if body.turnstile_token:
@@ -98,9 +126,10 @@ async def create_suggestion(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] 건의함 작성 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"건의함 작성 실패: {str(e)}"
+            detail="건의함 작성 실패"
         )
 
 
@@ -141,12 +170,12 @@ async def get_suggestions(
             )
         
         # 전체 개수 조회
-        count_query = supabase.table("suggestions").select("id")
+        count_query = supabase.table("suggestions").select("id", count="exact")  # type: ignore
         if status_filter:
             count_query = count_query.eq("status", status_filter)
         
         count_result = count_query.execute()
-        total = len(count_result.data) if count_result.data else 0
+        total = count_result.count if count_result.count is not None else 0
         
         # 목록 조회
         query = supabase.table("suggestions")\
@@ -224,9 +253,10 @@ async def get_suggestions(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] 건의함 목록 조회 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"건의함 목록 조회 실패: {str(e)}"
+            detail="건의함 목록 조회 실패"
         )
 
 
@@ -313,9 +343,10 @@ async def get_suggestion(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] 건의함 조회 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"건의함 조회 실패: {str(e)}"
+            detail="건의함 조회 실패"
         )
 
 
@@ -385,17 +416,29 @@ async def update_suggestion_status(
             update_data["rejection_reason"] = None
             update_data["resolution_note"] = None
         
-        # 업데이트 실행
+        # 업데이트 실행 (같은 상태로의 중복 변경 방지)
         admin_supabase = get_supabase_admin()
         result = admin_supabase.table("suggestions")\
             .update(update_data)\
             .eq("id", suggestion_id)\
+            .neq("status", body.status)\
             .execute()
         
         if not result.data:
+            # 건의함이 없거나 이미 같은 상태
+            check = admin_supabase.table("suggestions")\
+                .select("id, status")\
+                .eq("id", suggestion_id)\
+                .execute()
+            
+            if not check.data:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="건의함을 찾을 수 없습니다"
+                )
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="건의함을 찾을 수 없습니다"
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 동일한 상태입니다"
             )
         
         updated = result.data[0]
@@ -417,9 +460,10 @@ async def update_suggestion_status(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] 건의함 상태 변경 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"건의함 상태 변경 실패: {str(e)}"
+            detail="건의함 상태 변경 실패"
         )
 
 
@@ -472,7 +516,8 @@ async def delete_suggestion(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] 건의함 삭제 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"건의함 삭제 실패: {str(e)}"
+            detail="건의함 삭제 실패"
         )

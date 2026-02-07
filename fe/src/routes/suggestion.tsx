@@ -15,6 +15,7 @@ import {
     SuggestionPageSizeSelect,
     SuggestionPagination,
 } from '../components/suggestions'
+import { SEO } from '../components/common/SEO'
 
 export const Route = createFileRoute('/suggestion')({
     component: SuggestionPage,
@@ -123,6 +124,11 @@ function SuggestionPage() {
     // 비로그인 사용자 안내 화면
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors">
+            <SEO
+                title="건의함"
+                description="학생회에 바라는 점을 건의주세요."
+                url="/suggestion"
+            />
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-24 space-y-10">
                 <SuggestionHero
                     stats={stats}

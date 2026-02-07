@@ -41,9 +41,10 @@ export type PrinterInfo = {
     updated_at: string;
 };
 
-export type RentalConfig = {
-    sheet_url: string;
-    application_form_url: string;
+export type GuidebookInfo = {
+    notion_url: string;
+    title?: string;
+    description?: string;
 };
 
 export const welfareApi = {
@@ -228,6 +229,18 @@ export const welfareApi = {
         application_form_url: string;
     }, token?: string | null): Promise<RentalConfig> => {
         const response = await axios.put(`${API_BASE_URL}/admin/welfare/rental_config`, data, {
+     * 신입생 가이드북 정보를 가져옵니다.
+     */
+    getGuidebookInfo: async (): Promise<GuidebookInfo> => {
+        const response = await axios.get(`${API_BASE_URL}/welfare/guidebook`);
+        return response.data;
+    },
+
+    /**
+     * 신입생 가이드북 정보를 수정합니다.
+     */
+    updateGuidebookInfo: async (data: { notion_url?: string; title?: string; description?: string }, token?: string | null): Promise<GuidebookInfo> => {
+        const response = await axios.put(`${API_BASE_URL}/admin/welfare/guidebook`, data, {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return response.data;

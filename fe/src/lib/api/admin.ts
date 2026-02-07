@@ -2,8 +2,8 @@ import { api } from '../axios'
 import type { PendingUserItem, UserListItem, RejectedUserItem, BlockedUserItem } from '../../types/users'
 
 export const adminApi = {
-    getPendingUsers: async () => {
-        const response = await api.get<{ users: PendingUserItem[]; total: number }>('/admin/users/pending')
+    getPendingUsers: async (params?: { page?: number; limit?: number }) => {
+        const response = await api.get<{ users: PendingUserItem[]; total: number }>('/admin/users/pending', { params })
         return response.data
     },
     approveUser: async (userId: string) => {
@@ -14,7 +14,13 @@ export const adminApi = {
         const response = await api.post<{ message: string }>(`/admin/users/${userId}/reject`, { reason })
         return response.data
     },
-    getUsers: async (params?: { role?: string | null; verification_status?: string | null; membership_paid?: boolean | null }) => {
+    getUsers: async (params?: {
+        role?: string | null
+        verification_status?: string | null
+        membership_paid?: boolean | null
+        page?: number
+        limit?: number
+    }) => {
         const response = await api.get<{ users: UserListItem[]; total: number }>('/admin/users', { params })
         return response.data
     },
@@ -47,6 +53,50 @@ export const adminApi = {
     },
     unblockUser: async (studentId: string) => {
         const response = await api.post<{ message: string }>(`/admin/users/${studentId}/unblock`)
+        return response.data
+    },
+    getProfileUpdates: async (params?: { status_filter?: string | null; page?: number; page_size?: number }) => {
+        const response = await api.get('/admin/profile-updates', { params })
+        return response.data
+    },
+    getApprovedProfileUpdates: async (params?: { page?: number; page_size?: number }) => {
+        const response = await api.get('/admin/profile-updates/approved', { params })
+        return response.data
+    },
+    getRejectedProfileUpdates: async (params?: { page?: number; page_size?: number }) => {
+        const response = await api.get('/admin/profile-updates/rejected', { params })
+        return response.data
+    },
+    getStorageSignedUrl: async (path: string) => {
+        const response = await api.get<{ signed_url?: string }>('/admin/storage/signed-url', {
+            params: { path },
+        })
+        return response.data
+    },
+    approveProfileUpdate: async (requestId: string | number) => {
+        const response = await api.post(`/admin/profile-updates/${requestId}/approve`)
+        return response.data
+    },
+    rejectProfileUpdate: async (requestId: string | number, reason: string) => {
+        const response = await api.post(`/admin/profile-updates/${requestId}/reject`, null, {
+            params: { reason },
+        })
+        return response.data
+    },
+    getSignedUrl: async (path: string) => {
+        const response = await api.get<{ signed_url: string }>('/admin/storage/signed-url', { params: { path } })
+        return response.data
+    },
+    getActivityAttendance: async (activityId: number) => {
+        const response = await api.get(`/admin/${activityId}/attendance`)
+        return response.data
+    },
+    cancelActivityAttendance: async (activityId: number, registrationId: number) => {
+        const response = await api.delete(`/admin/${activityId}/registrations/${registrationId}/attend`)
+        return response.data
+    },
+    markActivityAttendance: async (activityId: number, registrationId: number) => {
+        const response = await api.post(`/admin/${activityId}/registrations/${registrationId}/attend`)
         return response.data
     },
 }

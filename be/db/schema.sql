@@ -161,6 +161,42 @@ CREATE INDEX idx_users_student_id ON users(student_id);
 CREATE INDEX idx_users_verification_status ON users(verification_status);  -- 승인 대기 목록 조회용
 CREATE INDEX idx_users_membership_paid ON users(membership_paid);
 
+-- 1-2. 거절된 사용자 아카이브
+CREATE TABLE rejected_users (
+  id UUID PRIMARY KEY,
+  student_id VARCHAR(20),
+  name VARCHAR(100),
+  email VARCHAR(255),
+  department VARCHAR(100),
+  phone VARCHAR(20),
+  role VARCHAR(20),
+  verification_image_url TEXT,
+  rejection_reason TEXT,
+  rejected_at TIMESTAMPTZ DEFAULT NOW(),
+  rejected_by UUID
+);
+
+COMMENT ON TABLE rejected_users IS '거절된 사용자 아카이브 (관리자가 회원 거절 시 이동)';
+
+-- 1-3. 프로필 변경 요청
+CREATE TABLE profile_update_requests (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  field_name VARCHAR(20) NOT NULL CHECK (field_name IN ('name', 'student_id')),
+  current_value VARCHAR(100),
+  new_value VARCHAR(100) NOT NULL,
+  verification_image_url TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  rejection_reason TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  processed_at TIMESTAMPTZ,
+  processed_by UUID REFERENCES users(id)
+);
+
+COMMENT ON TABLE profile_update_requests IS '사용자 프로필 변경 요청 (관리자 승인 필요)';
+CREATE INDEX idx_profile_updates_user_id ON profile_update_requests(user_id);
+CREATE INDEX idx_profile_updates_status ON profile_update_requests(status);
+
 -- ============================================================================
 -- 2. 학생회 소개 이미지
 -- ============================================================================
@@ -340,6 +376,20 @@ COMMENT ON COLUMN clubs.image_url IS '동아리 대표 이미지 URL (필수)';
 COMMENT ON COLUMN clubs.description IS '동아리 세부 설명 (필수)';
 COMMENT ON COLUMN clubs.website_url IS '동아리 웹사이트 또는 SNS URL (선택)';
 
+-- 5-2. 동아리 소개 이미지
+CREATE TABLE club_introduction_images (
+  id SERIAL PRIMARY KEY,
+  club_id INTEGER NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL,
+  caption TEXT,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE club_introduction_images IS '동아리 소개 이미지';
+CREATE INDEX idx_club_intro_images_club_id ON club_introduction_images(club_id);
+
 -- ============================================================================
 -- 6. 복지사업 - 대여
 -- ============================================================================
@@ -348,6 +398,20 @@ COMMENT ON COLUMN clubs.website_url IS '동아리 웹사이트 또는 SNS URL (�
 -- ============================================================================
 -- 물품대여 정보 (구글폼 + 스프레드시트 연동)
 -- ============================================================================
+CREATE TABLE rental_config (
+  id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  sheet_url TEXT,  -- 구글 스프레드시트 URL (전체 물품 공유)
+  spreadsheet_id TEXT,  -- sheet_url에서 자동 추출된 ID
+  application_form_url TEXT,  -- 신청 폼 URL (구글폼 등, 전체 물품 공유)
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO rental_config (id) VALUES (1) ON CONFLICT DO NOTHING;
+
+COMMENT ON TABLE rental_config IS '[싱글톤] 대여사업 설정 (시트 URL, 신청 폼 URL 등)';
+COMMENT ON COLUMN rental_config.sheet_url IS '구글 스프레드시트 URL (재고 조회용, 전체 물품 공유)';
+COMMENT ON COLUMN rental_config.application_form_url IS '신청 폼 URL (구글폼 등, 전체 물품 공유)';
+
 CREATE TABLE rental_items (
   id SERIAL PRIMARY KEY,
   item_name VARCHAR(100) NOT NULL,  -- 물품명 (장우산, 단우산, 2인용 돗자리 등)
@@ -355,10 +419,8 @@ CREATE TABLE rental_items (
 
   image_url TEXT,  -- 물품 이미지 URL
   
-  -- 구글 시트 연동
-  application_sheet_url TEXT NOT NULL,  -- 구글 시트 URL (물품별로 다른 시트 가능)
-  spreadsheet_id TEXT DEFAULT '1r4MXOaZ-Pp-PYIUcjscWhnyz0hLwrcqpcut2oKDles8',  -- 고정: 대여사업 스프레드시트 ID
-  quantity_sheet_name VARCHAR(100) DEFAULT '물품표',  -- 고정: 시트 이름
+  -- 구글 시트 재고 연동 (시트 URL은 rental_config에서 가져옴)
+  quantity_sheet_name VARCHAR(100) DEFAULT '물품표',  -- 시트 이름
   quantity_cell_range VARCHAR(20) NOT NULL,  -- 물품별 재고 셀 위치 (예: C2, C4, C6)
   
   is_active BOOLEAN DEFAULT true,
@@ -368,8 +430,7 @@ CREATE TABLE rental_items (
 
 COMMENT ON TABLE rental_items IS '[공개] 물품대여 정보 (구글 시트 연동)';
 COMMENT ON COLUMN rental_items.item_name IS '물품명 (장우산, 단우산 등 세분화)';
-COMMENT ON COLUMN rental_items.application_sheet_url IS '구글 시트 URL (신청 현황 확인용)';
-COMMENT ON COLUMN rental_items.spreadsheet_id IS '구글 스프레드시트 ID (재고 관리용)';
+COMMENT ON COLUMN rental_items.application_form_url IS '신청 폼 URL (물품별 구글폼 등)';
 COMMENT ON COLUMN rental_items.quantity_cell_range IS '현재 재고 수량이 있는 셀 위치 (예: C2, C4)';
 
 CREATE INDEX idx_rental_items_category ON rental_items(category);
@@ -422,6 +483,56 @@ CREATE TRIGGER trigger_locker_info_updated_at
   EXECUTE FUNCTION update_locker_info_updated_at();
 
 -- ============================================================================
+-- 7-2. 프린트 복지사업 정보 (싱글 행)
+-- ============================================================================
+CREATE TABLE print_welfare_info (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  image_url TEXT,
+  description TEXT,
+  google_form_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT print_welfare_single_row CHECK (id = 1)
+);
+
+INSERT INTO print_welfare_info (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+COMMENT ON TABLE print_welfare_info IS '프린트 복지사업 정보 (싱글 행)';
+
+-- ============================================================================
+-- 7-3. 신입생 가이드북 정보 (싱글 행)
+-- ============================================================================
+CREATE TABLE guidebook_info (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  notion_url TEXT,
+  title TEXT,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT guidebook_single_row CHECK (id = 1)
+);
+
+INSERT INTO guidebook_info (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+COMMENT ON TABLE guidebook_info IS '신입생 가이드북 정보 (싱글 행)';
+
+-- ============================================================================
+-- 7-4. 개인정보 총책임자 정보 (싱글 행)
+-- ============================================================================
+CREATE TABLE privacy_officer_info (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  name TEXT,
+  phone TEXT,
+  email TEXT,
+  office_address TEXT,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT privacy_officer_single_row CHECK (id = 1)
+);
+
+INSERT INTO privacy_officer_info (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+COMMENT ON TABLE privacy_officer_info IS '개인정보 총책임자(학생회장) 정보 (싱글 행)';
+
+-- ============================================================================
 -- 8. Activities 시스템 (통합 활동 관리)
 -- ============================================================================
 -- 마이그레이션 008에서 추가됨
@@ -443,6 +554,7 @@ CREATE TABLE activities (
   form_fields JSONB DEFAULT '[]',
   thumbnail_url TEXT,
   is_active BOOLEAN DEFAULT true,
+  is_anonymous BOOLEAN DEFAULT false,  -- 익명 여부 (true: 익명 모드, false: 기명 모드) 설문/수요조사는 생성 시 true로 설정
   is_deleted BOOLEAN DEFAULT false,
   deleted_at TIMESTAMPTZ,
   deleted_by UUID REFERENCES users(id),

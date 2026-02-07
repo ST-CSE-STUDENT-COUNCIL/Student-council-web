@@ -10,11 +10,15 @@ export type ActivityType = 'event' | 'demand_survey' | 'survey' | 'kakao_invite'
 export type FormField = {
     name: string
     label: string
-    type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'date' | 'file'
+    type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'date' | 'file' | 'section'
     options?: string[]
     required: boolean
     placeholder?: string
     help_text?: string
+    condition?: {
+        target: string
+        value: string
+    }
 }
 
 // 활동 목록 항목
@@ -82,6 +86,7 @@ export type ActivityCreateRequest = {
     thumbnail_url?: string
     image_urls?: { public_url: string }[]
     is_active?: boolean
+    is_anonymous?: boolean
 }
 
 // 활동 수정 요청
@@ -97,6 +102,7 @@ export type ActivityUpdateRequest = {
     thumbnail_url?: string
     image_urls?: { public_url: string }[]
     is_active?: boolean
+    is_anonymous?: boolean
 }
 
 
@@ -110,6 +116,7 @@ export type ActivityRegistrationRequest = {
     verification_image_url?: string
     form_responses?: Record<string, any>
     kakao_id?: string
+    turnstile_token?: string
 }
 
 // 활동 신청 응답
@@ -148,6 +155,7 @@ export type SurveySubmitRequest = {
     phone?: string
     email?: string
     survey_responses: Record<string, any>
+    turnstile_token?: string
 }
 
 // 활동 상태 (UI용)
@@ -172,6 +180,13 @@ export const getActivityStatus = (activity: ActivityListItem | Activity): Activi
     if (activity.registration_end) {
         const end = parseAsLocalTime(activity.registration_end)
         if (now > end) return 'closed'
+    }
+
+    // 정원 마감 체크 (오픈 예정이나 기간 마감이 아닐 때 체크)
+    if (activity.max_capacity && activity.current_count >= activity.max_capacity) {
+        // 공지사항 등 정원 개념이 없는 타입은 제외할 수도 있으나, 
+        // max_capacity가 설정되어 있다는 것은 제한을 두겠다는 의도이므로 포함
+        return 'closed'
     }
 
     return 'active'

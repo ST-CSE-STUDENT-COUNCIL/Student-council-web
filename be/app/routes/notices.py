@@ -4,7 +4,7 @@ boards + posts 통합 API
 """
 from fastapi import APIRouter, HTTPException, Depends, status, Query, File, UploadFile, Form
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import math
 from app.schemas.notices import (
     NoticeListResponse,
@@ -221,7 +221,7 @@ async def get_notices(
         print(f"[NOTICES ERROR] {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"공지사항 조회 실패: {str(e)}"
+            detail="공지사항 조회 실패"
         )
 
 
@@ -291,9 +291,10 @@ async def get_notice(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] get_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"공지사항 조회 실패: {str(e)}"
+            detail="공지사항 조회 실패"
         )
 
 
@@ -312,7 +313,23 @@ async def get_notice_attachment_presigned_url(
     current_user: dict = Depends(require_admin)
 ):
     """공지사항 첨부파일 업로드를 위한 Presigned URL 발급"""
-    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.pdf'})
+    try:
+        file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.pdf'})
+    except HTTPException:
+        # 확장자 검증 실패 시 해당 draft 자동 삭제
+        try:
+            admin_supabase = get_supabase_admin()
+            admin_supabase.table('posts')\
+                .delete()\
+                .eq('id', post_id)\
+                .eq('author_id', str(current_user["id"]))\
+                .eq('is_draft', True)\
+                .execute()
+            print(f"[CLEANUP] Draft {post_id} 삭제 완료 (파일 확장자 검증 실패)")
+        except Exception as cleanup_err:
+            print(f"[CLEANUP ERROR] Draft {post_id} 삭제 실패: {cleanup_err}")
+        raise
+
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     # 게시글별 폴더 분리
     file_key = f"post-{post_id}/{unique_filename}"
@@ -339,14 +356,39 @@ async def get_notice_attachment_presigned_url(
 @router.post(
     "/admin/notices/draft",
     summary="Draft 게시글 생성 (관리자)",
-    description="파일 업로드를 위한 post_id를 미리 획득"
+    description="파일 업로드를 위한 post_id를 미리 획득",
+    responses={
+        429: {"model": ErrorResponse, "description": "요청이 너무 빠릅니다"}
+    }
 )
-@limiter.limit("1/3second")  # Draft 생성 연타 방지
 async def create_draft_notice(
     body: DraftCreateRequest,
     request: Request,
     current_user: dict = Depends(require_admin)
 ):
+    # [Rate Limit] DB 기반 중복/연타 방지 (최근 3초)
+    try:
+        limit_time = (datetime.now(timezone.utc) - timedelta(seconds=3)).isoformat()
+        
+        # 최근 3초 내 작성된 글이 있는지 확인 (Draft 포함 모든 글)
+        recent_check = (
+            supabase.table("posts")
+            .select("id", count="exact")  # type: ignore
+            .eq("author_id", current_user["id"])
+            .gte("created_at", limit_time)
+            .execute()
+        )
+            
+        if recent_check.count and recent_check.count > 0:
+             raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="잠시 후 다시 시도해주세요."
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Rate limit check failed: {e}")
+
     """
     Draft 게시글 생성
     
@@ -381,9 +423,59 @@ async def create_draft_notice(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] create_draft_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Draft 생성 실패: {str(e)}"
+            detail="Draft 생성 실패"
+        )
+
+
+@router.delete(
+    "/admin/notices/draft/{post_id}",
+    summary="Draft 게시글 삭제 (관리자)",
+    description="파일 업로드 실패 등으로 불필요해진 draft를 삭제합니다",
+    responses={
+        404: {"model": ErrorResponse, "description": "Draft를 찾을 수 없음"}
+    }
+)
+async def delete_draft_notice(
+    post_id: int,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    Draft 삭제 API
+    
+    파일 업로드 실패, 글 작성 취소 등의 상황에서
+    프론트엔드가 호출하여 고아 draft를 정리합니다.
+    is_draft=True인 게시글만 삭제 가능합니다.
+    """
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # 본인이 작성한 draft만 삭제 가능
+        result = admin_supabase.table('posts')\
+            .delete()\
+            .eq('id', post_id)\
+            .eq('author_id', str(current_user["id"]))\
+            .eq('is_draft', True)\
+            .execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="삭제할 Draft를 찾을 수 없습니다"
+            )
+        
+        print(f"[CLEANUP] Draft {post_id} 삭제 완료 (by {current_user['id']})")
+        return {"message": "Draft가 삭제되었습니다"}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[API ERROR] delete_draft_notice: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Draft 삭제 실패"
         )
 
 
@@ -395,15 +487,40 @@ async def create_draft_notice(
     description="관리자만 공지사항을 작성할 수 있습니다 (Presigned URL로 첨부파일 업로드)",
     responses={
         401: {"model": ErrorResponse},
-        403: {"model": ErrorResponse, "description": "권한 없음"}
+        403: {"model": ErrorResponse, "description": "권한 없음"},
+        429: {"model": ErrorResponse, "description": "요청이 너무 빠릅니다"}
     }
 )
-@limiter.limit("1/3second")  # 더블 클릭 방지
 async def create_notice(
     body: NoticeCreateRequest,
     request: Request,
     current_user: dict = Depends(require_admin)
 ):
+    # [Rate Limit] DB 기반 중복/연타 방지 (최근 3초 내 작성 금지)
+    try:
+        # UTC 기준 3초 전
+        limit_time = (datetime.now(timezone.utc) - timedelta(seconds=3)).isoformat()
+        
+        # Draft가 아닌 실제 글 작성만 체크 (posts 테이블)
+        recent_check = (
+            supabase.table("posts")
+            .select("id", count="exact")  # type: ignore
+            .eq("author_id", current_user["id"])
+            .eq("is_draft", False)
+            .gte("created_at", limit_time)
+            .execute()
+        )
+            
+        if recent_check.count and recent_check.count > 0:
+             raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="잠시 후 다시 시도해주세요."
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Rate limit check failed: {e}")
+
     """
     공지사항 작성 (관리자 전용, Presigned URL 사용)
     
@@ -480,12 +597,37 @@ async def create_notice(
         # 생성된 공지사항 조회
         return await get_notice(post_id)
     
-    except HTTPException:
+    except HTTPException as he:
+        # publish 실패 시 draft 정리
+        if body.post_id:
+            try:
+                cleanup_supabase = get_supabase_admin()
+                cleanup_supabase.table('posts')\
+                    .delete()\
+                    .eq('id', body.post_id)\
+                    .eq('is_draft', True)\
+                    .execute()
+                print(f"[CLEANUP] Draft {body.post_id} 삭제 완료 (HTTPException)")
+            except Exception as cleanup_err:
+                print(f"[CLEANUP ERROR] Draft {body.post_id} 삭제 실패: {cleanup_err}")
         raise
     except Exception as e:
+        # publish 실패 시 draft 정리
+        if body.post_id:
+            try:
+                cleanup_supabase = get_supabase_admin()
+                cleanup_supabase.table('posts')\
+                    .delete()\
+                    .eq('id', body.post_id)\
+                    .eq('is_draft', True)\
+                    .execute()
+                print(f"[CLEANUP] Draft {body.post_id} 삭제 완료 (Exception)")
+            except Exception as cleanup_err:
+                print(f"[CLEANUP ERROR] Draft {body.post_id} 삭제 실패: {cleanup_err}")
+        print(f"[API ERROR] create_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"공지사항 작성 실패: {str(e)}"
+            detail="공지사항 작성 실패"
         )
 
 
@@ -561,9 +703,10 @@ async def update_notice(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] update_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"공지사항 수정 실패: {str(e)}"
+            detail="공지사항 수정 실패"
         )
 
 
@@ -625,7 +768,8 @@ async def delete_notice(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[API ERROR] delete_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"공지사항 삭제 실패: {str(e)}"
+            detail="공지사항 삭제 실패"
         )
