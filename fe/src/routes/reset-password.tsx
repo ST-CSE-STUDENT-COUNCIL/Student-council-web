@@ -217,7 +217,7 @@ function ResetPassword() {
                                         <input
                                             type="text"
                                             required
-                                            maxLength={8}
+                                            maxLength={15}
                                             className="block w-full pl-10 py-3 border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800"
                                             placeholder="학번을 입력해주세요"
                                             value={studentId}

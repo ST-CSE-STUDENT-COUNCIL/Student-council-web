@@ -76,7 +76,7 @@ function SignUp() {
 
     // Handlers
     const handleStudentIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const numbers = e.target.value.replace(/\D/g, '').slice(0, 8)
+        const numbers = e.target.value.replace(/\D/g, '').slice(0, 15)
         setValue('student_id', numbers, { shouldValidate: true })
         studentIdCheck.reset()
     }
@@ -196,14 +196,14 @@ function SignUp() {
                                                     type="text"
                                                     value={watchedStudentId}
                                                     onChange={handleStudentIdChange}
-                                                    maxLength={8}
+                                                    maxLength={15}
                                                     inputMode="numeric"
                                                     pattern="[0-9]*"
                                                     className={`block w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 ${studentIdCheck.isAvailable === true ? 'border-green-500 focus:border-green-500 focus:ring-green-200 dark:focus:ring-green-900/30' :
                                                         studentIdCheck.isAvailable === false ? 'border-red-500 focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-900/30' :
                                                             'border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30'
                                                         }`}
-                                                    placeholder="8자리 학번 입력"
+                                                    placeholder="학번(학번이 없는 경우, 수험번호) 입력*"
                                                 />
                                                 {studentIdCheck.isAvailable === true && (
                                                     <div className="absolute right-3 top-3.5 text-green-500">
