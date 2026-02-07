@@ -20,11 +20,11 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
     const [status, setStatus] = useState<ActivityStatus>(() => getActivityStatus(activity))
     const [currentTime, setCurrentTime] = useState(Date.now())
 
-    // 1분마다 현재 시간 업데이트 (남은 시간 실시간 표시용)
+    // 1초마다 현재 시간 업데이트 (남은 시간 실시간 표시용)
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(Date.now())
-        }, 60000) // 1분마다 업데이트
+        }, 1000) // 1초마다 업데이트
 
         return () => clearInterval(timer)
     }, [])
@@ -108,13 +108,16 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
         const days = Math.floor(diff / (1000 * 60 * 60 * 24))
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000)
 
         if (days > 0) {
             return `${days}일 ${hours}시간`
         } else if (hours > 0) {
             return `${hours}시간 ${minutes}분`
-        } else {
+        } else if (minutes > 0) {
             return `${minutes}분`
+        } else {
+            return `${seconds}초`
         }
     }
 

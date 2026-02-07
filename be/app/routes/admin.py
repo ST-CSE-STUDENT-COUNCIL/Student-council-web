@@ -2,7 +2,7 @@
 관리자 API 엔드포인트
 회원 승인, 역할 관리, 회비 납부 처리 등 관리자 전용 기능
 """
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import List, Optional
 from datetime import datetime
 from app.schemas.admin import (
@@ -34,6 +34,40 @@ router = APIRouter(
 
 
 @router.get(
+    "/storage/signed-url",
+    summary="이미지 Signed URL 생성",
+    description="스토리지 파일 경로를 받아 접근 가능한 Signed URL을 생성합니다",
+    responses={
+        400: {"model": ErrorResponse, "description": "잘못된 요청"},
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"}
+    }
+)
+async def get_storage_signed_url(path: str):
+    """
+    이미지 Signed URL 생성
+    
+    관리자가 이미지를 확인해야 할 때 호출합니다.
+    Private 버킷의 파일에 접근할 수 있는 임시 URL을 반환합니다.
+    """
+    if not path:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="파일 경로가 필요합니다"
+        )
+    
+    signed_url = create_signed_url(path)
+    
+    if not signed_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="파일을 찾을 수 없거나 URL 생성에 실패했습니다"
+        )
+    
+    return {"signed_url": signed_url}
+
+
+@router.get(
     "/users/pending",
     response_model=PendingUserListResponse,
     summary="승인 대기 회원 목록 조회",
@@ -43,39 +77,38 @@ router = APIRouter(
         403: {"model": ErrorResponse, "description": "관리자 권한 필요"}
     }
 )
-async def get_pending_users():
+async def get_pending_users(
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지 크기 (최대 100)")
+):
     """
     승인 대기 회원 목록 조회
     
     verification_status가 'pending' 또는 'submitted'인 회원들을 조회합니다.
     생성일 기준 오래된 순으로 정렬합니다.
-    학적 인증 이미지가 있는 경우 Signed URL을 생성하여 반환합니다.
+    학적 인증 이미지 URL(경로)은 포함되지만, Signed URL은 포함되지 않습니다.
+    이미지 확인이 필요한 경우 /admin/storage/signed-url 엔드포인트를 사용하세요.
     """
     try:
+        offset = (page - 1) * page_size
+
         # 승인 대기 중인 회원 조회 (pending + submitted)
         result = supabase.table('users')\
-            .select('id, student_id, name, email, department, phone, verification_image_url, created_at')\
+            .select('id, student_id, name, email, department, phone, verification_image_url, created_at', count='exact')\
             .in_('verification_status', ['pending', 'submitted'])\
             .order('created_at', desc=False)\
+            .range(offset, offset + page_size - 1)\
             .execute()
         
         users = result.data if result.data else []
+        total = result.count or 0
         
-        # 각 사용자의 이미지에 대한 Signed URL 생성
-        for user in users:
-            original_url = user.get('verification_image_url')
-            if original_url:
-                # Private Storage이므로 Signed URL 생성 (1시간 유효)
-                signed_url = create_signed_url(original_url, expires_in=3600)
-                if signed_url:
-                    user['verification_image_url'] = signed_url
-                else:
-                    # 실패 시 None 유지
-                    user['verification_image_url'] = None
+        # N+1 문제 해결: 목록 조회 시에는 Signed URL을 생성하지 않음
+        # 클라이언트에서 필요할 때 별도로 요청해야 함
         
         return PendingUserListResponse(
             users=users,
-            total=len(users)
+            total=total
         )
     
     except Exception as e:
@@ -96,8 +129,8 @@ async def get_pending_users():
     }
 )
 async def get_rejected_users(
-    page: int = 1,
-    page_size: int = 20
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지 크기 (최대 100)")
 ):
     """
     거절된 회원 목록 조회
@@ -115,9 +148,9 @@ async def get_rejected_users(
         
         total = count_result.count or 0
         
-        # 목록 조회
+        # 목록 조회 - [최적화] 필요한 컬럼만 선택
         result = admin_supabase.table('rejected_users')\
-            .select('*')\
+            .select('id, student_id, name, email, department, phone, rejection_reason, rejected_at, rejected_by')\
             .order('rejected_at', desc=True)\
             .range(offset, offset + page_size - 1)\
             .execute()
@@ -150,7 +183,9 @@ async def get_rejected_users(
 async def get_all_users(
     role: Optional[str] = None,
     verification_status: Optional[str] = None,
-    membership_paid: Optional[bool] = None
+    membership_paid: Optional[bool] = None,
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지 크기 (최대 100)")
 ):
     """
     전체 회원 목록 조회
@@ -159,14 +194,18 @@ async def get_all_users(
         role: 역할 필터 (student, admin)
         verification_status: 승인 상태 필터 (pending, approved, rejected)
         membership_paid: 회비 납부 여부 필터 (true, false)
+        page: 페이지 번호 (기본 1)
+        page_size: 페이지 크기 (기본 20)
     
     Returns:
         회원 목록과 총 개수
     """
     try:
+        offset = (page - 1) * page_size
+
         # 기본 쿼리
         query = supabase.table('users')\
-            .select('id, student_id, name, email, department, phone, role, verification_status, membership_paid, created_at')
+            .select('id, student_id, name, email, department, phone, role, verification_status, membership_paid, created_at', count='exact')
         
         # 필터 적용
         if role:
@@ -176,14 +215,17 @@ async def get_all_users(
         if membership_paid is not None:
             query = query.eq('membership_paid', membership_paid)
         
-        # 정렬 및 실행
-        result = query.order('created_at', desc=True).execute()
+        # 정렬 및 실행 (페이지네이션 적용)
+        result = query.order('created_at', desc=True)\
+            .range(offset, offset + page_size - 1)\
+            .execute()
         
         users = result.data if result.data else []
+        total = result.count or 0
         
         return UserListResponse(
             users=users,
-            total=len(users)
+            total=total
         )
     
     except Exception as e:
@@ -222,7 +264,7 @@ async def approve_user(user_id: str):
     try:
         # 1. 사용자 존재 확인
         user_check = supabase.table('users')\
-            .select('id, verification_status')\
+            .select('id, verification_status, verification_image_url')\
             .eq('id', user_id)\
             .single()\
             .execute()
@@ -233,8 +275,10 @@ async def approve_user(user_id: str):
                 detail="사용자를 찾을 수 없습니다"
             )
         
+        user = user_check.data
+        
         # 2. 이미 승인된 회원인지 확인
-        if user_check.data['verification_status'] == 'approved':
+        if user['verification_status'] == 'approved':
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="이미 승인된 회원입니다"
@@ -245,7 +289,8 @@ async def approve_user(user_id: str):
         kst = timezone(timedelta(hours=9))
         now_kst = datetime.now(kst).isoformat()
         
-        admin_supabase = get_supabase_admin()
+        from app.database import get_fresh_admin_client
+        admin_supabase = get_fresh_admin_client()
         result = admin_supabase.table('users')\
             .update({
                 'verification_status': 'approved',
@@ -255,6 +300,15 @@ async def approve_user(user_id: str):
             })\
             .eq('id', user_id)\
             .execute()
+        
+        # 승인 완료 후 인증 이미지 삭제 (개인정보 보호)
+        if user.get('verification_image_url'):
+            try:
+                # supabase는 전역 변수 사용 (지역 import 제거)
+                supabase.storage.from_('verification-images').remove([user['verification_image_url']])
+            except Exception as e:
+                # 이미지 삭제 실패해도 승인은 유지 (로그만 남김)
+                print(f"[APPROVE INFO] 이미지 삭제 실패 (무시됨): {str(e)}")
         
         return ApproveUserResponse(user_id=user_id)
     
@@ -393,7 +447,7 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest):
         
         # 2. 사용자 존재 확인
         user_check = supabase.table('users')\
-            .select('id, role')\
+            .select('id, role, email')\
             .eq('id', user_id)\
             .single()\
             .execute()
@@ -404,8 +458,20 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest):
                 detail="사용자를 찾을 수 없습니다"
             )
         
+        target_user = user_check.data
+        
+        # [보안] 절대 관리자 계정 보호 (admin1 ~ admin5)
+        # 이 계정들은 API를 통해서도 역할을 변경할 수 없음
+        protected_emails = [f"admin{i}@seoultech.ac.kr" for i in range(1, 6)]
+        
+        if target_user.get('email') in protected_emails:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="해당 관리자 계정은 역할을 변경할 수 없습니다 (Protected Account)"
+            )
+        
         # 3. 이미 같은 역할인지 확인
-        if user_check.data['role'] == request.role:
+        if target_user['role'] == request.role:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"이미 {request.role} 역할입니다"
@@ -532,10 +598,11 @@ async def get_blocked_users():
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc)
         
-        # 실제 차단된 사용자 조회 (block_reason이 있는 경우)
+        # 실제 차단된 사용자 조회 - [OOM 방지] 최대 100개로 제한
         blocks_result = supabase.table('login_blocks')\
-            .select('*')\
+            .select('student_id, failed_attempts, block_reason, block_until, created_at')\
             .not_.is_('block_reason', 'null')\
+            .limit(100)\
             .execute()
         
         if not blocks_result.data:
@@ -580,11 +647,12 @@ async def get_blocked_users():
             .execute()
         user_map = {u['student_id']: u for u in (users_result.data or [])}
         
-        # 로그인 시도 기록 한 번에 조회 (각 student_id별 최근 20개는 클라이언트에서 필터링)
+        # 로그인 시도 기록 한 번에 조회 (최근 50개만 조회하여 메모리 보호)
         attempts_result = supabase.table('login_attempts')\
             .select('*')\
             .in_('student_id', student_ids)\
             .order('attempt_time', desc=True)\
+            .limit(50)\
             .execute()
         
         # student_id별로 로그인 시도 그룹화
@@ -593,8 +661,7 @@ async def get_blocked_users():
             sid = attempt['student_id']
             if sid not in attempts_map:
                 attempts_map[sid] = []
-            if len(attempts_map[sid]) < 20:  # 최대 20개
-                attempts_map[sid].append(attempt)
+            attempts_map[sid].append(attempt)
         
         blocked_users = []
         for block in active_blocks:
@@ -673,4 +740,361 @@ async def unblock_user_by_admin(student_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"차단 해제 실패: {str(e)}"
+        )
+
+
+# ============================================================================
+# 프로필 변경 요청 관리
+# ============================================================================
+
+@router.get(
+    "/profile-updates",
+    summary="프로필 변경 요청 목록",
+    description="관리자 승인 대기 중인 프로필 변경 요청을 조회합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"}
+    }
+)
+async def get_profile_update_requests(
+    status_filter: Optional[str] = None,
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지 크기 (최대 100)")
+):
+    """프로필 변경 요청 목록 조회"""
+    try:
+        offset = (page - 1) * page_size
+        
+        # [OOM 방지] 최소 컬럼만 + 강제 limit
+        query = supabase.table('profile_update_requests')\
+            .select('id, user_id, status, field_name, current_value, new_value, rejection_reason, created_at, processed_at')
+        
+        if status_filter:
+            query = query.eq('status', status_filter)
+        else:
+            query = query.eq('status', 'pending')
+        
+        result = query.order('created_at', desc=True)\
+            .limit(page_size)\
+            .execute()
+        
+        requests = result.data or []
+        
+        if requests:
+            # 사용자 정보 별도 조회 (Join 대신)
+            user_ids = list(set(r['user_id'] for r in requests))
+            users = supabase.table('users').select('id, name, student_id').in_('id', user_ids).execute()
+            user_map = {u['id']: u for u in (users.data or [])}
+            
+            # 데이터 병합
+            for req in requests:
+                user = user_map.get(req['user_id'])
+                if user:
+                    req['user_name'] = user.get('name')
+                    req['student_id'] = user.get('student_id')
+        
+        return {"requests": requests, "total": -1}
+    
+    except Exception as e:
+        print(f"[API ERROR] get_profile_update_requests: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"조회 실패: {str(e)}"
+        )
+
+
+@router.get(
+    "/profile-updates/rejected",
+    summary="거부된 프로필 변경 요청 목록",
+    description="거부된 프로필 변경 요청을 조회합니다"
+)
+async def get_rejected_profile_updates(
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지 크기 (최대 100)")
+):
+    """거부된 프로필 변경 요청 목록"""
+    try:
+        offset = (page - 1) * page_size
+        
+        # [OOM 방지] 최소 컬럼만 + 강제 limit
+        result = supabase.table('profile_update_requests')\
+            .select('id, user_id, status, field_name, current_value, new_value, rejection_reason, created_at, processed_at')\
+            .eq('status', 'rejected')\
+            .order('created_at', desc=True)\
+            .limit(page_size)\
+            .execute()
+        
+        requests = result.data or []
+        
+        if requests:
+            user_ids = list(set(r['user_id'] for r in requests))
+            users = supabase.table('users').select('id, name, student_id').in_('id', user_ids).execute()
+            user_map = {u['id']: u for u in (users.data or [])}
+            
+            for req in requests:
+                user = user_map.get(req['user_id'])
+                if user:
+                    req['user_name'] = user.get('name')
+                    req['student_id'] = user.get('student_id')
+                    
+        return {"requests": requests, "total": -1}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"조회 실패: {str(e)}"
+        )
+
+
+@router.get(
+    "/profile-updates/approved",
+    summary="승인된 프로필 변경 요청 목록",
+    description="승인된 프로필 변경 요청을 조회합니다"
+)
+async def get_approved_profile_updates(
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지 크기 (최대 100)")
+):
+    """승인된 프로필 변경 요청 목록"""
+    try:
+        offset = (page - 1) * page_size
+        
+        # [OOM 방지] 최소 컬럼만 + 강제 limit
+        result = supabase.table('profile_update_requests')\
+            .select('id, user_id, status, field_name, current_value, new_value, created_at, processed_at')\
+            .eq('status', 'approved')\
+            .order('processed_at', desc=True)\
+            .limit(page_size)\
+            .execute()
+        
+        requests = result.data or []
+        
+        if requests:
+            user_ids = list(set(r['user_id'] for r in requests))
+            users = supabase.table('users').select('id, name, student_id').in_('id', user_ids).execute()
+            user_map = {u['id']: u for u in (users.data or [])}
+            
+            for req in requests:
+                user = user_map.get(req['user_id'])
+                if user:
+                    req['user_name'] = user.get('name')
+                    req['student_id'] = user.get('student_id')
+                    
+        return {"requests": requests, "total": -1}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"조회 실패: {str(e)}"
+        )
+
+
+@router.post(
+    "/profile-updates/{request_id}/approve",
+    summary="프로필 변경 승인",
+    description="프로필 변경 요청을 승인하고 사용자 정보를 업데이트합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        404: {"model": ErrorResponse, "description": "요청을 찾을 수 없음"}
+    }
+)
+async def approve_profile_update(
+    request_id: int,
+    current_user: dict = Depends(require_admin)
+):
+    """프로필 변경 승인"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        # 요청 조회
+        req_result = admin_supabase.table('profile_update_requests')\
+            .select('*')\
+            .eq('id', request_id)\
+            .eq('status', 'pending')\
+            .single()\
+            .execute()
+        
+        if not req_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="처리할 요청이 없습니다"
+            )
+        
+        request_data = req_result.data
+        
+        # 사용자 정보 업데이트
+        admin_supabase.table('users')\
+            .update({request_data['field_name']: request_data['new_value']})\
+            .eq('id', request_data['user_id'])\
+            .execute()
+        
+        # 요청 상태 업데이트
+        from datetime import timezone
+        admin_supabase.table('profile_update_requests')\
+            .update({
+                'status': 'approved',
+                'processed_at': datetime.now(timezone.utc).isoformat(),
+                'processed_by': current_user['id']
+            })\
+            .eq('id', request_id)\
+            .execute()
+        
+        return {
+            "request_id": request_id,
+            "status": "approved",
+            "message": "프로필 변경이 승인되었습니다"
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[API ERROR] approve_profile_update: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"승인 처리 실패: {str(e)}"
+        )
+
+
+@router.post(
+    "/profile-updates/{request_id}/reject",
+    summary="프로필 변경 거부",
+    description="프로필 변경 요청을 거부합니다 (사유 필수)",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"},
+        404: {"model": ErrorResponse, "description": "요청을 찾을 수 없음"},
+        400: {"model": ErrorResponse, "description": "거부 사유 필수"}
+    }
+)
+async def reject_profile_update(
+    request_id: int,
+    reason: str,
+    current_user: dict = Depends(require_admin)
+):
+    """프로필 변경 거부"""
+    try:
+        if not reason or len(reason.strip()) < 2:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="거부 사유를 입력해주세요"
+            )
+        
+        admin_supabase = get_supabase_admin()
+        
+        # 요청 조회
+        req_result = admin_supabase.table('profile_update_requests')\
+            .select('id')\
+            .eq('id', request_id)\
+            .eq('status', 'pending')\
+            .single()\
+            .execute()
+        
+        if not req_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="처리할 요청이 없습니다"
+            )
+        
+        # 요청 상태 업데이트
+        from datetime import timezone
+        admin_supabase.table('profile_update_requests')\
+            .update({
+                'status': 'rejected',
+                'rejection_reason': reason.strip(),
+                'processed_at': datetime.now(timezone.utc).isoformat(),
+                'processed_by': current_user['id']
+            })\
+            .eq('id', request_id)\
+            .execute()
+        
+        return {
+            "request_id": request_id,
+            "status": "rejected",
+            "rejection_reason": reason.strip(),
+            "message": "프로필 변경 요청이 거부되었습니다"
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[API ERROR] reject_profile_update: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"거부 처리 실패: {str(e)}"
+        )
+
+
+# ============================================================================
+# 개인정보 총책임자 정보 관리 (학생회장)
+# ============================================================================
+
+@router.get(
+    "/privacy-officer",
+    summary="개인정보 총책임자 정보 조회",
+    description="개인정보 총책임자(학생회장) 정보를 조회합니다"
+)
+async def get_privacy_officer_info():
+    """개인정보 총책임자 정보 조회"""
+    try:
+        result = supabase.table('privacy_officer_info').select('*').eq('id', 1).single().execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="개인정보 총책임자 정보가 없습니다")
+        
+        return result.data
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"조회 실패: {str(e)}"
+        )
+
+
+@router.put(
+    "/privacy-officer",
+    summary="개인정보 총책임자 정보 수정",
+    description="개인정보 총책임자(학생회장) 정보를 수정합니다"
+)
+async def update_privacy_officer_info(
+    name: Optional[str] = None,
+    phone: Optional[str] = None,
+    email: Optional[str] = None,
+    office_address: Optional[str] = None,
+    description: Optional[str] = None
+):
+    """개인정보 총책임자 정보 수정"""
+    try:
+        admin_supabase = get_supabase_admin()
+        
+        update_data = {}
+        if name is not None:
+            update_data['name'] = name
+        if phone is not None:
+            update_data['phone'] = phone
+        if email is not None:
+            update_data['email'] = email
+        if office_address is not None:
+            update_data['office_address'] = office_address
+        if description is not None:
+            update_data['description'] = description
+        
+        if not update_data:
+            raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
+        
+        update_data['updated_at'] = datetime.utcnow().isoformat()
+        
+        result = admin_supabase.table('privacy_officer_info').update(update_data).eq('id', 1).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=500, detail="수정 실패")
+        
+        return result.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"수정 실패: {str(e)}"
         )

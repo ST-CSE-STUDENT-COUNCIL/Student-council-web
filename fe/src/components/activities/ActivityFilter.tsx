@@ -73,7 +73,7 @@ export const ActivityFilter = ({
                 <div className="flex-1 flex p-1 bg-gray-100 dark:bg-slate-800 rounded-lg overflow-x-auto no-scrollbar">
                     {/* 행사, 수요조사, 카톡방초대, 공지, 설문조사 필터*/}
                     {
-                        ['all', 'event', 'demand_survey', 'kakao_invite', 'notice', 'survey'].map((k) => (
+                        ['all', 'event', 'demand_survey', 'survey', 'kakao_invite', 'notice',].map((k) => (
                             <button
                                 key={k}
                                 onClick={() => onTypeChange(k as TypeOption)}

@@ -141,20 +141,30 @@ function RouteComponent() {
     const [unblockingId, setUnblockingId] = useState<string | null>(null)
     const [previewImage, setPreviewImage] = useState<string | null>(null)
 
+    // Pagination State
+    const [pendingPage, setPendingPage] = useState(1)
+    const [pendingTotal, setPendingTotal] = useState(0)
+    const PENDING_LIMIT = 10
+
+    const [membersPage, setMembersPage] = useState(1)
+    const [membersTotal, setMembersTotal] = useState(0)
+    const MEMBERS_LIMIT = 20
+
     const fetchPendingMembers = useCallback(async () => {
         setPendingLoading(true)
         setPendingError(null)
         try {
-            const data = await adminApi.getPendingUsers()
+            const data = await adminApi.getPendingUsers({ page: pendingPage, limit: PENDING_LIMIT })
             const mapped = data.users.map(mapPendingUserToMember)
             setPendingMembers(mapped)
+            setPendingTotal(data.total)
         } catch (error) {
             console.error('승인 대기 회원 조회 실패:', error)
             setPendingError('승인 대기 회원 목록을 불러오지 못했습니다.')
         } finally {
             setPendingLoading(false)
         }
-    }, [])
+    }, [pendingPage])
 
     useEffect(() => {
         fetchPendingMembers()
@@ -167,10 +177,10 @@ function RouteComponent() {
             const data = await adminApi.getBlockedUsers()
             const usersPayload =
                 Array.isArray(data) ? data :
-                Array.isArray((data as { blocked_users?: unknown })?.blocked_users) ? (data as { blocked_users: unknown[] }).blocked_users :
-                Array.isArray((data as { users?: unknown })?.users) ? (data as { users: unknown[] }).users :
-                Array.isArray((data as { items?: unknown })?.items) ? (data as { items: unknown[] }).items :
-                []
+                    Array.isArray((data as { blocked_users?: unknown })?.blocked_users) ? (data as { blocked_users: unknown[] }).blocked_users :
+                        Array.isArray((data as { users?: unknown })?.users) ? (data as { users: unknown[] }).users :
+                            Array.isArray((data as { items?: unknown })?.items) ? (data as { items: unknown[] }).items :
+                                []
             const mapped = (usersPayload as BlockedUserItem[]).map(mapBlockedUserToMember)
             setBlockedMembers(mapped)
         } catch (error) {
@@ -213,9 +223,12 @@ function RouteComponent() {
                 role: roleFilter === 'all' ? null : roleFilter,
                 membership_paid: duesFilter === 'all' ? null : duesFilter === 'paid',
                 verification_status: null,
+                page: membersPage,
+                limit: MEMBERS_LIMIT,
             })
             const mapped = data.users.map(mapUserToMember)
             setMembers(mapped)
+            setMembersTotal(data.total)
             setEditedRoles({})
         } catch (error) {
             console.error('회원 목록 조회 실패:', error)
@@ -223,7 +236,7 @@ function RouteComponent() {
         } finally {
             setMembersLoading(false)
         }
-    }, [roleFilter, duesFilter])
+    }, [roleFilter, duesFilter, membersPage])
 
     useEffect(() => {
         fetchMembers()
@@ -368,6 +381,16 @@ function RouteComponent() {
         }
     }
 
+    const handlePreview = async (path: string) => {
+        try {
+            const { signed_url } = await adminApi.getSignedUrl(path)
+            setPreviewImage(signed_url)
+        } catch (error) {
+            console.error('이미지 로딩 실패:', error)
+            alert('이미지를 불러올 수 없습니다. 다시 시도해주세요.')
+        }
+    }
+
     const stats = [
         {
             label: '승인 대기',
@@ -430,7 +453,10 @@ function RouteComponent() {
                             onRefresh={fetchPendingMembers}
                             onApprove={handleApprove}
                             onReject={handleReject}
-                            onPreview={(url) => setPreviewImage(url)}
+                            onPreview={handlePreview}
+                            page={pendingPage}
+                            totalPages={Math.ceil(pendingTotal / PENDING_LIMIT)}
+                            onPageChange={setPendingPage}
                         />
                     )}
 
@@ -446,6 +472,9 @@ function RouteComponent() {
                             onRoleSelect={handleRoleSelect}
                             onRoleSave={handleRoleSave}
                             onToggleDues={handleToggleDues}
+                            page={membersPage}
+                            totalPages={Math.ceil(membersTotal / MEMBERS_LIMIT)}
+                            onPageChange={setMembersPage}
                         />
                     )}
 
