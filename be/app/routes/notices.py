@@ -313,7 +313,23 @@ async def get_notice_attachment_presigned_url(
     current_user: dict = Depends(require_admin)
 ):
     """공지사항 첨부파일 업로드를 위한 Presigned URL 발급"""
-    file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.pdf'})
+    try:
+        file_ext = validate_file_extension(filename, {'.jpg', '.jpeg', '.png', '.pdf'})
+    except HTTPException:
+        # 확장자 검증 실패 시 해당 draft 자동 삭제
+        try:
+            admin_supabase = get_supabase_admin()
+            admin_supabase.table('posts')\
+                .delete()\
+                .eq('id', post_id)\
+                .eq('author_id', str(current_user["id"]))\
+                .eq('is_draft', True)\
+                .execute()
+            print(f"[CLEANUP] Draft {post_id} 삭제 완료 (파일 확장자 검증 실패)")
+        except Exception as cleanup_err:
+            print(f"[CLEANUP ERROR] Draft {post_id} 삭제 실패: {cleanup_err}")
+        raise
+
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     # 게시글별 폴더 분리
     file_key = f"post-{post_id}/{unique_filename}"
