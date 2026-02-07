@@ -1509,7 +1509,7 @@ async def search_attendance_by_student_id(
         
         # 학번으로 신청 내역 조회
         registration_result = supabase.table('activity_registrations')\
-            .select('id, user_name, student_id, attended, attended_at')\
+            .select('id, name, student_id, attended, attended_at')\
             .eq('activity_id', activity_id)\
             .eq('student_id', student_id)\
             .single()\
@@ -1523,7 +1523,7 @@ async def search_attendance_by_student_id(
         return AttendanceInfoResponse(
             registration_id=reg['id'],
             activity_title=activity_result.data['title'],
-            user_name=reg['user_name'],
+            user_name=reg['name'],
             student_id=reg['student_id'],
             already_attended=reg.get('attended', False),
             attended_at=reg.get('attended_at')
