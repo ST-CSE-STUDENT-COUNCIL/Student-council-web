@@ -4,7 +4,6 @@
 - DB 호출 병렬화로 응답 속도 최적화
 """
 from fastapi import APIRouter, HTTPException, Query, status
-from fastapi.responses import JSONResponse
 from datetime import datetime, timezone
 import asyncio
 from app.schemas.search import SearchResultItem, SearchResponse
@@ -143,12 +142,7 @@ async def search(
         # 전체 limit 적용
         results = results[:limit]
 
-        # Cache-Control: 검색 결과는 30초간 캐시
-        response = JSONResponse(
-            content=SearchResponse(results=results, total_count=len(results)).model_dump(mode="json")
-        )
-        response.headers["Cache-Control"] = "public, max-age=30, stale-while-revalidate=60"
-        return response
+        return SearchResponse(results=results, total_count=len(results))
 
     except HTTPException:
         raise

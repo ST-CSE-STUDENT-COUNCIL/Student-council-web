@@ -1,7 +1,7 @@
 """
 학생회 소개 API 엔드포인트
 """
-from fastapi import APIRouter, HTTPException, Depends, status, File, UploadFile, Form, Response
+from fastapi import APIRouter, HTTPException, Depends, status, File, UploadFile, Form
 from typing import Optional
 from datetime import datetime
 from app.schemas.introductions import (
@@ -36,12 +36,10 @@ router = APIRouter(tags=["학생회 소개"])
     summary="개인정보 총책임자 정보 조회 (공개)",
     description="개인정보 총책임자(학생회장) 정보를 조회합니다. 로그인 불필요."
 )
-async def get_privacy_officer_info_public(response: Response):
+async def get_privacy_officer_info_public():
     """개인정보 총책임자 정보 조회 (공개)"""
     try:
         result = supabase.table('privacy_officer_info').select('*').eq('id', 1).single().execute()
-        
-        response.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=3600"
         
         if not result.data:
             return {
@@ -72,8 +70,7 @@ async def get_privacy_officer_info_public(response: Response):
     }
 )
 async def get_introduction_images(
-    active_only: bool = True,
-    response: Response = None  # type: ignore
+    active_only: bool = True
 ):
     """학생회 소개 이미지 목록 조회 (공개)"""
     try:
@@ -86,8 +83,6 @@ async def get_introduction_images(
         
         images = result.data if result.data else []
         
-        if response:
-            response.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=600"
         return IntroductionImageListResponse(
             images=images,
             total=len(images)

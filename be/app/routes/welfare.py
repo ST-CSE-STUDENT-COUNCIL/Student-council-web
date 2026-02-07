@@ -4,7 +4,7 @@
 - 물품대여: 물품 목록 + 구글 스프레드시트 재고 조회
 - 프린트: 이미지 + 구글폼 URL
 """
-from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form, Response
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from typing import List, Optional
 from app.schemas.welfare import (
     LockerInfo,
@@ -40,7 +40,7 @@ router = APIRouter(tags=["복지사업"])
 # ============================================================================
 
 @router.get("/welfare/print", response_model=PrintWelfareInfo, summary="프린트 복지사업 정보 조회 (공개)")
-async def get_print_welfare_info(response: Response):
+async def get_print_welfare_info():
     """
     프린트 복지사업 이미지 URL과 구글폼 URL을 조회합니다.
     
@@ -53,7 +53,6 @@ async def get_print_welfare_info(response: Response):
     if not result.data:
         raise HTTPException(status_code=404, detail="프린트 복지 정보가 없습니다")
     
-    response.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=600"
     return result.data[0]
 
 
@@ -196,7 +195,7 @@ async def get_welfare_image_presigned_url(
 # ============================================================================
 
 @router.get("/welfare/locker_periods", response_model=LockerInfo, summary="사물함 배치도 및 신청 정보 조회 (공개)")
-async def get_locker_info(response: Response):
+async def get_locker_info():
     """
     사물함 배치도 이미지 URL과 구글폼 신청 URL을 조회합니다.
     
@@ -212,7 +211,6 @@ async def get_locker_info(response: Response):
     if not result.data:
         raise HTTPException(status_code=404, detail="사물함 정보가 없습니다")
     
-    response.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=600"
     return result.data[0]
 
 
@@ -604,7 +602,7 @@ async def delete_rental_item(
 # ============================================================================
 
 @router.get("/welfare/guidebook", summary="신입생 가이드북 정보 조회 (공개)")
-async def get_guidebook_info(response: Response):
+async def get_guidebook_info():
     """
     신입생 가이드북 노션 URL을 조회합니다.
     
@@ -613,8 +611,6 @@ async def get_guidebook_info(response: Response):
     """
     supabase = get_supabase()
     result = supabase.table('guidebook_info').select('*').eq('id', 1).single().execute()
-    
-    response.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=600"
     
     if not result.data or not result.data.get('notion_url'):
         return {
