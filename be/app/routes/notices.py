@@ -441,6 +441,7 @@ async def create_notice(
             supabase.table("posts")
             .select("id", count="exact")  # type: ignore
             .eq("author_id", current_user["id"])
+            .eq("is_draft", False)
             .gte("created_at", limit_time)
             .execute()
         )

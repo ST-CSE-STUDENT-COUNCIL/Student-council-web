@@ -1621,7 +1621,7 @@ async def get_attendance_list(
         
         # 신청자 목록 조회 (users 조인)
         registrations_result = admin_supabase.table('activity_registrations')\
-            .select('id, user_id, user_name, student_id, phone, created_at, attended, attended_at')\
+            .select('id, user_id, name, student_id, phone, created_at, attended, attended_at')\
             .eq('activity_id', activity_id)\
             .order('created_at')\
             .execute()
@@ -1638,7 +1638,7 @@ async def get_attendance_list(
             AttendanceListItem(
                 registration_id=r['id'],
                 user_id=r.get('user_id'),
-                user_name=r['user_name'],
+                user_name=r['name'],
                 student_id=r['student_id'],
                 phone=r.get('phone'),
                 registered_at=r['created_at'],
