@@ -109,18 +109,6 @@ export function RentalEditModal({
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
-
-                <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">신청 시트 URL *</label>
-                    <input
-                        key={`edit-url-${editingItem.id}`}
-                        type="url"
-                        value={editItem.application_sheet_url || ''}
-                        onChange={(e) => onChange('application_sheet_url', e.target.value)}
-                        placeholder="https://docs.google.com/spreadsheets/..."
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                </div>
             </div>
         </Modal>
     )

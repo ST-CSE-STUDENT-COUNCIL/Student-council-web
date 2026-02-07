@@ -12,6 +12,7 @@ function Welfare() {
   const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함' | '프린터' | '신입생 가이드북'>('대여사업')
   const [rentalItems, setRentalItems] = React.useState<WelfareRental[]>([])
   const [rentalCategoryFilter, setRentalCategoryFilter] = React.useState<string>('전체')
+  const [rentalFormUrl, setRentalFormUrl] = React.useState('')
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
   const [lockerLoading, setLockerLoading] = React.useState(true)
@@ -63,6 +64,11 @@ function Welfare() {
       setError(null)
       setLockerError(null)
       setPrinterError(null)
+      const [rentalsResult, lockerResult, printerResult, rentalConfigResult] = await Promise.allSettled([
+        welfareApi.getRentals(),
+        welfareApi.getLockerInfo(),
+        welfareApi.getPrinterInfo(),
+        welfareApi.getRentalConfig()
       const [rentalsResult, lockerResult, printerResult, guidebookResult] = await Promise.allSettled([
         welfareApi.getRentals(),
         welfareApi.getLockerInfo(),
@@ -93,6 +99,13 @@ function Welfare() {
         setPrinterError('프린터 정보를 불러올 수 없습니다.')
       }
 
+      if (rentalConfigResult.status === 'fulfilled' && typeof rentalConfigResult.value !== 'string') {
+        setRentalFormUrl(rentalConfigResult.value.application_form_url?.trim() || '')
+      } else {
+        console.error('대여사업 설정 로드 실패:', rentalConfigResult.status === 'rejected'
+          ? rentalConfigResult.reason
+          : rentalConfigResult.value)
+        setRentalFormUrl('')
       if (guidebookResult.status === 'fulfilled') {
         setGuidebookInfo(guidebookResult.value)
       } else {
@@ -101,6 +114,7 @@ function Welfare() {
     } catch (err) {
       console.error('복지사업 데이터 로드 실패:', err)
       setError('데이터를 불러올 수 없습니다.')
+      setRentalFormUrl('')
     } finally {
       setLoading(false)
       setLockerLoading(false)
@@ -252,7 +266,12 @@ function Welfare() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                       {section.items.map((item) => (
-                        <RentalCard key={item.id} item={item} onApply={handleRentalRedirect} />
+                        <RentalCard
+                          key={item.id}
+                          item={item}
+                          applicationUrl={rentalFormUrl}
+                          onApply={handleRentalRedirect}
+                        />
                       ))}
                     </div>
                   </section>
