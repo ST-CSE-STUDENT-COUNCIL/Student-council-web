@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Home, RefreshCw, AlertTriangle } from 'lucide-react'
+import { Home, AlertTriangle } from 'lucide-react'
 
 export const Route = createFileRoute('/error')({
   component: ErrorPage,
@@ -27,14 +27,6 @@ function ErrorPage() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button
-            onClick={() => window.location.reload()}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
-          >
-            <RefreshCw size={20} />
-            새로고침
-          </button>
-
           <Link
             to="/"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors shadow-sm"
