@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
+import { isAxiosError } from 'axios'
 import { SEO } from '../../components/common/SEO'
 import { activityApi } from '../../lib/api/activities'
 
@@ -16,7 +17,8 @@ function AttendancePage() {
 
     const activityIdNumber = useMemo(() => Number(activityId), [activityId])
 
-    const canSubmit = studentId.trim().length > 0 && !Number.isNaN(activityIdNumber)
+    const isSubmitted = Boolean(submittedMessage)
+    const canSubmit = studentId.trim().length > 0 && !Number.isNaN(activityIdNumber) && !isSubmitted
 
     const handleSubmit = async () => {
         if (!canSubmit || isSubmitting) return
@@ -30,6 +32,10 @@ function AttendancePage() {
             setSubmittedMessage(response.message || '출석이 등록되었습니다.')
         } catch (error) {
             console.error('Attendance check failed', error)
+            if (isAxiosError(error) && error.response?.status === 409) {
+                setSubmittedMessage('이미 출석했습니다.')
+                return
+            }
             setErrorMessage('출석 등록에 실패했습니다. 학번을 확인해주세요.')
         } finally {
             setIsSubmitting(false)
@@ -59,8 +65,9 @@ function AttendancePage() {
                                 setSubmittedMessage(null)
                                 setErrorMessage(null)
                             }}
+                            disabled={isSubmitted}
                             placeholder="예) 20201234"
-                            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+                            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 disabled:bg-slate-100 disabled:text-slate-400"
                         />
                         <p className="text-xs text-slate-400">띄어쓰기 없이 숫자만 입력해주세요.</p>
                     </div>
@@ -71,7 +78,7 @@ function AttendancePage() {
                         disabled={!canSubmit || isSubmitting}
                         className="mt-6 w-full rounded-2xl bg-emerald-600 text-white py-3 font-semibold shadow-md shadow-emerald-200 hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isSubmitting ? '처리 중...' : '출석 등록'}
+                        {isSubmitted ? '출석 완료' : isSubmitting ? '처리 중...' : '출석 등록'}
                     </button>
 
                     <div className="mt-6 rounded-2xl border border-dashed border-slate-200 p-4 text-sm">

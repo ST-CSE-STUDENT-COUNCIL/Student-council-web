@@ -181,10 +181,6 @@ function AdminAttendancePage() {
                 ? buildRegistrationMeta(registrationsResult.value.registrations)
                 : {}
 
-            if (registrationsResult.status === 'fulfilled') {
-                console.log('Attendance registrations payload:', registrationsResult.value.registrations)
-            }
-
             const mapped: Registration[] = attendanceData.registrations.map((item) => {
                 const meta = registrationMeta[item.registration_id]
                 return {
