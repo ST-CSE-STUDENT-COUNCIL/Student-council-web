@@ -19,7 +19,7 @@ export function ProfileInfoHeader({ hasPendingProfileUpdate, onEditProfile }: Pr
           : 'bg-blue-600 text-white hover:bg-blue-700'
           }`}
       >
-        {hasPendingProfileUpdate ? '변경 요청 처리 중' : '내 정보 수정'}
+        {hasPendingProfileUpdate ? '변경 요청 처리 중' : '정보 수정 요청'}
       </button>
     </div>
   )
