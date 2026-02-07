@@ -16,6 +16,7 @@ from app.schemas.welfare import (
     PrintWelfareInfoUpdate,
     GuidebookInfoUpdate
 )
+from datetime import datetime, timezone
 from app.database import get_supabase, get_supabase_admin
 from app.utils.auth import get_current_user, require_admin
 from app.utils.sheets import get_sheet_value
@@ -114,13 +115,13 @@ async def complete_print_welfare_image_upload(
         # DB 업데이트
         result = admin_supabase.table('print_welfare_info').update({
             'image_url': public_url,
-            'updated_at': 'NOW()'
+            'updated_at': datetime.now(timezone.utc).isoformat()
         }).eq('id', 1).execute()
         
         return {"image_url": public_url}
     except Exception as e:
         print(f"[API ERROR] complete_print_welfare_image_upload: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"이미지 정보 저장 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail="이미지 정보 저장 실패")
 
 
 @router.put("/admin/welfare/print", response_model=PrintWelfareInfo, summary="프린트 복지 정보 수정 (관리자)")
@@ -140,7 +141,7 @@ async def update_print_welfare_info(
     if not update_data:
         raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
     
-    update_data['updated_at'] = 'NOW()'
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
     
     result = admin_supabase.table('print_welfare_info').update(update_data).eq('id', 1).execute()
     
@@ -289,7 +290,7 @@ async def complete_locker_image_upload(
         return {"image_url": public_url}
     except Exception as e:
         print(f"[API ERROR] complete_locker_image_upload: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"이미지 정보 저장 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail="이미지 정보 저장 실패")
 
 
 @router.post("/admin/welfare/locker_image", summary="[Deprecated] 사물함 배치도 이미지 업로드 (관리자)")
@@ -343,7 +344,7 @@ async def upload_locker_image(
         return {"image_url": image_url}
     except Exception as e:
         print(f"[API ERROR] upload_locker_image: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"이미지 업로드 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail="이미지 업로드 실패")
 
 
 @router.put("/admin/welfare/locker_periods", response_model=LockerInfo, summary="사물함 정보 수정/생성 (관리자)")
@@ -448,6 +449,9 @@ async def get_rental_items():
         if item.get('spreadsheet_id'):
             sheet_name = item.get('quantity_sheet_name', 'Sheet1')
             cell_range = item.get('quantity_cell_range', 'B2')
+            # 시트 이름에 특수문자(괄호, +, 공백 등)가 포함되면 작은따옴표로 감싸야 함
+            if not sheet_name.startswith("'"):
+                sheet_name = f"'{sheet_name}'"
             range_notation = f"{sheet_name}!{cell_range}"
             cache_key = f"{item['spreadsheet_id']}:{range_notation}"
             
@@ -549,7 +553,7 @@ async def update_rental_item(
         raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
     
     # updated_at 자동 갱신
-    update_data['updated_at'] = 'NOW()'
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
     
     # rental_items 업데이트
     result = admin_supabase.table('rental_items').update(update_data).eq('id', item_id).execute()
