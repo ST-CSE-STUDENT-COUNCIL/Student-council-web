@@ -55,6 +55,34 @@ export const adminApi = {
         const response = await api.post<{ message: string }>(`/admin/users/${studentId}/unblock`)
         return response.data
     },
+    getProfileUpdates: async (params?: { status_filter?: string | null; page?: number; page_size?: number }) => {
+        const response = await api.get('/admin/profile-updates', { params })
+        return response.data
+    },
+    getApprovedProfileUpdates: async (params?: { page?: number; page_size?: number }) => {
+        const response = await api.get('/admin/profile-updates/approved', { params })
+        return response.data
+    },
+    getRejectedProfileUpdates: async (params?: { page?: number; page_size?: number }) => {
+        const response = await api.get('/admin/profile-updates/rejected', { params })
+        return response.data
+    },
+    getStorageSignedUrl: async (path: string) => {
+        const response = await api.get<{ signed_url?: string }>('/admin/storage/signed-url', {
+            params: { path },
+        })
+        return response.data
+    },
+    approveProfileUpdate: async (requestId: string | number) => {
+        const response = await api.post(`/admin/profile-updates/${requestId}/approve`)
+        return response.data
+    },
+    rejectProfileUpdate: async (requestId: string | number, reason: string) => {
+        const response = await api.post(`/admin/profile-updates/${requestId}/reject`, null, {
+            params: { reason },
+        })
+        return response.data
+    },
     getSignedUrl: async (path: string) => {
         const response = await api.get<{ signed_url: string }>('/admin/storage/signed-url', { params: { path } })
         return response.data

@@ -99,3 +99,14 @@ class PrintWelfareInfoUpdate(BaseModel):
     """프린트 복지사업 정보 수정 (관리자용)"""
     description: Optional[str] = Field(None, description="설명")
     google_form_url: Optional[str] = Field(None, description="신청 구글폼 URL")
+
+
+# ============================================================================
+# 신입생 가이드북 (Freshman Guidebook)
+# ============================================================================
+
+class GuidebookInfoUpdate(BaseModel):
+    """신입생 가이드북 정보 수정 (관리자용)"""
+    notion_url: Optional[str] = Field(None, description="노션 페이지 URL")
+    title: Optional[str] = Field(None, description="제목")
+    description: Optional[str] = Field(None, description="설명")

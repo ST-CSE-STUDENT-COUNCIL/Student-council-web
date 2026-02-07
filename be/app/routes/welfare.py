@@ -13,7 +13,8 @@ from app.schemas.welfare import (
     RentalItemCreate,
     RentalItemUpdate,
     PrintWelfareInfo,
-    PrintWelfareInfoUpdate
+    PrintWelfareInfoUpdate,
+    GuidebookInfoUpdate
 )
 from app.database import get_supabase, get_supabase_admin
 from app.utils.auth import get_current_user, require_admin
@@ -428,7 +429,18 @@ async def get_rental_items():
     result = supabase.table('rental_items').select('*').eq('is_active', True).order('category, item_name').execute()
     
     # 각 물품의 재고를 구글 스프레드시트에서 조회
+    from cachetools import TTLCache
+    
+    # 캐시 초기화 (최대 100개 항목, 5분 유효)
+    # 전역변수로 선언하여 요청 간 공유
+    if not hasattr(get_rental_items, "cache"):
+        get_rental_items.cache = TTLCache(maxsize=100, ttl=300)
+    
     items = []
+    
+    # 배치 처리를 위한 시트별 그룹화가 이상적이지만,
+    # 일단 캐싱으로 부하를 대폭 줄임
+    
     for item in result.data:
         available_quantity = None
         
@@ -437,8 +449,20 @@ async def get_rental_items():
             sheet_name = item.get('quantity_sheet_name', 'Sheet1')
             cell_range = item.get('quantity_cell_range', 'B2')
             range_notation = f"{sheet_name}!{cell_range}"
+            cache_key = f"{item['spreadsheet_id']}:{range_notation}"
             
-            available_quantity = get_sheet_value(item['spreadsheet_id'], range_notation)
+            # 캐시 확인
+            if cache_key in get_rental_items.cache:
+                available_quantity = get_rental_items.cache[cache_key]
+            else:
+                try:
+                    available_quantity = get_sheet_value(item['spreadsheet_id'], range_notation)
+                    # 성공 시 캐시에 저장
+                    get_rental_items.cache[cache_key] = available_quantity
+                except Exception as e:
+                    print(f"재고 조회 실패 ({item['item_name']}): {e}")
+                    # 실패 시 캐시된 값이 있다면 그것이라도 사용 (없으면 None)
+                    pass
         
         items.append({
             **item,
@@ -558,3 +582,70 @@ async def delete_rental_item(
         raise HTTPException(status_code=404, detail="물품을 찾을 수 없습니다")
     
     return None
+
+
+# ============================================================================
+# 신입생 가이드북 (Freshman Guidebook)
+# ============================================================================
+
+@router.get("/welfare/guidebook", summary="신입생 가이드북 정보 조회 (공개)")
+async def get_guidebook_info():
+    """
+    신입생 가이드북 노션 URL을 조회합니다.
+    
+    - **공개 API**: 인증 불필요
+    - **프론트**: 반환된 notion_url을 iframe으로 표시
+    """
+    supabase = get_supabase()
+    result = supabase.table('guidebook_info').select('*').eq('id', 1).single().execute()
+    
+    if not result.data or not result.data.get('notion_url'):
+        return {
+            "notion_url": None,
+            "message": "가이드북이 등록되지 않았습니다"
+        }
+    
+    data = result.data
+    
+    return {
+        "notion_url": data.get('notion_url'),
+        "title": data.get('title'),
+        "description": data.get('description'),
+        "updated_at": data.get('updated_at')
+    }
+
+
+@router.put("/admin/welfare/guidebook", summary="신입생 가이드북 정보 수정 (관리자)")
+async def update_guidebook_info(
+    body: GuidebookInfoUpdate,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    신입생 가이드북 정보를 수정합니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    """
+    from datetime import datetime, timezone, timedelta
+    
+    admin_supabase = get_supabase_admin()
+    
+    update_data = {}
+    if body.notion_url is not None:
+        update_data['notion_url'] = body.notion_url
+    if body.title is not None:
+        update_data['title'] = body.title
+    if body.description is not None:
+        update_data['description'] = body.description
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
+    
+    kst = timezone(timedelta(hours=9))
+    update_data['updated_at'] = datetime.now(kst).isoformat()
+    
+    result = admin_supabase.table('guidebook_info').update(update_data).eq('id', 1).execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=500, detail="수정 실패")
+    
+    return result.data[0]

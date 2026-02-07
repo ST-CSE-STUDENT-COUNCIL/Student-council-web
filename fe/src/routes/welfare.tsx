@@ -185,16 +185,16 @@ function Welfare() {
   }, [groupedRentalSections, rentalCategoryFilter])
 
   return (
-    <div className="w-full px-[5%] lg:px-[10%] py-12">
+    <div className="w-full px-4 sm:px-6 lg:px-[10%] py-8 sm:py-12">
       <SEO
         title="복지사업"
         description="학생회의 복지사업(물품 대여, 사물함, 프린터, 가이드북)을 확인하세요."
         url="/welfare"
       />
       {/* Page Title */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">복지사업</h1>
-        <p className="text-gray-500 dark:text-gray-400">학생회의 복지사업을 확인하세요.</p>
+      <div className="text-center mb-8 sm:mb-12">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-2 sm:mb-4">복지사업</h1>
+        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">학생회의 복지사업을 확인하세요.</p>
       </div>
 
       <CategoryFilter selectedCategory={selectedCategory} onSelect={setSelectedCategory} />
@@ -343,24 +343,26 @@ function Welfare() {
             </div>
           </div>
         ) : (
-          <div className="w-full h-[800px] bg-white dark:bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center">
-            {guidebookLoading ? (
-              <p className="text-gray-500 dark:text-gray-400">가이드북 정보를 불러오는 중입니다...</p>
-            ) : guidebookInfo?.notion_url ? (
-              <iframe
-                src={guidebookInfo.notion_url}
-                width="100%"
-                height="100%"
-                className="border-0 w-full h-full"
-                title={guidebookInfo.title || "신입생 가이드북"}
-              />
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400">등록된 가이드북 정보가 없습니다.</p>
-            )}
+          <div className="w-full h-[600px] sm:h-[800px] bg-white dark:bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center">
+            {
+              guidebookLoading ? (
+                <p className="text-gray-500 dark:text-gray-400" > 가이드북 정보를 불러오는 중입니다...</p>
+              ) : guidebookInfo?.notion_url ? (
+                <iframe
+                  src={guidebookInfo.notion_url}
+                  width="100%"
+                  height="100%"
+                  className="border-0 w-full h-full"
+                  title={guidebookInfo.title || "신입생 가이드북"}
+                />
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">등록된 가이드북 정보가 없습니다.</p>
+              )}
           </div>
-        )}
-      </div>
+        )
+        }
+      </div >
 
-    </div>
+    </div >
   )
 }

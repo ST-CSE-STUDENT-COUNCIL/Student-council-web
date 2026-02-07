@@ -219,17 +219,17 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
 
     // 1단계 유효성 검사
     const validateStep1 = () => {
+        // 비회원 Turnstile 검증 (모든 타입에서 비회원이면 검증)
+        if (isNonMember && !turnstileToken) {
+            toast.error('보안 검증을 완료해주세요.')
+            return false
+        }
+
         if (isAnonymousType) return true
 
         // 비회원 약관 동의 검증
         if (isNonMember && !nonMemberAgreed) {
             toast.error('비회원 처리 규정에 동의해주세요.')
-            return false
-        }
-
-        // 비회원 Turnstile 검증
-        if (isNonMember && !turnstileToken) {
-            toast.error('보안 검증을 완료해주세요.')
             return false
         }
 
@@ -539,9 +539,9 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                     </div>
                                 )}
 
-                                {/* 비회원 Turnstile (익명이 아니고, 비회원인 경우) */}
-                                {!isAnonymousType && isNonMember && (
-                                    <div className="flex justify-center">
+                                {/* 비회원 Turnstile (비회원인 경우 항상 표시) */}
+                                {isNonMember && (
+                                    <div className="flex justify-center mt-4">
                                         <Turnstile
                                             onVerify={(token) => setTurnstileToken(token)}
                                             onExpire={() => setTurnstileToken(null)}

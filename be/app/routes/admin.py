@@ -2,7 +2,7 @@
 관리자 API 엔드포인트
 회원 승인, 역할 관리, 회비 납부 처리 등 관리자 전용 기능
 """
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import List, Optional
 from datetime import datetime
 from app.schemas.admin import (
@@ -34,6 +34,40 @@ router = APIRouter(
 
 
 @router.get(
+    "/storage/signed-url",
+    summary="이미지 Signed URL 생성",
+    description="스토리지 파일 경로를 받아 접근 가능한 Signed URL을 생성합니다",
+    responses={
+        400: {"model": ErrorResponse, "description": "잘못된 요청"},
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"}
+    }
+)
+async def get_storage_signed_url(path: str):
+    """
+    이미지 Signed URL 생성
+    
+    관리자가 이미지를 확인해야 할 때 호출합니다.
+    Private 버킷의 파일에 접근할 수 있는 임시 URL을 반환합니다.
+    """
+    if not path:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="파일 경로가 필요합니다"
+        )
+    
+    signed_url = create_signed_url(path)
+    
+    if not signed_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="파일을 찾을 수 없거나 URL 생성에 실패했습니다"
+        )
+    
+    return {"signed_url": signed_url}
+
+
+@router.get(
     "/users/pending",
     response_model=PendingUserListResponse,
     summary="승인 대기 회원 목록 조회",
@@ -43,39 +77,38 @@ router = APIRouter(
         403: {"model": ErrorResponse, "description": "관리자 권한 필요"}
     }
 )
-async def get_pending_users():
+async def get_pending_users(
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지 크기 (최대 100)")
+):
     """
     승인 대기 회원 목록 조회
     
     verification_status가 'pending' 또는 'submitted'인 회원들을 조회합니다.
     생성일 기준 오래된 순으로 정렬합니다.
-    학적 인증 이미지가 있는 경우 Signed URL을 생성하여 반환합니다.
+    학적 인증 이미지 URL(경로)은 포함되지만, Signed URL은 포함되지 않습니다.
+    이미지 확인이 필요한 경우 /admin/storage/signed-url 엔드포인트를 사용하세요.
     """
     try:
+        offset = (page - 1) * page_size
+
         # 승인 대기 중인 회원 조회 (pending + submitted)
         result = supabase.table('users')\
-            .select('id, student_id, name, email, department, phone, verification_image_url, created_at')\
+            .select('id, student_id, name, email, department, phone, verification_image_url, created_at', count='exact')\
             .in_('verification_status', ['pending', 'submitted'])\
             .order('created_at', desc=False)\
+            .range(offset, offset + page_size - 1)\
             .execute()
         
         users = result.data if result.data else []
+        total = result.count or 0
         
-        # 각 사용자의 이미지에 대한 Signed URL 생성
-        for user in users:
-            original_url = user.get('verification_image_url')
-            if original_url:
-                # Private Storage이므로 Signed URL 생성 (1시간 유효)
-                signed_url = create_signed_url(original_url, expires_in=3600)
-                if signed_url:
-                    user['verification_image_url'] = signed_url
-                else:
-                    # 실패 시 None 유지
-                    user['verification_image_url'] = None
+        # N+1 문제 해결: 목록 조회 시에는 Signed URL을 생성하지 않음
+        # 클라이언트에서 필요할 때 별도로 요청해야 함
         
         return PendingUserListResponse(
             users=users,
-            total=len(users)
+            total=total
         )
     
     except Exception as e:
@@ -96,8 +129,8 @@ async def get_pending_users():
     }
 )
 async def get_rejected_users(
-    page: int = 1,
-    page_size: int = 20
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지 크기 (최대 100)")
 ):
     """
     거절된 회원 목록 조회
@@ -115,9 +148,9 @@ async def get_rejected_users(
         
         total = count_result.count or 0
         
-        # 목록 조회
+        # 목록 조회 - [최적화] 필요한 컬럼만 선택
         result = admin_supabase.table('rejected_users')\
-            .select('*')\
+            .select('id, student_id, name, email, department, phone, rejection_reason, rejected_at, rejected_by')\
             .order('rejected_at', desc=True)\
             .range(offset, offset + page_size - 1)\
             .execute()
@@ -150,7 +183,9 @@ async def get_rejected_users(
 async def get_all_users(
     role: Optional[str] = None,
     verification_status: Optional[str] = None,
-    membership_paid: Optional[bool] = None
+    membership_paid: Optional[bool] = None,
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지 크기 (최대 100)")
 ):
     """
     전체 회원 목록 조회
@@ -159,14 +194,18 @@ async def get_all_users(
         role: 역할 필터 (student, admin)
         verification_status: 승인 상태 필터 (pending, approved, rejected)
         membership_paid: 회비 납부 여부 필터 (true, false)
+        page: 페이지 번호 (기본 1)
+        page_size: 페이지 크기 (기본 20)
     
     Returns:
         회원 목록과 총 개수
     """
     try:
+        offset = (page - 1) * page_size
+
         # 기본 쿼리
         query = supabase.table('users')\
-            .select('id, student_id, name, email, department, phone, role, verification_status, membership_paid, created_at')
+            .select('id, student_id, name, email, department, phone, role, verification_status, membership_paid, created_at', count='exact')
         
         # 필터 적용
         if role:
@@ -176,14 +215,17 @@ async def get_all_users(
         if membership_paid is not None:
             query = query.eq('membership_paid', membership_paid)
         
-        # 정렬 및 실행
-        result = query.order('created_at', desc=True).execute()
+        # 정렬 및 실행 (페이지네이션 적용)
+        result = query.order('created_at', desc=True)\
+            .range(offset, offset + page_size - 1)\
+            .execute()
         
         users = result.data if result.data else []
+        total = result.count or 0
         
         return UserListResponse(
             users=users,
-            total=len(users)
+            total=total
         )
     
     except Exception as e:
@@ -222,7 +264,7 @@ async def approve_user(user_id: str):
     try:
         # 1. 사용자 존재 확인
         user_check = supabase.table('users')\
-            .select('id, verification_status')\
+            .select('id, verification_status, verification_image_url')\
             .eq('id', user_id)\
             .single()\
             .execute()
@@ -233,8 +275,10 @@ async def approve_user(user_id: str):
                 detail="사용자를 찾을 수 없습니다"
             )
         
+        user = user_check.data
+        
         # 2. 이미 승인된 회원인지 확인
-        if user_check.data['verification_status'] == 'approved':
+        if user['verification_status'] == 'approved':
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="이미 승인된 회원입니다"
@@ -245,7 +289,8 @@ async def approve_user(user_id: str):
         kst = timezone(timedelta(hours=9))
         now_kst = datetime.now(kst).isoformat()
         
-        admin_supabase = get_supabase_admin()
+        from app.database import get_fresh_admin_client
+        admin_supabase = get_fresh_admin_client()
         result = admin_supabase.table('users')\
             .update({
                 'verification_status': 'approved',
@@ -257,9 +302,9 @@ async def approve_user(user_id: str):
             .execute()
         
         # 승인 완료 후 인증 이미지 삭제 (개인정보 보호)
-        if user['verification_image_url']:
+        if user.get('verification_image_url'):
             try:
-                from app.database import supabase
+                # supabase는 전역 변수 사용 (지역 import 제거)
                 supabase.storage.from_('verification-images').remove([user['verification_image_url']])
             except Exception as e:
                 # 이미지 삭제 실패해도 승인은 유지 (로그만 남김)
@@ -402,7 +447,7 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest):
         
         # 2. 사용자 존재 확인
         user_check = supabase.table('users')\
-            .select('id, role')\
+            .select('id, role, email')\
             .eq('id', user_id)\
             .single()\
             .execute()
@@ -413,8 +458,20 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest):
                 detail="사용자를 찾을 수 없습니다"
             )
         
+        target_user = user_check.data
+        
+        # [보안] 절대 관리자 계정 보호 (admin1 ~ admin5)
+        # 이 계정들은 API를 통해서도 역할을 변경할 수 없음
+        protected_emails = [f"admin{i}@seoultech.ac.kr" for i in range(1, 6)]
+        
+        if target_user.get('email') in protected_emails:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="해당 관리자 계정은 역할을 변경할 수 없습니다 (Protected Account)"
+            )
+        
         # 3. 이미 같은 역할인지 확인
-        if user_check.data['role'] == request.role:
+        if target_user['role'] == request.role:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"이미 {request.role} 역할입니다"
@@ -541,10 +598,11 @@ async def get_blocked_users():
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc)
         
-        # 실제 차단된 사용자 조회 (block_reason이 있는 경우)
+        # 실제 차단된 사용자 조회 - [OOM 방지] 최대 100개로 제한
         blocks_result = supabase.table('login_blocks')\
-            .select('*')\
+            .select('student_id, failed_attempts, block_reason, block_until, created_at')\
             .not_.is_('block_reason', 'null')\
+            .limit(100)\
             .execute()
         
         if not blocks_result.data:
@@ -589,11 +647,12 @@ async def get_blocked_users():
             .execute()
         user_map = {u['student_id']: u for u in (users_result.data or [])}
         
-        # 로그인 시도 기록 한 번에 조회 (각 student_id별 최근 20개는 클라이언트에서 필터링)
+        # 로그인 시도 기록 한 번에 조회 (최근 50개만 조회하여 메모리 보호)
         attempts_result = supabase.table('login_attempts')\
             .select('*')\
             .in_('student_id', student_ids)\
             .order('attempt_time', desc=True)\
+            .limit(50)\
             .execute()
         
         # student_id별로 로그인 시도 그룹화
@@ -602,8 +661,7 @@ async def get_blocked_users():
             sid = attempt['student_id']
             if sid not in attempts_map:
                 attempts_map[sid] = []
-            if len(attempts_map[sid]) < 20:  # 최대 20개
-                attempts_map[sid].append(attempt)
+            attempts_map[sid].append(attempt)
         
         blocked_users = []
         for block in active_blocks:
@@ -699,28 +757,43 @@ async def unblock_user_by_admin(student_id: str):
     }
 )
 async def get_profile_update_requests(
-    status_filter: Optional[str] = None
+    status_filter: Optional[str] = None,
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지 크기 (최대 100)")
 ):
     """프로필 변경 요청 목록 조회"""
     try:
+        offset = (page - 1) * page_size
+        
+        # [OOM 방지] 최소 컬럼만 + 강제 limit
         query = supabase.table('profile_update_requests')\
-            .select('*, users!user_id(name, student_id, email)')
+            .select('id, user_id, status, field_name, current_value, new_value, rejection_reason, created_at, processed_at')
         
         if status_filter:
             query = query.eq('status', status_filter)
         else:
-            query = query.eq('status', 'pending')  # 기본: 대기 중인 것만
+            query = query.eq('status', 'pending')
         
-        result = query.order('created_at', desc=True).execute()
+        result = query.order('created_at', desc=True)\
+            .limit(page_size)\
+            .execute()
         
-        # Signed URL 생성
-        requests = []
-        for req in (result.data or []):
-            signed_url = create_signed_url(req.get('verification_image_url'))
-            req['verification_image_signed_url'] = signed_url
-            requests.append(req)
+        requests = result.data or []
         
-        return {"requests": requests}
+        if requests:
+            # 사용자 정보 별도 조회 (Join 대신)
+            user_ids = list(set(r['user_id'] for r in requests))
+            users = supabase.table('users').select('id, name, student_id').in_('id', user_ids).execute()
+            user_map = {u['id']: u for u in (users.data or [])}
+            
+            # 데이터 병합
+            for req in requests:
+                user = user_map.get(req['user_id'])
+                if user:
+                    req['user_name'] = user.get('name')
+                    req['student_id'] = user.get('student_id')
+        
+        return {"requests": requests, "total": -1}
     
     except Exception as e:
         print(f"[API ERROR] get_profile_update_requests: {str(e)}")
@@ -735,22 +808,36 @@ async def get_profile_update_requests(
     summary="거부된 프로필 변경 요청 목록",
     description="거부된 프로필 변경 요청을 조회합니다"
 )
-async def get_rejected_profile_updates():
+async def get_rejected_profile_updates(
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지 크기 (최대 100)")
+):
     """거부된 프로필 변경 요청 목록"""
     try:
+        offset = (page - 1) * page_size
+        
+        # [OOM 방지] 최소 컬럼만 + 강제 limit
         result = supabase.table('profile_update_requests')\
-            .select('*, users!user_id(name, student_id, email)')\
+            .select('id, user_id, status, field_name, current_value, new_value, rejection_reason, created_at, processed_at')\
             .eq('status', 'rejected')\
-            .order('updated_at', desc=True)\
+            .order('created_at', desc=True)\
+            .limit(page_size)\
             .execute()
         
-        requests = []
-        for req in (result.data or []):
-            signed_url = create_signed_url(req.get('verification_image_url'))
-            req['verification_image_signed_url'] = signed_url
-            requests.append(req)
+        requests = result.data or []
         
-        return {"requests": requests, "total": len(requests)}
+        if requests:
+            user_ids = list(set(r['user_id'] for r in requests))
+            users = supabase.table('users').select('id, name, student_id').in_('id', user_ids).execute()
+            user_map = {u['id']: u for u in (users.data or [])}
+            
+            for req in requests:
+                user = user_map.get(req['user_id'])
+                if user:
+                    req['user_name'] = user.get('name')
+                    req['student_id'] = user.get('student_id')
+                    
+        return {"requests": requests, "total": -1}
     
     except Exception as e:
         raise HTTPException(
@@ -764,22 +851,36 @@ async def get_rejected_profile_updates():
     summary="승인된 프로필 변경 요청 목록",
     description="승인된 프로필 변경 요청을 조회합니다"
 )
-async def get_approved_profile_updates():
+async def get_approved_profile_updates(
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    page_size: int = Query(20, ge=1, le=100, description="페이지 크기 (최대 100)")
+):
     """승인된 프로필 변경 요청 목록"""
     try:
+        offset = (page - 1) * page_size
+        
+        # [OOM 방지] 최소 컬럼만 + 강제 limit
         result = supabase.table('profile_update_requests')\
-            .select('*, users!user_id(name, student_id, email)')\
+            .select('id, user_id, status, field_name, current_value, new_value, created_at, processed_at')\
             .eq('status', 'approved')\
-            .order('updated_at', desc=True)\
+            .order('processed_at', desc=True)\
+            .limit(page_size)\
             .execute()
         
-        requests = []
-        for req in (result.data or []):
-            signed_url = create_signed_url(req.get('verification_image_url'))
-            req['verification_image_signed_url'] = signed_url
-            requests.append(req)
+        requests = result.data or []
         
-        return {"requests": requests, "total": len(requests)}
+        if requests:
+            user_ids = list(set(r['user_id'] for r in requests))
+            users = supabase.table('users').select('id, name, student_id').in_('id', user_ids).execute()
+            user_map = {u['id']: u for u in (users.data or [])}
+            
+            for req in requests:
+                user = user_map.get(req['user_id'])
+                if user:
+                    req['user_name'] = user.get('name')
+                    req['student_id'] = user.get('student_id')
+                    
+        return {"requests": requests, "total": -1}
     
     except Exception as e:
         raise HTTPException(

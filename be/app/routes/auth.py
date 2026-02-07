@@ -394,6 +394,14 @@ async def login(body: LoginRequest, request: Request):
             from app.database import get_fresh_admin_client
             fresh_client = get_fresh_admin_client()
             
+            # [중복 로그인 방지] 기존 세션 모두 만료 처리
+            try:
+                # user_data['id']는 위에서 이미 조회했음
+                fresh_client.auth.admin.sign_out(user_data['id'], scope='global')
+            except Exception as e:
+                # 로그아웃 실패하더라도 로그인은 계속 진행 (로그만 남김)
+                print(f"[LOGIN WARNING] 기존 세션 만료 실패 (무시됨): {str(e)}")
+            
             auth_response = fresh_client.auth.sign_in_with_password({
                 "email": email,
                 "password": body.password
@@ -454,6 +462,20 @@ async def login(body: LoginRequest, request: Request):
         # 5. 로그인 성공 - 실패 횟수 초기화 및 기록
         await reset_failed_attempts(body.student_id)
         await record_login_attempt(body.student_id, True, client_ip)
+
+        # [중복 로그인 방지] 마지막 로그인 시각 갱신
+        # 이 시각 이전에 발급된 토큰은 모두 무효화됨
+        from datetime import datetime, timezone
+        now_iso = datetime.now(timezone.utc).isoformat()
+        
+        try:
+            fresh_client.table('users').update({'last_login_at': now_iso}).eq('id', user_data['id']).execute()
+            # 응답 데이터에도 최신 로그인 시각 반영
+            user_data['last_login_at'] = now_iso
+        except Exception as e:
+            print(f"[LOGIN ERROR] last_login_at update failed: {e}")
+            # 치명적이지 않으므로 진행 (로그인 성공 처리)
+
         # 6. 응답 생성 및 refresh_token을 HttpOnly 쿠키로 설정
         from fastapi.responses import JSONResponse
         
