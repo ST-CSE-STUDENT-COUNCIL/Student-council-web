@@ -25,6 +25,7 @@ import { Route as ErrorRouteImport } from './routes/error'
 import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SearchIndexRouteImport } from './routes/search/index'
 import { Route as NoticesIndexRouteImport } from './routes/notices/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ActivitiesIndexRouteImport } from './routes/activities/index'
@@ -129,6 +130,11 @@ const AdminRoute = AdminRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchIndexRoute = SearchIndexRouteImport.update({
+  id: '/search/',
+  path: '/search/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NoticesIndexRoute = NoticesIndexRouteImport.update({
@@ -289,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/activities': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/notices/': typeof NoticesIndexRoute
+  '/search': typeof SearchIndexRoute
   '/admin/events/create': typeof AdminEventsCreateRoute
   '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
   '/admin/notices/create': typeof AdminNoticesCreateRoute
@@ -330,6 +337,7 @@ export interface FileRoutesByTo {
   '/activities': typeof ActivitiesIndexRoute
   '/admin': typeof AdminIndexRoute
   '/notices': typeof NoticesIndexRoute
+  '/search': typeof SearchIndexRoute
   '/admin/events/create': typeof AdminEventsCreateRoute
   '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
   '/admin/notices/create': typeof AdminNoticesCreateRoute
@@ -374,6 +382,7 @@ export interface FileRoutesById {
   '/activities/': typeof ActivitiesIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/notices/': typeof NoticesIndexRoute
+  '/search/': typeof SearchIndexRoute
   '/admin/events/create': typeof AdminEventsCreateRoute
   '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
   '/admin/notices/create': typeof AdminNoticesCreateRoute
@@ -419,6 +428,7 @@ export interface FileRouteTypes {
     | '/activities'
     | '/admin/'
     | '/notices/'
+    | '/search'
     | '/admin/events/create'
     | '/admin/kakaotalk/create'
     | '/admin/notices/create'
@@ -460,6 +470,7 @@ export interface FileRouteTypes {
     | '/activities'
     | '/admin'
     | '/notices'
+    | '/search'
     | '/admin/events/create'
     | '/admin/kakaotalk/create'
     | '/admin/notices/create'
@@ -503,6 +514,7 @@ export interface FileRouteTypes {
     | '/activities/'
     | '/admin/'
     | '/notices/'
+    | '/search/'
     | '/admin/events/create'
     | '/admin/kakaotalk/create'
     | '/admin/notices/create'
@@ -537,6 +549,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   WelfareRoute: typeof WelfareRoute
   ActivitiesIndexRoute: typeof ActivitiesIndexRoute
+  SearchIndexRoute: typeof SearchIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -651,6 +664,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search/': {
+      id: '/search/'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notices/': {
@@ -914,6 +934,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   WelfareRoute: WelfareRoute,
   ActivitiesIndexRoute: ActivitiesIndexRoute,
+  SearchIndexRoute: SearchIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -38,7 +38,7 @@ export default function Footer() {
                     </div>
 
                     {/* Quick Links */}
-                    <div>
+                    <div className="hidden md:block">
                         <h4 className="text-white font-semibold mb-4">바로가기</h4>
                         <ul className="space-y-2 text-sm">
                             <li><a href="/intro" className="hover:text-blue-400 transition-colors">학생회 소개</a></li>
@@ -51,7 +51,7 @@ export default function Footer() {
                     </div>
 
                     {/* Resources */}
-                    <div>
+                    <div className="hidden md:block">
                         <h4 className="text-white font-semibold mb-4">관련 사이트</h4>
                         <ul className="space-y-2 text-sm">
                             <li><a href="https://www.seoultech.ac.kr/index.jsp" target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors">서울과학기술대학교 홈페이지</a></li>

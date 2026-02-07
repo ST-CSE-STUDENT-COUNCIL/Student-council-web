@@ -1,7 +1,7 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { LayoutDashboard, Megaphone, Calendar, Gift, Users, FileText, MessageSquare, BarChart3, MessageCircle, Shield, UserRoundPen } from 'lucide-react'
 
-const MENU_ITEMS = [
+export const ADMIN_MENU_ITEMS = [
     { label: '대시보드', href: '/admin', icon: LayoutDashboard },
     { label: '회장 정보 관리', href: '/admin/privacy-officer', icon: Shield },
     { label: '학생회 소개', href: '/admin/intro', icon: FileText },
@@ -27,7 +27,7 @@ export const AdminSidebar = () => {
             </div>
 
             <nav className="p-4 space-y-1">
-                {MENU_ITEMS.map((item) => {
+                {ADMIN_MENU_ITEMS.map((item) => {
                     const isActive = location.pathname === item.href || (item.href !== '/admin' && location.pathname.startsWith(item.href))
                     const Icon = item.icon
 
