@@ -12,7 +12,6 @@ export function AttendanceQrCard({ qrDataUrl, qrError, qrUrl }: AttendanceQrCard
                     <p className="text-sm font-semibold text-gray-900">출석 체크 QR</p>
                     <p className="text-xs text-gray-500">학생이 QR을 스캔하면 출석 페이지로 이동합니다.</p>
                 </div>
-                <div className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">공개</div>
             </div>
             <div className="mt-4 flex flex-col items-center gap-3">
                 {qrDataUrl ? (
@@ -25,6 +24,15 @@ export function AttendanceQrCard({ qrDataUrl, qrError, qrUrl }: AttendanceQrCard
                     <div className="w-44 h-44 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-sm text-gray-400">
                         {qrError ?? 'QR 생성 대기'}
                     </div>
+                )}
+                {qrDataUrl && (
+                    <a
+                        href={qrDataUrl}
+                        download="attendance-qr.png"
+                        className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 transition"
+                    >
+                        QR 다운로드
+                    </a>
                 )}
                 <div className="w-full rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-600 break-all text-center">
                     {qrUrl || '행사를 선택해주세요'}
