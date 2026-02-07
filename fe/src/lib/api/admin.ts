@@ -87,4 +87,16 @@ export const adminApi = {
         const response = await api.get<{ signed_url: string }>('/admin/storage/signed-url', { params: { path } })
         return response.data
     },
+    getActivityAttendance: async (activityId: number) => {
+        const response = await api.get(`/admin/${activityId}/attendance`)
+        return response.data
+    },
+    cancelActivityAttendance: async (activityId: number, registrationId: number) => {
+        const response = await api.delete(`/admin/${activityId}/registrations/${registrationId}/attend`)
+        return response.data
+    },
+    markActivityAttendance: async (activityId: number, registrationId: number) => {
+        const response = await api.post(`/admin/${activityId}/registrations/${registrationId}/attend`)
+        return response.data
+    },
 }
