@@ -41,7 +41,7 @@ function SignUp() {
         defaultValues: {
             name: '',
             student_id: '',
-            emailPrefix: '',
+            email: '',
             phone: '',
             password: '',
             password_confirm: '',
@@ -52,15 +52,15 @@ function SignUp() {
 
     const watchedPassword = watch('password')
     const watchedPasswordConfirm = watch('password_confirm')
-    const watchedEmailPrefix = watch('emailPrefix')
+    const watchedEmail = watch('email')
     const watchedStudentId = watch('student_id')
 
     // Custom hooks
-    const getFullEmail = useCallback(() => {
-        return watchedEmailPrefix ? `${watchedEmailPrefix}@seoultech.ac.kr` : ''
-    }, [watchedEmailPrefix])
+    const getEmail = useCallback(() => {
+        return watchedEmail || ''
+    }, [watchedEmail])
 
-    const emailVerification = useEmailVerification(getFullEmail)
+    const emailVerification = useEmailVerification(getEmail)
     const studentIdCheck = useStudentIdCheck()
 
     // Password validation display
@@ -81,14 +81,7 @@ function SignUp() {
         studentIdCheck.reset()
     }
 
-    const handleEmailPrefixChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value
-        if (value.includes('@')) {
-            toast.error("'@'를 제외한 아이디만 입력해주세요.")
-            return
-        }
-        setValue('emailPrefix', value, { shouldValidate: true })
-    }
+
 
     const onSubmit = async (data: SignupFormData) => {
         if (studentIdCheck.isAvailable !== true) {
@@ -110,7 +103,7 @@ function SignUp() {
             await authApi.signup({
                 name: data.name,
                 student_id: data.student_id,
-                email: getFullEmail(),
+                email: data.email,
                 phone: data.phone,
                 password: data.password,
                 department: data.department
@@ -236,27 +229,26 @@ function SignUp() {
                                     <div className="sm:col-span-2">
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">이메일</label>
                                         <div className="flex gap-3 items-center">
-                                            <div className="flex items-center gap-2 flex-1">
+                                            <div className="flex-1">
                                                 <input
-                                                    type="text"
-                                                    value={watchedEmailPrefix}
-                                                    onChange={handleEmailPrefixChange}
+                                                    type="email"
+                                                    {...register('email')}
                                                     disabled={emailVerification.isVerified}
                                                     className="block w-full px-4 py-3 border rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 sm:text-sm transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 disabled:bg-gray-100 dark:disabled:bg-slate-900 disabled:text-gray-500 border-gray-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-200 dark:focus:ring-blue-900/30"
-                                                    placeholder="example"
+                                                    placeholder="example@email.com"
                                                 />
-                                                <span className="text-gray-700 dark:text-gray-300 text-md whitespace-nowrap">@seoultech.ac.kr</span>
                                             </div>
                                             <button
                                                 type="button"
                                                 onClick={emailVerification.sendVerification}
-                                                disabled={emailVerification.isVerified || emailVerification.isSending || !watchedEmailPrefix?.trim()}
+                                                disabled={emailVerification.isVerified || emailVerification.isSending || !watchedEmail?.trim()}
                                                 className={`whitespace-nowrap px-6 py-3 border border-transparent rounded-xl text-sm font-semibold text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${emailVerification.isVerified ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
                                                     }`}
                                             >
                                                 {emailVerification.isSending ? '발송중...' : (emailVerification.isVerified ? '인증완료' : '인증번호 발송')}
                                             </button>
                                         </div>
+                                        {errors.email && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email.message}</p>}
                                     </div>
 
                                     {/* Verification Code */}
