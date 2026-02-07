@@ -239,7 +239,7 @@ async def get_activity(
             thumbnail_url=activity.get("thumbnail_url"),
             images=images,
             is_active=activity["is_active"],
-            is_anonymous=activity.get("is_anonymous", True),
+            is_anonymous=activity.get("is_anonymous", False),
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(activity["updated_at"].replace('Z', '+00:00')),
@@ -349,8 +349,8 @@ async def register_for_activity(
             from app.utils.turnstile import verify_turnstile
             await verify_turnstile(token=body.turnstile_token)
             
-            # 필수 정보 확인 (is_anonymous=true인 활동은 익명 허용)
-            is_anonymous_allowed = activity.get("is_anonymous", True)
+            # 필수 정보 확인 (is_anonymous=true인 활동만 익명 허용)
+            is_anonymous_allowed = activity.get("is_anonymous", False)
             
             if not is_anonymous_allowed and not all([body.name, body.student_id, body.department, body.phone]):
                 raise HTTPException(
@@ -363,7 +363,7 @@ async def register_for_activity(
         
         # 익명 활동이면 무조건 개인정보 제거 (프론트에서 임시값을 보내도 무시)
         # student_id=None이어야 DB 유니크 인덱스에 걸리지 않음
-        if activity.get("is_anonymous", True):
+        if activity.get("is_anonymous", False):
              name = "익명"
              student_id = None
              department = None
@@ -725,7 +725,7 @@ async def create_activity(
             form_fields=activity.get("form_fields", []),
             thumbnail_url=activity.get("thumbnail_url"),
             is_active=activity["is_active"],
-            is_anonymous=activity.get("is_anonymous", True),
+            is_anonymous=activity.get("is_anonymous", False),
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(activity["updated_at"].replace('Z', '+00:00')),
@@ -855,7 +855,7 @@ async def update_activity(
             form_fields=activity.get("form_fields", []),
             thumbnail_url=activity.get("thumbnail_url"),
             is_active=activity["is_active"],
-            is_anonymous=activity.get("is_anonymous", True),
+            is_anonymous=activity.get("is_anonymous", False),
             created_by=activity.get("created_by"),
             created_at=datetime.fromisoformat(activity["created_at"].replace('Z', '+00:00')),
             updated_at=datetime.fromisoformat(activity["updated_at"].replace('Z', '+00:00')),
