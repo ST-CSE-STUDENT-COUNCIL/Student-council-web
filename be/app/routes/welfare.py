@@ -9,6 +9,7 @@ from typing import List, Optional
 from app.schemas.welfare import (
     LockerInfo,
     LockerInfoUpdate,
+    RentalConfigUpdate,
     RentalItem,
     RentalItemCreate,
     RentalItemUpdate,
@@ -417,6 +418,57 @@ async def update_locker_info(
 # 물품대여 (Rental Items)
 # ============================================================================
 
+@router.get("/welfare/rental_config", summary="대여사업 설정 조회 (공개)")
+async def get_rental_config():
+    """
+    대여사업 설정(시트 URL, 신청 폼 URL)을 조회합니다.
+    
+    - **공개 API**: 인증 불필요
+    """
+    supabase = get_supabase()
+    result = supabase.table('rental_config').select('*').eq('id', 1).single().execute()
+    
+    if not result.data:
+        return {"id": 1, "sheet_url": None, "application_form_url": None, "updated_at": None}
+    
+    return result.data
+
+
+@router.put("/admin/welfare/rental_config", summary="대여사업 설정 수정 (관리자)")
+async def update_rental_config(
+    body: RentalConfigUpdate,
+    current_user: dict = Depends(require_admin)
+):
+    """
+    대여사업 설정(시트 URL, 신청 폼 URL)을 수정합니다.
+    한 번 설정하면 전체 물품에 공통 적용됩니다.
+    
+    - **관리자 전용**: admin 권한 필요
+    """
+    admin_supabase = get_supabase_admin()
+    
+    update_data = body.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="수정할 데이터가 없습니다")
+    
+    # sheet_url에서 spreadsheet_id 자동 추출
+    if 'sheet_url' in update_data and update_data['sheet_url']:
+        match = re.search(r'/spreadsheets/d/([a-zA-Z0-9_-]+)', update_data['sheet_url'])
+        if match:
+            update_data['spreadsheet_id'] = match.group(1)
+        else:
+            update_data['spreadsheet_id'] = None
+    
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
+    
+    result = admin_supabase.table('rental_config').update(update_data).eq('id', 1).execute()
+    
+    if not result.data:
+        raise HTTPException(status_code=500, detail="설정 저장 실패")
+    
+    return result.data[0]
+
+
 @router.get("/welfare/welfare_rentals", response_model=List[RentalItem], summary="대여 물품 목록 조회 (공개)")
 async def get_rental_items():
     """
@@ -424,8 +476,19 @@ async def get_rental_items():
     
     - **공개 API**: 인증 불필요
     - **현재 재고**: available_quantity는 구글 스프레드시트에서 실시간 조회
+    - **시트 URL**: rental_config에서 공통 시트 URL을 가져와 사용
     """
     supabase = get_supabase()
+    
+    # rental_config에서 공통 시트 URL 가져오기
+    config_result = supabase.table('rental_config').select('sheet_url, spreadsheet_id').eq('id', 1).single().execute()
+    spreadsheet_id = None
+    if config_result.data:
+        spreadsheet_id = config_result.data.get('spreadsheet_id')
+        if not spreadsheet_id and config_result.data.get('sheet_url'):
+            match = re.search(r'/spreadsheets/d/([a-zA-Z0-9_-]+)', config_result.data['sheet_url'])
+            if match:
+                spreadsheet_id = match.group(1)
     
     # rental_items 테이블에서 활성화된 물품만 조회
     result = supabase.table('rental_items').select('*').eq('is_active', True).order('category, item_name').execute()
@@ -445,14 +508,6 @@ async def get_rental_items():
     
     for item in result.data:
         available_quantity = None
-        
-        # application_sheet_url에서 spreadsheet_id 자동 추출 (DB에 별도 저장 불필요)
-        spreadsheet_id = item.get('spreadsheet_id') or None
-        if not spreadsheet_id:
-            url = item.get('application_sheet_url', '')
-            match = re.search(r'/spreadsheets/d/([a-zA-Z0-9_-]+)', url)
-            if match:
-                spreadsheet_id = match.group(1)
         
         if spreadsheet_id:
             # 빈 문자열이면 기본값 적용: 시트 이름은 물품명, 셀은 B2

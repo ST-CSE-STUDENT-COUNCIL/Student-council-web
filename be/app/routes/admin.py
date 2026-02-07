@@ -284,7 +284,7 @@ async def approve_user(user_id: str):
                 detail="이미 승인된 회원입니다"
             )
         
-        # 3. 승인 처리
+        # 3. 승인 처리 (verification_status 조건으로 race condition 방지)
         from datetime import timezone, timedelta
         kst = timezone(timedelta(hours=9))
         now_kst = datetime.now(kst).isoformat()
@@ -299,7 +299,14 @@ async def approve_user(user_id: str):
                 'updated_at': now_kst
             })\
             .eq('id', user_id)\
+            .neq('verification_status', 'approved')\
             .execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 처리된 요청입니다"
+            )
         
         # 승인 완료 후 인증 이미지 삭제 (개인정보 보호)
         if user.get('verification_image_url'):
@@ -366,7 +373,16 @@ async def reject_user(user_id: str, request: RejectUserRequest):
         
         user_data = user_check.data
         
-        # 2. rejected_users 테이블에 아카이브
+        # 2. 먼저 users 테이블에서 삭제 (원자적 보호 - 먼저 삭제해야 중복 거부 방지)
+        delete_result = admin_supabase.table('users').delete().eq('id', user_id).execute()
+        
+        if not delete_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 처리된 요청입니다"
+            )
+        
+        # 3. rejected_users 테이블에 아카이브
         archive_data = {
             'original_user_id': user_id,
             'email': user_data.get('email'),
@@ -378,9 +394,6 @@ async def reject_user(user_id: str, request: RejectUserRequest):
         }
         
         admin_supabase.table('rejected_users').insert(archive_data).execute()
-        
-        # 3. users 테이블에서 삭제
-        admin_supabase.table('users').delete().eq('id', user_id).execute()
         
         # 4. Supabase Auth에서 삭제 (새 클라이언트 사용)
         try:
@@ -553,6 +566,13 @@ async def update_membership_status(user_id: str, request: UpdateMembershipReques
             'updated_at': now_kst
         }
         
+        # 이미 같은 상태인지 확인
+        if user_check.data['membership_paid'] == request.paid:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 동일한 상태입니다"
+            )
+        
         # 납부로 변경하는 경우 납부 일시 기록
         if request.paid and not user_check.data['membership_paid']:
             update_data['membership_paid_at'] = now_kst
@@ -561,7 +581,14 @@ async def update_membership_status(user_id: str, request: UpdateMembershipReques
         result = admin_supabase.table('users')\
             .update(update_data)\
             .eq('id', user_id)\
+            .eq('membership_paid', not request.paid)\
             .execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 처리된 요청입니다"
+            )
         
         return UpdateMembershipResponse(
             user_id=user_id,
@@ -933,21 +960,28 @@ async def approve_profile_update(
                 detail=f"허용되지 않은 필드입니다: {request_data['field_name']}"
             )
         
-        # 사용자 정보 업데이트
-        admin_supabase.table('users')\
-            .update({request_data['field_name']: request_data['new_value']})\
-            .eq('id', request_data['user_id'])\
-            .execute()
-        
-        # 요청 상태 업데이트
+        # 요청 상태를 먼저 업데이트 (pending 조건으로 race condition 방지)
         from datetime import timezone
-        admin_supabase.table('profile_update_requests')\
+        status_update = admin_supabase.table('profile_update_requests')\
             .update({
                 'status': 'approved',
                 'processed_at': datetime.now(timezone.utc).isoformat(),
                 'processed_by': current_user['id']
             })\
             .eq('id', request_id)\
+            .eq('status', 'pending')\
+            .execute()
+        
+        if not status_update.data:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 처리된 요청입니다"
+            )
+        
+        # 사용자 정보 업데이트
+        admin_supabase.table('users')\
+            .update({request_data['field_name']: request_data['new_value']})\
+            .eq('id', request_data['user_id'])\
             .execute()
         
         return {
@@ -1006,9 +1040,9 @@ async def reject_profile_update(
                 detail="처리할 요청이 없습니다"
             )
         
-        # 요청 상태 업데이트
+        # 요청 상태 업데이트 (pending 조건으로 race condition 방지)
         from datetime import timezone
-        admin_supabase.table('profile_update_requests')\
+        status_update = admin_supabase.table('profile_update_requests')\
             .update({
                 'status': 'rejected',
                 'rejection_reason': reason.strip(),
@@ -1016,7 +1050,14 @@ async def reject_profile_update(
                 'processed_by': current_user['id']
             })\
             .eq('id', request_id)\
+            .eq('status', 'pending')\
             .execute()
+        
+        if not status_update.data:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 처리된 요청입니다"
+            )
         
         return {
             "request_id": request_id,
