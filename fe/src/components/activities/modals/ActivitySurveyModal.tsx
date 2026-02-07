@@ -4,6 +4,8 @@ import { Modal } from '../../common/Modal'
 import type { Activity, ActivityListItem, SurveySubmitRequest } from '../../../types/activities'
 import { activityApi } from '../../../lib/api/activities'
 import { toast } from 'sonner'
+import { Turnstile } from '../../common/Turnstile'
+import { useAuthStore } from '../../../store/useAuthStore'
 
 type ActivitySurveyModalProps = {
     isOpen: boolean
@@ -17,6 +19,9 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
     const [step, setStep] = useState(1)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const { user } = useAuthStore()
+    const isNonMember = user?.verification_status !== 'approved'
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
 
     // 모달이 열릴 때 초기화
     useState(() => {
@@ -119,6 +124,12 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
         }
 
         if (!validateStep()) return
+
+        // 캡차 검증 추가
+        if (isNonMember && !turnstileToken) {
+            toast.error('보안 검증을 완료해주세요.')
+            return
+        }
 
         setLoading(true)
         setError(null)
@@ -405,6 +416,16 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
                             placeholder="자유롭게 의견을 작성해주세요."
                         />
                     </motion.div>
+                )}
+
+                {/* 캡차 렌더링: 마지막 단계이고 비회원인 경우 */}
+                {step === totalSteps && isNonMember && (
+                    <div className="flex justify-center py-4">
+                        <Turnstile
+                            onVerify={(token) => setTurnstileToken(token)}
+                            onExpire={() => setTurnstileToken(null)}
+                        />
+                    </div>
                 )}
             </form>
         </Modal>
