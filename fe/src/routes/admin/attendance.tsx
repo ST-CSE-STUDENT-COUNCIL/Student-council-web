@@ -162,7 +162,7 @@ function AdminAttendancePage() {
 
             const [attendanceResult, registrationsResult] = await Promise.allSettled([
                 adminApi.getActivityAttendance(targetId) as Promise<AttendanceResponse>,
-                activityAdminApi.getRegistrations(targetId, { page: 1, page_size: 200 }),
+                activityAdminApi.getRegistrations(targetId, { page: 1, page_size: 20 }),
             ])
 
             if (attendanceResult.status !== 'fulfilled') {
