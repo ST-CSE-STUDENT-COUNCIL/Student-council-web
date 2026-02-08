@@ -1636,10 +1636,11 @@ async def get_attendance_list(
         if not activity_result.data:
             raise HTTPException(status_code=404, detail="활동을 찾을 수 없습니다")
         
-        # 신청자 목록 조회 (users 조인)
+        # 신청자 목록 조회 (승인된 신청만)
         registrations_result = admin_supabase.table('activity_registrations')\
             .select('id, user_id, name, student_id, phone, created_at, attended, attended_at')\
             .eq('activity_id', activity_id)\
+            .eq('status', 'approved')\
             .order('created_at')\
             .execute()
         
