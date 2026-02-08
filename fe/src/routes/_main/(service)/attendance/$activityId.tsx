@@ -14,7 +14,11 @@ function AttendancePage() {
     const [studentId, setStudentId] = useState('')
     const [submittedMessage, setSubmittedMessage] = useState<string | null>(null)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [isSearching, setIsSearching] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+    const [confirmUserName, setConfirmUserName] = useState<string | null>(null)
+    const [confirmStudentId, setConfirmStudentId] = useState<string | null>(null)
 
     const activityIdNumber = useMemo(() => Number(activityId), [activityId])
 
@@ -22,6 +26,40 @@ function AttendancePage() {
     const canSubmit = studentId.trim().length > 0 && !Number.isNaN(activityIdNumber) && !isSubmitted
 
     const handleSubmit = async () => {
+        if (!canSubmit || isSearching || isSubmitting) return
+        try {
+            setIsSearching(true)
+            setErrorMessage(null)
+            setSubmittedMessage(null)
+            setIsConfirmOpen(false)
+            setConfirmUserName(null)
+            setConfirmStudentId(null)
+            const response = await activityApi.searchAttendanceByStudentId(
+                activityIdNumber,
+                studentId.trim()
+            )
+
+            if (response.already_attended) {
+                setSubmittedMessage('이미 출석했습니다.')
+                return
+            }
+
+            setConfirmUserName(response.user_name)
+            setConfirmStudentId(response.student_id)
+            setIsConfirmOpen(true)
+        } catch (error) {
+            console.error('Attendance search failed', error)
+            if (isAxiosError(error) && error.response?.status === 404) {
+                setErrorMessage('신청 내역을 찾을 수 없습니다. 학번을 확인해주세요.')
+                return
+            }
+            setErrorMessage('출석 확인에 실패했습니다. 잠시 후 다시 시도해주세요.')
+        } finally {
+            setIsSearching(false)
+        }
+    }
+
+    const handleConfirm = async () => {
         if (!canSubmit || isSubmitting) return
         try {
             setIsSubmitting(true)
@@ -31,6 +69,9 @@ function AttendancePage() {
                 student_id: studentId.trim(),
             })
             setSubmittedMessage(response.message || '출석이 등록되었습니다.')
+            setIsConfirmOpen(false)
+            setConfirmUserName(null)
+            setConfirmStudentId(null)
         } catch (error) {
             console.error('Attendance check failed', error)
             if (isAxiosError(error) && error.response?.status === 409) {
@@ -41,6 +82,13 @@ function AttendancePage() {
         } finally {
             setIsSubmitting(false)
         }
+    }
+
+    const handleCancelConfirm = () => {
+        if (isSubmitting) return
+        setIsConfirmOpen(false)
+        setConfirmUserName(null)
+        setConfirmStudentId(null)
     }
 
     return (
@@ -55,15 +103,24 @@ function AttendancePage() {
                     studentId={studentId}
                     isSubmitted={isSubmitted}
                     canSubmit={canSubmit}
+                    isSearching={isSearching}
                     isSubmitting={isSubmitting}
                     errorMessage={errorMessage}
                     submittedMessage={submittedMessage}
+                    isConfirmOpen={isConfirmOpen}
+                    confirmUserName={confirmUserName}
+                    confirmStudentId={confirmStudentId}
                     onStudentIdChange={(value: string) => {
                         setStudentId(value)
                         setSubmittedMessage(null)
                         setErrorMessage(null)
+                        setIsConfirmOpen(false)
+                        setConfirmUserName(null)
+                        setConfirmStudentId(null)
                     }}
                     onSubmit={handleSubmit}
+                    onConfirm={handleConfirm}
+                    onCancelConfirm={handleCancelConfirm}
                 />
             </div>
         </div>
