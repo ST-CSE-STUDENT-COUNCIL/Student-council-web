@@ -10,7 +10,7 @@ interface SEOProps {
 
 export function SEO({
     title,
-    description = "서울과학기술대학교 컴퓨터공학과 학생회 웹사이트입니다.",
+    description = "서울과학기술대학교 컴퓨터공학과 학생회 웹사이트입니다. 학생회 공지사항, 행사 신청 및 일정, 정보공개, 복지사업(물품 대여, 사물함, 프린터 등), 동아리, 건의함 등 다양한 서비스를 이용할 수 있습니다.",
     keywords = "서울과학기술대학교, 컴퓨터공학과, 학생회, SeoulTech, CSE, Computer Science, Student Council",
     image = "/logo.jpg",
     url
