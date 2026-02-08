@@ -21,6 +21,10 @@ export function EditProfileModal({ onClose, initialName = '', initialStudentId =
   const inputRef = useRef<HTMLInputElement>(null)
 
   function setFileWithPreview(f: File) {
+    if (f.size > 10 * 1024 * 1024) {
+      setError('10MB 이하의 이미지를 업로드해주세요.')
+      return
+    }
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setFile(f)
     setPreviewUrl(URL.createObjectURL(f))
@@ -201,7 +205,7 @@ export function EditProfileModal({ onClose, initialName = '', initialStudentId =
                 onChange={onChange}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                {file ? `선택된 파일: ${file.name}` : 'JPG, PNG · 최대 5MB'}
+                {file ? `선택된 파일: ${file.name}` : 'JPG, PNG · 최대 10MB'}
               </p>
             </div>
 

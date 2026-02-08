@@ -494,27 +494,55 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                         학적 인증자료 제출 <span className="text-red-500">*</span>
                                                     </label>
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*,.pdf"
-                                                        onChange={async (e) => {
-                                                            const file = e.target.files?.[0]
-                                                            if (!file) return
-                                                            try {
-                                                                const { presigned_url, public_url } = await activityApi.getPresignedUrl(activity.id, file.name)
-                                                                await activityApi.uploadFile(presigned_url, file)
-                                                                setFormData(prev => ({ ...prev, verification_image_url: public_url }))
-                                                            } catch (err) {
-                                                                console.error(err)
-                                                                toast.error('파일 업로드에 실패했습니다.')
-                                                            }
-                                                        }}
-                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-400 dark:file:bg-blue-900/30 dark:file:text-blue-300 dark:hover:file:bg-blue-900/50"
-                                                    />
-                                                    {formData.verification_image_url && (
-                                                        <p className="text-xs text-green-600 mt-1 font-medium">✓ 인증 자료가 업로드되었습니다.</p>
+                                                    {formData.verification_image_url ? (
+                                                        <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900/20 dark:border-blue-800">
+                                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                                <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
+                                                                <a
+                                                                    href={formData.verification_image_url}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="text-sm text-blue-600 underline truncate dark:text-blue-400 max-w-[200px]"
+                                                                >
+                                                                    업로드된 파일 확인
+                                                                </a>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setFormData(prev => ({ ...prev, verification_image_url: '' }))}
+                                                                className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 border border-red-200 rounded hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30 transition-colors"
+                                                            >
+                                                                삭제 후 다시 올리기
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-1">
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*,.pdf"
+                                                                onChange={async (e) => {
+                                                                    const file = e.target.files?.[0]
+                                                                    if (!file) return
+
+                                                                    if (file.size > 10 * 1024 * 1024) {
+                                                                        toast.error('파일 크기는 10MB 이하여야 합니다.')
+                                                                        return
+                                                                    }
+
+                                                                    try {
+                                                                        const { presigned_url, public_url } = await activityApi.getPresignedUrl(activity.id, file.name)
+                                                                        await activityApi.uploadFile(presigned_url, file)
+                                                                        setFormData(prev => ({ ...prev, verification_image_url: public_url }))
+                                                                    } catch (err) {
+                                                                        console.error(err)
+                                                                        toast.error('파일 업로드에 실패했습니다.')
+                                                                    }
+                                                                }}
+                                                                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-400 dark:file:bg-blue-900/30 dark:file:text-blue-300 dark:hover:file:bg-blue-900/50"
+                                                            />
+                                                            <p className="text-xs text-gray-400">학생증, 합격증 등 학적을 증명할 수 있는 자료를 첨부해주세요. (최대 10MB)</p>
+                                                        </div>
                                                     )}
-                                                    <p className="text-xs text-gray-400 mt-1">학생증, 합격증 등 학적을 증명할 수 있는 자료를 첨부해주세요.</p>
                                                 </div>
                                             </>
                                         )}
@@ -661,33 +689,58 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                 </div>
                                             ) : field.type === 'file' ? (
                                                 <div className="space-y-2">
-                                                    <input
-                                                        type="file"
-                                                        onChange={async (e) => {
-                                                            const file = e.target.files?.[0]
-                                                            if (!file) return
-
-                                                            try {
-                                                                // 간단한 로딩 표시를 위해 alert 사용 대신 UI 개선 가능하나 우선 기능 구현
-                                                                const { presigned_url, public_url } = await activityApi.getPresignedUrl(activity.id, file.name)
-                                                                await activityApi.uploadFile(presigned_url, file)
-
-                                                                setFormData(prev => ({
+                                                    {formData.form_responses?.[field.name] ? (
+                                                        <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg dark:bg-green-900/20 dark:border-green-800">
+                                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                                <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
+                                                                <a
+                                                                    href={formData.form_responses[field.name]}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="text-sm text-green-700 underline truncate dark:text-green-300 max-w-[200px]"
+                                                                >
+                                                                    업로드된 파일 확인
+                                                                </a>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setFormData(prev => ({
                                                                     ...prev,
-                                                                    form_responses: { ...prev.form_responses, [field.name]: public_url }
-                                                                }))
-                                                            } catch (err) {
-                                                                console.error(err)
-                                                                toast.error('파일 업로드에 실패했습니다.')
-                                                            }
-                                                        }}
-                                                        required={field.required && !formData.form_responses?.[field.name]}
-                                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-400 dark:file:bg-blue-900/30 dark:file:text-blue-300 dark:hover:file:bg-blue-900/50"
-                                                    />
-                                                    {formData.form_responses?.[field.name] && (
-                                                        <p className="text-xs text-green-600 font-medium">
-                                                            ✓ 파일이 첨부되었습니다
-                                                        </p>
+                                                                    form_responses: { ...prev.form_responses, [field.name]: '' }
+                                                                }))}
+                                                                className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 border border-red-200 rounded hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/30 transition-colors"
+                                                            >
+                                                                삭제
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <input
+                                                            type="file"
+                                                            onChange={async (e) => {
+                                                                const file = e.target.files?.[0]
+                                                                if (!file) return
+
+                                                                if (file.size > 10 * 1024 * 1024) {
+                                                                    toast.error('파일 크기는 10MB 이하여야 합니다.')
+                                                                    return
+                                                                }
+
+                                                                try {
+                                                                    const { presigned_url, public_url } = await activityApi.getPresignedUrl(activity.id, file.name)
+                                                                    await activityApi.uploadFile(presigned_url, file)
+
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        form_responses: { ...prev.form_responses, [field.name]: public_url }
+                                                                    }))
+                                                                } catch (err) {
+                                                                    console.error(err)
+                                                                    toast.error('파일 업로드에 실패했습니다.')
+                                                                }
+                                                            }}
+                                                            required={field.required && !formData.form_responses?.[field.name]}
+                                                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-400 dark:file:bg-blue-900/30 dark:file:text-blue-300 dark:hover:file:bg-blue-900/50"
+                                                        />
                                                     )}
                                                 </div>
                                             ) : (
