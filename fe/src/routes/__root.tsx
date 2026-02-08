@@ -23,6 +23,7 @@ function RootComponent() {
     const { isInitialized } = useAuthInit()
     const location = useLocation()
     const isAttendancePage = location.pathname.startsWith('/attendance/')
+    const isAdminPage = location.pathname.startsWith('/admin')
     const showDevtools = import.meta.env.DEV && !isAttendancePage
 
     // 인증 초기화 중에는 로딩 표시
@@ -48,7 +49,7 @@ function RootComponent() {
                 {!isAttendancePage && <Footer />}
             </div>
             <VerificationPromptModal />
-            <Toaster richColors position="top-center" closeButton />
+            <Toaster richColors position={isAdminPage ? "bottom-right" : "top-center"} closeButton />
             {showDevtools && (
                 <Suspense fallback={null}>
                     <TanStackRouterDevtools position="bottom-right" />

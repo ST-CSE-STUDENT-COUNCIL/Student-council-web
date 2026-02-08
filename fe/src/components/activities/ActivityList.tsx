@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import type { ActivityListItem } from '../../types/activities'
 import { getActivityStatus, activityTypeLabels } from '../../types/activities'
 
@@ -9,6 +10,16 @@ type ActivityListProps = {
 }
 
 export const ActivityList = ({ activities, onActivitySelect, selectedActivityId, className }: ActivityListProps) => {
+    // 1초마다 리렌더링하여 상태(예정->진행중)를 실시간으로 업데이트
+    const [, setCurrentTime] = useState(Date.now())
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(Date.now())
+        }, 1000)
+        return () => clearInterval(timer)
+    }, [])
+
     if (!activities.length) {
         return (
             <div className="text-center py-20 text-gray-500 dark:text-gray-400">
@@ -83,11 +94,7 @@ export const ActivityList = ({ activities, onActivitySelect, selectedActivityId,
                         <span className="truncate pr-4 min-h-[1.25rem] block flex-1">
                             {activity.description || '\u00A0'}
                         </span>
-                        {activity.max_capacity && !['notice', 'survey'].includes(activity.type) && (
-                            <span className="whitespace-nowrap font-medium">
-                                {activity.current_count} / {activity.max_capacity}명
-                            </span>
-                        )}
+
                     </div>
                 </div>
             ))}
