@@ -2,7 +2,9 @@ import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 import { CategoryFilter, LockerActions, RentalCard } from '../../../../components/welfare'
 import { SEO } from '../../../../components/common/SEO'
-import { welfareApi, type WelfareRental, type LockerInfo, type PrinterInfo, type GuidebookInfo } from '../../../../lib/api/welfare'
+import { type WelfareRental } from '../../../../lib/api/welfare'
+
+import { useRentals, useLockerInfo, usePrinterInfo, useRentalConfig, useGuidebookInfo } from '../../../../hooks/queries/useWelfares'
 
 export const Route = createFileRoute('/_main/(service)/welfare/')({
   component: Welfare,
@@ -10,21 +12,28 @@ export const Route = createFileRoute('/_main/(service)/welfare/')({
 
 function Welfare() {
   const [selectedCategory, setSelectedCategory] = React.useState<'대여사업' | '사물함' | '프린터' | '신입생 가이드북'>('대여사업')
-  const [rentalItems, setRentalItems] = React.useState<WelfareRental[]>([])
   const [rentalCategoryFilter, setRentalCategoryFilter] = React.useState<string>('전체')
-  const [rentalFormUrl, setRentalFormUrl] = React.useState('')
-  const [loading, setLoading] = React.useState(true)
-  const [error, setError] = React.useState<string | null>(null)
-  const [lockerLoading, setLockerLoading] = React.useState(true)
-  const [lockerError, setLockerError] = React.useState<string | null>(null)
-  const [lockerInfo, setLockerInfo] = React.useState<LockerInfo | null>(null)
-  const [printerLoading, setPrinterLoading] = React.useState(true)
-  const [printerError, setPrinterError] = React.useState<string | null>(null)
-  const [printerInfo, setPrinterInfo] = React.useState<PrinterInfo | null>(null)
-  const [guidebookLoading, setGuidebookLoading] = React.useState(true)
-  const [guidebookInfo, setGuidebookInfo] = React.useState<GuidebookInfo | null>(null)
+
+  const { data: rentalsData, isLoading: rentalsLoading, error: rentalsError } = useRentals()
+  const { data: lockerInfo, isLoading: lockerLoading, error: lockerError } = useLockerInfo()
+  const { data: printerInfo, isLoading: printerLoading, error: printerError } = usePrinterInfo()
+  const { data: rentalConfig, isLoading: configLoading } = useRentalConfig()
+  const { data: guidebookInfo, isLoading: guidebookLoading } = useGuidebookInfo()
+
   const today = React.useMemo(() => new Date().toISOString().slice(0, 10), [])
   const disabledClass = 'border-gray-200 opacity-60 cursor-not-allowed hover:-translate-y-0 hover:shadow-none'
+
+  const activeRentals = React.useMemo(() => {
+    return rentalsData?.filter(item => item.is_active) || []
+  }, [rentalsData])
+
+  const rentalFormUrl = React.useMemo(() => {
+    if (typeof rentalConfig === 'string') return ''
+    return rentalConfig?.application_form_url?.trim() || ''
+  }, [rentalConfig])
+
+  const loading = rentalsLoading || lockerLoading || printerLoading || configLoading || guidebookLoading
+  const error = rentalsError ? '데이터를 불러올 수 없습니다.' : null
 
   const { lockerStart, lockerEnd, lockerReturnStart, lockerReturnEnd } = React.useMemo(() => {
     const start = lockerInfo?.application_start || null
@@ -55,79 +64,9 @@ function Welfare() {
     ? `${lockerReturnStart.slice(0, 10)} ~ ${lockerReturnEnd.slice(0, 10)}`
     : ''
 
-  const fetchRentals = React.useCallback(async () => {
-    try {
-      setLoading(true)
-      setLockerLoading(true)
-      setPrinterLoading(true)
-      setGuidebookLoading(true)
-      setError(null)
-      setLockerError(null)
-      setPrinterError(null)
-      const [rentalsResult, lockerResult, printerResult, rentalConfigResult, guidebookResult] = await Promise.allSettled([
-        welfareApi.getRentals(),
-        welfareApi.getLockerInfo(),
-        welfareApi.getPrinterInfo(),
-        welfareApi.getRentalConfig(),
-        welfareApi.getGuidebookInfo()
-      ])
-
-      if (rentalsResult.status === 'fulfilled') {
-        const rentals = Array.isArray(rentalsResult.value) ? rentalsResult.value : []
-        const activeRentals = rentals.filter((item) => item.is_active)
-        setRentalItems(activeRentals)
-      } else {
-        console.error('복지사업 데이터 로드 실패:', rentalsResult.reason)
-        setError('데이터를 불러올 수 없습니다.')
-      }
-
-      if (lockerResult.status === 'fulfilled') {
-        setLockerInfo(lockerResult.value)
-      } else {
-        console.error('사물함 정보 로드 실패:', lockerResult.reason)
-        setLockerError('사물함 정보를 불러올 수 없습니다.')
-      }
-
-      if (printerResult.status === 'fulfilled') {
-        setPrinterInfo(printerResult.value)
-      } else {
-        console.error('프린터 정보 로드 실패:', printerResult.reason)
-        setPrinterError('프린터 정보를 불러올 수 없습니다.')
-      }
-
-      if (rentalConfigResult.status === 'fulfilled' && typeof rentalConfigResult.value !== 'string') {
-        setRentalFormUrl(rentalConfigResult.value.application_form_url?.trim() || '')
-      } else {
-        console.error('대여사업 설정 로드 실패:', rentalConfigResult.status === 'rejected'
-          ? rentalConfigResult.reason
-          : rentalConfigResult.value)
-        setRentalFormUrl('')
-      }
-
-      if (guidebookResult.status === 'fulfilled') {
-        setGuidebookInfo(guidebookResult.value)
-      } else {
-        console.error('가이드북 정보 로드 실패:', guidebookResult.reason)
-      }
-    } catch (err) {
-      console.error('복지사업 데이터 로드 실패:', err)
-      setError('데이터를 불러올 수 없습니다.')
-      setRentalFormUrl('')
-    } finally {
-      setLoading(false)
-      setLockerLoading(false)
-      setPrinterLoading(false)
-      setGuidebookLoading(false)
-    }
-  }, [today])
-
-  React.useEffect(() => {
-    fetchRentals()
-  }, [fetchRentals])
-
   const groupedRentalSections = React.useMemo(() => {
     const groups = new Map<string, WelfareRental[]>()
-    for (const item of rentalItems) {
+    for (const item of activeRentals) {
       const categoryKey = item.category?.trim() || '기타'
       const existing = groups.get(categoryKey)
       if (existing) {
@@ -158,7 +97,7 @@ function Welfare() {
       name,
       items: groups.get(name) || [],
     }))
-  }, [rentalItems])
+  }, [activeRentals])
 
   const rentalCategoryOptions = React.useMemo(() => groupedRentalSections.map((section) => section.name), [groupedRentalSections])
 
@@ -250,7 +189,7 @@ function Welfare() {
               <div className="text-center py-12">
                 <p className="text-red-500">{error}</p>
               </div>
-            ) : rentalItems.length === 0 ? (
+            ) : activeRentals.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 dark:text-gray-400">대여 가능한 물품이 없습니다.</p>
               </div>
@@ -305,7 +244,7 @@ function Welfare() {
                 </div>
               ) : lockerError ? (
                 <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-red-500 text-sm">
-                  {lockerError}
+                  {lockerError instanceof Error ? lockerError.message : '불러오기 실패'}
                 </div>
               ) : lockerInfo?.layout_image_url ? (
                 <div className="space-y-3">
@@ -337,7 +276,7 @@ function Welfare() {
                 </div>
               ) : printerError ? (
                 <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-red-500 text-sm">
-                  {printerError}
+                  {printerError instanceof Error ? printerError.message : '불러오기 실패'}
                 </div>
               ) : printerInfo?.image_url ? (
                 <div className="space-y-3">

@@ -27,6 +27,8 @@ export function useActivities(options?: {
             page: options?.page,
             page_size: options?.pageSize,
         }),
+        refetchOnWindowFocus: true, // 창 포커스 시 재조회
+        staleTime: 0, // 항상 최신 데이터 조회 시도
     })
 }
 
@@ -38,6 +40,8 @@ export function useActivity(activityId: number) {
         queryKey: activityKeys.detail(activityId),
         queryFn: () => activityApi.getById(activityId),
         enabled: activityId > 0,
+        refetchOnWindowFocus: true, // 창 포커스 시 재조회
+        staleTime: 0, // 항상 최신 데이터 조회 시도
     })
 }
 
