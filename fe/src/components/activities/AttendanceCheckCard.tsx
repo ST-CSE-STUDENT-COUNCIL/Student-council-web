@@ -32,7 +32,7 @@ export function AttendanceCheckCard({
                     value={studentId}
                     onChange={(event) => onStudentIdChange(event.target.value)}
                     disabled={isSubmitted}
-                    placeholder="예) 20201234"
+                    placeholder="예) 25000000"
                     className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 disabled:bg-slate-100 disabled:text-slate-400"
                 />
                 <p className="text-xs text-slate-400">띄어쓰기 없이 숫자만 입력해주세요.</p>

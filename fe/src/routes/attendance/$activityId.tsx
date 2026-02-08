@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { isAxiosError } from 'axios'
 import { SEO } from '../../components/common/SEO'
 import { AttendanceCheckCard } from '../../components/activities/AttendanceCheckCard'
@@ -15,6 +15,19 @@ function AttendancePage() {
     const [submittedMessage, setSubmittedMessage] = useState<string | null>(null)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
+
+    useEffect(() => {
+        const root = document.documentElement
+        const hadDarkMode = root.classList.contains('dark')
+
+        root.classList.remove('dark')
+
+        return () => {
+            if (hadDarkMode) {
+                root.classList.add('dark')
+            }
+        }
+    }, [])
 
     const activityIdNumber = useMemo(() => Number(activityId), [activityId])
 
