@@ -1,33 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router'
 import React from 'react'
-import { clubApi } from '../../../../lib/api/clubs'
 import { ClubsHeader, ClubCard, ClubDetailModal } from '../../../../components/clubs'
 import type { Club } from '../../../../types/clubs'
 import { SEO } from '../../../../components/common/SEO'
+import { useClubs } from '../../../../hooks/queries/useClubs'
 
 export const Route = createFileRoute('/_main/(info)/clubs/')({
   component: Clubs,
 })
 
 function Clubs() {
-  const [clubs, setClubs] = React.useState<Club[]>([])
-  const [loading, setLoading] = React.useState(true)
+  const { data: clubsData, isLoading: loading } = useClubs()
   const [selectedClub, setSelectedClub] = React.useState<Club | null>(null)
 
-  React.useEffect(() => {
-    async function loadClubs() {
-      try {
-        const data = await clubApi.getAll()
-        setClubs(data)
-      } catch (error) {
-        console.error('Failed to load clubs', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadClubs()
-  }, [])
+  const clubs = clubsData || []
 
   if (loading) {
     return (

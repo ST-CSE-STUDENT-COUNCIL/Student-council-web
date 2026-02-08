@@ -71,7 +71,7 @@ function ActivitiesPage() {
     const { data: listData, isLoading: listLoading } = useActivities({
         isActiveOnly: false,
         page: 1,
-        pageSize: 10
+        pageSize: 100
     })
     const activities = listData?.activities || []
 
