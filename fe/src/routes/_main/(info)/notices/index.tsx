@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect, useRef } from 'react'
 import { PostFilter } from '../../../../components/notices/PostFilter'
 import { PostList } from '../../../../components/notices/PostList'
-import type { NoticeListItem } from '../../../../types/posts'
+import { useNotices } from '../../../../hooks/queries/useNotices'
 import { SEO } from '../../../../components/common/SEO'
 
 type PostSearch = {
@@ -26,13 +26,10 @@ export const Route = createFileRoute('/_main/(info)/notices/')({
   },
 })
 
+
 function Notices() {
   const { board_id, subCategory, search, sort, page } = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
-
-  const [posts, setPosts] = useState<NoticeListItem[]>([])
-  const [totalPages, setTotalPages] = useState(1)
-  const [loading, setLoading] = useState(true)
 
   // 한글 입력 버그 수정: 로컬 검색 상태 분리
   const [localSearch, setLocalSearch] = useState(search)
@@ -45,34 +42,17 @@ function Notices() {
 
   const itemsPerPage = 20
 
-  const fetchNotices = async () => {
-    try {
-      setLoading(true)
-      // Map board_id to mainCategory for backend
-      const mainCategory = board_id === 1 ? 'student_council' : board_id === 2 ? 'democracy' : undefined
-      const { postApi } = await import('../../../../lib/api/notices')
-      const { posts: data, pagination } = await postApi.getAll({
-        // @ts-ignore - Backend expects mainCategory string
-        mainCategory,
-        subCategory: subCategory === 'all' ? undefined : subCategory,
-        search,
-        sort,
-        page,
-        page_size: itemsPerPage
-      })
-      setPosts(data)
-      setTotalPages(pagination.total_pages)
-    } catch (error) {
-      console.error('Failed to fetch notices', error)
-      setPosts([]) // Clear notices on error
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data, isLoading: loading } = useNotices({
+    mainCategory: board_id === 1 ? 'student_council' : board_id === 2 ? 'democracy' : undefined,
+    subCategory: subCategory === 'all' ? undefined : subCategory,
+    search: search || undefined,
+    sort,
+    page,
+    pageSize: itemsPerPage
+  })
 
-  useEffect(() => {
-    fetchNotices()
-  }, [board_id, subCategory, search, sort, page])
+  const posts = data?.posts || []
+  const totalPages = data?.pagination.total_pages || 1
 
   // Pagination Logic handled by server
   const paginatedPosts = posts
