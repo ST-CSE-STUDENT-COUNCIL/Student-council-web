@@ -21,9 +21,13 @@ export const MANUAL_GROUPS = [
         icon: Paintbrush,
         color: 'text-pink-600 dark:text-pink-400',
         sections: [
-            { id: 'fe-structure', title: '1. 프로젝트 구조' },
-            { id: 'fe-directories', title: '2. 주요 디렉토리' },
-            { id: 'fe-build', title: '3. 개발 및 빌드' },
+            { id: 'fe-intro', title: '1. 기술 스택' },
+            { id: 'fe-structure', title: '2. 프로젝트 구조' },
+            { id: 'fe-routing', title: '3. 라우팅 (TanStack Router)' },
+            { id: 'fe-state', title: '4. 상태 관리 (Zustand)' },
+            { id: 'fe-api', title: '5. API 연동' },
+            { id: 'fe-styling', title: '6. 스타일링 및 컴포넌트' },
+            { id: 'fe-build', title: '7. 개발 및 빌드' },
         ]
     },
     {
