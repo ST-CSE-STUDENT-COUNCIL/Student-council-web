@@ -14,6 +14,7 @@ import { Route as ErrorRouteImport } from './routes/error'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as MainIndexRouteImport } from './routes/_main/index'
+import { Route as AdminManualRouteImport } from './routes/admin/manual'
 import { Route as MaininfoNoticesRouteImport } from './routes/_main/(info)/notices'
 import { Route as AdminserviceWelfareIndexRouteImport } from './routes/admin/(service)/welfare/index'
 import { Route as AdminserviceSurveysIndexRouteImport } from './routes/admin/(service)/surveys/index'
@@ -78,6 +79,11 @@ const MainIndexRoute = MainIndexRouteImport.update({
   id: '/_main/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminManualRoute = AdminManualRouteImport.update({
+  id: '/manual',
+  path: '/manual',
+  getParentRoute: () => AdminRoute,
 } as any)
 const MaininfoNoticesRoute = MaininfoNoticesRouteImport.update({
   id: '/_main/(info)/notices',
@@ -301,6 +307,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/error': typeof ErrorRoute
   '/maintenance': typeof MaintenanceRoute
+  '/admin/manual': typeof AdminManualRoute
   '/': typeof MainIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/notices': typeof MaininfoNoticesRouteWithChildren
@@ -346,6 +353,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/error': typeof ErrorRoute
   '/maintenance': typeof MaintenanceRoute
+  '/admin/manual': typeof AdminManualRoute
   '/': typeof MainIndexRoute
   '/admin': typeof AdminIndexRoute
   '/notices/$noticeId': typeof MaininfoNoticesNoticeIdRoute
@@ -392,6 +400,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/error': typeof ErrorRoute
   '/maintenance': typeof MaintenanceRoute
+  '/admin/manual': typeof AdminManualRoute
   '/_main/': typeof MainIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/_main/(info)/notices': typeof MaininfoNoticesRouteWithChildren
@@ -440,6 +449,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/error'
     | '/maintenance'
+    | '/admin/manual'
     | '/'
     | '/admin/'
     | '/notices'
@@ -485,6 +495,7 @@ export interface FileRouteTypes {
   to:
     | '/error'
     | '/maintenance'
+    | '/admin/manual'
     | '/'
     | '/admin'
     | '/notices/$noticeId'
@@ -530,6 +541,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/error'
     | '/maintenance'
+    | '/admin/manual'
     | '/_main/'
     | '/admin/'
     | '/_main/(info)/notices'
@@ -631,6 +643,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof MainIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/manual': {
+      id: '/admin/manual'
+      path: '/manual'
+      fullPath: '/admin/manual'
+      preLoaderRoute: typeof AdminManualRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/_main/(info)/notices': {
       id: '/_main/(info)/notices'
@@ -909,6 +928,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminManualRoute: typeof AdminManualRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdmininfoNoticesCreateRoute: typeof AdmininfoNoticesCreateRoute
   AdminserviceEventsCreateRoute: typeof AdminserviceEventsCreateRoute
@@ -935,6 +955,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminManualRoute: AdminManualRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdmininfoNoticesCreateRoute: AdmininfoNoticesCreateRoute,
   AdminserviceEventsCreateRoute: AdminserviceEventsCreateRoute,
