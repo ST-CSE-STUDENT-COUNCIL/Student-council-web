@@ -7,7 +7,6 @@ app = 'seoultech-cse-backend'
 primary_region = 'nrt'
 
 [build]
-  dockerfile = "Dockerfile"
 
 [http_service]
   internal_port = 8080
