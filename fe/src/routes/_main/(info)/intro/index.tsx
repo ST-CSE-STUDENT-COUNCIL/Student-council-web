@@ -1,7 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
-import { introductionApi } from '../../../../lib/api/introductions'
-import type { IntroductionImage } from '../../../../types/introductions'
+import { useIntroductions } from '../../../../hooks/queries/useIntroductions'
 import { SEO } from '../../../../components/common/SEO'
 
 export const Route = createFileRoute('/_main/(info)/intro/')({
@@ -9,26 +7,9 @@ export const Route = createFileRoute('/_main/(info)/intro/')({
 })
 
 function Intro() {
-  const [images, setImages] = useState<IntroductionImage[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    async function loadImages() {
-      try {
-        setLoading(true)
-        const response = await introductionApi.getAll(true) // 활성화된 이미지만 조회
-        setImages(response.images)
-      } catch (err: any) {
-        setError('이미지를 불러오는데 실패했습니다.')
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadImages()
-  }, [])
+  const { data, isLoading, error } = useIntroductions(true)
+  const images = data?.images || []
+  const loading = isLoading
 
   if (loading) {
     return (
@@ -42,7 +23,7 @@ function Intro() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          {error}
+          {error.message || '이미지를 불러오는데 실패했습니다.'}
         </div>
       </div>
     )

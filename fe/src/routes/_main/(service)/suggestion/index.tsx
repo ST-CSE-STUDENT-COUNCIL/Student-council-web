@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { LockKeyhole } from 'lucide-react'
 
-import type { Suggestion, SuggestionListItem } from '../../../../types/suggestions'
-import { suggestionApi } from '../../../../lib/api/suggestions'
+import type { Suggestion } from '../../../../types/suggestions'
 import { useAuthStore } from '../../../../store/useAuthStore'
 import {
     SuggestionCreateModal,
@@ -16,6 +15,7 @@ import {
     SuggestionPagination,
 } from '../../../../components/suggestions'
 import { SEO } from '../../../../components/common/SEO'
+import { useAllSuggestions, useSuggestion, useCreateSuggestion, useSuggestionStats } from '../../../../hooks/queries/useSuggestions'
 
 export const Route = createFileRoute('/_main/(service)/suggestion/')({
     component: SuggestionPage,
@@ -27,51 +27,24 @@ function SuggestionPage() {
         'all' | Suggestion['status']
     >('all')
     const [search, setSearch] = useState('')
-    const [suggestions, setSuggestions] = useState<SuggestionListItem[]>([])
-    const [selected, setSelected] = useState<Suggestion | null>(null)
-    const [isOpen, setIsOpen] = useState(false)
+
+    // Query hook for list
+    const { data: suggestionsData } = useAllSuggestions(statusFilter)
+    const suggestions = suggestionsData?.suggestions || []
+
+    const { data: statsData } = useSuggestionStats()
+    const totalAll = statsData?.total || 0
+
+    const [selectedId, setSelectedId] = useState<number | null>(null)
     const [isCreateOpen, setIsCreateOpen] = useState(false)
-    const [submitting, setSubmitting] = useState(false)
     const [pageSize, setPageSize] = useState(10)
     const [page, setPage] = useState(1)
-    const [totalAll, setTotalAll] = useState(0)
 
-    const fetchSuggestions = useCallback(
-        async (params?: { status?: 'all' | Suggestion['status'] }) => {
-            const nextStatus = params?.status ?? statusFilter
+    // Mutation for create
+    const createMutation = useCreateSuggestion()
 
-            try {
-                const pageSizeAll = 100
-                let pageIndex = 1
-                let totalPagesAll = 1
-                const allItems: SuggestionListItem[] = []
-
-                do {
-                    const data = await suggestionApi.getAll({
-                        status_filter: nextStatus === 'all' ? undefined : nextStatus,
-                        page: pageIndex,
-                        page_size: pageSizeAll,
-                    })
-                    allItems.push(...data.suggestions)
-                    totalPagesAll = Math.max(1, data.pagination.total_pages || 1)
-                    if (nextStatus === 'all' && pageIndex === 1) {
-                        setTotalAll(data.pagination.total)
-                    }
-                    pageIndex += 1
-                } while (pageIndex <= totalPagesAll)
-
-                setSuggestions(allItems)
-            } catch (error) {
-                console.error('failed to fetch suggestions', error)
-                setSuggestions([])
-            }
-        },
-        [statusFilter],
-    )
-
-    useEffect(() => {
-        fetchSuggestions()
-    }, [fetchSuggestions])
+    // Query for detail (only if selectedId is present)
+    const { data: selectedSuggestion } = useSuggestion(selectedId)
 
     const stats = useMemo(() => {
         return { all: totalAll, received: 0, in_progress: 0, approved: 0, rejected: 0 }
@@ -186,16 +159,7 @@ function SuggestionPage() {
                             <div className="space-y-4">
                                 <SuggestionList
                                     items={visibleSuggestions}
-                                    onSelect={async (item) => {
-                                        try {
-                                            const detail = await suggestionApi.getById(item.id)
-                                            setSelected(detail)
-                                            setIsOpen(true)
-                                        } catch (error) {
-                                            console.error('failed to fetch suggestion detail', error)
-                                            toast.error('건의 상세를 불러오지 못했습니다. 다시 시도해주세요.')
-                                        }
-                                    }}
+                                    onSelect={(item) => setSelectedId(item.id)}
                                 />
                                 <SuggestionPagination
                                     page={page}
@@ -208,34 +172,22 @@ function SuggestionPage() {
                 )}
 
                 <SuggestionDetailModal
-                    isOpen={isOpen && !!selected}
-                    suggestion={selected}
-                    onClose={() => {
-                        setIsOpen(false)
-                        setSelected(null)
-                    }}
+                    isOpen={!!selectedId && !!selectedSuggestion}
+                    suggestion={selectedSuggestion || null}
+                    onClose={() => setSelectedId(null)}
                 />
 
                 <SuggestionCreateModal
                     isOpen={isCreateOpen}
-                    submitting={submitting}
+                    submitting={createMutation.isPending}
                     onClose={() => setIsCreateOpen(false)}
                     onSubmit={async ({ title, content }) => {
-                        try {
-                            setSubmitting(true)
-                            await suggestionApi.create({ title, content })
-                            setTotalAll((prev) => prev + 1)
-                            if (statusFilter === 'all' || statusFilter === 'received') {
+                        createMutation.mutate({ title, content }, {
+                            onSuccess: () => {
+                                setIsCreateOpen(false)
                                 setPage(1)
-                                await fetchSuggestions({ status: statusFilter })
                             }
-                            setIsCreateOpen(false)
-                        } catch (err) {
-                            console.error('failed to create suggestion', err)
-                            toast.error('건의 등록에 실패했습니다. 로그인 상태를 확인해주세요.')
-                        } finally {
-                            setSubmitting(false)
-                        }
+                        })
                     }}
                 />
             </div>

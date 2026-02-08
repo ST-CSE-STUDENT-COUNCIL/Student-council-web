@@ -53,7 +53,7 @@ function RootComponent() {
                 <main className="flex-1 w-full">
                     <Outlet />
                 </main>
-                {!isAttendancePage && <Footer />}
+                {!isAttendancePage && !isAdminPage && <Footer />}
             </div>
             <VerificationPromptModal />
             <Toaster richColors position={isAdminPage ? "bottom-right" : "top-center"} closeButton />

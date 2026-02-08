@@ -13,17 +13,30 @@ export const noticeKeys = {
 /**
  * 공지사항 목록 조회 훅
  */
-export function useNotices(options?: {
-    boardId?: number
+export type UseNoticesOptions = {
+    mainCategory?: string
+    subCategory?: string
+    search?: string
+    sort?: string
     page?: number
     pageSize?: number
-}) {
+}
+
+/**
+ * 공지사항 목록 조회 훅
+ */
+export function useNotices(options?: UseNoticesOptions) {
     return useQuery({
         queryKey: noticeKeys.list(options ?? {}),
         queryFn: () => postApi.getAll({
+            mainCategory: options?.mainCategory,
+            subCategory: options?.subCategory,
+            search: options?.search,
+            sort: options?.sort,
             page: options?.page,
             page_size: options?.pageSize,
         }),
+        placeholderData: (previousData) => previousData, // 페이지네이션 시 깜빡임 방지
     })
 }
 

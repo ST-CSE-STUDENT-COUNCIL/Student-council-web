@@ -1,13 +1,14 @@
-import { createFileRoute, useSearch } from '@tanstack/react-router'
+import { createFileRoute, useSearch, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState, useMemo } from 'react'
 import { ActivityFilter, type SortOption, type StatusOption, type TypeOption } from '../../../../components/activities/ActivityFilter'
 import { ActivityList } from '../../../../components/activities/ActivityList'
 import { ActivityCard } from '../../../../components/activities/ActivityCard'
-import { activityApi } from '../../../../lib/api/activities'
 import { supabase } from '../../../../lib/supabase'
 import type { ActivityListItem, Activity } from '../../../../types/activities'
 import { getActivityStatus } from '../../../../types/activities'
 import { SEO } from '../../../../components/common/SEO'
+import { useQueryClient } from '@tanstack/react-query'
+import { useActivities, useActivity, activityKeys } from '../../../../hooks/queries/useActivities'
 
 export const Route = createFileRoute('/_main/(service)/activities/')({
     component: ActivitiesPage,
@@ -16,111 +17,135 @@ export const Route = createFileRoute('/_main/(service)/activities/')({
 function ActivitiesPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { id: queryId } = useSearch({ strict: false }) as any
-    const [activities, setActivities] = useState<ActivityListItem[]>([])
-    const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
-    const [loading, setLoading] = useState(true)
+    const navigate = useNavigate({ from: Route.fullPath })
+    const queryClient = useQueryClient()
 
-    // Filter & Sort States
+    // ...
+
+    const selectActivity = (activity: ActivityListItem) => {
+        navigate({
+            search: (prev: any) => ({ ...prev, id: activity.id }),
+        })
+    }
+
+    // Filter & Sort States (Keep these)
     const [search, setSearch] = useState('')
     const [sort, setSort] = useState<SortOption>('newest')
     const [status, setStatus] = useState<StatusOption>('all')
     const [type, setType] = useState<TypeOption>('all')
 
-    // Pagination
+    // Pagination (Dynamic based on screen width)
     const [currentPage, setCurrentPage] = useState(1)
-    const ITEMS_PER_PAGE = 5
+    const [itemsPerPage, setItemsPerPage] = useState(5)
 
-    const fetchActivities = async () => {
-        try {
-            setLoading(true)
-            const response = await activityApi.getAll({
-                is_active_only: false,
-                page: 1,
-                page_size: 100
-            })
-            setActivities(response.activities)
-
-            if (response.activities.length > 0) {
-                // URL에 id가 있고 목록에 존재하면 그 활동 선택, 아니면 첫 번째 활동 선택
-                const targetId = queryId || response.activities[0].id
-                const detail = await activityApi.getById(targetId)
-                setSelectedActivity(detail)
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                // 모바일: 세로 배치이므로 5개
+                setItemsPerPage(5)
+            } else if (window.innerWidth < 1280) {
+                // 태블릿 ~ 일반 노트북: 3개 (높이 맞춤)
+                setItemsPerPage(3)
+            } else if (window.innerWidth < 1540) {
+                // 중대형 데스크탑: 4개
+                setItemsPerPage(4)
+            } else {
+                // 초대형 모니터: 5개
+                setItemsPerPage(5)
             }
-        } catch (error) {
-            console.error('Failed to fetch activities', error)
-        } finally {
-            setLoading(false)
         }
-    }
 
-    // URL id가 변경되면 해당 활동 선택 (단, 초기 로딩 이후)
-    useEffect(() => {
-        if (queryId && !loading && activities.length > 0) {
-            activityApi.getById(queryId).then(setSelectedActivity).catch(console.error)
-        }
-    }, [queryId])
+        // Initial check
+        handleResize()
 
-    const selectActivity = async (activity: ActivityListItem) => {
-        try {
-            const detail = await activityApi.getById(activity.id)
-            setSelectedActivity(detail)
-        } catch (error) {
-            console.error('Failed to fetch activity detail', error)
-        }
-    }
-
-    useEffect(() => {
-        fetchActivities()
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
     }, [])
+
+    // itemsPerPage 변경 시 1페이지로 리셋
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [itemsPerPage])
+
+    // 1. Fetch All Activities (using useActivities)
+    const { data: listData, isLoading: listLoading } = useActivities({
+        isActiveOnly: false,
+        page: 1,
+        pageSize: 100
+    })
+    const activities = listData?.activities || []
+
+    // 2. Derive Selected Activity ID
+    // If queryId exists, try to use it.
+    // Otherwise, if activities loaded, use the first one.
+    const firstActivityId = activities.length > 0 ? activities[0].id : 0
+    const targetId = queryId ? Number(queryId) : firstActivityId
+
+    // 3. Fetch Selected Activity Detail (using useActivity)
+    const { data: selectedActivity, isLoading: detailLoading } = useActivity(targetId)
+
+    const loading = listLoading || (targetId > 0 && detailLoading)
 
     // Real-time subscription for selected activity
     useEffect(() => {
-        if (!selectedActivity) return
+        if (!targetId || !selectedActivity) return
 
-        console.log(`Subscribing to activity ${selectedActivity.id} updates...`)
+        console.log(`Subscribing to activity ${targetId} updates...`)
 
         const channel = supabase
-            .channel(`activity-detail-${selectedActivity.id}`)
+            .channel(`activity-detail-${targetId}`)
             .on(
                 'postgres_changes',
                 {
                     event: 'UPDATE',
                     schema: 'public',
                     table: 'activities',
-                    filter: `id=eq.${selectedActivity.id}`,
+                    filter: `id=eq.${targetId}`,
                 },
                 (payload) => {
                     console.log('Realtime update received:', payload)
                     const newCount = payload.new.current_count
 
                     if (typeof newCount === 'number') {
-                        console.log(`Updating current_count: ${selectedActivity.current_count} -> ${newCount}`)
+                        // Update Query Cache: Detail
+                        queryClient.setQueryData(activityKeys.detail(targetId), (old: Activity | undefined) => {
+                            if (!old) return old
+                            return { ...old, current_count: newCount, is_active: payload.new.is_active }
+                        })
 
-                        // Update selected activity detail
-                        setSelectedActivity((prev) =>
-                            prev ? { ...prev, current_count: newCount, is_active: payload.new.is_active } : null
-                        )
-
-                        // Update list item for consistency (only for the selected item)
-                        setActivities((prev) =>
-                            prev.map((activity) =>
-                                activity.id === selectedActivity.id
-                                    ? { ...activity, current_count: newCount, is_active: payload.new.is_active }
-                                    : activity
-                            )
+                        // Update Query Cache: List
+                        // Note: useActivities uses generic key with options.
+                        // We need to invalidate or set data for the active query.
+                        // Ideally, invalidateQueries is safer strictly speaking, but for instant update:
+                        // We iterate over the cache or just invalidate. For simplicity + speed, let's invalidate list.
+                        // Or better, update specific list cache if we know the key.
+                        // But since we use useActivities with hardcoded options above:
+                        queryClient.setQueryData(
+                            activityKeys.list({ isActiveOnly: false, page: 1, pageSize: 100 }),
+                            (old: any) => {
+                                if (!old?.activities) return old
+                                return {
+                                    ...old,
+                                    activities: old.activities.map((act: ActivityListItem) =>
+                                        act.id === targetId
+                                            ? { ...act, current_count: newCount, is_active: payload.new.is_active }
+                                            : act
+                                    )
+                                }
+                            }
                         )
                     }
                 }
             )
             .subscribe((status) => {
-                console.log(`Subscription status for activity ${selectedActivity.id}:`, status)
+                console.log(`Subscription status for activity ${targetId}:`, status)
             })
 
         return () => {
-            console.log(`Unsubscribing from activity ${selectedActivity.id}`)
+            console.log(`Unsubscribing from activity ${targetId}`)
             supabase.removeChannel(channel)
         }
-    }, [selectedActivity?.id])
+    }, [targetId, queryClient, selectedActivity]) // selectedActivity dependency to ensure we have initial data? Actually targetId is enough.
 
     useEffect(() => {
         setCurrentPage(1)
@@ -161,11 +186,11 @@ function ActivitiesPage() {
             })
     }, [activities, status, search, sort, type])
 
-    const totalPages = Math.ceil(filteredActivities.length / ITEMS_PER_PAGE)
+    const totalPages = Math.ceil(filteredActivities.length / itemsPerPage)
     const paginatedActivities = useMemo(() => {
-        const start = (currentPage - 1) * ITEMS_PER_PAGE
-        return filteredActivities.slice(start, start + ITEMS_PER_PAGE)
-    }, [filteredActivities, currentPage])
+        const start = (currentPage - 1) * itemsPerPage
+        return filteredActivities.slice(start, start + itemsPerPage)
+    }, [filteredActivities, currentPage, itemsPerPage])
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -179,12 +204,12 @@ function ActivitiesPage() {
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                 </div>
             ) : (
-                <div className="flex flex-col lg:flex-row gap-8 mt-6">
+                <div className="flex flex-col lg:flex-row gap-8 mt-6 lg:items-stretch">
                     {/* Left Column: Large Selected Card */}
                     <div className="w-full lg:w-2/3 lg:shrink-0 lg:grow-0">
-                        <div className="sticky top-8">
+                        <div className="h-full">
                             {selectedActivity ? (
-                                <div className="transform transition-all duration-500 hover:scale-[1.01] animate-fade-in">
+                                <div className="transform transition-all duration-500 hover:scale-[1.01] animate-fade-in h-full">
                                     <ActivityCard activity={selectedActivity} />
                                 </div>
                             ) : (
@@ -196,8 +221,8 @@ function ActivitiesPage() {
                     </div>
 
                     {/* Right Column: Filter & List */}
-                    <div className="w-full lg:w-1/3 lg:shrink-0 lg:grow-0 flex flex-col sticky top-8 max-h-[calc(100vh-4rem)]">
-                        <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-xl flex flex-col flex-1 min-h-0 border border-gray-100 dark:border-slate-800 shadow-sm">
+                    <div className="w-full lg:w-1/3 lg:shrink-0 lg:grow-0 flex flex-col">
+                        <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-xl flex flex-col flex-1 min-h-0 border border-gray-100 dark:border-slate-800 shadow-sm h-full">
                             <div className="mb-4 shrink-0">
                                 <ActivityFilter
                                     search={search}
@@ -262,7 +287,8 @@ function ActivitiesPage() {
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     )
 }
