@@ -941,18 +941,17 @@ async def get_activity_registrations(
 ):
     """활동 신청자 목록 조회 (관리자 전용)"""
     try:
-        # 전체 개수 (승인된 신청만)
+        # 전체 개수
         # type: ignore는 count 파라미터의 타입 힌트 오류를 무시합니다
-        count_result = supabase.table("activity_registrations").select("id", count="exact").eq("activity_id", activity_id).eq("registration_status", "approved").execute()  # type: ignore
+        count_result = supabase.table("activity_registrations").select("id", count="exact").eq("activity_id", activity_id).execute()  # type: ignore
         
         total = count_result.count if count_result.count is not None else 0
         
-        # 목록 조회 (승인된 신청만)
+        # 목록 조회
         offset = (page - 1) * page_size
         result = supabase.table("activity_registrations")\
             .select("*")\
             .eq("activity_id", activity_id)\
-            .eq("registration_status", "approved")\
             .order("created_at", desc=True)\
             .range(offset, offset + page_size - 1)\
             .execute()
@@ -1571,11 +1570,12 @@ async def attend_by_student_id(
     try:
         admin_supabase = get_supabase_admin()
         
-        # 학번으로 신청 내역 조회
+        # 학번으로 신청 내역 조회 (승인된 신청만)
         registration_result = admin_supabase.table('activity_registrations')\
             .select('id, attended')\
             .eq('activity_id', activity_id)\
             .eq('student_id', body.student_id)\
+            .eq('status', 'approved')\
             .maybe_single()\
             .execute()
         
@@ -1701,11 +1701,12 @@ async def admin_mark_attendance(
     try:
         admin_supabase = get_supabase_admin()
         
-        # 신청 내역 확인
+        # 신청 내역 확인 (승인된 신청만)
         reg_result = admin_supabase.table('activity_registrations')\
             .select('id, attended')\
             .eq('id', registration_id)\
             .eq('activity_id', activity_id)\
+            .eq('status', 'approved')\
             .single()\
             .execute()
         
