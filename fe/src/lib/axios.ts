@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '../store/useAuthStore'
+import { useSystemStore } from '../store/useSystemStore'
 import { router } from './router'
 
 // 커스텀 Axios 인스턴스 생성
@@ -52,7 +53,7 @@ api.interceptors.response.use(
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
         if (error.code === 'ERR_NETWORK') {
-            router.navigate({ to: '/maintenance' })
+            useSystemStore.getState().setMaintenance(true)
             return Promise.reject(error)
         }
 
@@ -61,7 +62,7 @@ api.interceptors.response.use(
 
             // 401 에러 + 재시도 안 함 + refresh 요청이 아닌 경우
             if (status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/refresh')) {
-                // 로그인 유지 중인지 확인 (storage에 토큰이 있으면 갱신 시도)
+                // ... (keep existing 401 logic)
                 const authState = useAuthStore.getState()
 
                 // 토큰이 있었던 경우에만 갱신 시도
@@ -112,8 +113,8 @@ api.interceptors.response.use(
                     // 토큰이 없었던 경우 바로 로그아웃
                     useAuthStore.getState().logout()
                 }
-            } else if (status === 502 || status === 503) {
-                router.navigate({ to: '/maintenance' })
+            } else if (status === 502 || status === 503 || status === 504) {
+                useSystemStore.getState().setMaintenance(true)
             } else if (status >= 500) {
                 router.navigate({ to: '/error' })
             }
