@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Pagination, Navigation } from 'swiper/modules'
-import type { Activity, ActivityListItem, ActivityStatus } from '../../types/activities'
+import type { Activity, ActivityListItem } from '../../types/activities'
 import { getActivityStatus } from '../../types/activities'
 import { ActivityRegistrationModal } from './modals'
 
@@ -17,10 +17,9 @@ type ActivityCardProps = {
 
 export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
     const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false)
-    const [status, setStatus] = useState<ActivityStatus>(() => getActivityStatus(activity))
     const [currentTime, setCurrentTime] = useState(Date.now())
 
-    // 1초마다 현재 시간 업데이트 (남은 시간 실시간 표시용)
+    // 1초마다 현재 시간 업데이트 (남은 시간 실시간 표시용 & 상태 자동 업데이트용)
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(Date.now())
@@ -29,52 +28,8 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
         return () => clearInterval(timer)
     }, [])
 
-    // 신청 시작/종료 시간에 맞춰 상태 자동 업데이트
-    useEffect(() => {
-        // 시간 문자열을 Date 객체로 변환
-        const parseAsLocalTime = (dateString: string): Date => {
-            return new Date(dateString)
-        }
-
-        const updateStatus = () => {
-            setStatus(getActivityStatus(activity))
-        }
-
-        // 다음 상태 변경 시점 계산
-        const getNextUpdateTime = (): number | null => {
-            const now = Date.now()
-
-            if (activity.registration_start) {
-                const startTime = parseAsLocalTime(activity.registration_start).getTime()
-                if (startTime > now) {
-                    return startTime - now
-                }
-            }
-
-            if (activity.registration_end) {
-                const endTime = parseAsLocalTime(activity.registration_end).getTime()
-                if (endTime > now) {
-                    return endTime - now
-                }
-            }
-
-            return null
-        }
-
-        // 초기 상태 업데이트
-        updateStatus()
-
-        // 다음 상태 변경 시점에 타이머 설정
-        const nextUpdate = getNextUpdateTime()
-        if (nextUpdate !== null && nextUpdate > 0) {
-            // 1초 여유를 두고 업데이트 (정확한 시간에 맞추기 위해)
-            const timerId = setTimeout(() => {
-                updateStatus()
-            }, nextUpdate + 1000)
-
-            return () => clearTimeout(timerId)
-        }
-    }, [activity.registration_start, activity.registration_end, activity.is_active, status])
+    // currentTime이 1초마다 업데이트되므로, status도 매초 재계산되어 실시간으로 반영됨
+    const status = getActivityStatus(activity)
 
     // 정원 마감 여부 계산
     const isFull = activity.max_capacity

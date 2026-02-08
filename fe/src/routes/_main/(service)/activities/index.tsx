@@ -4,6 +4,7 @@ import { ActivityFilter, type SortOption, type StatusOption, type TypeOption } f
 import { ActivityList } from '../../../../components/activities/ActivityList'
 import { ActivityCard } from '../../../../components/activities/ActivityCard'
 import { activityApi } from '../../../../lib/api/activities'
+import { supabase } from '../../../../lib/supabase'
 import type { ActivityListItem, Activity } from '../../../../types/activities'
 import { getActivityStatus } from '../../../../types/activities'
 import { SEO } from '../../../../components/common/SEO'
@@ -71,6 +72,55 @@ function ActivitiesPage() {
     useEffect(() => {
         fetchActivities()
     }, [])
+
+    // Real-time subscription for selected activity
+    useEffect(() => {
+        if (!selectedActivity) return
+
+        console.log(`Subscribing to activity ${selectedActivity.id} updates...`)
+
+        const channel = supabase
+            .channel(`activity-detail-${selectedActivity.id}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'activities',
+                    filter: `id=eq.${selectedActivity.id}`,
+                },
+                (payload) => {
+                    console.log('Realtime update received:', payload)
+                    const newCount = payload.new.current_count
+
+                    if (typeof newCount === 'number') {
+                        console.log(`Updating current_count: ${selectedActivity.current_count} -> ${newCount}`)
+
+                        // Update selected activity detail
+                        setSelectedActivity((prev) =>
+                            prev ? { ...prev, current_count: newCount, is_active: payload.new.is_active } : null
+                        )
+
+                        // Update list item for consistency (only for the selected item)
+                        setActivities((prev) =>
+                            prev.map((activity) =>
+                                activity.id === selectedActivity.id
+                                    ? { ...activity, current_count: newCount, is_active: payload.new.is_active }
+                                    : activity
+                            )
+                        )
+                    }
+                }
+            )
+            .subscribe((status) => {
+                console.log(`Subscription status for activity ${selectedActivity.id}:`, status)
+            })
+
+        return () => {
+            console.log(`Unsubscribing from activity ${selectedActivity.id}`)
+            supabase.removeChannel(channel)
+        }
+    }, [selectedActivity?.id])
 
     useEffect(() => {
         setCurrentPage(1)
