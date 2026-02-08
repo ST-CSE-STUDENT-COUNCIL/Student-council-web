@@ -5,6 +5,7 @@ import Footer from '../components/layout/Footer'
 import { VerificationPromptModal } from '../components/auth/VerificationPromptModal'
 import { Toaster } from 'sonner'
 import NotFound from './-404'
+import { ErrorComponent } from './error'
 import { useAuthInit } from '../hooks/useAuthInit'
 import { SEO } from '../components/common/SEO'
 
@@ -59,5 +60,6 @@ function RootComponent() {
 
 export const Route = createRootRoute({
     notFoundComponent: NotFound,
+    errorComponent: ErrorComponent,
     component: RootComponent,
 })

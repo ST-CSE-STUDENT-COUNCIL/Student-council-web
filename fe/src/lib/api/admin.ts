@@ -88,7 +88,15 @@ export const adminApi = {
         return response.data
     },
     getActivityAttendance: async (activityId: number) => {
-        const response = await api.get(`/admin/${activityId}/attendance`)
+        const response = await api.get<{
+            activity_id: number
+            activity_title: string
+            total_registrations: number
+            attended_count: number
+            attendance_rate: number
+            registrations: any[]
+            is_attendance_open: boolean
+        }>(`/admin/${activityId}/attendance`)
         return response.data
     },
     cancelActivityAttendance: async (activityId: number, registrationId: number) => {

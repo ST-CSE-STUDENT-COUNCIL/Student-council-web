@@ -9,109 +9,54 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WelfareRouteImport } from './routes/welfare'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SuggestionRouteImport } from './routes/suggestion'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as NoticesRouteImport } from './routes/notices'
-import { Route as NonMemberPolicyRouteImport } from './routes/non-member-policy'
-import { Route as MypageRouteImport } from './routes/mypage'
 import { Route as MaintenanceRouteImport } from './routes/maintenance'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as IntroRouteImport } from './routes/intro'
 import { Route as ErrorRouteImport } from './routes/error'
-import { Route as ClubsRouteImport } from './routes/clubs'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as SearchIndexRouteImport } from './routes/search/index'
-import { Route as NoticesIndexRouteImport } from './routes/notices/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as ActivitiesIndexRouteImport } from './routes/activities/index'
-import { Route as NoticesNoticeIdRouteImport } from './routes/notices/$noticeId'
-import { Route as AttendanceActivityIdRouteImport } from './routes/attendance/$activityId'
-import { Route as AdminWelfareRouteImport } from './routes/admin/welfare'
-import { Route as AdminSuggestionsRouteImport } from './routes/admin/suggestions'
-import { Route as AdminProfileUpdatesRouteImport } from './routes/admin/profile-updates'
-import { Route as AdminPrivacyOfficerRouteImport } from './routes/admin/privacy-officer'
-import { Route as AdminIntroRouteImport } from './routes/admin/intro'
-import { Route as AdminClubsRouteImport } from './routes/admin/clubs'
-import { Route as AdminAttendanceRouteImport } from './routes/admin/attendance'
-import { Route as AdminActivitiesRouteImport } from './routes/admin/activities'
-import { Route as AdminSurveysIndexRouteImport } from './routes/admin/surveys/index'
-import { Route as AdminNoticesIndexRouteImport } from './routes/admin/notices/index'
-import { Route as AdminKakaotalkIndexRouteImport } from './routes/admin/kakaotalk/index'
-import { Route as AdminEventsIndexRouteImport } from './routes/admin/events/index'
-import { Route as AdminSurveysCreateRouteImport } from './routes/admin/surveys/create'
-import { Route as AdminNoticesCreateRouteImport } from './routes/admin/notices/create'
-import { Route as AdminKakaotalkCreateRouteImport } from './routes/admin/kakaotalk/create'
-import { Route as AdminEventsCreateRouteImport } from './routes/admin/events/create'
-import { Route as AdminSurveysActivityIdIndexRouteImport } from './routes/admin/surveys/$activityId/index'
-import { Route as AdminEventsEventIdIndexRouteImport } from './routes/admin/events/$eventId/index'
-import { Route as AdminSurveysActivityIdEditRouteImport } from './routes/admin/surveys/$activityId/edit'
-import { Route as AdminNoticesNoticeIdEditRouteImport } from './routes/admin/notices/$noticeId/edit'
-import { Route as AdminKakaotalkActivityIdEditRouteImport } from './routes/admin/kakaotalk/$activityId/edit'
-import { Route as AdminEventsEventIdEditRouteImport } from './routes/admin/events/$eventId/edit'
+import { Route as MainIndexRouteImport } from './routes/_main/index'
+import { Route as MaininfoNoticesRouteImport } from './routes/_main/(info)/notices'
+import { Route as AdminserviceWelfareIndexRouteImport } from './routes/admin/(service)/welfare/index'
+import { Route as AdminserviceSurveysIndexRouteImport } from './routes/admin/(service)/surveys/index'
+import { Route as AdminserviceSuggestionsIndexRouteImport } from './routes/admin/(service)/suggestions/index'
+import { Route as AdminserviceKakaotalkIndexRouteImport } from './routes/admin/(service)/kakaotalk/index'
+import { Route as AdminserviceEventsIndexRouteImport } from './routes/admin/(service)/events/index'
+import { Route as AdminserviceActivitiesIndexRouteImport } from './routes/admin/(service)/activities/index'
+import { Route as AdminmanageProfileUpdatesIndexRouteImport } from './routes/admin/(manage)/profile-updates/index'
+import { Route as AdmininfoPrivacyOfficerIndexRouteImport } from './routes/admin/(info)/privacy-officer/index'
+import { Route as AdmininfoNoticesIndexRouteImport } from './routes/admin/(info)/notices/index'
+import { Route as AdmininfoIntroIndexRouteImport } from './routes/admin/(info)/intro/index'
+import { Route as AdmininfoClubsIndexRouteImport } from './routes/admin/(info)/clubs/index'
+import { Route as MainserviceWelfareIndexRouteImport } from './routes/_main/(service)/welfare/index'
+import { Route as MainserviceSuggestionIndexRouteImport } from './routes/_main/(service)/suggestion/index'
+import { Route as MainserviceSearchIndexRouteImport } from './routes/_main/(service)/search/index'
+import { Route as MainserviceActivitiesIndexRouteImport } from './routes/_main/(service)/activities/index'
+import { Route as MainpolicyTermsIndexRouteImport } from './routes/_main/(policy)/terms/index'
+import { Route as MainpolicyPrivacyIndexRouteImport } from './routes/_main/(policy)/privacy/index'
+import { Route as MainpolicyNonMemberPolicyIndexRouteImport } from './routes/_main/(policy)/non-member-policy/index'
+import { Route as MaininfoNoticesIndexRouteImport } from './routes/_main/(info)/notices/index'
+import { Route as MaininfoIntroIndexRouteImport } from './routes/_main/(info)/intro/index'
+import { Route as MaininfoClubsIndexRouteImport } from './routes/_main/(info)/clubs/index'
+import { Route as MainauthSignupIndexRouteImport } from './routes/_main/(auth)/signup/index'
+import { Route as MainauthResetPasswordIndexRouteImport } from './routes/_main/(auth)/reset-password/index'
+import { Route as MainauthMypageIndexRouteImport } from './routes/_main/(auth)/mypage/index'
+import { Route as MainauthLoginIndexRouteImport } from './routes/_main/(auth)/login/index'
+import { Route as AdminserviceSurveysCreateRouteImport } from './routes/admin/(service)/surveys/create'
+import { Route as AdminserviceKakaotalkCreateRouteImport } from './routes/admin/(service)/kakaotalk/create'
+import { Route as AdminserviceEventsCreateRouteImport } from './routes/admin/(service)/events/create'
+import { Route as AdmininfoNoticesCreateRouteImport } from './routes/admin/(info)/notices/create'
+import { Route as MainserviceAttendanceActivityIdRouteImport } from './routes/_main/(service)/attendance/$activityId'
+import { Route as MaininfoNoticesNoticeIdRouteImport } from './routes/_main/(info)/notices/$noticeId'
+import { Route as AdminserviceSurveysActivityIdIndexRouteImport } from './routes/admin/(service)/surveys/$activityId/index'
+import { Route as AdminserviceEventsEventIdIndexRouteImport } from './routes/admin/(service)/events/$eventId/index'
+import { Route as AdminserviceSurveysActivityIdEditRouteImport } from './routes/admin/(service)/surveys/$activityId/edit'
+import { Route as AdminserviceKakaotalkActivityIdEditRouteImport } from './routes/admin/(service)/kakaotalk/$activityId/edit'
+import { Route as AdminserviceEventsEventIdEditRouteImport } from './routes/admin/(service)/events/$eventId/edit'
+import { Route as AdminserviceEventsEventIdAttendanceRouteImport } from './routes/admin/(service)/events/$eventId/attendance'
+import { Route as AdmininfoNoticesNoticeIdEditRouteImport } from './routes/admin/(info)/notices/$noticeId/edit'
 
-const WelfareRoute = WelfareRouteImport.update({
-  id: '/welfare',
-  path: '/welfare',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SuggestionRoute = SuggestionRouteImport.update({
-  id: '/suggestion',
-  path: '/suggestion',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NoticesRoute = NoticesRouteImport.update({
-  id: '/notices',
-  path: '/notices',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NonMemberPolicyRoute = NonMemberPolicyRouteImport.update({
-  id: '/non-member-policy',
-  path: '/non-member-policy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MypageRoute = MypageRouteImport.update({
-  id: '/mypage',
-  path: '/mypage',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MaintenanceRoute = MaintenanceRouteImport.update({
   id: '/maintenance',
   path: '/maintenance',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IntroRoute = IntroRouteImport.update({
-  id: '/intro',
-  path: '/intro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ErrorRoute = ErrorRouteImport.update({
@@ -119,548 +64,544 @@ const ErrorRoute = ErrorRouteImport.update({
   path: '/error',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ClubsRoute = ClubsRouteImport.update({
-  id: '/clubs',
-  path: '/clubs',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SearchIndexRoute = SearchIndexRouteImport.update({
-  id: '/search/',
-  path: '/search/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NoticesIndexRoute = NoticesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => NoticesRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const ActivitiesIndexRoute = ActivitiesIndexRouteImport.update({
-  id: '/activities/',
-  path: '/activities/',
+const MainIndexRoute = MainIndexRouteImport.update({
+  id: '/_main/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NoticesNoticeIdRoute = NoticesNoticeIdRouteImport.update({
-  id: '/$noticeId',
-  path: '/$noticeId',
-  getParentRoute: () => NoticesRoute,
-} as any)
-const AttendanceActivityIdRoute = AttendanceActivityIdRouteImport.update({
-  id: '/attendance/$activityId',
-  path: '/attendance/$activityId',
+const MaininfoNoticesRoute = MaininfoNoticesRouteImport.update({
+  id: '/_main/(info)/notices',
+  path: '/notices',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminWelfareRoute = AdminWelfareRouteImport.update({
-  id: '/welfare',
-  path: '/welfare',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSuggestionsRoute = AdminSuggestionsRouteImport.update({
-  id: '/suggestions',
-  path: '/suggestions',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminProfileUpdatesRoute = AdminProfileUpdatesRouteImport.update({
-  id: '/profile-updates',
-  path: '/profile-updates',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPrivacyOfficerRoute = AdminPrivacyOfficerRouteImport.update({
-  id: '/privacy-officer',
-  path: '/privacy-officer',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminIntroRoute = AdminIntroRouteImport.update({
-  id: '/intro',
-  path: '/intro',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminClubsRoute = AdminClubsRouteImport.update({
-  id: '/clubs',
-  path: '/clubs',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAttendanceRoute = AdminAttendanceRouteImport.update({
-  id: '/attendance',
-  path: '/attendance',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminActivitiesRoute = AdminActivitiesRouteImport.update({
-  id: '/activities',
-  path: '/activities',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSurveysIndexRoute = AdminSurveysIndexRouteImport.update({
-  id: '/surveys/',
-  path: '/surveys/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminNoticesIndexRoute = AdminNoticesIndexRouteImport.update({
-  id: '/notices/',
-  path: '/notices/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminKakaotalkIndexRoute = AdminKakaotalkIndexRouteImport.update({
-  id: '/kakaotalk/',
-  path: '/kakaotalk/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminEventsIndexRoute = AdminEventsIndexRouteImport.update({
-  id: '/events/',
+const AdminserviceWelfareIndexRoute =
+  AdminserviceWelfareIndexRouteImport.update({
+    id: '/(service)/welfare/',
+    path: '/welfare/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminserviceSurveysIndexRoute =
+  AdminserviceSurveysIndexRouteImport.update({
+    id: '/(service)/surveys/',
+    path: '/surveys/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminserviceSuggestionsIndexRoute =
+  AdminserviceSuggestionsIndexRouteImport.update({
+    id: '/(service)/suggestions/',
+    path: '/suggestions/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminserviceKakaotalkIndexRoute =
+  AdminserviceKakaotalkIndexRouteImport.update({
+    id: '/(service)/kakaotalk/',
+    path: '/kakaotalk/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminserviceEventsIndexRoute = AdminserviceEventsIndexRouteImport.update({
+  id: '/(service)/events/',
   path: '/events/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminSurveysCreateRoute = AdminSurveysCreateRouteImport.update({
-  id: '/surveys/create',
-  path: '/surveys/create',
+const AdminserviceActivitiesIndexRoute =
+  AdminserviceActivitiesIndexRouteImport.update({
+    id: '/(service)/activities/',
+    path: '/activities/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminmanageProfileUpdatesIndexRoute =
+  AdminmanageProfileUpdatesIndexRouteImport.update({
+    id: '/(manage)/profile-updates/',
+    path: '/profile-updates/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdmininfoPrivacyOfficerIndexRoute =
+  AdmininfoPrivacyOfficerIndexRouteImport.update({
+    id: '/(info)/privacy-officer/',
+    path: '/privacy-officer/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdmininfoNoticesIndexRoute = AdmininfoNoticesIndexRouteImport.update({
+  id: '/(info)/notices/',
+  path: '/notices/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminNoticesCreateRoute = AdminNoticesCreateRouteImport.update({
-  id: '/notices/create',
+const AdmininfoIntroIndexRoute = AdmininfoIntroIndexRouteImport.update({
+  id: '/(info)/intro/',
+  path: '/intro/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdmininfoClubsIndexRoute = AdmininfoClubsIndexRouteImport.update({
+  id: '/(info)/clubs/',
+  path: '/clubs/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const MainserviceWelfareIndexRoute = MainserviceWelfareIndexRouteImport.update({
+  id: '/_main/(service)/welfare/',
+  path: '/welfare/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainserviceSuggestionIndexRoute =
+  MainserviceSuggestionIndexRouteImport.update({
+    id: '/_main/(service)/suggestion/',
+    path: '/suggestion/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const MainserviceSearchIndexRoute = MainserviceSearchIndexRouteImport.update({
+  id: '/_main/(service)/search/',
+  path: '/search/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainserviceActivitiesIndexRoute =
+  MainserviceActivitiesIndexRouteImport.update({
+    id: '/_main/(service)/activities/',
+    path: '/activities/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const MainpolicyTermsIndexRoute = MainpolicyTermsIndexRouteImport.update({
+  id: '/_main/(policy)/terms/',
+  path: '/terms/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainpolicyPrivacyIndexRoute = MainpolicyPrivacyIndexRouteImport.update({
+  id: '/_main/(policy)/privacy/',
+  path: '/privacy/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainpolicyNonMemberPolicyIndexRoute =
+  MainpolicyNonMemberPolicyIndexRouteImport.update({
+    id: '/_main/(policy)/non-member-policy/',
+    path: '/non-member-policy/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const MaininfoNoticesIndexRoute = MaininfoNoticesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MaininfoNoticesRoute,
+} as any)
+const MaininfoIntroIndexRoute = MaininfoIntroIndexRouteImport.update({
+  id: '/_main/(info)/intro/',
+  path: '/intro/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MaininfoClubsIndexRoute = MaininfoClubsIndexRouteImport.update({
+  id: '/_main/(info)/clubs/',
+  path: '/clubs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainauthSignupIndexRoute = MainauthSignupIndexRouteImport.update({
+  id: '/_main/(auth)/signup/',
+  path: '/signup/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainauthResetPasswordIndexRoute =
+  MainauthResetPasswordIndexRouteImport.update({
+    id: '/_main/(auth)/reset-password/',
+    path: '/reset-password/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const MainauthMypageIndexRoute = MainauthMypageIndexRouteImport.update({
+  id: '/_main/(auth)/mypage/',
+  path: '/mypage/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MainauthLoginIndexRoute = MainauthLoginIndexRouteImport.update({
+  id: '/_main/(auth)/login/',
+  path: '/login/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminserviceSurveysCreateRoute =
+  AdminserviceSurveysCreateRouteImport.update({
+    id: '/(service)/surveys/create',
+    path: '/surveys/create',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminserviceKakaotalkCreateRoute =
+  AdminserviceKakaotalkCreateRouteImport.update({
+    id: '/(service)/kakaotalk/create',
+    path: '/kakaotalk/create',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminserviceEventsCreateRoute =
+  AdminserviceEventsCreateRouteImport.update({
+    id: '/(service)/events/create',
+    path: '/events/create',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdmininfoNoticesCreateRoute = AdmininfoNoticesCreateRouteImport.update({
+  id: '/(info)/notices/create',
   path: '/notices/create',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminKakaotalkCreateRoute = AdminKakaotalkCreateRouteImport.update({
-  id: '/kakaotalk/create',
-  path: '/kakaotalk/create',
-  getParentRoute: () => AdminRoute,
+const MainserviceAttendanceActivityIdRoute =
+  MainserviceAttendanceActivityIdRouteImport.update({
+    id: '/_main/(service)/attendance/$activityId',
+    path: '/attendance/$activityId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const MaininfoNoticesNoticeIdRoute = MaininfoNoticesNoticeIdRouteImport.update({
+  id: '/$noticeId',
+  path: '/$noticeId',
+  getParentRoute: () => MaininfoNoticesRoute,
 } as any)
-const AdminEventsCreateRoute = AdminEventsCreateRouteImport.update({
-  id: '/events/create',
-  path: '/events/create',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSurveysActivityIdIndexRoute =
-  AdminSurveysActivityIdIndexRouteImport.update({
-    id: '/surveys/$activityId/',
+const AdminserviceSurveysActivityIdIndexRoute =
+  AdminserviceSurveysActivityIdIndexRouteImport.update({
+    id: '/(service)/surveys/$activityId/',
     path: '/surveys/$activityId/',
     getParentRoute: () => AdminRoute,
   } as any)
-const AdminEventsEventIdIndexRoute = AdminEventsEventIdIndexRouteImport.update({
-  id: '/events/$eventId/',
-  path: '/events/$eventId/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSurveysActivityIdEditRoute =
-  AdminSurveysActivityIdEditRouteImport.update({
-    id: '/surveys/$activityId/edit',
+const AdminserviceEventsEventIdIndexRoute =
+  AdminserviceEventsEventIdIndexRouteImport.update({
+    id: '/(service)/events/$eventId/',
+    path: '/events/$eventId/',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminserviceSurveysActivityIdEditRoute =
+  AdminserviceSurveysActivityIdEditRouteImport.update({
+    id: '/(service)/surveys/$activityId/edit',
     path: '/surveys/$activityId/edit',
     getParentRoute: () => AdminRoute,
   } as any)
-const AdminNoticesNoticeIdEditRoute =
-  AdminNoticesNoticeIdEditRouteImport.update({
-    id: '/notices/$noticeId/edit',
-    path: '/notices/$noticeId/edit',
-    getParentRoute: () => AdminRoute,
-  } as any)
-const AdminKakaotalkActivityIdEditRoute =
-  AdminKakaotalkActivityIdEditRouteImport.update({
-    id: '/kakaotalk/$activityId/edit',
+const AdminserviceKakaotalkActivityIdEditRoute =
+  AdminserviceKakaotalkActivityIdEditRouteImport.update({
+    id: '/(service)/kakaotalk/$activityId/edit',
     path: '/kakaotalk/$activityId/edit',
     getParentRoute: () => AdminRoute,
   } as any)
-const AdminEventsEventIdEditRoute = AdminEventsEventIdEditRouteImport.update({
-  id: '/events/$eventId/edit',
-  path: '/events/$eventId/edit',
-  getParentRoute: () => AdminRoute,
-} as any)
+const AdminserviceEventsEventIdEditRoute =
+  AdminserviceEventsEventIdEditRouteImport.update({
+    id: '/(service)/events/$eventId/edit',
+    path: '/events/$eventId/edit',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminserviceEventsEventIdAttendanceRoute =
+  AdminserviceEventsEventIdAttendanceRouteImport.update({
+    id: '/(service)/events/$eventId/attendance',
+    path: '/events/$eventId/attendance',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdmininfoNoticesNoticeIdEditRoute =
+  AdmininfoNoticesNoticeIdEditRouteImport.update({
+    id: '/(info)/notices/$noticeId/edit',
+    path: '/notices/$noticeId/edit',
+    getParentRoute: () => AdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/clubs': typeof ClubsRoute
   '/error': typeof ErrorRoute
-  '/intro': typeof IntroRoute
-  '/login': typeof LoginRoute
   '/maintenance': typeof MaintenanceRoute
-  '/mypage': typeof MypageRoute
-  '/non-member-policy': typeof NonMemberPolicyRoute
-  '/notices': typeof NoticesRouteWithChildren
-  '/privacy': typeof PrivacyRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/signup': typeof SignupRoute
-  '/suggestion': typeof SuggestionRoute
-  '/terms': typeof TermsRoute
-  '/welfare': typeof WelfareRoute
-  '/admin/activities': typeof AdminActivitiesRoute
-  '/admin/attendance': typeof AdminAttendanceRoute
-  '/admin/clubs': typeof AdminClubsRoute
-  '/admin/intro': typeof AdminIntroRoute
-  '/admin/privacy-officer': typeof AdminPrivacyOfficerRoute
-  '/admin/profile-updates': typeof AdminProfileUpdatesRoute
-  '/admin/suggestions': typeof AdminSuggestionsRoute
-  '/admin/welfare': typeof AdminWelfareRoute
-  '/attendance/$activityId': typeof AttendanceActivityIdRoute
-  '/notices/$noticeId': typeof NoticesNoticeIdRoute
-  '/activities': typeof ActivitiesIndexRoute
+  '/': typeof MainIndexRoute
   '/admin/': typeof AdminIndexRoute
-  '/notices/': typeof NoticesIndexRoute
-  '/search': typeof SearchIndexRoute
-  '/admin/events/create': typeof AdminEventsCreateRoute
-  '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
-  '/admin/notices/create': typeof AdminNoticesCreateRoute
-  '/admin/surveys/create': typeof AdminSurveysCreateRoute
-  '/admin/events': typeof AdminEventsIndexRoute
-  '/admin/kakaotalk': typeof AdminKakaotalkIndexRoute
-  '/admin/notices': typeof AdminNoticesIndexRoute
-  '/admin/surveys': typeof AdminSurveysIndexRoute
-  '/admin/events/$eventId/edit': typeof AdminEventsEventIdEditRoute
-  '/admin/kakaotalk/$activityId/edit': typeof AdminKakaotalkActivityIdEditRoute
-  '/admin/notices/$noticeId/edit': typeof AdminNoticesNoticeIdEditRoute
-  '/admin/surveys/$activityId/edit': typeof AdminSurveysActivityIdEditRoute
-  '/admin/events/$eventId': typeof AdminEventsEventIdIndexRoute
-  '/admin/surveys/$activityId': typeof AdminSurveysActivityIdIndexRoute
+  '/notices': typeof MaininfoNoticesRouteWithChildren
+  '/notices/$noticeId': typeof MaininfoNoticesNoticeIdRoute
+  '/attendance/$activityId': typeof MainserviceAttendanceActivityIdRoute
+  '/admin/notices/create': typeof AdmininfoNoticesCreateRoute
+  '/admin/events/create': typeof AdminserviceEventsCreateRoute
+  '/admin/kakaotalk/create': typeof AdminserviceKakaotalkCreateRoute
+  '/admin/surveys/create': typeof AdminserviceSurveysCreateRoute
+  '/login': typeof MainauthLoginIndexRoute
+  '/mypage': typeof MainauthMypageIndexRoute
+  '/reset-password': typeof MainauthResetPasswordIndexRoute
+  '/signup': typeof MainauthSignupIndexRoute
+  '/clubs': typeof MaininfoClubsIndexRoute
+  '/intro': typeof MaininfoIntroIndexRoute
+  '/notices/': typeof MaininfoNoticesIndexRoute
+  '/non-member-policy': typeof MainpolicyNonMemberPolicyIndexRoute
+  '/privacy': typeof MainpolicyPrivacyIndexRoute
+  '/terms': typeof MainpolicyTermsIndexRoute
+  '/activities': typeof MainserviceActivitiesIndexRoute
+  '/search': typeof MainserviceSearchIndexRoute
+  '/suggestion': typeof MainserviceSuggestionIndexRoute
+  '/welfare': typeof MainserviceWelfareIndexRoute
+  '/admin/clubs': typeof AdmininfoClubsIndexRoute
+  '/admin/intro': typeof AdmininfoIntroIndexRoute
+  '/admin/notices': typeof AdmininfoNoticesIndexRoute
+  '/admin/privacy-officer': typeof AdmininfoPrivacyOfficerIndexRoute
+  '/admin/profile-updates': typeof AdminmanageProfileUpdatesIndexRoute
+  '/admin/activities': typeof AdminserviceActivitiesIndexRoute
+  '/admin/events': typeof AdminserviceEventsIndexRoute
+  '/admin/kakaotalk': typeof AdminserviceKakaotalkIndexRoute
+  '/admin/suggestions': typeof AdminserviceSuggestionsIndexRoute
+  '/admin/surveys': typeof AdminserviceSurveysIndexRoute
+  '/admin/welfare': typeof AdminserviceWelfareIndexRoute
+  '/admin/notices/$noticeId/edit': typeof AdmininfoNoticesNoticeIdEditRoute
+  '/admin/events/$eventId/attendance': typeof AdminserviceEventsEventIdAttendanceRoute
+  '/admin/events/$eventId/edit': typeof AdminserviceEventsEventIdEditRoute
+  '/admin/kakaotalk/$activityId/edit': typeof AdminserviceKakaotalkActivityIdEditRoute
+  '/admin/surveys/$activityId/edit': typeof AdminserviceSurveysActivityIdEditRoute
+  '/admin/events/$eventId': typeof AdminserviceEventsEventIdIndexRoute
+  '/admin/surveys/$activityId': typeof AdminserviceSurveysActivityIdIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/clubs': typeof ClubsRoute
   '/error': typeof ErrorRoute
-  '/intro': typeof IntroRoute
-  '/login': typeof LoginRoute
   '/maintenance': typeof MaintenanceRoute
-  '/mypage': typeof MypageRoute
-  '/non-member-policy': typeof NonMemberPolicyRoute
-  '/privacy': typeof PrivacyRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/signup': typeof SignupRoute
-  '/suggestion': typeof SuggestionRoute
-  '/terms': typeof TermsRoute
-  '/welfare': typeof WelfareRoute
-  '/admin/activities': typeof AdminActivitiesRoute
-  '/admin/attendance': typeof AdminAttendanceRoute
-  '/admin/clubs': typeof AdminClubsRoute
-  '/admin/intro': typeof AdminIntroRoute
-  '/admin/privacy-officer': typeof AdminPrivacyOfficerRoute
-  '/admin/profile-updates': typeof AdminProfileUpdatesRoute
-  '/admin/suggestions': typeof AdminSuggestionsRoute
-  '/admin/welfare': typeof AdminWelfareRoute
-  '/attendance/$activityId': typeof AttendanceActivityIdRoute
-  '/notices/$noticeId': typeof NoticesNoticeIdRoute
-  '/activities': typeof ActivitiesIndexRoute
+  '/': typeof MainIndexRoute
   '/admin': typeof AdminIndexRoute
-  '/notices': typeof NoticesIndexRoute
-  '/search': typeof SearchIndexRoute
-  '/admin/events/create': typeof AdminEventsCreateRoute
-  '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
-  '/admin/notices/create': typeof AdminNoticesCreateRoute
-  '/admin/surveys/create': typeof AdminSurveysCreateRoute
-  '/admin/events': typeof AdminEventsIndexRoute
-  '/admin/kakaotalk': typeof AdminKakaotalkIndexRoute
-  '/admin/notices': typeof AdminNoticesIndexRoute
-  '/admin/surveys': typeof AdminSurveysIndexRoute
-  '/admin/events/$eventId/edit': typeof AdminEventsEventIdEditRoute
-  '/admin/kakaotalk/$activityId/edit': typeof AdminKakaotalkActivityIdEditRoute
-  '/admin/notices/$noticeId/edit': typeof AdminNoticesNoticeIdEditRoute
-  '/admin/surveys/$activityId/edit': typeof AdminSurveysActivityIdEditRoute
-  '/admin/events/$eventId': typeof AdminEventsEventIdIndexRoute
-  '/admin/surveys/$activityId': typeof AdminSurveysActivityIdIndexRoute
+  '/notices/$noticeId': typeof MaininfoNoticesNoticeIdRoute
+  '/attendance/$activityId': typeof MainserviceAttendanceActivityIdRoute
+  '/admin/notices/create': typeof AdmininfoNoticesCreateRoute
+  '/admin/events/create': typeof AdminserviceEventsCreateRoute
+  '/admin/kakaotalk/create': typeof AdminserviceKakaotalkCreateRoute
+  '/admin/surveys/create': typeof AdminserviceSurveysCreateRoute
+  '/login': typeof MainauthLoginIndexRoute
+  '/mypage': typeof MainauthMypageIndexRoute
+  '/reset-password': typeof MainauthResetPasswordIndexRoute
+  '/signup': typeof MainauthSignupIndexRoute
+  '/clubs': typeof MaininfoClubsIndexRoute
+  '/intro': typeof MaininfoIntroIndexRoute
+  '/notices': typeof MaininfoNoticesIndexRoute
+  '/non-member-policy': typeof MainpolicyNonMemberPolicyIndexRoute
+  '/privacy': typeof MainpolicyPrivacyIndexRoute
+  '/terms': typeof MainpolicyTermsIndexRoute
+  '/activities': typeof MainserviceActivitiesIndexRoute
+  '/search': typeof MainserviceSearchIndexRoute
+  '/suggestion': typeof MainserviceSuggestionIndexRoute
+  '/welfare': typeof MainserviceWelfareIndexRoute
+  '/admin/clubs': typeof AdmininfoClubsIndexRoute
+  '/admin/intro': typeof AdmininfoIntroIndexRoute
+  '/admin/notices': typeof AdmininfoNoticesIndexRoute
+  '/admin/privacy-officer': typeof AdmininfoPrivacyOfficerIndexRoute
+  '/admin/profile-updates': typeof AdminmanageProfileUpdatesIndexRoute
+  '/admin/activities': typeof AdminserviceActivitiesIndexRoute
+  '/admin/events': typeof AdminserviceEventsIndexRoute
+  '/admin/kakaotalk': typeof AdminserviceKakaotalkIndexRoute
+  '/admin/suggestions': typeof AdminserviceSuggestionsIndexRoute
+  '/admin/surveys': typeof AdminserviceSurveysIndexRoute
+  '/admin/welfare': typeof AdminserviceWelfareIndexRoute
+  '/admin/notices/$noticeId/edit': typeof AdmininfoNoticesNoticeIdEditRoute
+  '/admin/events/$eventId/attendance': typeof AdminserviceEventsEventIdAttendanceRoute
+  '/admin/events/$eventId/edit': typeof AdminserviceEventsEventIdEditRoute
+  '/admin/kakaotalk/$activityId/edit': typeof AdminserviceKakaotalkActivityIdEditRoute
+  '/admin/surveys/$activityId/edit': typeof AdminserviceSurveysActivityIdEditRoute
+  '/admin/events/$eventId': typeof AdminserviceEventsEventIdIndexRoute
+  '/admin/surveys/$activityId': typeof AdminserviceSurveysActivityIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/clubs': typeof ClubsRoute
   '/error': typeof ErrorRoute
-  '/intro': typeof IntroRoute
-  '/login': typeof LoginRoute
   '/maintenance': typeof MaintenanceRoute
-  '/mypage': typeof MypageRoute
-  '/non-member-policy': typeof NonMemberPolicyRoute
-  '/notices': typeof NoticesRouteWithChildren
-  '/privacy': typeof PrivacyRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/signup': typeof SignupRoute
-  '/suggestion': typeof SuggestionRoute
-  '/terms': typeof TermsRoute
-  '/welfare': typeof WelfareRoute
-  '/admin/activities': typeof AdminActivitiesRoute
-  '/admin/attendance': typeof AdminAttendanceRoute
-  '/admin/clubs': typeof AdminClubsRoute
-  '/admin/intro': typeof AdminIntroRoute
-  '/admin/privacy-officer': typeof AdminPrivacyOfficerRoute
-  '/admin/profile-updates': typeof AdminProfileUpdatesRoute
-  '/admin/suggestions': typeof AdminSuggestionsRoute
-  '/admin/welfare': typeof AdminWelfareRoute
-  '/attendance/$activityId': typeof AttendanceActivityIdRoute
-  '/notices/$noticeId': typeof NoticesNoticeIdRoute
-  '/activities/': typeof ActivitiesIndexRoute
+  '/_main/': typeof MainIndexRoute
   '/admin/': typeof AdminIndexRoute
-  '/notices/': typeof NoticesIndexRoute
-  '/search/': typeof SearchIndexRoute
-  '/admin/events/create': typeof AdminEventsCreateRoute
-  '/admin/kakaotalk/create': typeof AdminKakaotalkCreateRoute
-  '/admin/notices/create': typeof AdminNoticesCreateRoute
-  '/admin/surveys/create': typeof AdminSurveysCreateRoute
-  '/admin/events/': typeof AdminEventsIndexRoute
-  '/admin/kakaotalk/': typeof AdminKakaotalkIndexRoute
-  '/admin/notices/': typeof AdminNoticesIndexRoute
-  '/admin/surveys/': typeof AdminSurveysIndexRoute
-  '/admin/events/$eventId/edit': typeof AdminEventsEventIdEditRoute
-  '/admin/kakaotalk/$activityId/edit': typeof AdminKakaotalkActivityIdEditRoute
-  '/admin/notices/$noticeId/edit': typeof AdminNoticesNoticeIdEditRoute
-  '/admin/surveys/$activityId/edit': typeof AdminSurveysActivityIdEditRoute
-  '/admin/events/$eventId/': typeof AdminEventsEventIdIndexRoute
-  '/admin/surveys/$activityId/': typeof AdminSurveysActivityIdIndexRoute
+  '/_main/(info)/notices': typeof MaininfoNoticesRouteWithChildren
+  '/_main/(info)/notices/$noticeId': typeof MaininfoNoticesNoticeIdRoute
+  '/_main/(service)/attendance/$activityId': typeof MainserviceAttendanceActivityIdRoute
+  '/admin/(info)/notices/create': typeof AdmininfoNoticesCreateRoute
+  '/admin/(service)/events/create': typeof AdminserviceEventsCreateRoute
+  '/admin/(service)/kakaotalk/create': typeof AdminserviceKakaotalkCreateRoute
+  '/admin/(service)/surveys/create': typeof AdminserviceSurveysCreateRoute
+  '/_main/(auth)/login/': typeof MainauthLoginIndexRoute
+  '/_main/(auth)/mypage/': typeof MainauthMypageIndexRoute
+  '/_main/(auth)/reset-password/': typeof MainauthResetPasswordIndexRoute
+  '/_main/(auth)/signup/': typeof MainauthSignupIndexRoute
+  '/_main/(info)/clubs/': typeof MaininfoClubsIndexRoute
+  '/_main/(info)/intro/': typeof MaininfoIntroIndexRoute
+  '/_main/(info)/notices/': typeof MaininfoNoticesIndexRoute
+  '/_main/(policy)/non-member-policy/': typeof MainpolicyNonMemberPolicyIndexRoute
+  '/_main/(policy)/privacy/': typeof MainpolicyPrivacyIndexRoute
+  '/_main/(policy)/terms/': typeof MainpolicyTermsIndexRoute
+  '/_main/(service)/activities/': typeof MainserviceActivitiesIndexRoute
+  '/_main/(service)/search/': typeof MainserviceSearchIndexRoute
+  '/_main/(service)/suggestion/': typeof MainserviceSuggestionIndexRoute
+  '/_main/(service)/welfare/': typeof MainserviceWelfareIndexRoute
+  '/admin/(info)/clubs/': typeof AdmininfoClubsIndexRoute
+  '/admin/(info)/intro/': typeof AdmininfoIntroIndexRoute
+  '/admin/(info)/notices/': typeof AdmininfoNoticesIndexRoute
+  '/admin/(info)/privacy-officer/': typeof AdmininfoPrivacyOfficerIndexRoute
+  '/admin/(manage)/profile-updates/': typeof AdminmanageProfileUpdatesIndexRoute
+  '/admin/(service)/activities/': typeof AdminserviceActivitiesIndexRoute
+  '/admin/(service)/events/': typeof AdminserviceEventsIndexRoute
+  '/admin/(service)/kakaotalk/': typeof AdminserviceKakaotalkIndexRoute
+  '/admin/(service)/suggestions/': typeof AdminserviceSuggestionsIndexRoute
+  '/admin/(service)/surveys/': typeof AdminserviceSurveysIndexRoute
+  '/admin/(service)/welfare/': typeof AdminserviceWelfareIndexRoute
+  '/admin/(info)/notices/$noticeId/edit': typeof AdmininfoNoticesNoticeIdEditRoute
+  '/admin/(service)/events/$eventId/attendance': typeof AdminserviceEventsEventIdAttendanceRoute
+  '/admin/(service)/events/$eventId/edit': typeof AdminserviceEventsEventIdEditRoute
+  '/admin/(service)/kakaotalk/$activityId/edit': typeof AdminserviceKakaotalkActivityIdEditRoute
+  '/admin/(service)/surveys/$activityId/edit': typeof AdminserviceSurveysActivityIdEditRoute
+  '/admin/(service)/events/$eventId/': typeof AdminserviceEventsEventIdIndexRoute
+  '/admin/(service)/surveys/$activityId/': typeof AdminserviceSurveysActivityIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/admin'
-    | '/clubs'
     | '/error'
-    | '/intro'
-    | '/login'
     | '/maintenance'
-    | '/mypage'
-    | '/non-member-policy'
-    | '/notices'
-    | '/privacy'
-    | '/reset-password'
-    | '/signup'
-    | '/suggestion'
-    | '/terms'
-    | '/welfare'
-    | '/admin/activities'
-    | '/admin/attendance'
-    | '/admin/clubs'
-    | '/admin/intro'
-    | '/admin/privacy-officer'
-    | '/admin/profile-updates'
-    | '/admin/suggestions'
-    | '/admin/welfare'
-    | '/attendance/$activityId'
-    | '/notices/$noticeId'
-    | '/activities'
+    | '/'
     | '/admin/'
-    | '/notices/'
-    | '/search'
+    | '/notices'
+    | '/notices/$noticeId'
+    | '/attendance/$activityId'
+    | '/admin/notices/create'
     | '/admin/events/create'
     | '/admin/kakaotalk/create'
-    | '/admin/notices/create'
     | '/admin/surveys/create'
+    | '/login'
+    | '/mypage'
+    | '/reset-password'
+    | '/signup'
+    | '/clubs'
+    | '/intro'
+    | '/notices/'
+    | '/non-member-policy'
+    | '/privacy'
+    | '/terms'
+    | '/activities'
+    | '/search'
+    | '/suggestion'
+    | '/welfare'
+    | '/admin/clubs'
+    | '/admin/intro'
+    | '/admin/notices'
+    | '/admin/privacy-officer'
+    | '/admin/profile-updates'
+    | '/admin/activities'
     | '/admin/events'
     | '/admin/kakaotalk'
-    | '/admin/notices'
+    | '/admin/suggestions'
     | '/admin/surveys'
+    | '/admin/welfare'
+    | '/admin/notices/$noticeId/edit'
+    | '/admin/events/$eventId/attendance'
     | '/admin/events/$eventId/edit'
     | '/admin/kakaotalk/$activityId/edit'
-    | '/admin/notices/$noticeId/edit'
     | '/admin/surveys/$activityId/edit'
     | '/admin/events/$eventId'
     | '/admin/surveys/$activityId'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/clubs'
     | '/error'
-    | '/intro'
-    | '/login'
     | '/maintenance'
-    | '/mypage'
-    | '/non-member-policy'
-    | '/privacy'
-    | '/reset-password'
-    | '/signup'
-    | '/suggestion'
-    | '/terms'
-    | '/welfare'
-    | '/admin/activities'
-    | '/admin/attendance'
-    | '/admin/clubs'
-    | '/admin/intro'
-    | '/admin/privacy-officer'
-    | '/admin/profile-updates'
-    | '/admin/suggestions'
-    | '/admin/welfare'
-    | '/attendance/$activityId'
-    | '/notices/$noticeId'
-    | '/activities'
+    | '/'
     | '/admin'
-    | '/notices'
-    | '/search'
+    | '/notices/$noticeId'
+    | '/attendance/$activityId'
+    | '/admin/notices/create'
     | '/admin/events/create'
     | '/admin/kakaotalk/create'
-    | '/admin/notices/create'
     | '/admin/surveys/create'
+    | '/login'
+    | '/mypage'
+    | '/reset-password'
+    | '/signup'
+    | '/clubs'
+    | '/intro'
+    | '/notices'
+    | '/non-member-policy'
+    | '/privacy'
+    | '/terms'
+    | '/activities'
+    | '/search'
+    | '/suggestion'
+    | '/welfare'
+    | '/admin/clubs'
+    | '/admin/intro'
+    | '/admin/notices'
+    | '/admin/privacy-officer'
+    | '/admin/profile-updates'
+    | '/admin/activities'
     | '/admin/events'
     | '/admin/kakaotalk'
-    | '/admin/notices'
+    | '/admin/suggestions'
     | '/admin/surveys'
+    | '/admin/welfare'
+    | '/admin/notices/$noticeId/edit'
+    | '/admin/events/$eventId/attendance'
     | '/admin/events/$eventId/edit'
     | '/admin/kakaotalk/$activityId/edit'
-    | '/admin/notices/$noticeId/edit'
     | '/admin/surveys/$activityId/edit'
     | '/admin/events/$eventId'
     | '/admin/surveys/$activityId'
   id:
     | '__root__'
-    | '/'
     | '/admin'
-    | '/clubs'
     | '/error'
-    | '/intro'
-    | '/login'
     | '/maintenance'
-    | '/mypage'
-    | '/non-member-policy'
-    | '/notices'
-    | '/privacy'
-    | '/reset-password'
-    | '/signup'
-    | '/suggestion'
-    | '/terms'
-    | '/welfare'
-    | '/admin/activities'
-    | '/admin/attendance'
-    | '/admin/clubs'
-    | '/admin/intro'
-    | '/admin/privacy-officer'
-    | '/admin/profile-updates'
-    | '/admin/suggestions'
-    | '/admin/welfare'
-    | '/attendance/$activityId'
-    | '/notices/$noticeId'
-    | '/activities/'
+    | '/_main/'
     | '/admin/'
-    | '/notices/'
-    | '/search/'
-    | '/admin/events/create'
-    | '/admin/kakaotalk/create'
-    | '/admin/notices/create'
-    | '/admin/surveys/create'
-    | '/admin/events/'
-    | '/admin/kakaotalk/'
-    | '/admin/notices/'
-    | '/admin/surveys/'
-    | '/admin/events/$eventId/edit'
-    | '/admin/kakaotalk/$activityId/edit'
-    | '/admin/notices/$noticeId/edit'
-    | '/admin/surveys/$activityId/edit'
-    | '/admin/events/$eventId/'
-    | '/admin/surveys/$activityId/'
+    | '/_main/(info)/notices'
+    | '/_main/(info)/notices/$noticeId'
+    | '/_main/(service)/attendance/$activityId'
+    | '/admin/(info)/notices/create'
+    | '/admin/(service)/events/create'
+    | '/admin/(service)/kakaotalk/create'
+    | '/admin/(service)/surveys/create'
+    | '/_main/(auth)/login/'
+    | '/_main/(auth)/mypage/'
+    | '/_main/(auth)/reset-password/'
+    | '/_main/(auth)/signup/'
+    | '/_main/(info)/clubs/'
+    | '/_main/(info)/intro/'
+    | '/_main/(info)/notices/'
+    | '/_main/(policy)/non-member-policy/'
+    | '/_main/(policy)/privacy/'
+    | '/_main/(policy)/terms/'
+    | '/_main/(service)/activities/'
+    | '/_main/(service)/search/'
+    | '/_main/(service)/suggestion/'
+    | '/_main/(service)/welfare/'
+    | '/admin/(info)/clubs/'
+    | '/admin/(info)/intro/'
+    | '/admin/(info)/notices/'
+    | '/admin/(info)/privacy-officer/'
+    | '/admin/(manage)/profile-updates/'
+    | '/admin/(service)/activities/'
+    | '/admin/(service)/events/'
+    | '/admin/(service)/kakaotalk/'
+    | '/admin/(service)/suggestions/'
+    | '/admin/(service)/surveys/'
+    | '/admin/(service)/welfare/'
+    | '/admin/(info)/notices/$noticeId/edit'
+    | '/admin/(service)/events/$eventId/attendance'
+    | '/admin/(service)/events/$eventId/edit'
+    | '/admin/(service)/kakaotalk/$activityId/edit'
+    | '/admin/(service)/surveys/$activityId/edit'
+    | '/admin/(service)/events/$eventId/'
+    | '/admin/(service)/surveys/$activityId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
-  ClubsRoute: typeof ClubsRoute
   ErrorRoute: typeof ErrorRoute
-  IntroRoute: typeof IntroRoute
-  LoginRoute: typeof LoginRoute
   MaintenanceRoute: typeof MaintenanceRoute
-  MypageRoute: typeof MypageRoute
-  NonMemberPolicyRoute: typeof NonMemberPolicyRoute
-  NoticesRoute: typeof NoticesRouteWithChildren
-  PrivacyRoute: typeof PrivacyRoute
-  ResetPasswordRoute: typeof ResetPasswordRoute
-  SignupRoute: typeof SignupRoute
-  SuggestionRoute: typeof SuggestionRoute
-  TermsRoute: typeof TermsRoute
-  WelfareRoute: typeof WelfareRoute
-  AttendanceActivityIdRoute: typeof AttendanceActivityIdRoute
-  ActivitiesIndexRoute: typeof ActivitiesIndexRoute
-  SearchIndexRoute: typeof SearchIndexRoute
+  MainIndexRoute: typeof MainIndexRoute
+  MaininfoNoticesRoute: typeof MaininfoNoticesRouteWithChildren
+  MainserviceAttendanceActivityIdRoute: typeof MainserviceAttendanceActivityIdRoute
+  MainauthLoginIndexRoute: typeof MainauthLoginIndexRoute
+  MainauthMypageIndexRoute: typeof MainauthMypageIndexRoute
+  MainauthResetPasswordIndexRoute: typeof MainauthResetPasswordIndexRoute
+  MainauthSignupIndexRoute: typeof MainauthSignupIndexRoute
+  MaininfoClubsIndexRoute: typeof MaininfoClubsIndexRoute
+  MaininfoIntroIndexRoute: typeof MaininfoIntroIndexRoute
+  MainpolicyNonMemberPolicyIndexRoute: typeof MainpolicyNonMemberPolicyIndexRoute
+  MainpolicyPrivacyIndexRoute: typeof MainpolicyPrivacyIndexRoute
+  MainpolicyTermsIndexRoute: typeof MainpolicyTermsIndexRoute
+  MainserviceActivitiesIndexRoute: typeof MainserviceActivitiesIndexRoute
+  MainserviceSearchIndexRoute: typeof MainserviceSearchIndexRoute
+  MainserviceSuggestionIndexRoute: typeof MainserviceSuggestionIndexRoute
+  MainserviceWelfareIndexRoute: typeof MainserviceWelfareIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/welfare': {
-      id: '/welfare'
-      path: '/welfare'
-      fullPath: '/welfare'
-      preLoaderRoute: typeof WelfareRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/suggestion': {
-      id: '/suggestion'
-      path: '/suggestion'
-      fullPath: '/suggestion'
-      preLoaderRoute: typeof SuggestionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notices': {
-      id: '/notices'
-      path: '/notices'
-      fullPath: '/notices'
-      preLoaderRoute: typeof NoticesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/non-member-policy': {
-      id: '/non-member-policy'
-      path: '/non-member-policy'
-      fullPath: '/non-member-policy'
-      preLoaderRoute: typeof NonMemberPolicyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mypage': {
-      id: '/mypage'
-      path: '/mypage'
-      fullPath: '/mypage'
-      preLoaderRoute: typeof MypageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/maintenance': {
       id: '/maintenance'
       path: '/maintenance'
       fullPath: '/maintenance'
       preLoaderRoute: typeof MaintenanceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/intro': {
-      id: '/intro'
-      path: '/intro'
-      fullPath: '/intro'
-      preLoaderRoute: typeof IntroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/error': {
@@ -670,40 +611,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ErrorRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/clubs': {
-      id: '/clubs'
-      path: '/clubs'
-      fullPath: '/clubs'
-      preLoaderRoute: typeof ClubsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin': {
       id: '/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/search/': {
-      id: '/search/'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notices/': {
-      id: '/notices/'
-      path: '/'
-      fullPath: '/notices/'
-      preLoaderRoute: typeof NoticesIndexRouteImport
-      parentRoute: typeof NoticesRoute
     }
     '/admin/': {
       id: '/admin/'
@@ -712,271 +625,381 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/activities/': {
-      id: '/activities/'
-      path: '/activities'
-      fullPath: '/activities'
-      preLoaderRoute: typeof ActivitiesIndexRouteImport
+    '/_main/': {
+      id: '/_main/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof MainIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/notices/$noticeId': {
-      id: '/notices/$noticeId'
-      path: '/$noticeId'
-      fullPath: '/notices/$noticeId'
-      preLoaderRoute: typeof NoticesNoticeIdRouteImport
-      parentRoute: typeof NoticesRoute
-    }
-    '/attendance/$activityId': {
-      id: '/attendance/$activityId'
-      path: '/attendance/$activityId'
-      fullPath: '/attendance/$activityId'
-      preLoaderRoute: typeof AttendanceActivityIdRouteImport
+    '/_main/(info)/notices': {
+      id: '/_main/(info)/notices'
+      path: '/notices'
+      fullPath: '/notices'
+      preLoaderRoute: typeof MaininfoNoticesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/welfare': {
-      id: '/admin/welfare'
+    '/admin/(service)/welfare/': {
+      id: '/admin/(service)/welfare/'
       path: '/welfare'
       fullPath: '/admin/welfare'
-      preLoaderRoute: typeof AdminWelfareRouteImport
+      preLoaderRoute: typeof AdminserviceWelfareIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/suggestions': {
-      id: '/admin/suggestions'
-      path: '/suggestions'
-      fullPath: '/admin/suggestions'
-      preLoaderRoute: typeof AdminSuggestionsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/profile-updates': {
-      id: '/admin/profile-updates'
-      path: '/profile-updates'
-      fullPath: '/admin/profile-updates'
-      preLoaderRoute: typeof AdminProfileUpdatesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/privacy-officer': {
-      id: '/admin/privacy-officer'
-      path: '/privacy-officer'
-      fullPath: '/admin/privacy-officer'
-      preLoaderRoute: typeof AdminPrivacyOfficerRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/intro': {
-      id: '/admin/intro'
-      path: '/intro'
-      fullPath: '/admin/intro'
-      preLoaderRoute: typeof AdminIntroRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/clubs': {
-      id: '/admin/clubs'
-      path: '/clubs'
-      fullPath: '/admin/clubs'
-      preLoaderRoute: typeof AdminClubsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/attendance': {
-      id: '/admin/attendance'
-      path: '/attendance'
-      fullPath: '/admin/attendance'
-      preLoaderRoute: typeof AdminAttendanceRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/activities': {
-      id: '/admin/activities'
-      path: '/activities'
-      fullPath: '/admin/activities'
-      preLoaderRoute: typeof AdminActivitiesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/surveys/': {
-      id: '/admin/surveys/'
+    '/admin/(service)/surveys/': {
+      id: '/admin/(service)/surveys/'
       path: '/surveys'
       fullPath: '/admin/surveys'
-      preLoaderRoute: typeof AdminSurveysIndexRouteImport
+      preLoaderRoute: typeof AdminserviceSurveysIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/notices/': {
-      id: '/admin/notices/'
-      path: '/notices'
-      fullPath: '/admin/notices'
-      preLoaderRoute: typeof AdminNoticesIndexRouteImport
+    '/admin/(service)/suggestions/': {
+      id: '/admin/(service)/suggestions/'
+      path: '/suggestions'
+      fullPath: '/admin/suggestions'
+      preLoaderRoute: typeof AdminserviceSuggestionsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/kakaotalk/': {
-      id: '/admin/kakaotalk/'
+    '/admin/(service)/kakaotalk/': {
+      id: '/admin/(service)/kakaotalk/'
       path: '/kakaotalk'
       fullPath: '/admin/kakaotalk'
-      preLoaderRoute: typeof AdminKakaotalkIndexRouteImport
+      preLoaderRoute: typeof AdminserviceKakaotalkIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/events/': {
-      id: '/admin/events/'
+    '/admin/(service)/events/': {
+      id: '/admin/(service)/events/'
       path: '/events'
       fullPath: '/admin/events'
-      preLoaderRoute: typeof AdminEventsIndexRouteImport
+      preLoaderRoute: typeof AdminserviceEventsIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/surveys/create': {
-      id: '/admin/surveys/create'
+    '/admin/(service)/activities/': {
+      id: '/admin/(service)/activities/'
+      path: '/activities'
+      fullPath: '/admin/activities'
+      preLoaderRoute: typeof AdminserviceActivitiesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/(manage)/profile-updates/': {
+      id: '/admin/(manage)/profile-updates/'
+      path: '/profile-updates'
+      fullPath: '/admin/profile-updates'
+      preLoaderRoute: typeof AdminmanageProfileUpdatesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/(info)/privacy-officer/': {
+      id: '/admin/(info)/privacy-officer/'
+      path: '/privacy-officer'
+      fullPath: '/admin/privacy-officer'
+      preLoaderRoute: typeof AdmininfoPrivacyOfficerIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/(info)/notices/': {
+      id: '/admin/(info)/notices/'
+      path: '/notices'
+      fullPath: '/admin/notices'
+      preLoaderRoute: typeof AdmininfoNoticesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/(info)/intro/': {
+      id: '/admin/(info)/intro/'
+      path: '/intro'
+      fullPath: '/admin/intro'
+      preLoaderRoute: typeof AdmininfoIntroIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/(info)/clubs/': {
+      id: '/admin/(info)/clubs/'
+      path: '/clubs'
+      fullPath: '/admin/clubs'
+      preLoaderRoute: typeof AdmininfoClubsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_main/(service)/welfare/': {
+      id: '/_main/(service)/welfare/'
+      path: '/welfare'
+      fullPath: '/welfare'
+      preLoaderRoute: typeof MainserviceWelfareIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(service)/suggestion/': {
+      id: '/_main/(service)/suggestion/'
+      path: '/suggestion'
+      fullPath: '/suggestion'
+      preLoaderRoute: typeof MainserviceSuggestionIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(service)/search/': {
+      id: '/_main/(service)/search/'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof MainserviceSearchIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(service)/activities/': {
+      id: '/_main/(service)/activities/'
+      path: '/activities'
+      fullPath: '/activities'
+      preLoaderRoute: typeof MainserviceActivitiesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(policy)/terms/': {
+      id: '/_main/(policy)/terms/'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof MainpolicyTermsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(policy)/privacy/': {
+      id: '/_main/(policy)/privacy/'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof MainpolicyPrivacyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(policy)/non-member-policy/': {
+      id: '/_main/(policy)/non-member-policy/'
+      path: '/non-member-policy'
+      fullPath: '/non-member-policy'
+      preLoaderRoute: typeof MainpolicyNonMemberPolicyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(info)/notices/': {
+      id: '/_main/(info)/notices/'
+      path: '/'
+      fullPath: '/notices/'
+      preLoaderRoute: typeof MaininfoNoticesIndexRouteImport
+      parentRoute: typeof MaininfoNoticesRoute
+    }
+    '/_main/(info)/intro/': {
+      id: '/_main/(info)/intro/'
+      path: '/intro'
+      fullPath: '/intro'
+      preLoaderRoute: typeof MaininfoIntroIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(info)/clubs/': {
+      id: '/_main/(info)/clubs/'
+      path: '/clubs'
+      fullPath: '/clubs'
+      preLoaderRoute: typeof MaininfoClubsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(auth)/signup/': {
+      id: '/_main/(auth)/signup/'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof MainauthSignupIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(auth)/reset-password/': {
+      id: '/_main/(auth)/reset-password/'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof MainauthResetPasswordIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(auth)/mypage/': {
+      id: '/_main/(auth)/mypage/'
+      path: '/mypage'
+      fullPath: '/mypage'
+      preLoaderRoute: typeof MainauthMypageIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(auth)/login/': {
+      id: '/_main/(auth)/login/'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof MainauthLoginIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/(service)/surveys/create': {
+      id: '/admin/(service)/surveys/create'
       path: '/surveys/create'
       fullPath: '/admin/surveys/create'
-      preLoaderRoute: typeof AdminSurveysCreateRouteImport
+      preLoaderRoute: typeof AdminserviceSurveysCreateRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/notices/create': {
-      id: '/admin/notices/create'
-      path: '/notices/create'
-      fullPath: '/admin/notices/create'
-      preLoaderRoute: typeof AdminNoticesCreateRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/kakaotalk/create': {
-      id: '/admin/kakaotalk/create'
+    '/admin/(service)/kakaotalk/create': {
+      id: '/admin/(service)/kakaotalk/create'
       path: '/kakaotalk/create'
       fullPath: '/admin/kakaotalk/create'
-      preLoaderRoute: typeof AdminKakaotalkCreateRouteImport
+      preLoaderRoute: typeof AdminserviceKakaotalkCreateRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/events/create': {
-      id: '/admin/events/create'
+    '/admin/(service)/events/create': {
+      id: '/admin/(service)/events/create'
       path: '/events/create'
       fullPath: '/admin/events/create'
-      preLoaderRoute: typeof AdminEventsCreateRouteImport
+      preLoaderRoute: typeof AdminserviceEventsCreateRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/surveys/$activityId/': {
-      id: '/admin/surveys/$activityId/'
+    '/admin/(info)/notices/create': {
+      id: '/admin/(info)/notices/create'
+      path: '/notices/create'
+      fullPath: '/admin/notices/create'
+      preLoaderRoute: typeof AdmininfoNoticesCreateRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_main/(service)/attendance/$activityId': {
+      id: '/_main/(service)/attendance/$activityId'
+      path: '/attendance/$activityId'
+      fullPath: '/attendance/$activityId'
+      preLoaderRoute: typeof MainserviceAttendanceActivityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(info)/notices/$noticeId': {
+      id: '/_main/(info)/notices/$noticeId'
+      path: '/$noticeId'
+      fullPath: '/notices/$noticeId'
+      preLoaderRoute: typeof MaininfoNoticesNoticeIdRouteImport
+      parentRoute: typeof MaininfoNoticesRoute
+    }
+    '/admin/(service)/surveys/$activityId/': {
+      id: '/admin/(service)/surveys/$activityId/'
       path: '/surveys/$activityId'
       fullPath: '/admin/surveys/$activityId'
-      preLoaderRoute: typeof AdminSurveysActivityIdIndexRouteImport
+      preLoaderRoute: typeof AdminserviceSurveysActivityIdIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/events/$eventId/': {
-      id: '/admin/events/$eventId/'
+    '/admin/(service)/events/$eventId/': {
+      id: '/admin/(service)/events/$eventId/'
       path: '/events/$eventId'
       fullPath: '/admin/events/$eventId'
-      preLoaderRoute: typeof AdminEventsEventIdIndexRouteImport
+      preLoaderRoute: typeof AdminserviceEventsEventIdIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/surveys/$activityId/edit': {
-      id: '/admin/surveys/$activityId/edit'
+    '/admin/(service)/surveys/$activityId/edit': {
+      id: '/admin/(service)/surveys/$activityId/edit'
       path: '/surveys/$activityId/edit'
       fullPath: '/admin/surveys/$activityId/edit'
-      preLoaderRoute: typeof AdminSurveysActivityIdEditRouteImport
+      preLoaderRoute: typeof AdminserviceSurveysActivityIdEditRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/notices/$noticeId/edit': {
-      id: '/admin/notices/$noticeId/edit'
-      path: '/notices/$noticeId/edit'
-      fullPath: '/admin/notices/$noticeId/edit'
-      preLoaderRoute: typeof AdminNoticesNoticeIdEditRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/kakaotalk/$activityId/edit': {
-      id: '/admin/kakaotalk/$activityId/edit'
+    '/admin/(service)/kakaotalk/$activityId/edit': {
+      id: '/admin/(service)/kakaotalk/$activityId/edit'
       path: '/kakaotalk/$activityId/edit'
       fullPath: '/admin/kakaotalk/$activityId/edit'
-      preLoaderRoute: typeof AdminKakaotalkActivityIdEditRouteImport
+      preLoaderRoute: typeof AdminserviceKakaotalkActivityIdEditRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/events/$eventId/edit': {
-      id: '/admin/events/$eventId/edit'
+    '/admin/(service)/events/$eventId/edit': {
+      id: '/admin/(service)/events/$eventId/edit'
       path: '/events/$eventId/edit'
       fullPath: '/admin/events/$eventId/edit'
-      preLoaderRoute: typeof AdminEventsEventIdEditRouteImport
+      preLoaderRoute: typeof AdminserviceEventsEventIdEditRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/(service)/events/$eventId/attendance': {
+      id: '/admin/(service)/events/$eventId/attendance'
+      path: '/events/$eventId/attendance'
+      fullPath: '/admin/events/$eventId/attendance'
+      preLoaderRoute: typeof AdminserviceEventsEventIdAttendanceRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/(info)/notices/$noticeId/edit': {
+      id: '/admin/(info)/notices/$noticeId/edit'
+      path: '/notices/$noticeId/edit'
+      fullPath: '/admin/notices/$noticeId/edit'
+      preLoaderRoute: typeof AdmininfoNoticesNoticeIdEditRouteImport
       parentRoute: typeof AdminRoute
     }
   }
 }
 
 interface AdminRouteChildren {
-  AdminActivitiesRoute: typeof AdminActivitiesRoute
-  AdminAttendanceRoute: typeof AdminAttendanceRoute
-  AdminClubsRoute: typeof AdminClubsRoute
-  AdminIntroRoute: typeof AdminIntroRoute
-  AdminPrivacyOfficerRoute: typeof AdminPrivacyOfficerRoute
-  AdminProfileUpdatesRoute: typeof AdminProfileUpdatesRoute
-  AdminSuggestionsRoute: typeof AdminSuggestionsRoute
-  AdminWelfareRoute: typeof AdminWelfareRoute
   AdminIndexRoute: typeof AdminIndexRoute
-  AdminEventsCreateRoute: typeof AdminEventsCreateRoute
-  AdminKakaotalkCreateRoute: typeof AdminKakaotalkCreateRoute
-  AdminNoticesCreateRoute: typeof AdminNoticesCreateRoute
-  AdminSurveysCreateRoute: typeof AdminSurveysCreateRoute
-  AdminEventsIndexRoute: typeof AdminEventsIndexRoute
-  AdminKakaotalkIndexRoute: typeof AdminKakaotalkIndexRoute
-  AdminNoticesIndexRoute: typeof AdminNoticesIndexRoute
-  AdminSurveysIndexRoute: typeof AdminSurveysIndexRoute
-  AdminEventsEventIdEditRoute: typeof AdminEventsEventIdEditRoute
-  AdminKakaotalkActivityIdEditRoute: typeof AdminKakaotalkActivityIdEditRoute
-  AdminNoticesNoticeIdEditRoute: typeof AdminNoticesNoticeIdEditRoute
-  AdminSurveysActivityIdEditRoute: typeof AdminSurveysActivityIdEditRoute
-  AdminEventsEventIdIndexRoute: typeof AdminEventsEventIdIndexRoute
-  AdminSurveysActivityIdIndexRoute: typeof AdminSurveysActivityIdIndexRoute
+  AdmininfoNoticesCreateRoute: typeof AdmininfoNoticesCreateRoute
+  AdminserviceEventsCreateRoute: typeof AdminserviceEventsCreateRoute
+  AdminserviceKakaotalkCreateRoute: typeof AdminserviceKakaotalkCreateRoute
+  AdminserviceSurveysCreateRoute: typeof AdminserviceSurveysCreateRoute
+  AdmininfoClubsIndexRoute: typeof AdmininfoClubsIndexRoute
+  AdmininfoIntroIndexRoute: typeof AdmininfoIntroIndexRoute
+  AdmininfoNoticesIndexRoute: typeof AdmininfoNoticesIndexRoute
+  AdmininfoPrivacyOfficerIndexRoute: typeof AdmininfoPrivacyOfficerIndexRoute
+  AdminmanageProfileUpdatesIndexRoute: typeof AdminmanageProfileUpdatesIndexRoute
+  AdminserviceActivitiesIndexRoute: typeof AdminserviceActivitiesIndexRoute
+  AdminserviceEventsIndexRoute: typeof AdminserviceEventsIndexRoute
+  AdminserviceKakaotalkIndexRoute: typeof AdminserviceKakaotalkIndexRoute
+  AdminserviceSuggestionsIndexRoute: typeof AdminserviceSuggestionsIndexRoute
+  AdminserviceSurveysIndexRoute: typeof AdminserviceSurveysIndexRoute
+  AdminserviceWelfareIndexRoute: typeof AdminserviceWelfareIndexRoute
+  AdmininfoNoticesNoticeIdEditRoute: typeof AdmininfoNoticesNoticeIdEditRoute
+  AdminserviceEventsEventIdAttendanceRoute: typeof AdminserviceEventsEventIdAttendanceRoute
+  AdminserviceEventsEventIdEditRoute: typeof AdminserviceEventsEventIdEditRoute
+  AdminserviceKakaotalkActivityIdEditRoute: typeof AdminserviceKakaotalkActivityIdEditRoute
+  AdminserviceSurveysActivityIdEditRoute: typeof AdminserviceSurveysActivityIdEditRoute
+  AdminserviceEventsEventIdIndexRoute: typeof AdminserviceEventsEventIdIndexRoute
+  AdminserviceSurveysActivityIdIndexRoute: typeof AdminserviceSurveysActivityIdIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminActivitiesRoute: AdminActivitiesRoute,
-  AdminAttendanceRoute: AdminAttendanceRoute,
-  AdminClubsRoute: AdminClubsRoute,
-  AdminIntroRoute: AdminIntroRoute,
-  AdminPrivacyOfficerRoute: AdminPrivacyOfficerRoute,
-  AdminProfileUpdatesRoute: AdminProfileUpdatesRoute,
-  AdminSuggestionsRoute: AdminSuggestionsRoute,
-  AdminWelfareRoute: AdminWelfareRoute,
   AdminIndexRoute: AdminIndexRoute,
-  AdminEventsCreateRoute: AdminEventsCreateRoute,
-  AdminKakaotalkCreateRoute: AdminKakaotalkCreateRoute,
-  AdminNoticesCreateRoute: AdminNoticesCreateRoute,
-  AdminSurveysCreateRoute: AdminSurveysCreateRoute,
-  AdminEventsIndexRoute: AdminEventsIndexRoute,
-  AdminKakaotalkIndexRoute: AdminKakaotalkIndexRoute,
-  AdminNoticesIndexRoute: AdminNoticesIndexRoute,
-  AdminSurveysIndexRoute: AdminSurveysIndexRoute,
-  AdminEventsEventIdEditRoute: AdminEventsEventIdEditRoute,
-  AdminKakaotalkActivityIdEditRoute: AdminKakaotalkActivityIdEditRoute,
-  AdminNoticesNoticeIdEditRoute: AdminNoticesNoticeIdEditRoute,
-  AdminSurveysActivityIdEditRoute: AdminSurveysActivityIdEditRoute,
-  AdminEventsEventIdIndexRoute: AdminEventsEventIdIndexRoute,
-  AdminSurveysActivityIdIndexRoute: AdminSurveysActivityIdIndexRoute,
+  AdmininfoNoticesCreateRoute: AdmininfoNoticesCreateRoute,
+  AdminserviceEventsCreateRoute: AdminserviceEventsCreateRoute,
+  AdminserviceKakaotalkCreateRoute: AdminserviceKakaotalkCreateRoute,
+  AdminserviceSurveysCreateRoute: AdminserviceSurveysCreateRoute,
+  AdmininfoClubsIndexRoute: AdmininfoClubsIndexRoute,
+  AdmininfoIntroIndexRoute: AdmininfoIntroIndexRoute,
+  AdmininfoNoticesIndexRoute: AdmininfoNoticesIndexRoute,
+  AdmininfoPrivacyOfficerIndexRoute: AdmininfoPrivacyOfficerIndexRoute,
+  AdminmanageProfileUpdatesIndexRoute: AdminmanageProfileUpdatesIndexRoute,
+  AdminserviceActivitiesIndexRoute: AdminserviceActivitiesIndexRoute,
+  AdminserviceEventsIndexRoute: AdminserviceEventsIndexRoute,
+  AdminserviceKakaotalkIndexRoute: AdminserviceKakaotalkIndexRoute,
+  AdminserviceSuggestionsIndexRoute: AdminserviceSuggestionsIndexRoute,
+  AdminserviceSurveysIndexRoute: AdminserviceSurveysIndexRoute,
+  AdminserviceWelfareIndexRoute: AdminserviceWelfareIndexRoute,
+  AdmininfoNoticesNoticeIdEditRoute: AdmininfoNoticesNoticeIdEditRoute,
+  AdminserviceEventsEventIdAttendanceRoute:
+    AdminserviceEventsEventIdAttendanceRoute,
+  AdminserviceEventsEventIdEditRoute: AdminserviceEventsEventIdEditRoute,
+  AdminserviceKakaotalkActivityIdEditRoute:
+    AdminserviceKakaotalkActivityIdEditRoute,
+  AdminserviceSurveysActivityIdEditRoute:
+    AdminserviceSurveysActivityIdEditRoute,
+  AdminserviceEventsEventIdIndexRoute: AdminserviceEventsEventIdIndexRoute,
+  AdminserviceSurveysActivityIdIndexRoute:
+    AdminserviceSurveysActivityIdIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface NoticesRouteChildren {
-  NoticesNoticeIdRoute: typeof NoticesNoticeIdRoute
-  NoticesIndexRoute: typeof NoticesIndexRoute
+interface MaininfoNoticesRouteChildren {
+  MaininfoNoticesNoticeIdRoute: typeof MaininfoNoticesNoticeIdRoute
+  MaininfoNoticesIndexRoute: typeof MaininfoNoticesIndexRoute
 }
 
-const NoticesRouteChildren: NoticesRouteChildren = {
-  NoticesNoticeIdRoute: NoticesNoticeIdRoute,
-  NoticesIndexRoute: NoticesIndexRoute,
+const MaininfoNoticesRouteChildren: MaininfoNoticesRouteChildren = {
+  MaininfoNoticesNoticeIdRoute: MaininfoNoticesNoticeIdRoute,
+  MaininfoNoticesIndexRoute: MaininfoNoticesIndexRoute,
 }
 
-const NoticesRouteWithChildren =
-  NoticesRoute._addFileChildren(NoticesRouteChildren)
+const MaininfoNoticesRouteWithChildren = MaininfoNoticesRoute._addFileChildren(
+  MaininfoNoticesRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
-  ClubsRoute: ClubsRoute,
   ErrorRoute: ErrorRoute,
-  IntroRoute: IntroRoute,
-  LoginRoute: LoginRoute,
   MaintenanceRoute: MaintenanceRoute,
-  MypageRoute: MypageRoute,
-  NonMemberPolicyRoute: NonMemberPolicyRoute,
-  NoticesRoute: NoticesRouteWithChildren,
-  PrivacyRoute: PrivacyRoute,
-  ResetPasswordRoute: ResetPasswordRoute,
-  SignupRoute: SignupRoute,
-  SuggestionRoute: SuggestionRoute,
-  TermsRoute: TermsRoute,
-  WelfareRoute: WelfareRoute,
-  AttendanceActivityIdRoute: AttendanceActivityIdRoute,
-  ActivitiesIndexRoute: ActivitiesIndexRoute,
-  SearchIndexRoute: SearchIndexRoute,
+  MainIndexRoute: MainIndexRoute,
+  MaininfoNoticesRoute: MaininfoNoticesRouteWithChildren,
+  MainserviceAttendanceActivityIdRoute: MainserviceAttendanceActivityIdRoute,
+  MainauthLoginIndexRoute: MainauthLoginIndexRoute,
+  MainauthMypageIndexRoute: MainauthMypageIndexRoute,
+  MainauthResetPasswordIndexRoute: MainauthResetPasswordIndexRoute,
+  MainauthSignupIndexRoute: MainauthSignupIndexRoute,
+  MaininfoClubsIndexRoute: MaininfoClubsIndexRoute,
+  MaininfoIntroIndexRoute: MaininfoIntroIndexRoute,
+  MainpolicyNonMemberPolicyIndexRoute: MainpolicyNonMemberPolicyIndexRoute,
+  MainpolicyPrivacyIndexRoute: MainpolicyPrivacyIndexRoute,
+  MainpolicyTermsIndexRoute: MainpolicyTermsIndexRoute,
+  MainserviceActivitiesIndexRoute: MainserviceActivitiesIndexRoute,
+  MainserviceSearchIndexRoute: MainserviceSearchIndexRoute,
+  MainserviceSuggestionIndexRoute: MainserviceSuggestionIndexRoute,
+  MainserviceWelfareIndexRoute: MainserviceWelfareIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
