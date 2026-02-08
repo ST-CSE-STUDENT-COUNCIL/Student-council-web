@@ -48,8 +48,8 @@ export function VerifyModal({ onClose, onUploaded }: VerifyModalProps) {
 
   async function handleUpload() {
     if (!file || isUploading) return
-    if (file.size > 5 * 1024 * 1024) {
-      setError('5MB 이하의 이미지를 업로드해주세요.')
+    if (file.size > 10 * 1024 * 1024) {
+      setError('10MB 이하의 이미지를 업로드해주세요.')
       return
     }
 
@@ -111,7 +111,7 @@ export function VerifyModal({ onClose, onUploaded }: VerifyModalProps) {
             onChange={onChange}
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            {file ? `선택된 파일: ${file.name}` : 'JPG, PNG · 최대 5MB'}
+            {file ? `선택된 파일: ${file.name}` : 'JPG, PNG · 최대 10MB'}
           </p>
         </div>
 

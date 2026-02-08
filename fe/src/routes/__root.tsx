@@ -8,6 +8,8 @@ import NotFound from './-404'
 import { ErrorComponent } from './error'
 import { useAuthInit } from '../hooks/useAuthInit'
 import { SEO } from '../components/common/SEO'
+import { useSystemStore } from '../store/useSystemStore'
+import { MaintenancePage } from './maintenance'
 
 // DevTools는 개발 환경에서만 로드
 const TanStackRouterDevtools = import.meta.env.DEV
@@ -21,10 +23,15 @@ const TanStackRouterDevtools = import.meta.env.DEV
 // 앱 초기화를 처리하는 래퍼 컴포넌트
 function RootComponent() {
     const { isInitialized } = useAuthInit()
+    const { isMaintenance } = useSystemStore()
     const location = useLocation()
     const isAttendancePage = location.pathname.startsWith('/attendance/')
     const isAdminPage = location.pathname.startsWith('/admin')
     const showDevtools = import.meta.env.DEV && !isAttendancePage
+
+    if (isMaintenance) {
+        return <MaintenancePage />
+    }
 
     // 인증 초기화 중에는 로딩 표시
     if (!isInitialized) {

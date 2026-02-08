@@ -26,7 +26,7 @@ export const ImageUploader = ({
     onImagesChange,
     isDragging,
     onDraggingChange,
-    maxImages = 10
+    maxImages = 15
 }: ImageUploaderProps) => {
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -117,7 +117,7 @@ export const ImageUploader = ({
                         {images.length > 0 ? '이미지 추가하기' : '클릭하여 이미지를 선택하거나 드래그하세요'}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                        (최대 10MB, {images.length}/{maxImages}개 선택됨)
+                        (파일 크기 제한 없음, {images.length}/{maxImages}개 선택됨)
                     </p>
                 </div>
             </div>
