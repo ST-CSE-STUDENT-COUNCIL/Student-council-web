@@ -79,6 +79,26 @@ export const activityApi = {
     },
 
     /**
+     * 학번 출석 정보 조회 (공개)
+     */
+    searchAttendanceByStudentId: async (
+        activityId: number,
+        studentId: string
+    ): Promise<{
+        registration_id: number
+        activity_title: string
+        user_name: string
+        student_id: string
+        already_attended: boolean
+        attended_at: string | null
+    }> => {
+        const response = await api.get(`/${activityId}/attendance/search`, {
+            params: { student_id: studentId }
+        })
+        return response.data
+    },
+
+    /**
      * 학번 출석 체크 (공개)
      */
     attendByStudentId: async (
