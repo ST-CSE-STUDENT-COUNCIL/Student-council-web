@@ -616,6 +616,17 @@ async def refresh_token(request: Request):
             "token_type": "bearer"
         }
         
+        # 토큰 갱신 시 last_login_at 업데이트 (중복 로그인 방지 로직 호환)
+        try:
+            user_response = fresh_client.auth.get_user(new_access_token)
+            if user_response and user_response.user:
+                user_id = user_response.user.id
+                now_iso = datetime.now(timezone.utc).isoformat()
+                fresh_client.table('users').update({'last_login_at': now_iso}).eq('id', user_id).execute()
+        except Exception:
+            # last_login_at 업데이트 실패 시 무시 (토큰 갱신은 성공)
+            pass
+        
         response = JSONResponse(content=response_data)
         
         # 새 refresh_token으로 쿠키 갱신
