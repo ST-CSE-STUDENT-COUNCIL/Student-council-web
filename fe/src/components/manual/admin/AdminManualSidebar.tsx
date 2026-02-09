@@ -1,23 +1,33 @@
-import { useEffect, useState } from 'react'
-import { BookOpen, Code2, Paintbrush } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
+import { BookOpen, Code2, Paintbrush, Users } from 'lucide-react'
 
 // 섹션 그룹 정의
 export const MANUAL_GROUPS = [
     {
-        id: 'usage',
-        title: 'PART 1. 학생회 운영 가이드',
+        id: 'user',
+        title: 'PART 1. 사용자 가이드',
+        icon: Users,
+        color: 'text-green-600 dark:text-green-400',
+        sections: [
+            { id: 'user-intro', title: '1. 시스템 개요' },
+            { id: 'user-interface', title: '2. 메인 화면 구성' },
+            { id: 'user-features', title: '3. 주요 기능 가이드' },
+        ]
+    },
+    {
+        id: 'admin',
+        title: 'PART 2. 관리자 가이드',
         icon: BookOpen,
         color: 'text-blue-600 dark:text-blue-400',
         sections: [
-            { id: 'intro', title: '1. 시스템 개요' },
-            { id: 'user-interface', title: '2. 사용자 페이지 구조' },
-            { id: 'admin-interface', title: '3. 관리자 페이지 구조' },
-            { id: 'feature-details', title: '4. 관리자 기능 상세 가이드' },
+            { id: 'admin-intro', title: '1. 관리자 접속' },
+            { id: 'admin-structure', title: '2. 대시보드 구조' },
+            { id: 'admin-features', title: '3. 상세 기능 가이드' },
         ]
     },
     {
         id: 'frontend',
-        title: 'PART 2. 프론트엔드 가이드',
+        title: 'PART 3. 프론트엔드 가이드',
         icon: Paintbrush,
         color: 'text-pink-600 dark:text-pink-400',
         sections: [
@@ -32,7 +42,7 @@ export const MANUAL_GROUPS = [
     },
     {
         id: 'backend',
-        title: 'PART 3. 백엔드 가이드',
+        title: 'PART 4. 백엔드 가이드',
         icon: Code2,
         color: 'text-purple-600 dark:text-purple-400',
         sections: [
@@ -52,26 +62,29 @@ export const MANUAL_GROUPS = [
 export const ALL_SECTIONS = MANUAL_GROUPS.flatMap(group => group.sections)
 
 interface AdminManualSidebarProps {
-    activePart: 'usage' | 'frontend' | 'backend'
+    activePart: 'user' | 'admin' | 'frontend' | 'backend'
 }
 
 export const AdminManualSidebar = ({ activePart }: AdminManualSidebarProps) => {
     const [activeSection, setActiveSection] = useState('')
+    const observer = useRef<IntersectionObserver | null>(null)
 
     // 탭 변경 시 스크롤 초기화 및 첫 섹션 활성화
     useEffect(() => {
         const container = document.getElementById('manual-scroll-container')
         if (container) container.scrollTo(0, 0)
 
-        const firstSection = MANUAL_GROUPS.find(g => g.id === activePart)?.sections[0].id
-        if (firstSection) setActiveSection(firstSection)
+        const group = MANUAL_GROUPS.find(g => g.id === activePart)
+        if (group && group.sections.length > 0) {
+            setActiveSection(group.sections[0].id)
+        }
     }, [activePart])
 
     useEffect(() => {
         const container = document.getElementById('manual-scroll-container')
         if (!container) return
 
-        const observer = new IntersectionObserver(
+        observer.current = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
@@ -91,11 +104,11 @@ export const AdminManualSidebar = ({ activePart }: AdminManualSidebarProps) => {
         if (currentGroup) {
             currentGroup.sections.forEach((section) => {
                 const element = document.getElementById(section.id)
-                if (element) observer.observe(element)
+                if (element) observer.current?.observe(element)
             })
         }
 
-        return () => observer.disconnect()
+        return () => observer.current?.disconnect()
     }, [activePart])
 
     const scrollToSection = (id: string) => {
@@ -103,11 +116,7 @@ export const AdminManualSidebar = ({ activePart }: AdminManualSidebarProps) => {
         const container = document.getElementById('manual-scroll-container')
 
         if (element && container) {
-            const offsetTop = element.offsetTop - container.offsetTop
-            container.scrollTo({
-                top: offsetTop - 20,
-                behavior: 'smooth'
-            })
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
     }
 
