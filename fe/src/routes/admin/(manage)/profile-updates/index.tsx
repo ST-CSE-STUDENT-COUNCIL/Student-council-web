@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { ShieldCheck, UserRoundPen } from 'lucide-react'
+import { ShieldCheck, UserRoundPen, RefreshCw } from 'lucide-react'
 import { adminApi } from '../../../../lib/api/admin'
 import { ProfileUpdateCard } from '../../../../components/members/admin/profile-updates/ProfileUpdateCard'
 import { ProfileUpdatesFilter } from '../../../../components/members/admin/profile-updates/ProfileUpdatesFilter'
@@ -189,8 +189,17 @@ function AdminProfileUpdatesPage() {
     }
   }, [statusFilter, page, pageSize, refreshKey])
 
+  /**
+   * 학적 인증 이미지 미리보기 핸들러
+   * - base64(data:)로 시작하면 API 호출 없이 바로 프리뷰
+   * - 그 외에는 스토리지 서명 URL을 받아서 프리뷰
+   */
   async function handlePreviewImage(verificationImageUrl: string) {
     if (!verificationImageUrl || previewLoading) return
+    if (verificationImageUrl.startsWith('data:')) {
+      setPreviewImageUrl(verificationImageUrl)
+      return
+    }
     setPreviewLoading(true)
     try {
       const { signed_url } = await adminApi.getStorageSignedUrl(verificationImageUrl)
@@ -271,10 +280,21 @@ function AdminProfileUpdatesPage() {
               <h2 className="text-lg font-semibold text-gray-900">요청 목록</h2>
               <p className="text-sm text-gray-500">최근 요청부터 표시됩니다.</p>
             </div>
-            <ProfileUpdatesFilter
-              statusFilter={statusFilter}
-              onChange={setStatusFilter}
-            />
+            <div className="flex items-center gap-2">
+              <ProfileUpdatesFilter
+                statusFilter={statusFilter}
+                onChange={setStatusFilter}
+              />
+              <button
+                type="button"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                title="목록 새로고침"
+                onClick={() => setRefreshKey((prev) => prev + 1)}
+              >
+                <RefreshCw className="w-4 h-4" />
+                새로고침
+              </button>
+            </div>
           </div>
 
           <div className="divide-y divide-gray-100">
