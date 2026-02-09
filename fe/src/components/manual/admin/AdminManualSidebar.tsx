@@ -1,77 +1,30 @@
-import { useEffect, useState } from 'react'
-import { BookOpen, Code2, Paintbrush } from 'lucide-react'
-
-// 섹션 그룹 정의
-export const MANUAL_GROUPS = [
-    {
-        id: 'usage',
-        title: 'PART 1. 학생회 운영 가이드',
-        icon: BookOpen,
-        color: 'text-blue-600 dark:text-blue-400',
-        sections: [
-            { id: 'intro', title: '1. 시스템 개요' },
-            { id: 'user-interface', title: '2. 사용자 페이지 구조' },
-            { id: 'admin-interface', title: '3. 관리자 페이지 구조' },
-            { id: 'feature-details', title: '4. 관리자 기능 상세 가이드' },
-        ]
-    },
-    {
-        id: 'frontend',
-        title: 'PART 2. 프론트엔드 가이드',
-        icon: Paintbrush,
-        color: 'text-pink-600 dark:text-pink-400',
-        sections: [
-            { id: 'fe-intro', title: '1. 기술 스택' },
-            { id: 'fe-structure', title: '2. 프로젝트 구조' },
-            { id: 'fe-routing', title: '3. 라우팅 (TanStack Router)' },
-            { id: 'fe-state', title: '4. 상태 관리 (Zustand)' },
-            { id: 'fe-api', title: '5. API 연동' },
-            { id: 'fe-styling', title: '6. 스타일링 및 컴포넌트' },
-            { id: 'fe-build', title: '7. 개발 및 빌드' },
-        ]
-    },
-    {
-        id: 'backend',
-        title: 'PART 3. 백엔드 가이드',
-        icon: Code2,
-        color: 'text-purple-600 dark:text-purple-400',
-        sections: [
-            { id: 'tech-stack', title: '1. 기술 스택 및 아키텍처' },
-            { id: 'env-vars', title: '2. 환경 변수 관리' },
-            { id: 'server', title: '3. 서버 관리 (Fly.io)' },
-            { id: 'database', title: '4. 데이터베이스 (Supabase)' },
-            { id: 'storage', title: '5. 스토리지 관리' },
-            { id: 'auth-security', title: '6. 인증 및 보안' },
-            { id: 'troubleshooting', title: '7. 트러블슈팅 & FAQ' },
-            { id: 'checklist', title: '8. 운영 체크리스트' },
-        ]
-    }
-]
-
-// 전체 섹션 목록 (Flattened for Observer)
-export const ALL_SECTIONS = MANUAL_GROUPS.flatMap(group => group.sections)
+import { useEffect, useState, useRef } from 'react'
+import { MANUAL_GROUPS } from './AdminManualConstants'
 
 interface AdminManualSidebarProps {
-    activePart: 'usage' | 'frontend' | 'backend'
+    activePart: 'user' | 'admin' | 'frontend' | 'backend'
 }
 
 export const AdminManualSidebar = ({ activePart }: AdminManualSidebarProps) => {
     const [activeSection, setActiveSection] = useState('')
+    const observer = useRef<IntersectionObserver | null>(null)
 
     // 탭 변경 시 스크롤 초기화 및 첫 섹션 활성화
     useEffect(() => {
         const container = document.getElementById('manual-scroll-container')
         if (container) container.scrollTo(0, 0)
 
-        const firstSection = MANUAL_GROUPS.find(g => g.id === activePart)?.sections[0].id
-        if (firstSection) setActiveSection(firstSection)
+        const group = MANUAL_GROUPS.find(g => g.id === activePart)
+        if (group && group.sections.length > 0) {
+            setActiveSection(group.sections[0].id)
+        }
     }, [activePart])
 
     useEffect(() => {
         const container = document.getElementById('manual-scroll-container')
         if (!container) return
 
-        const observer = new IntersectionObserver(
+        observer.current = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
@@ -91,11 +44,11 @@ export const AdminManualSidebar = ({ activePart }: AdminManualSidebarProps) => {
         if (currentGroup) {
             currentGroup.sections.forEach((section) => {
                 const element = document.getElementById(section.id)
-                if (element) observer.observe(element)
+                if (element) observer.current?.observe(element)
             })
         }
 
-        return () => observer.disconnect()
+        return () => observer.current?.disconnect()
     }, [activePart])
 
     const scrollToSection = (id: string) => {
@@ -103,11 +56,7 @@ export const AdminManualSidebar = ({ activePart }: AdminManualSidebarProps) => {
         const container = document.getElementById('manual-scroll-container')
 
         if (element && container) {
-            const offsetTop = element.offsetTop - container.offsetTop
-            container.scrollTo({
-                top: offsetTop - 20,
-                behavior: 'smooth'
-            })
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
     }
 
