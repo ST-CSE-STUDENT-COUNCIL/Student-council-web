@@ -51,6 +51,7 @@ api.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+        const isAttendancePage = typeof window !== 'undefined' && window.location.pathname.startsWith('/attendance/')
 
         if (error.code === 'ERR_NETWORK') {
             useSystemStore.getState().setMaintenance(true)
@@ -116,7 +117,9 @@ api.interceptors.response.use(
             } else if (status === 502 || status === 503 || status === 504) {
                 useSystemStore.getState().setMaintenance(true)
             } else if (status >= 500) {
-                router.navigate({ to: '/error' })
+                if (!isAttendancePage) {
+                    router.navigate({ to: '/error' })
+                }
             }
         }
 
