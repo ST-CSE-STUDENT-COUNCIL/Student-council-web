@@ -43,7 +43,7 @@ export function AttendanceTable({
                         className="w-full rounded-xl border border-gray-200 pl-10 pr-4 py-2.5 text-sm"
                     />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                     {['all', 'attended', 'absent'].map((status) => (
                         <button
                             key={status}
@@ -56,6 +56,21 @@ export function AttendanceTable({
                             {status === 'all' ? '전체' : status === 'attended' ? '출석' : '미출석'}
                         </button>
                     ))}
+                    <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        className="ml-2 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={loading}
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={loading ? 'animate-spin' : ''}
+                            width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582M20 20v-5h-.581m-1.837-6.163A7.974 7.974 0 0012 4c-4.418 0-8 3.582-8 8m16 0c0 1.657-.672 3.157-1.763 4.237M15 19.418A7.974 7.974 0 0012 20c-4.418 0-8-3.582-8-8" />
+                        </svg>
+                        {loading ? '불러오는 중' : '새로고침'}
+                    </button>
                 </div>
             </div>
 
