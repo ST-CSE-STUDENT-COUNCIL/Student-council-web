@@ -147,7 +147,6 @@ async def search(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] search: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="검색 중 오류가 발생했습니다",

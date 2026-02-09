@@ -61,7 +61,6 @@ async def get_clubs():
         )
     
     except Exception as e:
-        print(f"[API ERROR] get_clubs: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="동아리 목록 조회 실패"
@@ -103,7 +102,6 @@ async def get_club(club_id: int):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] get_club: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="동아리 조회 실패"
@@ -185,7 +183,6 @@ async def create_club(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] create_club: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="동아리 추가 실패"
@@ -249,7 +246,6 @@ async def update_club(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] update_club: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="동아리 수정 실패"
@@ -301,7 +297,6 @@ async def delete_club(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] delete_club: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="동아리 삭제 실패"
@@ -333,7 +328,6 @@ async def get_club_intro_images(club_id: int):
             total=len(images)
         )
     except Exception as e:
-        print(f"[API ERROR] get_club_intro_images: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="이미지 목록 조회 실패"
@@ -407,7 +401,6 @@ async def create_club_intro_image(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] create_club_intro_image: {str(e)}")
         raise HTTPException(status_code=500, detail="이미지 추가 실패")
 
 
@@ -444,7 +437,6 @@ async def update_club_intro_image(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] update_club_intro_image: {str(e)}")
         raise HTTPException(status_code=500, detail="이미지 수정 실패")
 
 
@@ -476,5 +468,4 @@ async def delete_club_intro_image(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] delete_club_intro_image: {str(e)}")
         raise HTTPException(status_code=500, detail="이미지 삭제 실패")
