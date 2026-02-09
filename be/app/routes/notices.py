@@ -218,7 +218,6 @@ async def get_notices(
         )
     
     except Exception as e:
-        print(f"[NOTICES ERROR] {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="공지사항 조회 실패"
@@ -291,7 +290,6 @@ async def get_notice(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] get_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="공지사항 조회 실패"
@@ -423,7 +421,6 @@ async def create_draft_notice(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] create_draft_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Draft 생성 실패"
@@ -703,7 +700,6 @@ async def update_notice(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] update_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="공지사항 수정 실패"
@@ -768,7 +764,6 @@ async def delete_notice(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] delete_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="공지사항 삭제 실패"

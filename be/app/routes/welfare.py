@@ -122,7 +122,6 @@ async def complete_print_welfare_image_upload(
         
         return {"image_url": public_url}
     except Exception as e:
-        print(f"[API ERROR] complete_print_welfare_image_upload: {str(e)}")
         raise HTTPException(status_code=500, detail="이미지 정보 저장 실패")
 
 
@@ -291,7 +290,6 @@ async def complete_locker_image_upload(
         
         return {"image_url": public_url}
     except Exception as e:
-        print(f"[API ERROR] complete_locker_image_upload: {str(e)}")
         raise HTTPException(status_code=500, detail="이미지 정보 저장 실패")
 
 
@@ -345,7 +343,6 @@ async def upload_locker_image(
         
         return {"image_url": image_url}
     except Exception as e:
-        print(f"[API ERROR] upload_locker_image: {str(e)}")
         raise HTTPException(status_code=500, detail="이미지 업로드 실패")
 
 
