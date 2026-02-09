@@ -1,10 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 import { activityApi, activityAdminApi } from '../../../../lib/api/activities'
 import type { ActivityListItem, Activity, ActivityCreateRequest, ActivityType } from '../../../../types/activities'
 import { activityTypeLabels, getActivityStatus } from '../../../../types/activities'
-import { RegistrationsModal, FormFieldsManager, ImageUploader, type UploadImage } from '../../../../components/activities/admin'
+import { FormFieldsManager, ImageUploader, type UploadImage } from '../../../../components/activities/admin'
 import { toast } from 'sonner'
 import Swal from 'sweetalert2'
 import {
@@ -74,11 +74,11 @@ function StatsCard({ icon, label, value, color }: { icon: React.ReactNode; label
 }
 
 function AdminActivitiesPage() {
+  const navigate = useNavigate()
   const [activities, setActivities] = useState<ActivityListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
-  const [viewingRegistrationsActivity, setViewingRegistrationsActivity] = useState<ActivityListItem | null>(null)
   const [saving, setSaving] = useState(false)
 
   // View & Filter State
@@ -651,7 +651,7 @@ function AdminActivitiesPage() {
                     <div className="flex gap-2 pt-4 border-t border-gray-100">
                       <button
                         type="button"
-                        onClick={() => setViewingRegistrationsActivity(activity)}
+                        onClick={() => navigate({ to: `/admin/${(['survey', 'demand_survey'].includes(activity.type)) ? 'surveys' : 'events'}/${activity.id}` })}
                         className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all"
                       >
                         <Eye size={14} />
@@ -737,7 +737,7 @@ function AdminActivitiesPage() {
                             <div className="flex justify-end gap-2">
                               <button
                                 type="button"
-                                onClick={() => setViewingRegistrationsActivity(activity)}
+                                onClick={() => navigate({ to: `/admin/${(['survey', 'demand_survey'].includes(activity.type)) ? 'surveys' : 'events'}/${activity.id}` })}
                                 className="px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all"
                               >
                                 신청자
@@ -974,14 +974,6 @@ function AdminActivitiesPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Registrations Modal */}
-      {viewingRegistrationsActivity && (
-        <RegistrationsModal
-          activity={viewingRegistrationsActivity}
-          onClose={() => setViewingRegistrationsActivity(null)}
-        />
       )}
     </div>
   )
