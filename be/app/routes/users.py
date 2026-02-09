@@ -3,6 +3,7 @@
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Form, Query
 from typing import Optional, List
+from datetime import datetime, timezone, timedelta
 from app.schemas.users import (
     UserProfileResponse,
     ChangePasswordRequest,
@@ -95,7 +96,6 @@ async def change_password(
                 {"password": body.new_password}
             )
         except Exception as e:
-            print(f"[CHANGE PASSWORD ERROR] {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="비밀번호 변경 실패"
@@ -106,10 +106,9 @@ async def change_password(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] change_password: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="비밀번호 변경 중 오류 발생"
+            detail=f"비밀번호 변경 중 오류 발생: {str(e)}"
         )
 
 
@@ -167,10 +166,9 @@ async def upload_verification_image_direct(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] upload_verification_image_direct: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="이미지 업로드 실패"
+            detail=f"이미지 업로드 실패: {str(e)}"
         )
 
 
@@ -219,10 +217,9 @@ async def withdraw(
         try:
             admin_supabase.rpc('delete_user_completely', {'target_user_id': user_id}).execute()
         except Exception as rpc_error:
-            print(f"[WITHDRAW ERROR] RPC 삭제 실패: {str(rpc_error)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="회원탈퇴 처리 실패"
+                detail=f"회원탈퇴 처리 실패: {str(rpc_error)}"
             )
         
         # 3. email_verifications 삭제 (재가입 허용)
@@ -239,10 +236,9 @@ async def withdraw(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] withdraw: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="회원탈퇴 처리 중 오류 발생"
+            detail=f"회원탈퇴 처리 중 오류 발생: {str(e)}"
         )
 
 
@@ -344,10 +340,9 @@ async def get_my_activities(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] get_my_activities: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="활동 목록 조회 실패"
+            detail=f"활동 목록 조회 실패: {str(e)}"
         )
 
 
@@ -393,10 +388,9 @@ async def upload_profile_update_image(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] upload_profile_update_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="이미지 업로드 실패"
+            detail=f"이미지 업로드 실패: {str(e)}"
         )
 
 
@@ -414,7 +408,6 @@ async def request_profile_update(
     current_user: dict = Depends(get_current_user)
 ):
     """프로필 변경 요청 생성"""
-    from datetime import timezone, timedelta
     
     # [Rate Limit] DB 기반 중복/연타 방지 (최근 5초 내 요청 금지)
     try:
@@ -424,7 +417,7 @@ async def request_profile_update(
             .select("id", count="exact")\
             .eq("user_id", current_user["id"])\
             .gte("created_at", limit_time)\
-            .execute()  # type: ignore
+            .execute()
             
         if recent_check.count and recent_check.count > 0:
             raise HTTPException(
@@ -433,9 +426,8 @@ async def request_profile_update(
             )
     except HTTPException:
         raise
-    except Exception as e:
-        print(f"Rate limit check failed: {e}")
-        # DB 오류시 진행 허용 (Fail Open)
+    except Exception:
+        # DB 오류시 진행 허용 (Fail Open - 중복 제출 방지 보다 사용자 경험 우선)
         pass
     
     try:
@@ -475,7 +467,6 @@ async def request_profile_update(
             )
         
         data = result.data[0]
-        from datetime import datetime
         return {
             "id": data['id'],
             "field_name": data['field_name'],
@@ -489,10 +480,9 @@ async def request_profile_update(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] request_profile_update: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="변경 요청 실패"
+            detail=f"변경 요청 실패: {str(e)}"
         )
 
 
@@ -518,10 +508,9 @@ async def get_my_profile_updates(
         return {"requests": result.data or []}
     
     except Exception as e:
-        print(f"[API ERROR] get_my_profile_updates: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="조회 실패"
+            detail=f"조회 실패: {str(e)}"
         )
 
 
@@ -579,10 +568,9 @@ async def send_email_change_verification(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] send_email_change_verification: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="인증번호 발송 실패"
+            detail=f"인증번호 발송 실패: {str(e)}"
         )
 
 
@@ -642,10 +630,9 @@ async def verify_email_change(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] verify_email_change: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="이메일 변경 실패"
+            detail=f"이메일 변경 실패: {str(e)}"
         )
 
 
@@ -701,8 +688,7 @@ async def change_phone(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] change_phone: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="전화번호 변경 실패"
+            detail=f"전화번호 변경 실패: {str(e)}"
         )

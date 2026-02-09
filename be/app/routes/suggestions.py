@@ -126,7 +126,6 @@ async def create_suggestion(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] 건의함 작성 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="건의함 작성 실패"
@@ -253,7 +252,6 @@ async def get_suggestions(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] 건의함 목록 조회 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="건의함 목록 조회 실패"
@@ -343,7 +341,6 @@ async def get_suggestion(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] 건의함 조회 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="건의함 조회 실패"
@@ -460,7 +457,6 @@ async def update_suggestion_status(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] 건의함 상태 변경 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="건의함 상태 변경 실패"
@@ -516,7 +512,6 @@ async def delete_suggestion(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] 건의함 삭제 실패: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="건의함 삭제 실패"

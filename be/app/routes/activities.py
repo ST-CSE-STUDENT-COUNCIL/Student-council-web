@@ -159,7 +159,6 @@ async def get_activities(
         )
     
     except Exception as e:
-        print(f"[API ERROR] get_activities: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="활동 목록 조회 실패"
@@ -250,7 +249,6 @@ async def get_activity(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] get_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="활동 조회 실패"
@@ -435,7 +433,6 @@ async def register_for_activity(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] register_for_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="활동 신청 실패"
@@ -503,7 +500,6 @@ async def cancel_activity_registration(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] cancel_activity_registration: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="신청 취소 실패"
@@ -643,7 +639,6 @@ async def submit_survey(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] submit_survey: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="설문조사 제출 실패"
@@ -736,7 +731,6 @@ async def create_activity(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] create_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="활동 생성 실패"
@@ -866,7 +860,6 @@ async def update_activity(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] update_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="활동 수정 실패"
@@ -914,7 +907,6 @@ async def delete_activity(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] delete_activity: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="활동 삭제 실패"
@@ -987,7 +979,6 @@ async def get_activity_registrations(
         )
     
     except Exception as e:
-        print(f"[API ERROR] get_activity_registrations: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="신청자 목록 조회 실패"
@@ -1083,7 +1074,6 @@ async def update_registration_status(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] update_registration_status: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="상태 변경 실패"
@@ -1210,7 +1200,6 @@ async def get_survey_stats(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] get_survey_stats: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="설문조사 통계 조회 실패"
@@ -1354,7 +1343,6 @@ async def get_demand_survey_stats(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] get_demand_survey_stats: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="수요조사 통계 조회 실패"
@@ -1434,7 +1422,6 @@ async def add_activity_image(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] add_activity_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="이미지 추가 실패"
@@ -1480,9 +1467,9 @@ async def delete_activity_image(
         # R2에서 파일 삭제
         try:
             await delete_file_from_r2(image_url, bucket_name="activity-images")
-        except Exception as e:
-            print(f"R2 파일 삭제 실패: {str(e)}")
-            # R2 삭제 실패해도 DB에서는 삭제
+        except Exception:
+            # R2 파일 삭제 실패 시 무시 (이미 삭제되었거나 존재하지 않는 경우, DB에서는 삭제)
+            pass
         
         # DB에서 삭제
         admin_supabase.table('activity_images').delete().eq('id', image_id).execute()
@@ -1492,7 +1479,6 @@ async def delete_activity_image(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] delete_activity_image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="이미지 삭제 실패"
@@ -1548,7 +1534,6 @@ async def search_attendance_by_student_id(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] search_attendance_by_student_id: {str(e)}")
         raise HTTPException(status_code=500, detail="출석 정보 조회 실패")
 
 
@@ -1570,15 +1555,16 @@ async def attend_by_student_id(
     try:
         admin_supabase = get_supabase_admin()
         
-        # 학번으로 신청 내역 조회
+        # 학번으로 신청 내역 조회 (승인된 신청만)
         registration_result = admin_supabase.table('activity_registrations')\
             .select('id, attended')\
             .eq('activity_id', activity_id)\
             .eq('student_id', body.student_id)\
+            .eq('status', 'approved')\
             .maybe_single()\
             .execute()
         
-        if not registration_result.data:
+        if not registration_result or not registration_result.data:
             raise HTTPException(status_code=404, detail="해당 학번으로 신청된 내역이 없습니다")
         
         reg = registration_result.data
@@ -1607,7 +1593,6 @@ async def attend_by_student_id(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] attend_by_student_id: {str(e)}")
         raise HTTPException(status_code=500, detail="출석 체크 실패")
 
 
@@ -1635,10 +1620,11 @@ async def get_attendance_list(
         if not activity_result.data:
             raise HTTPException(status_code=404, detail="활동을 찾을 수 없습니다")
         
-        # 신청자 목록 조회 (users 조인)
+        # 신청자 목록 조회 (승인된 신청만)
         registrations_result = admin_supabase.table('activity_registrations')\
             .select('id, user_id, name, student_id, phone, created_at, attended, attended_at')\
             .eq('activity_id', activity_id)\
+            .eq('status', 'approved')\
             .order('created_at')\
             .execute()
         
@@ -1676,7 +1662,6 @@ async def get_attendance_list(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] get_attendance_list: {str(e)}")
         raise HTTPException(status_code=500, detail="출석 현황 조회 실패")
 
 
@@ -1700,11 +1685,12 @@ async def admin_mark_attendance(
     try:
         admin_supabase = get_supabase_admin()
         
-        # 신청 내역 확인
+        # 신청 내역 확인 (승인된 신청만)
         reg_result = admin_supabase.table('activity_registrations')\
             .select('id, attended')\
             .eq('id', registration_id)\
             .eq('activity_id', activity_id)\
+            .eq('status', 'approved')\
             .single()\
             .execute()
         
@@ -1735,7 +1721,6 @@ async def admin_mark_attendance(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] admin_mark_attendance: {str(e)}")
         raise HTTPException(status_code=500, detail="출석 체크 실패")
 
 
@@ -1781,5 +1766,4 @@ async def admin_cancel_attendance(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] admin_cancel_attendance: {str(e)}")
         raise HTTPException(status_code=500, detail="출석 취소 실패")
