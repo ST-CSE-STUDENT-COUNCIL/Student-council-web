@@ -61,6 +61,7 @@
    ============================================ */
 html {
     color-scheme: light;
+    touch-action: manipulation;
 }
 
 html.dark {
