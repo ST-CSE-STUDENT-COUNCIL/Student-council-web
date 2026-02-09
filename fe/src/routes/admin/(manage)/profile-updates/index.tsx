@@ -2,9 +2,9 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { ShieldCheck, UserRoundPen } from 'lucide-react'
 import { adminApi } from '../../../../lib/api/admin'
-import { ProfileUpdateCard } from '../../../../components/admin/profile-updates/ProfileUpdateCard'
-import { ProfileUpdatesFilter } from '../../../../components/admin/profile-updates/ProfileUpdatesFilter'
-import type { ProfileUpdateRequest, StatusFilter, UpdateField } from '../../../../components/admin/profile-updates/types'
+import { ProfileUpdateCard } from '../../../../components/members/admin/profile-updates/ProfileUpdateCard'
+import { ProfileUpdatesFilter } from '../../../../components/members/admin/profile-updates/ProfileUpdatesFilter'
+import type { ProfileUpdateRequest, StatusFilter, UpdateField } from '../../../../components/members/admin/profile-updates/types'
 
 export const Route = createFileRoute('/admin/(manage)/profile-updates/')({
   component: AdminProfileUpdatesPage,

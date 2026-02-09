@@ -1,6 +1,6 @@
 import { Search } from 'lucide-react'
 
-import type { AttendanceRegistration, AttendanceStatus } from '../../../types/attendance'
+import type { AttendanceRegistration, AttendanceStatus } from '../../../../types/attendance'
 
 type AttendanceTableProps = {
     searchQuery: string

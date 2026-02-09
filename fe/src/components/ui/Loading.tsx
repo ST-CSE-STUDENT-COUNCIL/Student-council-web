@@ -2,6 +2,7 @@ type LoadingProps = {
     size?: 'sm' | 'md' | 'lg'
     text?: string
     fullScreen?: boolean
+    className?: string
 }
 
 const sizeClasses = {
@@ -10,9 +11,9 @@ const sizeClasses = {
     lg: 'w-12 h-12 border-4',
 }
 
-export function Loading({ size = 'md', text, fullScreen = false }: LoadingProps) {
+export function Loading({ size = 'md', text, fullScreen = false, className = '' }: LoadingProps) {
     const content = (
-        <div className="flex flex-col items-center justify-center gap-3">
+        <div className={`flex flex-col items-center justify-center gap-3 ${className}`}>
             <div
                 className={`${sizeClasses[size]} border-blue-600 border-t-transparent rounded-full animate-spin`}
             />

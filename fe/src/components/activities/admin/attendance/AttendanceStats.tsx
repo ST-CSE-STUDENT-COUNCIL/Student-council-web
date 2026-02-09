@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { CheckCircle2, ClipboardList, Users, XCircle } from 'lucide-react'
 
-import type { AttendanceSummary } from '../../../types/attendance'
+import type { AttendanceSummary } from '../../../../types/attendance'
 
 type AttendanceStatsProps = {
     stats: AttendanceSummary

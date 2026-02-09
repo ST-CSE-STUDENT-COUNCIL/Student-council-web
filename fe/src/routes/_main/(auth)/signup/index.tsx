@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
+﻿import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { useState, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,7 +7,7 @@ import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import { CheckCircle, Eye, EyeOff } from 'lucide-react'
 
-import { PhoneInput } from '../../../../components/common/PhoneInput'
+import { PhoneInput } from '../../../../components/ui/PhoneInput'
 import { Turnstile } from '../../../../components/common/Turnstile'
 import { signupFormSchema, type SignupFormData } from '../../../../schemas/auth'
 import { useEmailVerification } from '../../../../hooks/useEmailVerification'
@@ -514,3 +514,4 @@ function AgreementStep({
         </div>
     )
 }
+

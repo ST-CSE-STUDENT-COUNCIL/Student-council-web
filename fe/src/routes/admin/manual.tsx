@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { AdminManualSidebar } from '../../components/admin/manual/AdminManualSidebar'
-import { AdminManualContent } from '../../components/admin/manual/AdminManualContent'
+import { AdminManualSidebar } from '../../components/manual/admin/AdminManualSidebar'
+import { AdminManualContent } from '../../components/manual/admin/AdminManualContent'
 import { useState } from 'react'
 import { BookOpen, Code2, Paintbrush } from 'lucide-react'
 

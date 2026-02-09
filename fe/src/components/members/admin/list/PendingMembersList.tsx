@@ -26,7 +26,7 @@ type PendingMembersListProps = {
     onPageChange: (page: number) => void
 }
 
-import { Pagination } from '../../ui/Pagination'
+import { Pagination } from '../../../ui/Pagination'
 import { FileImage } from 'lucide-react'
 
 export function PendingMembersList({

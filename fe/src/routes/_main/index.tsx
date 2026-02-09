@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+﻿import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay, Pagination, Navigation } from 'swiper/modules'
@@ -23,7 +23,7 @@ import { postApi } from '../../lib/api/notices'
 import type { ActivityListItem } from '../../types/activities'
 import { getActivityStatus } from '../../types/activities'
 import type { NoticeListItem } from '../../types/posts'
-import { LoadingSpinner } from '../../components/common/LoadingSpinner'
+import { Loading } from '../../components/ui/Loading'
 import { SEO } from '../../components/common/SEO'
 
 export const Route = createFileRoute('/_main/')({
@@ -78,7 +78,7 @@ function Index() {
         fetchData()
     }, [])
 
-    if (loading) return <LoadingSpinner message="홈페이지를 불러오고 있습니다..." />
+    if (loading) return <Loading text="홈페이지를 불러오고 있습니다..." className="min-h-[60vh] py-20" />
 
     return (
         <div className="pb-20 space-y-12">
@@ -94,7 +94,7 @@ function Index() {
                     <div className="lg:col-span-8 relative group rounded-3xl overflow-hidden shadow-2xl shadow-indigo-500/10 dark:shadow-none ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-slate-900">
                         {loading ? (
                             <div className="w-full h-full min-h-[400px] flex items-center justify-center bg-gray-100 dark:bg-slate-800 animate-pulse">
-                                <LoadingSpinner />
+                                <Loading />
                             </div>
                         ) : (
                             <>

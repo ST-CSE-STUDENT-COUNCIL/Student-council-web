@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Modal } from '../../common/Modal'
+import { Modal } from '../../ui/Modal'
 import type { Activity, ActivityListItem, SurveySubmitRequest } from '../../../types/activities'
 import { activityApi } from '../../../lib/api/activities'
 import { toast } from 'sonner'
@@ -537,3 +537,4 @@ export const ActivitySurveyModal = ({ isOpen, onClose, activity, onSubmit }: Act
         </Modal>
     )
 }
+

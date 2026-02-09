@@ -1,9 +1,9 @@
-import { Outlet, createFileRoute, useNavigate, useLocation } from '@tanstack/react-router'
+﻿import { Outlet, createFileRoute, useNavigate, useLocation } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { AdminSidebar } from '../components/layout/AdminSidebar'
 import { useAuthStore } from '../store/useAuthStore'
 import { useThemeStore } from '../store/useThemeStore'
-import { LoadingSpinner } from '../components/common/LoadingSpinner'
+import { Loading } from '../components/ui/Loading'
 
 export const Route = createFileRoute('/admin')({
     component: AdminLayout,
@@ -58,7 +58,7 @@ function AdminLayout() {
     if (!isInitialized) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <LoadingSpinner />
+                <Loading />
             </div>
         )
     }
@@ -85,3 +85,4 @@ function AdminLayout() {
         </div>
     )
 }
+

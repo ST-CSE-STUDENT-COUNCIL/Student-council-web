@@ -1,6 +1,6 @@
-import React from 'react'
+﻿import React from 'react'
 
-import { Modal } from '../../common/Modal'
+import { Modal } from '../../ui/Modal'
 import type { WelfareRental } from '../../../lib/api/welfare'
 import type { RentalFormState } from './RentalTypes.ts'
 
@@ -113,3 +113,4 @@ export function RentalEditModal({
         </Modal>
     )
 }
+

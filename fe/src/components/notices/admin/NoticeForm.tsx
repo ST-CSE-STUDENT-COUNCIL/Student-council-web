@@ -1,5 +1,5 @@
-import { Upload, X, Eye, EyeOff, Image as ImageIcon, File, AlertCircle } from 'lucide-react'
-import { Modal } from '../../common/Modal'
+﻿import { Upload, X, Eye, EyeOff, Image as ImageIcon, File, AlertCircle } from 'lucide-react'
+import { Modal } from '../../ui/Modal'
 import { CATEGORIES, BOARD_SUB_CATEGORIES } from './constants'
 import { useState, useCallback, useRef, useLayoutEffect } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
@@ -510,3 +510,4 @@ const getCaretCoordinates = (element: HTMLTextAreaElement, position: number) => 
 
     return coordinates;
 }
+
