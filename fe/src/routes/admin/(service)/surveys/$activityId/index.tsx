@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import * as XLSX from 'xlsx'
 import { activityAdminApi, activityApi } from '../../../../../lib/api/activities'
 import type { ActivityRegistrationResponse, Activity } from '../../../../../types/activities'
 import {
     User, Phone, Building,
     Hash, Calendar, Eye, BarChart3, Check, Loader2, ArrowLeft, Users,
-    PieChart as PieChartIcon, Image as ImageIcon, FileText
+    PieChart as PieChartIcon, Image as ImageIcon, FileText, Download
 } from 'lucide-react'
 import {
     useReactTable,
@@ -63,6 +64,9 @@ function SurveyActivityDetailPage() {
     const selectedIds = useMemo(() => Object.keys(rowSelection).map(Number), [rowSelection])
 
     const [processingBulk, setProcessingBulk] = useState(false)
+
+    // Excel Download
+    const [downloading, setDownloading] = useState(false)
 
     // Fetch activity detail
     const fetchActivityDetail = useCallback(async () => {
@@ -171,6 +175,121 @@ function SurveyActivityDetailPage() {
             alert('일괄 처리에 실패했습니다.')
         } finally {
             setProcessingBulk(false)
+        }
+    }
+
+    // Handle Excel Download
+    const handleDownloadExcel = async () => {
+        if (!activityDetail) return
+        try {
+            setDownloading(true)
+
+            // 1. Fetch first page to know total pages
+            const pageSize = 100
+            const firstResponse = await activityAdminApi.getRegistrations(id, {
+                page: 1,
+                page_size: pageSize
+            })
+
+            let allRegistrations = [...firstResponse.registrations]
+            const totalPages = firstResponse.pagination.total_pages
+
+            // 2. Fetch remaining pages in parallel
+            if (totalPages > 1) {
+                const promises = []
+                for (let i = 2; i <= totalPages; i++) {
+                    promises.push(activityAdminApi.getRegistrations(id, {
+                        page: i,
+                        page_size: pageSize
+                    }))
+                }
+                const responses = await Promise.all(promises)
+                responses.forEach(res => {
+                    allRegistrations = [...allRegistrations, ...res.registrations]
+                })
+            }
+
+            if (allRegistrations.length === 0) {
+                alert('다운로드할 신청자 데이터가 없습니다.')
+                return
+            }
+
+            // 2. Prepare data headers
+            const headers: string[] = []
+
+            // Basic fields for non-anonymous surveys
+            const isAnonymous = ['survey', 'demand_survey'].includes(activityDetail.type) && (activityDetail.config?.is_anonymous ?? true)
+            if (!isAnonymous) {
+                headers.push('이름', '학번', '학과', '전화번호')
+            }
+
+            headers.push('상태', '참여일시')
+
+            // Add custom dynamic form fields headers
+            if (activityDetail.form_fields) {
+                activityDetail.form_fields.forEach(field => {
+                    headers.push(field.label)
+                })
+            } else if (activityDetail.config?.questions) {
+                // Fallback for surveys without form_fields (using config.questions)
+                activityDetail.config.questions.forEach((q: any) => {
+                    headers.push(q.question)
+                })
+            }
+
+            // 3. Transform data rows
+            const data = allRegistrations.map(reg => {
+                const row: any[] = []
+
+                if (!isAnonymous) {
+                    row.push(
+                        reg.name || '-',
+                        reg.student_id || '-',
+                        reg.department || '-',
+                        reg.phone || '-'
+                    )
+                }
+
+                row.push(
+                    reg.status, // You might want to map this to Korean label if needed
+                    new Date(reg.created_at).toLocaleString('ko-KR')
+                )
+
+                // Custom fields/questions data matching headers
+                if (activityDetail.form_fields) {
+                    activityDetail.form_fields.forEach(field => {
+                        const val = reg.form_responses?.[field.name] ?? (reg as any).survey_responses?.[field.name]
+                        row.push(Array.isArray(val) ? val.join(', ') : val || '')
+                    })
+                } else if (activityDetail.config?.questions) {
+                    activityDetail.config.questions.forEach((q: any) => {
+                        const val = reg.form_responses?.[String(q.id)] ?? (reg as any).survey_responses?.[String(q.id)]
+                        row.push(Array.isArray(val) ? val.join(', ') : val || '')
+                    })
+                }
+
+                return row
+            })
+
+            // 4. Create Workbook
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...data])
+
+            // Set column widths
+            const wscols = headers.map(() => ({ wch: 15 }))
+            ws['!cols'] = wscols
+
+            const wb = XLSX.utils.book_new()
+            XLSX.utils.book_append_sheet(wb, ws, "참여자 목록")
+
+            // 5. Trigger download
+            const sanitizedTitle = activityDetail.title.replace(/[:\/\\?*|"<>;]/g, '_')
+            XLSX.writeFile(wb, `${sanitizedTitle}_참여자목록_${new Date().toISOString().slice(0, 10)}.xlsx`)
+
+        } catch (error) {
+            console.error('Excel download failed', error)
+            alert('엑셀 다운로드에 실패했습니다.')
+        } finally {
+            setDownloading(false)
         }
     }
 
@@ -471,6 +590,17 @@ function SurveyActivityDetailPage() {
                         </p>
                     </div>
                 </div>
+
+                <div className="ml-auto flex gap-2">
+                    <button
+                        onClick={handleDownloadExcel}
+                        disabled={downloading}
+                        className="px-4 py-2 bg-emerald-50 text-emerald-700 font-medium rounded-xl hover:bg-emerald-100 disabled:opacity-50 transition-all border border-emerald-100 flex items-center gap-2"
+                    >
+                        {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                        {downloading ? '다운로드 중...' : '엑셀 다운로드'}
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -497,38 +627,40 @@ function SurveyActivityDetailPage() {
                 </button>
             </div>
 
-            {currentTab === 'list' ? (
-                <SurveyRegistrationsPanel
-                    activityDetail={activityDetail}
-                    loading={loading}
-                    filteredRegistrations={filteredRegistrations}
-                    totalCount={totalCount}
-                    statusCounts={statusCounts}
-                    statusFilter={statusFilter}
-                    onStatusFilterChange={setStatusFilter}
-                    searchQuery={searchQuery}
-                    onSearchQueryChange={setSearchQuery}
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
-                    selectedIds={selectedIds}
-                    processingBulk={processingBulk}
-                    onBulkStatusChange={handleBulkStatusChange}
-                    onSelectOne={handleSelectOne}
-                    onSelectRegistration={setSelectedRegistration}
-                    onPreviewImage={setPreviewImageUrl}
-                    table={table}
-                    page={page}
-                    totalPages={totalPages}
-                    onPageChange={setPage}
-                    onStatusChange={handleStatusChange}
-                />
-            ) : (
-                <SurveyStatsPanel
-                    loading={loadingStats}
-                    surveyStats={surveyStats}
-                    questionStats={resolvedQuestionStats}
-                />
-            )}
+            {
+                currentTab === 'list' ? (
+                    <SurveyRegistrationsPanel
+                        activityDetail={activityDetail}
+                        loading={loading}
+                        filteredRegistrations={filteredRegistrations}
+                        totalCount={totalCount}
+                        statusCounts={statusCounts}
+                        statusFilter={statusFilter}
+                        onStatusFilterChange={setStatusFilter}
+                        searchQuery={searchQuery}
+                        onSearchQueryChange={setSearchQuery}
+                        viewMode={viewMode}
+                        onViewModeChange={setViewMode}
+                        selectedIds={selectedIds}
+                        processingBulk={processingBulk}
+                        onBulkStatusChange={handleBulkStatusChange}
+                        onSelectOne={handleSelectOne}
+                        onSelectRegistration={setSelectedRegistration}
+                        onPreviewImage={setPreviewImageUrl}
+                        table={table}
+                        page={page}
+                        totalPages={totalPages}
+                        onPageChange={setPage}
+                        onStatusChange={handleStatusChange}
+                    />
+                ) : (
+                    <SurveyStatsPanel
+                        loading={loadingStats}
+                        surveyStats={surveyStats}
+                        questionStats={resolvedQuestionStats}
+                    />
+                )
+            }
 
             {/* Sub-modals */}
             <AnimatePresence>
@@ -551,6 +683,6 @@ function SurveyActivityDetailPage() {
                     />
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     )
 }

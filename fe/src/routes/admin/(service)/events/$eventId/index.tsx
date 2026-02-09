@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import * as XLSX from 'xlsx'
 import { activityAdminApi, activityApi } from '../../../../../lib/api/activities'
 import type { ActivityRegistrationResponse, Activity } from '../../../../../types/activities'
 import {
   Search, CheckCircle, XCircle, Clock, User, Phone, Building,
   Hash, Calendar, Eye, ChevronLeft, ChevronRight, Users,
   Check, Loader2, ArrowLeft,
-  PieChart, LayoutGrid, List, ClipboardList, Image as ImageIcon, FileText
+  PieChart, LayoutGrid, List, ClipboardList, Image as ImageIcon, FileText, Download
 } from 'lucide-react'
 import { EventStatsPanel } from '../../../../../components/activities/admin/EventStatsPanel'
 import {
@@ -154,6 +155,9 @@ function EventActivityDetailPage() {
 
   const [processingBulk, setProcessingBulk] = useState(false)
 
+  // Excel Download
+  const [downloading, setDownloading] = useState(false)
+
   // Fetch activity detail
   const fetchActivityDetail = useCallback(async () => {
     try {
@@ -251,6 +255,105 @@ function EventActivityDetailPage() {
       alert('일괄 처리에 실패했습니다.')
     } finally {
       setProcessingBulk(false)
+    }
+  }
+
+  // Handle Excel Download
+  const handleDownloadExcel = async () => {
+    if (!activityDetail) return
+    try {
+      setDownloading(true)
+
+      // 1. Fetch first page to know total pages
+      const pageSize = 100
+      const firstResponse = await activityAdminApi.getRegistrations(id, {
+        page: 1,
+        page_size: pageSize
+      })
+
+      let allRegistrations = [...firstResponse.registrations]
+      const totalPages = firstResponse.pagination.total_pages
+
+      // 2. Fetch remaining pages in parallel
+      if (totalPages > 1) {
+        const promises = []
+        for (let i = 2; i <= totalPages; i++) {
+          promises.push(activityAdminApi.getRegistrations(id, {
+            page: i,
+            page_size: pageSize
+          }))
+        }
+        const responses = await Promise.all(promises)
+        responses.forEach(res => {
+          allRegistrations = [...allRegistrations, ...res.registrations]
+        })
+      }
+
+      if (allRegistrations.length === 0) {
+        alert('다운로드할 신청자 데이터가 없습니다.')
+        return
+      }
+
+      // 2. Prepare data headers
+      const headers = ['이름', '학번', '학과', '전화번호', '상태', '신청일시']
+
+      // Add custom dynamic form fields headers
+      if (activityDetail.form_fields) {
+        activityDetail.form_fields.forEach(field => {
+          headers.push(field.label)
+        })
+      }
+
+      // Add Kakao invite specific header
+      if (activityDetail.type === 'kakao_invite') {
+        headers.push('카톡ID')
+      }
+
+      // 3. Transform data rows
+      const data = allRegistrations.map(reg => {
+        const row: any[] = [
+          reg.name || '-',
+          reg.student_id || '-',
+          reg.department || '-',
+          reg.phone || '-',
+          STATUS_CONFIG[reg.status as StatusFilterType]?.label || reg.status,
+          new Date(reg.created_at).toLocaleString('ko-KR')
+        ]
+
+        // Custom fields data matching headers
+        if (activityDetail.form_fields) {
+          activityDetail.form_fields.forEach(field => {
+            const val = reg.form_responses?.[field.name] ?? (reg as any).survey_responses?.[field.name]
+            row.push(Array.isArray(val) ? val.join(', ') : val || '')
+          })
+        }
+
+        if (activityDetail.type === 'kakao_invite') {
+          row.push(reg.kakao_id || '-')
+        }
+
+        return row
+      })
+
+      // 4. Create Workbook
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...data])
+
+      // Set column widths
+      const wscols = headers.map(() => ({ wch: 15 }))
+      ws['!cols'] = wscols
+
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, "신청자 목록")
+
+      // 5. Trigger download
+      const sanitizedTitle = activityDetail.title.replace(/[:\/\\?*|"<>;]/g, '_')
+      XLSX.writeFile(wb, `${sanitizedTitle}_신청자목록_${new Date().toISOString().slice(0, 10)}.xlsx`)
+
+    } catch (error) {
+      console.error('Excel download failed', error)
+      alert('엑셀 다운로드에 실패했습니다.')
+    } finally {
+      setDownloading(false)
     }
   }
 
@@ -480,15 +583,25 @@ function EventActivityDetailPage() {
           </div>
         </div>
 
-        {activityDetail.type !== 'notice' && (
+        <div className="ml-auto flex gap-2">
           <button
-            onClick={() => navigate({ to: `/admin/events/${id}/attendance` })}
-            className="ml-auto px-4 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-purple-600 rounded-xl flex items-center gap-2 shadow-sm font-medium transition-all"
+            onClick={handleDownloadExcel}
+            disabled={downloading}
+            className="px-4 py-2 bg-emerald-50 text-emerald-700 font-medium rounded-xl hover:bg-emerald-100 disabled:opacity-50 transition-all border border-emerald-100 flex items-center gap-2"
           >
-            <ClipboardList size={18} />
-            출석 관리 페이지로 이동
+            {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            {downloading ? '다운로드 중...' : '엑셀 다운로드'}
           </button>
-        )}
+          {activityDetail.type !== 'notice' && (
+            <button
+              onClick={() => navigate({ to: `/admin/events/${id}/attendance` })}
+              className="px-4 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-purple-600 rounded-xl flex items-center gap-2 shadow-sm font-medium transition-all"
+            >
+              <ClipboardList size={18} />
+              출석 관리 페이지로 이동
+            </button>
+          )}
+        </div>
       </div>
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
