@@ -39,9 +39,18 @@ export function useAuthInit() {
                     // 사용자 정보 갱신 실패해도 토큰은 유효
                     console.warn('Failed to refresh user info')
                 }
-            } catch (error) {
+            } catch (error: any) {
                 // 갱신 실패 시 로그아웃
-                console.warn('Session expired, logging out')
+                console.warn('Token refresh failed during initialization:', error?.response?.status || error?.message)
+
+                // 네트워크 오류인 경우는 로그아웃하지 않고 기존 토큰 유지
+                if (error?.code === 'ERR_NETWORK' || error?.code === 'ECONNABORTED') {
+                    console.log('Network error during token refresh, keeping existing session')
+                    setInitialized(true)
+                    return
+                }
+
+                // 인증 오류인 경우에만 로그아웃
                 logout()
             } finally {
                 setInitialized(true)

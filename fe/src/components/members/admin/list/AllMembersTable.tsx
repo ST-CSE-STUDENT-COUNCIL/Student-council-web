@@ -30,7 +30,7 @@ type AllMembersTableProps = {
     onPageChange: (page: number) => void
 }
 
-import { Pagination } from '../../ui/Pagination'
+import { Pagination } from '../../../ui/Pagination'
 
 const formatPhone = (phone: string) => {
     const digits = (phone ?? '').replace(/\D/g, '')

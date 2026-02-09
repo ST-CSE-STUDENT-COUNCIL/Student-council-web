@@ -1,7 +1,7 @@
 import { Server, Database, Code, Shield, Terminal, Layout, Monitor, BookOpen, Code2, Megaphone, Calendar, Users, AlertTriangle, CheckSquare, Cloud, FileText, Key, Paintbrush } from 'lucide-react'
 
 interface AdminManualContentProps {
-    activePart: 'usage' | 'frontend' | 'backend'
+    activePart: 'user' | 'admin' | 'frontend' | 'backend'
 }
 
 export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
@@ -9,364 +9,346 @@ export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
         <div className="flex-1 min-w-0 pr-0 xl:pr-8 pb-20">
             <div className="prose prose-slate dark:prose-invert max-w-none">
 
-                {/* PART 1. 학생회 운영 가이드 */}
-                {activePart === 'usage' && (
+                {/* PART 1. 사용자 가이드 */}
+                {activePart === 'user' && (
                     <>
                         {/* 1. 시스템 개요 */}
-                        <section id="intro" className="scroll-mt-24 mb-16">
+                        <section id="user-intro" className="scroll-mt-24 mb-16">
                             <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-6 pb-2 border-b border-gray-200 dark:border-slate-800">
                                 1. 시스템 개요
                             </h1>
                             <p className="lead text-lg text-gray-600 dark:text-gray-400">
-                                본 시스템은 컴퓨터공학과 학생회의 효율적인 업무 처리와 학우들의 편의 증진을 위해 구축된 웹 플랫폼입니다. PC와 모바일 환경을 모두 지원하며, 별도의 앱 설치 없이 웹브라우저를 통해 접속할 수 있습니다.
+                                본 시스템은 컴퓨터공학부 학생들의 편의를 위해 제작되었습니다. 공지사항 확인, 행사 신청, 복지 물품 대여 신청 등 학생회에서 제공하는 다양한 서비스를 이용하실 수 있습니다.
                             </p>
 
-                            <div className="my-6 p-4 bg-gray-50 dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700">
-                                <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-2">📌 주요 기능 요약</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                    <ul className="list-disc list-inside space-y-1">
-                                        <li><strong>공지사항:</strong> 학사, 일반 공지 및 혜택 안내</li>
-                                        <li><strong>행사/사업:</strong> 참여 신청, 설문조사, 인원 관리</li>
-                                        <li><strong>물품 대여:</strong> 우산, 보조배터리 실시간 대여 현황</li>
-                                    </ul>
-                                    <ul className="list-disc list-inside space-y-1">
-                                        <li><strong>사물함:</strong> 신청 및 배정 관리</li>
-                                        <li><strong>건의함:</strong> 익명 건의 및 답변</li>
-                                        <li><strong>마이페이지:</strong> 학생회비 납부 내역 및 신청 내역 확인</li>
-                                    </ul>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
+                                    <h4 className="font-bold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+                                        <Monitor className="w-4 h-4" />
+                                        접속 환경
+                                    </h4>
+                                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                                        PC, 모바일, 태블릿 등 모든 기기에서 최적화된 화면을 제공합니다. 별도의 앱 설치 없이 웹 브라우저를 통해 접속 가능합니다.
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800">
+                                    <h4 className="font-bold text-green-900 dark:text-green-100 mb-2 flex items-center gap-2">
+                                        <Key className="w-4 h-4" />
+                                        회원가입 및 승인
+                                    </h4>
+                                    <p className="text-sm text-green-800 dark:text-green-200">
+                                        정확한 서비스 이용을 위해 재학 증명이 필요합니다. 가입 후 관리자의 승인 절차를 거치면 모든 서비스를 이용하실 수 있습니다.
+                                    </p>
+                                    <br />
+                                    <span className="text-sm text-green-800 dark:text-green-200">
+                                        가입 후 승인된 사용자는 행사 신청시, 기본정보 자동 입력 및 보안 인증 검사 미진행, 건의함 이용가능 등의 서비스를 이용가능합니다.
+                                    </span>
                                 </div>
                             </div>
-
-                            <div className="flex flex-col md:flex-row gap-4 mt-6">
-                                <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
-                                    <h4 className="font-bold text-blue-900 dark:text-blue-100 mb-2">🌐 접속 주소</h4>
-                                    <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
-                                        <li>사용자: <a href="https://stcse-student.com" target="_blank" className="underline">https://stcse-student.com</a></li>
-                                        <li>관리자: <a href="https://stcse-student.com/admin" target="_blank" className="underline">https://stcse-student.com/admin</a></li>
-                                    </ul>
+                        </section>
+                        {/* 2. 메인 화면 구성 */}
+                        <section id="user-interface" className="scroll-mt-24 mb-16">
+                            {/* 메인 화면 구성 헤더 */}
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
+                                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                                    <Layout className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                                 </div>
-                                <div className="flex-1 bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-100 dark:border-purple-800">
-                                    <h4 className="font-bold text-purple-900 dark:text-purple-100 mb-2">📞 기술 지원</h4>
-                                    <p className="text-sm text-purple-800 dark:text-purple-200">
-                                        시스템 오류나 개선 사항은 전산팀장에게 문의해주세요.<br />
-                                        Email: <strong>ehgis2344@seoultech.ac.kr</strong>
+                                2. 메인 화면 구성
+                            </h2>
+                            <p className="text-gray-700 dark:text-gray-300 mb-6">
+                                사용자 페이지는 학우분들이 필요한 정보를 가장 빠르게 찾을 수 있도록 직관적으로 설계되었습니다.
+                            </p>
+
+                            <div className="space-y-8">
+                                {/* 상단 네비게이션 설명 */}
+                                <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-6 bg-white dark:bg-slate-800/50">
+                                    <h3 className="text-lg font-bold mb-4">2.1 상단 네비게이션</h3>
+                                    <div className=" gap-6">
+                                        <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                                            <li className="flex gap-2">
+                                                <span className="font-bold text-indigo-600 shrink-0">메뉴 이동:</span>
+                                                공지사항, 행사신청, 복지사업 등 주요 서비스로 즉시 이동할 수 있습니다.
+                                            </li>
+                                            <li className="flex gap-2">
+                                                <span className="font-bold text-indigo-600 shrink-0">마이페이지:</span>
+                                                본인의 행사 신청 현황, 납부 내역 확인 및 정보 수정을 할 수 있습니다.
+                                            </li>
+                                            <li className="flex gap-2">
+                                                <span className="font-bold text-indigo-600 shrink-0">다크모드:</span>
+                                                우측 상단 토글을 통해 시스템 테마를 변경할 수 있습니다.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                {/* 메인 대시보드 설명 */}
+                                <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-6 bg-white dark:bg-slate-800/50">
+                                    <h3 className="text-lg font-bold mb-4">2.2 메인 대시보드</h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        로그인 후 첫 화면에서는 현재 진행 중인 핵심 이벤트와 공지사항을 요약해서 보여줍니다.
+                                    </p>
+                                    <img src="/assets/manual/main_dashboard.png" alt="Main Dashboard" className="w-full h-full object-cover" />
+                                </div>
+                                {/* 푸터 설명 */}
+                                <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-6 bg-white dark:bg-slate-800/50">
+                                    <h3 className="text-lg font-bold mb-4">2.3 푸터</h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        푸터는 학교 정보와 다양한 바로가기 및 관련 사이트 링크, 학생회 연락처(현행 학생회장) 등으로 구성되어 있습니다.
+                                    </p>
+                                    <img src="/assets/manual/footer.png" alt="Footer" className="w-full h-full object-cover" />
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 3. 주요 기능 가이드 */}
+                        <section id="user-features" className="scroll-mt-24 mb-16">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
+                                <div className="p-2 bg-pink-100 dark:bg-pink-900/30 rounded-lg">
+                                    <Megaphone className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+                                </div>
+                                3. 주요 기능 가이드
+                            </h2>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                {/* 학생회 소개 */}
+                                <div className="p-6 border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800 shadow-sm">
+                                    <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                                        <BookOpen className="w-5 h-5 text-blue-500" />
+                                        학생회 소개
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        학생회의 역할 및 소개 <br />
+                                        현행 학생회 공약, 조직도, 연락처 등을 소개합니다.
+                                    </p>
+                                </div>
+                                {/* 공지사항 확인 */}
+                                <div className="p-6 border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800 shadow-sm">
+                                    <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                                        <BookOpen className="w-5 h-5 text-blue-500" />
+                                        공지사항 확인
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        학생회 소식을 공유하는 공간입니다. <br />
+                                        중요 공지는 상단에 고정되어 표시됩니다. <br />
+                                        아래의 표와 같이 카테고리가 분류되어 있습니다.
+                                    </p>
+                                    <div className="mb-4 overflow-hidden border border-gray-100 dark:border-slate-700 rounded-lg">
+                                        <table className="w-full text-xs text-left">
+                                            <thead className="bg-gray-50 dark:bg-slate-800/50 text-gray-500">
+                                                <tr>
+                                                    <th className="px-3 py-2 border-b border-gray-100 dark:border-slate-700">분류</th>
+                                                    <th className="px-3 py-2 border-b border-gray-100 dark:border-slate-700">항목</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="text-gray-600 dark:text-gray-400">
+                                                <tr className="border-b border-gray-50 dark:border-slate-700/50">
+                                                    <td className="px-3 py-2 font-semibold text-indigo-600 dark:text-indigo-400">학생회</td>
+                                                    <td className="px-3 py-2">행사, 복지, 공지</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="px-3 py-2 font-semibold text-indigo-600 dark:text-indigo-400">정보공개</td>
+                                                    <td className="px-3 py-2">공고, 고시, 대표자 회의, 학생회칙</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {/* 행사 및 사업 신청 */}
+                                <div className="p-6 border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800 shadow-sm">
+                                    <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                                        <Calendar className="w-5 h-5 text-green-500" />
+                                        행사 및 사업 신청
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        간식행사, MT, 개강총회 등 행사 신청뿐만 아니라, <br />
+                                        학번별 톡방 초대, 회비 납부, 설문조사, 수요조사 등 다양한 형태의 신청을 <br />
+                                        간편하게 신청할 수 있습니다. <br />
+                                        <hr className="my-4 border-gray-100 dark:border-slate-700" />
+                                        현재 모집인원 실시간 확인 등 다양한 편의 기능을 제공합니다.
+                                    </p>
+                                </div>
+                                {/* 복지 물품 대여 */}
+                                <div className="p-6 border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800 shadow-sm">
+                                    <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                                        <CheckSquare className="w-5 h-5 text-purple-500" />
+                                        복지 사업
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        물품 대여 사업에 접근하여 우산, 보조배터리 등 <br />
+                                        학생회실 대여 물품의 잔여 수량을 확인하고 대여 신청을 할 수 있습니다.
+                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        사물함 신청 및 배정 자리 조회 가능합니다.
+                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        프린터 사용 매뉴얼을 확인할 수 있습니다.
+                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        신입생 가이드북을 손쉽게 접근하여 확인할 수 있습니다.
+                                    </p>
+                                </div>
+                                {/* 마이페이지 관리 */}
+                                <div className="p-6 border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800 shadow-sm">
+                                    <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                                        <Users className="w-5 h-5 text-orange-500" />
+                                        마이페이지 관리
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        내가 신청한 행사의 승인 상태를 확인하고, 학생회비 납부 여부 및 개인정보를 관리할 수 있습니다.
                                     </p>
                                 </div>
                             </div>
                         </section>
-
-                        <div className="flex items-center gap-3 mb-8 pb-2 border-b-2 border-blue-600 dark:border-blue-400">
-                            <BookOpen className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                            <h2 className="text-2xl font-black text-blue-900 dark:text-blue-100 m-0">
-                                PART 1. 학생회 운영 가이드
-                            </h2>
-                        </div>
-
-                        {/* 2. 사용자 페이지 구조 */}
-                        <section id="user-interface" className="scroll-mt-24 mb-16">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
-                                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                                    <Monitor className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                                </div>
-                                2. 사용자 페이지 구조
-                            </h2>
-                            <p className="text-gray-700 dark:text-gray-300 mb-4">
-                                일반 학우들이 접속하는 화면입니다. 직관적인 UI를 제공하여 누구나 쉽게 정보를 찾고 학생회 사업에 참여할 수 있도록 구성되었습니다.
+                    </>
+                )}
+                {/* PART 2. 관리자 가이드 */}
+                {activePart === 'admin' && (
+                    <>
+                        {/* 1. 관리자 접속 */}
+                        <section id="admin-intro" className="scroll-mt-24 mb-16">
+                            <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-6 pb-2 border-b border-gray-200 dark:border-slate-800">
+                                1. 관리자 접속 및 권한
+                            </h1>
+                            <p className="lead text-lg text-gray-600 dark:text-gray-400">
+                                관리자 페이지는 학생회 임원들이 시스템을 운영하고 데이터를 관리하는 공간입니다. 보안을 위해 승인된 계정으로만 접근이 가능합니다.
                             </p>
 
-                            {/* [Image Placeholder: 메인 화면 전체 스크린샷] */}
-                            <figure className="my-6 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
-                                <div className="bg-gray-100 dark:bg-slate-800 h-64 flex items-center justify-center text-gray-400 flex-col gap-2">
-                                    <Monitor className="w-12 h-12" />
-                                    <span className="text-sm">📷 (여기에 메인 화면 캡처 이미지를 넣어주세요: /public/manual/user-main.png)</span>
-                                </div>
-                                <figcaption className="bg-gray-50 dark:bg-slate-800/50 p-2 text-center text-xs text-gray-500">
-                                    사용자 메인 화면 예시
-                                </figcaption>
-                            </figure>
+                            <div className="mt-8 p-6 bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500 rounded-r-xl">
+                                <h4 className="font-bold text-red-800 dark:text-red-200 mb-2 flex items-center gap-2">
+                                    <Shield className="w-5 h-5" />
+                                    관리자 권한 획득 방법
+                                </h4>
+                                <ol className="list-decimal list-inside text-sm text-red-700 dark:text-red-300 space-y-2">
+                                    <li>먼저 사용자 페이지에서 회원가입을 완료합니다.</li>
+                                    <li>기존 관리자에게 본인의 학번을 전달하여 권한 승격 요청을 합니다.</li>
+                                    <li>관리자가 DB 또는 관리자 페이지에서 권한을 'Admin'으로 변경하면 접속이 가능해집니다.</li>
+                                </ol>
+                            </div>
 
-                            <div className="space-y-8 mt-8">
-                                <div>
-                                    <h3 className="text-xl font-bold mb-3 border-l-4 border-indigo-500 pl-3">2.1. 헤더 (Navigation)</h3>
-                                    <p className="text-gray-700 dark:text-gray-300 mb-2">상단 네비게이션 바를 통해 주요 메뉴로 이동할 수 있습니다.</p>
-                                    <ul className="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400 ml-2">
-                                        <li><strong>로고:</strong> 클릭 시 메인 홈으로 이동합니다.</li>
-                                        <li><strong>소개:</strong> 학생회 조직도 및 인사말을 확인합니다.</li>
-                                        <li><strong>공지사항:</strong> 전체 공지 목록으로 이동합니다.</li>
-                                        <li><strong>행사/사업:</strong> 진행 중인 행사 목록을 확인합니다.</li>
-                                        <li><strong>로그인/마이페이지:</strong> 우측 상단 버튼을 통해 로그인하거나 개인 정보를 확인합니다.</li>
-                                    </ul>
+                            <div className="mt-6 flex flex-col md:flex-row gap-4">
+                                <div className="flex-1 p-4 border border-gray-200 dark:border-slate-700 rounded-xl">
+                                    <h4 className="font-bold mb-2">접속 주소</h4>
+                                    <code className="text-sm text-blue-600 dark:text-blue-400 font-mono">https://stcse-student.com/admin</code>
                                 </div>
-
-                                <div>
-                                    <h3 className="text-xl font-bold mb-3 border-l-4 border-indigo-500 pl-3">2.2. 주요 서비스 화면</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 bg-white dark:bg-slate-800">
-                                            <h4 className="font-bold mb-2 flex items-center gap-2">📢 공지사항 (Notices)</h4>
-                                            <p className="text-sm text-gray-600 mb-3">학사일정, 일반 공지, 제휴 혜택 등 카테고리별 뉴스를 제공합니다.</p>
-                                            <div className="bg-gray-100 dark:bg-slate-700 h-32 rounded flex items-center justify-center text-xs text-gray-400">
-                                                📷 (공지 목록 이미지: /public/manual/user-notice.png)
-                                            </div>
-                                        </div>
-                                        <div className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 bg-white dark:bg-slate-800">
-                                            <h4 className="font-bold mb-2 flex items-center gap-2">📅 행사 신청 (Activities)</h4>
-                                            <p className="text-sm text-gray-600 mb-3">간식행사, MT, 스터디 등 다양한 행사에 원클릭으로 신청합니다.</p>
-                                            <div className="bg-gray-100 dark:bg-slate-700 h-32 rounded flex items-center justify-center text-xs text-gray-400">
-                                                📷 (행사 상세 이미지: /public/manual/user-activity.png)
-                                            </div>
-                                        </div>
-                                        <div className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 bg-white dark:bg-slate-800">
-                                            <h4 className="font-bold mb-2 flex items-center gap-2">🎁 복지 사업 (Welfare)</h4>
-                                            <p className="text-sm text-gray-600 mb-3">우산/보조배터리 대여 가능 여부를 실시간으로 보여줍니다.</p>
-                                            <div className="bg-gray-100 dark:bg-slate-700 h-32 rounded flex items-center justify-center text-xs text-gray-400">
-                                                📷 (대여 현황 이미지: /public/manual/user-welfare.png)
-                                            </div>
-                                        </div>
-                                        <div className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 bg-white dark:bg-slate-800">
-                                            <h4 className="font-bold mb-2 flex items-center gap-2">👤 마이페이지 (My Page)</h4>
-                                            <p className="text-sm text-gray-600 mb-3">납부 내역 및 신청한 행사 상태(승인/대기)를 확인합니다.</p>
-                                            <div className="bg-gray-100 dark:bg-slate-700 h-32 rounded flex items-center justify-center text-xs text-gray-400">
-                                                📷 (마이페이지 이미지: /public/manual/user-mypage.png)
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div className="flex-1 p-4 border border-gray-200 dark:border-slate-700 rounded-xl">
+                                    <h4 className="font-bold mb-2">주의사항</h4>
+                                    <p className="text-xs text-gray-500">공용 PC 사용 시 반드시 로그아웃을 해주시기 바랍니다.</p>
                                 </div>
                             </div>
                         </section>
 
-                        {/* 3. 관리자 페이지 구조 */}
-                        <section id="admin-interface" className="scroll-mt-24 mb-16">
+                        {/* 2. 대시보드 구조 */}
+                        <section id="admin-structure" className="scroll-mt-24 mb-16">
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
                                 <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
                                     <Layout className="w-6 h-6 text-slate-600 dark:text-slate-400" />
                                 </div>
-                                3. 관리자 페이지 구조
+                                2. 대시보드 구조
                             </h2>
-                            <div className="bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500 p-4 mb-6">
-                                <p className="text-sm text-red-700 dark:text-red-300">
-                                    <strong>🚨 주의:</strong> 관리자 페이지는 승인된 임원 계정으로만 접근 가능합니다. 일반 학우에게 주소가 노출되지 않도록 주의해주세요.
-                                </p>
-                            </div>
-
                             <p className="text-gray-700 dark:text-gray-300 mb-6">
-                                효율적인 업무 관리를 위해 <strong>Dashboard</strong> 형태의 UI를 채택했습니다. 좌측 사이드바를 통해 모든 기능에 접근할 수 있습니다.
+                                관리자 화면은 효율적인 업무 처리를 위해 기능별로 구분된 좌측 사이드바와 메인 컨텐츠 영역으로 구성됩니다.
                             </p>
 
-                            {/* [Image Placeholder: 관리자 대시보드 스크린샷] */}
-                            <figure className="my-6 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
-                                <div className="bg-gray-100 dark:bg-slate-800 h-80 flex items-center justify-center text-gray-400 flex-col gap-2">
-                                    <Layout className="w-12 h-12" />
-                                    <span className="text-sm">📷 (여기에 관리자 대시보드 이미지를 넣어주세요: /public/manual/admin-dashboard.png)</span>
-                                </div>
-                                <figcaption className="bg-gray-50 dark:bg-slate-800/50 p-2 text-center text-xs text-gray-500">
-                                    관리자 대시보드 화면
-                                </figcaption>
-                            </figure>
-
-                            <h3 className="text-xl font-semibold mt-8 mb-4">3.1. 사이드바 메뉴 구성</h3>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full text-sm text-left border border-gray-200 dark:border-slate-700 rounded-lg">
-                                    <thead className="bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
-                                        <tr>
-                                            <th className="px-4 py-3 font-bold">카테고리</th>
-                                            <th className="px-4 py-3 font-bold">메뉴명</th>
-                                            <th className="px-4 py-3 font-bold">주요 기능</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                                        <tr>
-                                            <td className="px-4 py-3 font-medium bg-gray-50/50 dark:bg-slate-800/30">메인</td>
-                                            <td className="px-4 py-3">대시보드</td>
-                                            <td className="px-4 py-3">주요 지표 요약, 공지사항 바로가기</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-4 py-3 font-medium bg-gray-50/50 dark:bg-slate-800/30" rowSpan={3}>회원 관리</td>
-                                            <td className="px-4 py-3">전체 회원</td>
-                                            <td className="px-4 py-3">가입 회원 목록 조회, 학적 상태 변경</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-4 py-3">승인 대기</td>
-                                            <td className="px-4 py-3">신규 가입자 승인/반려 (재학증명서 확인)</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-4 py-3">정보 변경 요청</td>
-                                            <td className="px-4 py-3">개명, 전과 등으로 인한 정보 수정 승인</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-4 py-3 font-medium bg-gray-50/50 dark:bg-slate-800/30" rowSpan={4}>운영 관리</td>
-                                            <td className="px-4 py-3">공지사항</td>
-                                            <td className="px-4 py-3">공지 작성, 수정, 삭제, 상단 고정 설정</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-4 py-3">행사/사업</td>
-                                            <td className="px-4 py-3">행사 생성, 신청자 관리, 엑셀 다운로드</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-4 py-3">제휴 업체</td>
-                                            <td className="px-4 py-3">제휴 혜택 카드 관리 (이미지 업로드)</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-4 py-3">건의함</td>
-                                            <td className="px-4 py-3">접수된 건의사항 확인 (익명)</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-4 py-3 font-medium bg-gray-50/50 dark:bg-slate-800/30" rowSpan={2}>복지 사업</td>
-                                            <td className="px-4 py-3">물품 대여</td>
-                                            <td className="px-4 py-3">대여/반납 처리, 연체 관리</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-4 py-3">사물함</td>
-                                            <td className="px-4 py-3">사물함 배정 현황, 신청 기간 설정</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </section>
-
-                        {/* 4. 관리자 기능 상세 가이드 */}
-                        <section id="feature-details" className="scroll-mt-24 mb-20">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
-                                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                                    <Shield className="w-6 h-6 text-red-600 dark:text-red-400" />
-                                </div>
-                                4. 관리자 기능 상세 가이드
-                            </h2>
-
-                            {/* 4.1 공지사항 작성 */}
-                            <div className="mb-12">
-                                <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-blue-800 dark:text-blue-200 border-b border-blue-100 pb-2">
-                                    <Megaphone className="w-6 h-6" />
-                                    4.1. 공지사항 작성 및 관리 (Notices)
-                                </h3>
-                                <p className="mb-4 text-gray-700 dark:text-gray-300">
-                                    학우들에게 전달할 소식을 게시합니다. 서식 있는 텍스트(Bold, Link 등)와 이미지를 지원합니다.
-                                </p>
-
-                                <div className="flex flex-col lg:flex-row gap-6">
-                                    <div className="flex-1 space-y-4">
-                                        <div className="bg-white dark:bg-slate-800 p-4 border rounded-lg">
-                                            <h4 className="font-bold mb-2">① 작성 프로세스</h4>
-                                            <ol className="list-decimal list-inside space-y-2 text-sm">
-                                                <li>우측 상단 <strong>[글쓰기]</strong> 버튼 클릭</li>
-                                                <li><strong>카테고리 선택</strong> (필수): 일반, 학사, 장학, 행사 등</li>
-                                                <li><strong>제목 입력</strong>: 핵심 내용이 드러나게 작성</li>
-                                                <li><strong>상단 고정 여부</strong>: 중요 공지는 체크 (목록 최상단 노출됨)</li>
-                                                <li><strong>내용 작성</strong>: 에디터를 이용하여 작성. 필요 시 파일/이미지 첨부</li>
-                                                <li><strong>등록</strong> 버튼 클릭</li>
-                                            </ol>
-                                        </div>
-                                        <div className="bg-yellow-50 dark:bg-yellow-900/10 p-4 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                                            <h4 className="font-bold text-yellow-800 mb-1 text-sm">💡 Tip: 이미지 업로드</h4>
-                                            <p className="text-xs text-yellow-700">
-                                                이미지는 드래그&드롭으로 본문에 바로 삽입하거나, 하단 첨부파일 영역에 추가할 수 있습니다.
-                                                본문 삽입 시 <strong>width: 100%</strong>로 자동 설정되어 모바일에서도 잘 보입니다.
-                                            </p>
-                                        </div>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-white dark:bg-slate-800 border rounded-xl">
+                                        <h3 className="font-bold text-sm mb-2 text-indigo-600">좌측 사이드바 메뉴</h3>
+                                        <ul className="text-xs space-y-2 text-gray-600 dark:text-gray-400">
+                                            <li><strong>통계/대시보드:</strong> 전체 회원 수, 승인 대기 수 등 요약 지표</li>
+                                            <li><strong>회원 관리:</strong> 전체 회원 목록 조회, 승인 대기자 처리</li>
+                                            <li><strong>컨텐츠 관리:</strong> 공지사항 작성, 제휴 업체 관리</li>
+                                            <li><strong>사업 관리:</strong> 행사 생성, 신청자 명단 확인, 물품 대여 관리</li>
+                                        </ul>
                                     </div>
-                                    <div className="flex-1 flex items-center justify-center bg-gray-100 dark:bg-slate-800 rounded-lg min-h-[200px] text-gray-400 text-sm">
-                                        📷 (공지 작성 화면: /public/manual/admin-notice-write.png)
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* 4.2 행사 관리 */}
-                            <div className="mb-12">
-                                <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-green-800 dark:text-green-200 border-b border-green-100 pb-2">
-                                    <Calendar className="w-6 h-6" />
-                                    4.2. 행사 및 신청 관리 (Activities)
-                                </h3>
-                                <p className="mb-4 text-gray-700 dark:text-gray-300">
-                                    간식행사, MT, 개강총회 등 신청이 필요한 모든 사업을 관리합니다.
-                                </p>
-
-                                <div className="space-y-6">
-                                    {/* Step 1 */}
-                                    <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-gray-200 dark:border-slate-700">
-                                        <h4 className="font-bold text-lg mb-3">STEP 1: 행사 생성</h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                                                    <li><strong>행사명:</strong> 학우들에게 보여질 이름</li>
-                                                    <li><strong>신청 기간:</strong> <span className="text-red-500">자동으로 신청 버튼이 활성화/비활성화</span>되는 기준입니다. 정확히 설정하세요.</li>
-                                                    <li><strong>참여 대상:</strong> 전체, 재학생, 납부자(학생회비) 등 필터링 가능</li>
-                                                    <li><strong>최대 인원:</strong> 선착순 마감 시 자동 차단됩니다. (0 입력 시 무제한)</li>
-                                                </ul>
-                                            </div>
-                                            <div className="bg-gray-100 dark:bg-slate-900 rounded flex items-center justify-center text-xs text-gray-400 h-32">
-                                                📷 (행사 생성 화면: /public/manual/admin-activity-create.png)
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Step 2 */}
-                                    <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-gray-200 dark:border-slate-700">
-                                        <h4 className="font-bold text-lg mb-3">STEP 2: 신청 폼 빌더 (Form Builder)</h4>
-                                        <p className="text-sm mb-3">신청 시 받을 정보를 자유롭게 구성할 수 있습니다.</p>
-                                        <div className="flex gap-2 mb-3">
-                                            <span className="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-xs font-mono">단답형</span>
-                                            <span className="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-xs font-mono">장문형</span>
-                                            <span className="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-xs font-mono">객관식(Single)</span>
-                                            <span className="px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded text-xs font-mono">체크박스(Multi)</span>
-                                        </div>
-                                        <div className="bg-blue-50 dark:bg-blue-900/10 p-3 rounded text-sm text-blue-800 dark:text-blue-200">
-                                            <strong>예시) 간식행사 폼 구성</strong><br />
-                                            1. 수령 시간 (객관식: 12:00 / 12:30 / 13:00)<br />
-                                            2. 알러지 유무 (단답형)<br />
-                                            3. 개인정보 수집 동의 (체크박스)
-                                        </div>
-                                    </div>
-
-                                    {/* Step 3 */}
-                                    <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-gray-200 dark:border-slate-700">
-                                        <h4 className="font-bold text-lg mb-3">STEP 3: 신청자 관리 & 엑셀 다운로드</h4>
-                                        <p className="text-sm mb-3">
-                                            해당 행사 카드를 클릭하여 상세 페이지로 이동하면 신청자 목록을 볼 수 있습니다.
-                                        </p>
-                                        <ul className="list-disc list-inside space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                                            <li><strong>상태 변경:</strong> 신청완료 / 참여확정 / 취소됨 / 노쇼</li>
-                                            <li><strong>엑셀 다운로드:</strong> 우측 상단 버튼을 누르면 신청자 전체 명단이 <code>.csv</code>로 다운로드됩니다. 구글 스프레드시트에 업로드하여 활용하세요.</li>
+                                    <div className="p-4 bg-white dark:bg-slate-800 border rounded-xl">
+                                        <h3 className="font-bold text-sm mb-2 text-green-600">상단 툴바</h3>
+                                        <ul className="text-xs space-y-2 text-gray-600 dark:text-gray-400">
+                                            <li><strong>홈 바로가기:</strong> 사용자 메인 페이지로 즉시 이동</li>
+                                            <li><strong>프로필:</strong> 내 정보 확인 및 로그아웃</li>
                                         </ul>
                                     </div>
                                 </div>
+                                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl aspect-video flex items-center justify-center text-gray-400 text-xs text-center p-6 border-2 border-dashed border-gray-200 dark:border-slate-700">
+                                    📷 (Admin Dashboard Structure Diagram or Screenshot)
+                                </div>
                             </div>
+                        </section>
 
-                            {/* 4.3 회원 승인 */}
-                            <div className="mb-12">
-                                <h3 className="text-xl font-bold flex items-center gap-2 mb-4 text-purple-800 dark:text-purple-200 border-b border-purple-100 pb-2">
-                                    <Users className="w-6 h-6" />
-                                    4.3. 신규 회원 승인 (Pending Users)
-                                </h3>
-                                <p className="mb-4 text-gray-700 dark:text-gray-300">
-                                    회원가입 직후에는 <strong>준회원</strong> 상태이며, 학생회 서비스를 이용할 수 없습니다. 관리자가 학적 정보를 확인하고 승인해야 <strong>정회원</strong>이 됩니다.
-                                </p>
+                        {/* 3. 상세 기능 가이드 */}
+                        <section id="admin-features" className="scroll-mt-24 mb-16">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                                    <Code className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                3. 상세 기능 가이드
+                            </h2>
 
-                                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-gray-200 dark:border-slate-700 flex flex-col md:flex-row gap-6 items-center">
-                                    <div className="flex-1">
-                                        <h5 className="font-bold mb-2">승인 절차</h5>
+                            <div className="space-y-12">
+                                {/* 3.1 회원 승인 관리 */}
+                                <div className="scroll-mt-24">
+                                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                        <Users className="w-5 h-5 text-purple-500" />
+                                        3.1 신규 회원 승인 프로세스
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        가입 신청한 학생들의 학적 증빙을 확인하고 서비스를 이용할 수 있도록 승인 처리합니다.
+                                    </p>
+                                    <div className="bg-gray-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-slate-800">
                                         <ol className="list-decimal list-inside space-y-3 text-sm">
-                                            <li><strong>[회원 관리] - [승인 대기]</strong> 메뉴 접속</li>
-                                            <li>회원 목록의 <strong>[증빙자료]</strong> 버튼 클릭 (이미지 확인)</li>
-                                            <li>
-                                                정보가 일치하면 <span className="text-green-600 font-bold">[승인]</span> 클릭<br />
-                                                <span className="text-gray-400 text-xs ml-4">→ 즉시 정회원으로 변경됨</span>
-                                            </li>
-                                            <li>
-                                                불일치하거나 식별 불가 시 <span className="text-red-500 font-bold">[반려]</span> 클릭<br />
-                                                <span className="text-gray-400 text-xs ml-4">→ 사유 입력 모달 팝업 → 입력 후 전송 시 해당 유저에게 이메일 통보됨</span>
-                                            </li>
+                                            <li><strong>[회원 관리] &gt; [승인 대기]</strong> 메뉴로 이동합니다.</li>
+                                            <li>학생이 업로드한 <strong>재학증명서/학생증 이미지</strong>를 클릭하여 정보를 확인합니다.</li>
+                                            <li>이름, 학번, 학과가 일치하면 <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">승인</span> 버튼을 클릭합니다.</li>
+                                            <li>정보가 불확실한 경우 반려 사유를 입력하고 <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-bold">반려</span> 처리합니다.</li>
                                         </ol>
                                     </div>
-                                    <div className="w-full md:w-64 h-40 bg-gray-100 dark:bg-slate-900 rounded flex items-center justify-center text-xs text-gray-400">
-                                        📷 (승인 대기 목록: /public/manual/admin-pending.png)
+                                </div>
+
+                                {/* 3.2 행사 관리 */}
+                                <div className="scroll-mt-24">
+                                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                        <Calendar className="w-5 h-5 text-green-500" />
+                                        3.2 행사 및 설문 생성 관리
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        학생회에서 주관하는 각종 이벤트와 설문조사를 생성하고 신청 데이터를 관리합니다.
+                                    </p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="p-5 border rounded-xl bg-white dark:bg-slate-800">
+                                            <h4 className="font-bold text-sm mb-3">행사 생성 팁</h4>
+                                            <ul className="text-xs space-y-2 text-gray-500">
+                                                <li>- 신청 기간을 설정하면 해당 시간에만 신청 버튼이 활성화됩니다.</li>
+                                                <li>- 선착순 인원을 설정하면 초과 인원 발생 시 자동으로 마감됩니다.</li>
+                                                <li>- 폼 빌더를 통해 주관식, 객관식 등 원하는 질문을 추가할 수 있습니다.</li>
+                                            </ul>
+                                        </div>
+                                        <div className="p-5 border rounded-xl bg-white dark:bg-slate-800">
+                                            <h4 className="font-bold text-sm mb-3">데이터 추출</h4>
+                                            <ul className="text-xs space-y-2 text-gray-500">
+                                                <li>- 신청 완료된 명단을 Excel(.csv) 파일로 다운로드할 수 있습니다.</li>
+                                                <li>- 명단 확인 페이지에서 개별 신청자의 상세 내용을 확인 가능합니다.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 3.3 복지 물품 관리 */}
+                                <div className="scroll-mt-24">
+                                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                        <Database className="w-5 h-5 text-blue-500" />
+                                        3.3 복지 물품 대여 관리
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                        현재 대여 중인 물품과 반납 상태를 실시간으로 관리합니다.
+                                    </p>
+                                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-sm text-blue-800 dark:text-blue-200">
+                                        학생이 대여 신청 후 방문하면, 관리자 페이지에서 <strong>[대여 승인]</strong> 처리를 하여 수량을 차감하고, 반납 시 <strong>[반납 처리]</strong>를 통해 수량을 복구합니다.
                                     </div>
                                 </div>
                             </div>
-
                         </section>
                     </>
                 )}
 
-                {/* PART 2. 프론트엔드 가이드 (기존 코드 유지) */}
+                {/* PART 3. 프론트엔드 가이드 */}
                 {activePart === 'frontend' && (
                     <>
                         {/* 1. 기술 스택 */}
@@ -615,7 +597,7 @@ export const useAuthStore = create((set) => ({
                     </>
                 )}
 
-                {/* PART 3. 백엔드 가이드 (기존 코드 유지) */}
+                {/* PART 4. 백엔드 가이드 */}
                 {activePart === 'backend' && (
                     <>
                         <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800 mb-8 text-sm">
@@ -633,7 +615,7 @@ export const useAuthStore = create((set) => ({
                         <div className="flex items-center gap-3 mb-8 pb-2 border-b-2 border-purple-600 dark:border-purple-400">
                             <Code2 className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                             <h2 className="text-2xl font-black text-purple-900 dark:text-purple-100 m-0">
-                                PART 3. 백엔드 가이드
+                                PART 4. 백엔드 가이드
                             </h2>
                         </div>
 

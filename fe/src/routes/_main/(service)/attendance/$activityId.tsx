@@ -9,6 +9,8 @@ export const Route = createFileRoute('/_main/(service)/attendance/$activityId')(
     component: AttendancePage,
 })
 
+const NOT_REGISTERED_MESSAGE = '신청 확인이 되지 않습니다. 학생회에게 문의 바랍니다.'
+
 function AttendancePage() {
     const { activityId } = Route.useParams()
     const [studentId, setStudentId] = useState('')
@@ -49,9 +51,12 @@ function AttendancePage() {
             setIsConfirmOpen(true)
         } catch (error) {
             console.error('Attendance search failed', error)
-            if (isAxiosError(error) && error.response?.status === 404) {
-                setErrorMessage('신청 내역을 찾을 수 없습니다. 학번을 확인해주세요.')
-                return
+            if (isAxiosError(error)) {
+                const status = error.response?.status
+                if (status === 404 || (typeof status === 'number' && status >= 500)) {
+                    setErrorMessage(NOT_REGISTERED_MESSAGE)
+                    return
+                }
             }
             setErrorMessage('출석 확인에 실패했습니다. 잠시 후 다시 시도해주세요.')
         } finally {
@@ -77,6 +82,13 @@ function AttendancePage() {
             if (isAxiosError(error) && error.response?.status === 409) {
                 setSubmittedMessage('이미 출석했습니다.')
                 return
+            }
+            if (isAxiosError(error)) {
+                const status = error.response?.status
+                if (status === 404 || (typeof status === 'number' && status >= 500)) {
+                    setErrorMessage(NOT_REGISTERED_MESSAGE)
+                    return
+                }
             }
             setErrorMessage('출석 등록에 실패했습니다. 학번을 확인해주세요.')
         } finally {

@@ -1,5 +1,5 @@
-import type { Suggestion } from '../../types/suggestions'
-import { Modal } from '../common/Modal'
+﻿import type { Suggestion } from '../../types/suggestions'
+import { Modal } from '../ui/Modal'
 import { STATUS_META } from './constants'
 
 export function SuggestionDetailModal({
@@ -59,3 +59,4 @@ export function SuggestionDetailModal({
         </Modal>
     )
 }
+

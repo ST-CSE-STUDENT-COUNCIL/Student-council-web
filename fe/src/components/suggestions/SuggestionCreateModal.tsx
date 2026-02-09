@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 
-import { Modal } from '../common/Modal'
+import { Modal } from '../ui/Modal'
 
 export function SuggestionCreateModal({
     isOpen,
@@ -94,3 +94,4 @@ export function SuggestionCreateModal({
         </Modal>
     )
 }
+

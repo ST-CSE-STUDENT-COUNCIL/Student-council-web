@@ -1,6 +1,6 @@
-import React from 'react'
+﻿import React from 'react'
 
-import { Modal } from '../../common/Modal'
+import { Modal } from '../../ui/Modal'
 import type { RentalFormState } from './RentalTypes.ts'
 
 type RentalAddModalProps = {
@@ -103,3 +103,4 @@ export function RentalAddModal({
         </Modal>
     )
 }
+

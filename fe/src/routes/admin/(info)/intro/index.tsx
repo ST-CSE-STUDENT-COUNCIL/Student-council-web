@@ -1,11 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router'
+﻿import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { introductionApi } from '../../../../lib/api/introductions'
 import type { IntroductionImage, IntroductionImageCreate, IntroductionImageUpdate } from '../../../../types/introductions'
 import { Plus, Trash2, Edit2, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import Swal from 'sweetalert2'
-import { Modal } from '../../../../components/common/Modal'
+import { Modal } from '../../../../components/ui/Modal'
 
 export const Route = createFileRoute('/admin/(info)/intro/')({
   component: AdminIntroPage,
@@ -549,3 +549,4 @@ function IntroModal({
     </Modal>
   )
 }
+

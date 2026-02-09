@@ -1,39 +1,49 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { AdminManualSidebar } from '../../components/admin/manual/AdminManualSidebar'
-import { AdminManualContent } from '../../components/admin/manual/AdminManualContent'
+import { AdminManualSidebar } from '../../components/manual/admin/AdminManualSidebar'
+import { AdminManualContent } from '../../components/manual/admin/AdminManualContent'
 import { useState } from 'react'
-import { BookOpen, Code2, Paintbrush } from 'lucide-react'
+import { BookOpen, Code2, Paintbrush, Users } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/manual')({
     component: AdminManualPage,
 })
 
 function AdminManualPage() {
-    const [activePart, setActivePart] = useState<'usage' | 'frontend' | 'backend'>('usage')
+    const [activePart, setActivePart] = useState<'user' | 'admin' | 'frontend' | 'backend'>('user')
 
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)]">
             <div className="flex-none px-6 py-4 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                        📚 관리자 시스템 매뉴얼
+                        📚 시스템 매뉴얼
                     </h1>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        시스템 아키텍처 및 관리 가이드 문서입니다.
+                        학생회 시스템 사용법 및 개발 가이드 문서입니다.
                     </p>
                 </div>
 
                 {/* Tab Switcher */}
                 <div className="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-lg">
                     <button
-                        onClick={() => setActivePart('usage')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activePart === 'usage'
+                        onClick={() => setActivePart('user')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activePart === 'user'
+                            ? 'bg-white dark:bg-slate-700 text-green-600 dark:text-green-400 shadow-sm'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                            }`}
+                    >
+                        <Users className="w-4 h-4" />
+                        사용자 가이드
+                    </button>
+                    <button
+                        onClick={() => setActivePart('admin')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activePart === 'admin'
                             ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
                             : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                             }`}
                     >
                         <BookOpen className="w-4 h-4" />
-                        학생회 운영 가이드
+                        관리자 가이드
                     </button>
                     <button
                         onClick={() => setActivePart('frontend')}

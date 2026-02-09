@@ -82,12 +82,12 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
                 # DB의 last_login_at은 ISO 문자열 (KST or UTC)
                 last_login_str = user_data.get("last_login_at")
                 
-                # 문자열을 timestamp로 변환 (약간의 오차 허용 2초)
+                # 문자열을 timestamp로 변환 (약간의 오차 허용 5초)
                 last_login_dt = datetime.fromisoformat(last_login_str.replace('Z', '+00:00'))
                 last_login_ts = last_login_dt.timestamp()
                 
-                # 토큰 발급 시각이 마지막 로그인 시각보다 2초 이상 이전이면 거부
-                if iat < (last_login_ts - 2):
+                # 토큰 발급 시각이 마지막 로그인 시각보다 5초 이상 이전이면 거부 (네트워크 지연 고려)
+                if iat < (last_login_ts - 5):
                      raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
                         detail="다른 기기에서 로그인되어 자동으로 로그아웃되었습니다."

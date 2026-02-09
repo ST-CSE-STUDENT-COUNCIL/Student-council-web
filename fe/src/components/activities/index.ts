@@ -3,4 +3,4 @@ export { ActivityFilter } from './ActivityFilter'
 export { ActivityList } from './ActivityList'
 export { AttendanceCheckCard } from './AttendanceCheckCard'
 export { ActivityRegistrationModal } from './modals/ActivityRegistrationModal'
-export { ActivitySurveyModal } from './modals/ActivitySurveyModal'
+

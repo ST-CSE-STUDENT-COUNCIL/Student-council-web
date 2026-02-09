@@ -1,9 +1,9 @@
-import React from 'react'
+﻿import React from 'react'
 import { AlertTriangle, X } from 'lucide-react'
 import { mypageApi } from '../../lib/api/mypage'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useNavigate } from '@tanstack/react-router'
-import { Button } from '../common/Button'
+import { Button } from '../ui/Button'
 import { toast } from 'sonner'
 import Swal from 'sweetalert2'
 
@@ -122,3 +122,4 @@ export function WithdrawModal({ onClose }: WithdrawModalProps) {
         </div>
     )
 }
+

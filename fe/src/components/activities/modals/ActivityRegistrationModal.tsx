@@ -1,13 +1,14 @@
-import { useState, useEffect, useMemo } from 'react'
+﻿import { useState, useEffect, useMemo, useRef } from 'react'
+import { Calendar } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
-import { Modal } from '../../common/Modal'
-import { PhoneInput } from '../../common/PhoneInput'
+import { Modal } from '../../ui/Modal'
+import { PhoneInput } from '../../ui/PhoneInput'
 import { Turnstile } from '../../common/Turnstile'
 import type { Activity, ActivityListItem, ActivityRegistrationRequest } from '../../../types/activities'
 import { activityApi } from '../../../lib/api/activities'
 import { useAuthStore } from '../../../store/useAuthStore'
-import { LoadingSpinnerSmall } from '../../common/LoadingSpinner'
+import { Loading } from '../../ui/Loading'
 
 type ActivityRegistrationModalProps = {
     isOpen: boolean
@@ -21,6 +22,8 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     const [step, setStep] = useState(1)
     const [detailActivity, setDetailActivity] = useState<Activity | null>(null)
     const [fetching, setFetching] = useState(false)
+    const [dateInputValues, setDateInputValues] = useState<Record<string, string>>({})
+    const datePickerRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
     const [formData, setFormData] = useState<ActivityRegistrationRequest>({
         name: '',
@@ -55,6 +58,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
             setError(null)
             setNonMemberAgreed(false) // 비회원 약관 동의 초기화
             setTurnstileToken(null) // Turnstile 토큰 초기화
+            setDateInputValues({})
 
             // 2. 상세 정보 가져오기 (무조건 새로고침)
             const fetchDetail = async () => {
@@ -198,6 +202,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                 kakao_id: '',
                 form_responses: {}
             })
+            setDateInputValues({})
             setStep(1)
         } catch (err: any) {
             const errorMessage = err.response?.data?.detail || '신청 처리 중 오류가 발생했습니다.'
@@ -294,8 +299,61 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                     return false
                 }
             }
+
+            if (field.type === 'date') {
+                const value = formData.form_responses?.[field.name]
+                if (value) {
+                    const normalized = String(value)
+                    if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+                        toast.error(`${field.label}은 YYYY-MM-DD 형식으로 입력해주세요.`)
+                        return false
+                    }
+                }
+            }
         }
         return true
+    }
+
+    const formatDateDisplay = (value: string): string => {
+        if (!value) return ''
+
+        const digits = value.replace(/\D/g, '').slice(0, 8)
+        if (digits.length <= 4) return digits
+        if (digits.length <= 6) return `${digits.slice(0, 4)}. ${digits.slice(4)}`
+        return `${digits.slice(0, 4)}. ${digits.slice(4, 6)}. ${digits.slice(6, 8)}`
+    }
+
+    const handleDateInputChange = (fieldName: string, inputValue: string) => {
+        const digits = inputValue.replace(/\D/g, '').slice(0, 8)
+        const displayValue = formatDateDisplay(digits)
+
+        setDateInputValues(prev => ({
+            ...prev,
+            [fieldName]: displayValue
+        }))
+
+        const nextValue = digits.length === 8
+            ? `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
+            : digits
+
+        setFormData(prev => ({
+            ...prev,
+            form_responses: { ...prev.form_responses, [fieldName]: nextValue }
+        }))
+    }
+
+    const handleDatePickerSelect = (fieldName: string, value: string) => {
+        const displayValue = formatDateDisplay(value)
+
+        setDateInputValues(prev => ({
+            ...prev,
+            [fieldName]: displayValue
+        }))
+
+        setFormData(prev => ({
+            ...prev,
+            form_responses: { ...prev.form_responses, [fieldName]: value }
+        }))
     }
 
     // 다음 단계로 이동
@@ -385,7 +443,7 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={getTitle()} footer={renderFooter()}>
             {fetching || !detailActivity ? (
-                <LoadingSpinnerSmall />
+                <Loading size="sm" />
             ) : (
                 <form id="activity-registration-form" onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex flex-col gap-4">
                     {/* Progress Indicators (Dynamic) */}
@@ -744,17 +802,58 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                     )}
                                                 </div>
                                             ) : (
-                                                <input
-                                                    type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
-                                                    value={formData.form_responses?.[field.name] || ''}
-                                                    onChange={(e) => setFormData(prev => ({
-                                                        ...prev,
-                                                        form_responses: { ...prev.form_responses, [field.name]: e.target.value }
-                                                    }))}
-                                                    required={field.required}
-                                                    placeholder={field.placeholder}
-                                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder-gray-500"
-                                                />
+                                                field.type === 'date' ? (
+                                                    <div className="relative">
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={dateInputValues[field.name] ?? formatDateDisplay(formData.form_responses?.[field.name] || '')}
+                                                            onChange={(e) => handleDateInputChange(field.name, e.target.value)}
+                                                            required={field.required}
+                                                            placeholder={field.placeholder || 'YYYY. MM. DD.'}
+                                                            className="w-full px-4 py-2 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder-gray-500"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const picker = datePickerRefs.current[field.name]
+                                                                if (picker?.showPicker) {
+                                                                    picker.showPicker()
+                                                                    return
+                                                                }
+                                                                picker?.focus()
+                                                            }}
+                                                            aria-label="달력 열기"
+                                                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md border border-gray-200 bg-white p-2 text-gray-600 hover:bg-gray-100 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
+                                                        >
+                                                            <Calendar className="h-4 w-4" />
+                                                        </button>
+                                                        <input
+                                                            ref={(el) => { datePickerRefs.current[field.name] = el }}
+                                                            type="date"
+                                                            value={
+                                                                /^\d{4}-\d{2}-\d{2}$/.test(String(formData.form_responses?.[field.name] || ''))
+                                                                    ? String(formData.form_responses?.[field.name])
+                                                                    : ''
+                                                            }
+                                                            onChange={(e) => handleDatePickerSelect(field.name, e.target.value)}
+                                                            className="absolute inset-0 opacity-0 pointer-events-none"
+                                                            tabIndex={-1}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <input
+                                                        type={field.type === 'number' ? 'number' : 'text'}
+                                                        value={formData.form_responses?.[field.name] || ''}
+                                                        onChange={(e) => setFormData(prev => ({
+                                                            ...prev,
+                                                            form_responses: { ...prev.form_responses, [field.name]: e.target.value }
+                                                        }))}
+                                                        required={field.required}
+                                                        placeholder={field.placeholder}
+                                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder-gray-500"
+                                                    />
+                                                )
                                             )
                                             }
                                             {field.help_text && (
@@ -780,3 +879,4 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
         </Modal>
     )
 }
+

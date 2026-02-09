@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from '@tanstack/react-router'
 import { AlertCircle, ArrowRight } from 'lucide-react'
 import { useAuthStore } from '../../store/useAuthStore'
-import { Modal } from '../common/Modal'
+import { Modal } from '../ui/Modal'
 
 export function VerificationPromptModal() {
     const navigate = useNavigate()
@@ -105,3 +105,4 @@ export function VerificationPromptModal() {
         </Modal>
     )
 }
+

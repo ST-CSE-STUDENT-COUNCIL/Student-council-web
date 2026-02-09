@@ -108,7 +108,6 @@ async def send_verification(body: SendVerificationRequest, request: Request):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] send_verification: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="이메일 발송 실패"
@@ -141,7 +140,6 @@ async def verify_email(request: VerifyEmailRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] verify_email: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="인증 확인 실패"
@@ -176,7 +174,6 @@ async def check_student_id(request: CheckStudentIdRequest):
         )
     
     except Exception as e:
-        print(f"[API ERROR] check_student_id: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="학번 확인 실패"
@@ -295,13 +292,11 @@ async def signup(request: SignupRequest):
     except HTTPException:
         raise
     except APIError as e:
-        print(f"[API ERROR] signup (APIError): {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="회원가입 실패"
         )
     except Exception as e:
-        print(f"[API ERROR] signup: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="서버 오류"
@@ -512,7 +507,6 @@ async def login(body: LoginRequest, request: Request):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] login: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="로그인 실패"
@@ -565,7 +559,6 @@ async def logout(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] logout: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="로그아웃 실패"
@@ -623,6 +616,17 @@ async def refresh_token(request: Request):
             "token_type": "bearer"
         }
         
+        # 토큰 갱신 시 last_login_at 업데이트 (중복 로그인 방지 로직 호환)
+        try:
+            user_response = fresh_client.auth.get_user(new_access_token)
+            if user_response and user_response.user:
+                user_id = user_response.user.id
+                now_iso = datetime.now(timezone.utc).isoformat()
+                fresh_client.table('users').update({'last_login_at': now_iso}).eq('id', user_id).execute()
+        except Exception:
+            # last_login_at 업데이트 실패 시 무시 (토큰 갱신은 성공)
+            pass
+        
         response = JSONResponse(content=response_data)
         
         # 새 refresh_token으로 쿠키 갱신
@@ -640,7 +644,6 @@ async def refresh_token(request: Request):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] refresh_token: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="토큰 갱신 실패"
@@ -689,7 +692,6 @@ async def forgot_password(body: ForgotPasswordRequest, request: Request):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] forgot_password: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="비밀번호 찾기 실패"
@@ -724,7 +726,6 @@ async def verify_reset_code(body: VerifyResetCodeRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] verify_reset_code: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="인증 확인 실패"
@@ -778,7 +779,6 @@ async def reset_password(body: ResetPasswordRequest):
                 {"password": body.new_password}
             )
         except Exception as auth_error:
-            print(f"[API ERROR] reset_password (auth): {str(auth_error)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="비밀번호 변경 실패"
@@ -795,7 +795,6 @@ async def reset_password(body: ResetPasswordRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] reset_password: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="비밀번호 재설정 실패"

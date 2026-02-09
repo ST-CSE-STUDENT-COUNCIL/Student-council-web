@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import type { Club, ClubImage } from '../../types/clubs'
 import { clubApi } from '../../lib/api/clubs'
-import { Modal } from '../common/Modal'
+import { Modal } from '../ui/Modal'
 
 type Props = {
     club: Club | null

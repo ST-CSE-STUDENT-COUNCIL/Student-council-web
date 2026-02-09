@@ -102,16 +102,31 @@ api.interceptors.response.use(
                         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`
                         return api(originalRequest)
                     } catch (refreshError) {
-                        // 갱신 실패 - 로그아웃
+                        // 갱신 실패 - 로그아웃 및 로그인 페이지로 리다이렉트
                         processQueue(refreshError, null)
                         useAuthStore.getState().logout()
+
+                        // 현재 경로 저장 후 로그인 페이지로 리다이렉트
+                        const currentPath = window.location.pathname + window.location.search
+                        router.navigate({
+                            to: '/login',
+                            search: { redirect: currentPath }
+                        })
+
                         return Promise.reject(refreshError)
                     } finally {
                         isRefreshing = false
                     }
                 } else {
-                    // 토큰이 없었던 경우 바로 로그아웃
+                    // 토큰이 없었던 경우 바로 로그아웃 및 로그인 페이지로 리다이렉트
                     useAuthStore.getState().logout()
+
+                    // 현재 경로 저장 후 로그인 페이지로 리다이렉트
+                    const currentPath = window.location.pathname + window.location.search
+                    router.navigate({
+                        to: '/login',
+                        search: { redirect: currentPath }
+                    })
                 }
             } else if (status === 502 || status === 503 || status === 504) {
                 useSystemStore.getState().setMaintenance(true)

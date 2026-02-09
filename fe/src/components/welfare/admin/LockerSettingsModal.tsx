@@ -1,6 +1,6 @@
-import React from 'react'
+﻿import React from 'react'
 
-import { Modal } from '../../common/Modal'
+import { Modal } from '../../ui/Modal'
 import type { LockerFormState } from './LockerTypes'
 
 const inputBaseClass =
@@ -137,3 +137,4 @@ export function LockerSettingsModal({ isOpen, formData, onChange, onClose, onSav
         </Modal>
     )
 }
+

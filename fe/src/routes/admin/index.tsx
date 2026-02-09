@@ -11,7 +11,7 @@ import {
     ImagePreviewModal,
     PendingMembersList,
     RejectedMembersList,
-} from '../../components/admin/index'
+} from '../../components/members/admin/list'
 
 export const Route = createFileRoute('/admin/')({
     component: RouteComponent,

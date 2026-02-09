@@ -1,6 +1,6 @@
 import { CheckCircle2 } from 'lucide-react'
 
-import type { AttendanceRegistration } from '../../../types/attendance'
+import type { AttendanceRegistration } from '../../../../types/attendance'
 
 type SelectedRegistrationCardProps = {
     selectedRegistration: AttendanceRegistration | null
