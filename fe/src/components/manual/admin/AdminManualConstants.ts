@@ -36,7 +36,9 @@ export const MANUAL_GROUPS = [
             { id: 'fe-state', title: '4. 상태 관리 (Zustand)' },
             { id: 'fe-api', title: '5. API 연동' },
             { id: 'fe-styling', title: '6. 스타일링 및 컴포넌트' },
-            { id: 'fe-build', title: '7. 개발 및 빌드' },
+            { id: 'fe-seo', title: '7. SEO 최적화' },
+            { id: 'fe-performance', title: '8. 성능 최적화' },
+            { id: 'fe-build', title: '9. 개발 및 빌드' },
         ]
     },
     {

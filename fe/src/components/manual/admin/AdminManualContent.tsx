@@ -83,18 +83,16 @@ export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
                                 {/* 메인 대시보드 설명 */}
                                 <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-6 bg-white dark:bg-slate-800/50">
                                     <h3 className="text-lg font-bold mb-4">2.2 메인 대시보드</h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
                                         로그인 후 첫 화면에서는 현재 진행 중인 핵심 이벤트와 공지사항을 요약해서 보여줍니다.
                                     </p>
-                                    <img src="/assets/manual/main_dashboard.png" alt="Main Dashboard" className="w-full h-full object-cover" />
                                 </div>
                                 {/* 푸터 설명 */}
                                 <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-6 bg-white dark:bg-slate-800/50">
                                     <h3 className="text-lg font-bold mb-4">2.3 푸터</h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
                                         푸터는 학교 정보와 다양한 바로가기 및 관련 사이트 링크, 학생회 연락처(현행 학생회장) 등으로 구성되어 있습니다.
                                     </p>
-                                    <img src="/assets/manual/footer.png" alt="Footer" className="w-full h-full object-cover" />
                                 </div>
                             </div>
                         </section>
@@ -971,13 +969,232 @@ export const useAuthStore = create((set) => ({
                             </code>
                         </section>
 
-                        {/* 7. 개발 및 빌드 */}
+                        {/* 7. SEO 최적화 */}
+                        <section id="fe-seo" className="scroll-mt-24 mb-16">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
+                                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                                    <Code className="w-6 h-6 text-green-600 dark:text-green-400" />
+                                </div>
+                                7. SEO 최적화
+                            </h2>
+
+                            <h3 className="text-lg font-bold mb-2">🔍 구현된 SEO 기능</h3>
+                            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6 mb-6">
+                                <ul className="space-y-3 text-sm">
+                                    <li className="flex items-start gap-3">
+                                        <span className="text-green-500">✓</span>
+                                        <div>
+                                            <strong>동적 메타 태그</strong>: 각 페이지별 고유한 title, description, keywords 설정
+                                        </div>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <span className="text-green-500">✓</span>
+                                        <div>
+                                            <strong>Open Graph 태그</strong>: 카카오톡, 페이스북 공유 시 미리보기 최적화
+                                        </div>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <span className="text-green-500">✓</span>
+                                        <div>
+                                            <strong>구조화된 데이터 (JSON-LD)</strong>: Google 검색 결과 리치 스니펫 지원
+                                        </div>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <span className="text-green-500">✓</span>
+                                        <div>
+                                            <strong>Canonical URL</strong>: 중복 콘텐츠 방지
+                                        </div>
+                                    </li>
+                                    <li className="flex items-start gap-3">
+                                        <span className="text-green-500">✓</span>
+                                        <div>
+                                            <strong>Article 메타데이터</strong>: 공지사항 상세 페이지에 게시/수정 시간 추가
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <h3 className="text-lg font-bold mb-2">📄 페이지별 SEO 적용</h3>
+                            <div className="overflow-x-auto mb-6">
+                                <table className="min-w-full text-left text-sm">
+                                    <thead className="bg-gray-50 dark:bg-slate-800">
+                                        <tr>
+                                            <th className="px-4 py-2 border">페이지</th>
+                                            <th className="px-4 py-2 border">적용 내용</th>
+                                            <th className="px-4 py-2 border">noindex</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td className="px-4 py-2 border font-mono">홈 (/)</td>
+                                            <td className="px-4 py-2 border">전체 서비스 소개, 키워드 최적화</td>
+                                            <td className="px-4 py-2 border">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 border font-mono">공지사항 목록</td>
+                                            <td className="px-4 py-2 border">카테고리별 키워드, 상세 description</td>
+                                            <td className="px-4 py-2 border">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 border font-mono">공지사항 상세</td>
+                                            <td className="px-4 py-2 border">동적 title/description, article type, 게시시간</td>
+                                            <td className="px-4 py-2 border">-</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 border font-mono">마이페이지</td>
+                                            <td className="px-4 py-2 border">개인정보 보호</td>
+                                            <td className="px-4 py-2 border font-bold text-red-600">✓</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 border font-mono">출석체크</td>
+                                            <td className="px-4 py-2 border">검색 제외</td>
+                                            <td className="px-4 py-2 border font-bold text-red-600">✓</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3 className="text-lg font-bold mb-2">⚙️ SEO 컴포넌트 사용법</h3>
+                            <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm mb-6">
+                                <pre>{`<SEO
+  title="공지사항"
+  description="학생회 공지사항 및 소식"
+  keywords="공지사항, 학사공지, 행사소식"
+  url="/notices"
+  type="website"
+  image="/logo.jpg"
+  publishedTime="2026-01-01"
+  noindex={false}
+/>`}</pre>
+                            </div>
+
+                            <h3 className="text-lg font-bold mb-2">📊 추가 권장 작업</h3>
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 text-sm">
+                                <ol className="list-decimal list-inside space-y-2">
+                                    <li><strong>Google Search Console</strong> 등록 및 sitemap.xml 제출</li>
+                                    <li><strong>Naver 웹마스터 도구</strong> 등록 (이미 인증 파일 존재)</li>
+                                    <li>각 페이지별 대표 이미지 1200x630 크기 준비</li>
+                                    <li>정기적인 콘텐츠 업데이트로 검색 노출 유지</li>
+                                </ol>
+                            </div>
+                        </section>
+
+                        {/* 8. 성능 최적화 */}
+                        <section id="fe-performance" className="scroll-mt-24 mb-16">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
+                                <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                                    <Terminal className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                                </div>
+                                8. 성능 최적화
+                            </h2>
+
+                            <h3 className="text-lg font-bold mb-2">🚀 적용된 최적화</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4">
+                                    <h4 className="font-bold mb-2">1. 코드 스플리팅</h4>
+                                    <ul className="text-sm space-y-1 text-gray-600 dark:text-gray-400">
+                                        <li>• vendor-react (1,021 KB → 289 KB gzip)</li>
+                                        <li>• vendor-tanstack (176 KB → 52 KB gzip)</li>
+                                        <li>• vendor-data (207 KB → 59 KB gzip)</li>
+                                        <li>• admin (1,584 KB → 414 KB gzip)</li>
+                                    </ul>
+                                </div>
+                                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4">
+                                    <h4 className="font-bold mb-2">2. 폰트 최적화</h4>
+                                    <ul className="text-sm space-y-1 text-gray-600 dark:text-gray-400">
+                                        <li>• Pretendard Variable Font 사용</li>
+                                        <li>• Static 18개 → Variable 1개</li>
+                                        <li>• 15MB → 2MB (87% 감소)</li>
+                                    </ul>
+                                </div>
+                                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4">
+                                    <h4 className="font-bold mb-2">3. 이미지 최적화</h4>
+                                    <ul className="text-sm space-y-1 text-gray-600 dark:text-gray-400">
+                                        <li>• vite-plugin-image-optimizer 사용</li>
+                                        <li>• PNG/JPEG 품질 80% 압축</li>
+                                        <li>• WebP 변환 지원</li>
+                                        <li>• 브라우저 네이티브 lazy loading</li>
+                                    </ul>
+                                </div>
+                                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4">
+                                    <h4 className="font-bold mb-2">4. 네트워크 최적화</h4>
+                                    <ul className="text-sm space-y-1 text-gray-600 dark:text-gray-400">
+                                        <li>• preconnect 추가</li>
+                                        <li>• dns-prefetch 적용</li>
+                                        <li>• API 응답 데이터 최소화</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <h3 className="text-lg font-bold mb-2">📊 최적화 결과</h3>
+                            <div className="overflow-x-auto mb-6">
+                                <table className="min-w-full text-left text-sm">
+                                    <thead className="bg-gray-50 dark:bg-slate-800">
+                                        <tr>
+                                            <th className="px-4 py-2 border">항목</th>
+                                            <th className="px-4 py-2 border">이전</th>
+                                            <th className="px-4 py-2 border">현재</th>
+                                            <th className="px-4 py-2 border">개선율</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td className="px-4 py-2 border font-bold">JS 번들 (gzip)</td>
+                                            <td className="px-4 py-2 border">900 KB</td>
+                                            <td className="px-4 py-2 border">425 KB</td>
+                                            <td className="px-4 py-2 border text-green-600 font-bold">53% ↓</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 border font-bold">폰트</td>
+                                            <td className="px-4 py-2 border">15 MB</td>
+                                            <td className="px-4 py-2 border">2 MB</td>
+                                            <td className="px-4 py-2 border text-green-600 font-bold">87% ↓</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 border font-bold">빌드 시간</td>
+                                            <td className="px-4 py-2 border">25.75s</td>
+                                            <td className="px-4 py-2 border">22.07s</td>
+                                            <td className="px-4 py-2 border text-green-600 font-bold">14% ↓</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3 className="text-lg font-bold mb-2">⚙️ 빌드 설정 (vite.config.ts)</h3>
+                            <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm mb-6">
+                                <pre>{`build: {
+  chunkSizeWarningLimit: 1000,
+  rollupOptions: {
+    output: {
+      manualChunks: (id) => {
+        if (id.includes('react')) return 'vendor-react'
+        if (id.includes('@tanstack')) return 'vendor-tanstack'
+        // ... 청크 분리 로직
+      }
+    }
+  },
+  minify: 'esbuild', // 빠른 압축
+  sourcemap: false   // production에서 제거
+}`}</pre>
+                            </div>
+
+                            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800 text-sm">
+                                <h4 className="font-bold mb-2">💡 추가 최적화 권장</h4>
+                                <ul className="list-disc list-inside space-y-1">
+                                    <li>CDN 활용으로 정적 파일 전송 속도 향상</li>
+                                    <li>PWA 적용으로 오프라인 지원 및 재방문 속도 개선</li>
+                                    <li>Core Web Vitals 점수 정기 모니터링</li>
+                                </ul>
+                            </div>
+                        </section>
+
+                        {/* 9. 개발 및 빌드 */}
                         <section id="fe-build" className="scroll-mt-24 mb-16">
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
                                 <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
                                     <Terminal className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                                 </div>
-                                7. 개발 및 빌드 (CLI)
+                                9. 개발 및 빌드 (CLI)
                             </h2>
                             <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm space-y-4">
                                 <div>
