@@ -99,16 +99,78 @@ export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
                             </div>
                         </section>
 
-                        {/* 3. 주요 기능 가이드 */}
+                        {/* 3. 회원가입 및 로그인 */}
+                        <section id="user-signup" className="scroll-mt-24 mb-16">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                                    <Key className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                3. 회원가입 및 로그인
+                            </h2>
+
+                            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6 mb-6">
+                                <h3 className="text-lg font-bold mb-4">3.1 회원가입 프로세스</h3>
+                                <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+                                    <div className="flex items-start gap-3">
+                                        <div className="shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center font-bold text-blue-600 dark:text-blue-400">1</div>
+                                        <div className="flex-1">
+                                            <h4 className="font-bold mb-1">학번 중복 확인</h4>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">이미 가입된 학번인지 실시간으로 확인합니다. 중복된 학번은 가입할 수 없습니다.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center font-bold text-blue-600 dark:text-blue-400">2</div>
+                                        <div className="flex-1">
+                                            <h4 className="font-bold mb-1">이메일 인증</h4>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">이메일로 6자리 인증번호가 발송됩니다. 5분 내에 인증번호를 입력해야 합니다.</p>
+                                            <div className="bg-yellow-50 dark:bg-yellow-900/10 p-2 rounded text-xs text-yellow-800 dark:text-yellow-200">
+                                                💡 이메일이 오지 않는다면 스팸메일함을 확인하세요.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center font-bold text-blue-600 dark:text-blue-400">3</div>
+                                        <div className="flex-1">
+                                            <h4 className="font-bold mb-1">학적 증빙 자료 업로드</h4>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">재학증명서 또는 학생증 사진을 업로드합니다. 이름과 학번이 명확히 보여야 합니다.</p>
+                                            <ul className="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 space-y-1 ml-2">
+                                                <li>지원 형식: JPG, PNG (10MB 이하)</li>
+                                                <li>개인정보는 암호화되어 안전하게 저장됩니다</li>
+                                                <li>승인 후 자동으로 삭제됩니다</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center font-bold text-blue-600 dark:text-blue-400">4</div>
+                                        <div className="flex-1">
+                                            <h4 className="font-bold mb-1">관리자 승인 대기</h4>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">관리자가 학적 증빙을 확인한 후 24시간 내에 승인됩니다. 승인 전까지는 일부 기능만 이용 가능합니다.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6">
+                                <h3 className="text-lg font-bold mb-4">3.2 비밀번호 찾기</h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">학번을 입력하면 등록된 이메일로 비밀번호 재설정 링크가 전송됩니다.</p>
+                                <ol className="list-decimal list-inside text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                                    <li>로그인 화면에서 '비밀번호 찾기' 클릭</li>
+                                    <li>학번 입력 → 이메일로 인증번호 수신</li>
+                                    <li>인증번호 확인 후 새 비밀번호 설정</li>
+                                </ol>
+                            </div>
+                        </section>
+
+                        {/* 4. 주요 기능 가이드 */}
                         <section id="user-features" className="scroll-mt-24 mb-16">
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-3">
                                 <div className="p-2 bg-pink-100 dark:bg-pink-900/30 rounded-lg">
                                     <Megaphone className="w-6 h-6 text-pink-600 dark:text-pink-400" />
                                 </div>
-                                3. 주요 기능 가이드
+                                4. 주요 기능 가이드
                             </h2>
 
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* 학생회 소개 */}
                                 <div className="p-6 border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800 shadow-sm">
                                     <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
@@ -127,16 +189,14 @@ export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
                                         공지사항 확인
                                     </h3>
                                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                        학생회 소식을 공유하는 공간입니다. <br />
-                                        중요 공지는 상단에 고정되어 표시됩니다. <br />
-                                        아래의 표와 같이 카테고리가 분류되어 있습니다.
+                                        학생회 소식을 공유하는 공간입니다. 중요 공지는 상단에 고정되어 표시됩니다.
                                     </p>
                                     <div className="mb-4 overflow-hidden border border-gray-100 dark:border-slate-700 rounded-lg">
                                         <table className="w-full text-xs text-left">
                                             <thead className="bg-gray-50 dark:bg-slate-800/50 text-gray-500">
                                                 <tr>
-                                                    <th className="px-3 py-2 border-b border-gray-100 dark:border-slate-700">분류</th>
-                                                    <th className="px-3 py-2 border-b border-gray-100 dark:border-slate-700">항목</th>
+                                                    <th className="px-3 py-2 border-b border-gray-100 dark:border-slate-700">대분류</th>
+                                                    <th className="px-3 py-2 border-b border-gray-100 dark:border-slate-700">소분류</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="text-gray-600 dark:text-gray-400">
@@ -151,6 +211,20 @@ export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
                                             </tbody>
                                         </table>
                                     </div>
+                                    <div className="space-y-2 text-xs">
+                                        <div className="flex gap-2">
+                                            <span className="font-bold text-gray-700 dark:text-gray-300">•</span>
+                                            <span className="text-gray-600 dark:text-gray-400">카테고리별 필터링으로 원하는 공지만 볼 수 있습니다</span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <span className="font-bold text-gray-700 dark:text-gray-300">•</span>
+                                            <span className="text-gray-600 dark:text-gray-400">제목/내용 검색 기능 제공</span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <span className="font-bold text-gray-700 dark:text-gray-300">•</span>
+                                            <span className="text-gray-600 dark:text-gray-400">첨부파일 다운로드 가능</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 {/* 행사 및 사업 신청 */}
                                 <div className="p-6 border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800 shadow-sm">
@@ -158,13 +232,46 @@ export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
                                         <Calendar className="w-5 h-5 text-green-500" />
                                         행사 및 사업 신청
                                     </h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                        간식행사, MT, 개강총회 등 행사 신청뿐만 아니라, <br />
-                                        학번별 톡방 초대, 회비 납부, 설문조사, 수요조사 등 다양한 형태의 신청을 <br />
-                                        간편하게 신청할 수 있습니다. <br />
-                                        <hr className="my-4 border-gray-100 dark:border-slate-700" />
-                                        현재 모집인원 실시간 확인 등 다양한 편의 기능을 제공합니다.
-                                    </p>
+                                    <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                                        <p>
+                                            간식행사, MT, 개강총회 등 다양한 행사에 참여할 수 있습니다.
+                                        </p>
+                                        <div className="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-lg space-y-2">
+                                            <h4 className="font-bold text-blue-900 dark:text-blue-100 text-xs">활동 유형</h4>
+                                            <ul className="text-xs space-y-1">
+                                                <li className="flex gap-2">
+                                                    <span className="font-bold text-blue-600">•</span>
+                                                    <span><strong>행사 (Event):</strong> 간식행사, MT, 개강파티 등</span>
+                                                </li>
+                                                <li className="flex gap-2">
+                                                    <span className="font-bold text-blue-600">•</span>
+                                                    <span><strong>설문조사 (Survey):</strong> 의견 수렴용 설문</span>
+                                                </li>
+                                                <li className="flex gap-2">
+                                                    <span className="font-bold text-blue-600">•</span>
+                                                    <span><strong>수요조사 (Demand):</strong> 굿즈, 과잠, 간식행사, 행사 수요 파악</span>
+                                                </li>
+                                                <li className="flex gap-2">
+                                                    <span className="font-bold text-blue-600">•</span>
+                                                    <span><strong>카톡방 초대:</strong> 학번별 단톡방 초대</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div className="space-y-1 text-xs">
+                                            <div className="flex gap-2">
+                                                <span>✓</span>
+                                                <span>실시간 참가 인원 확인</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <span>✓</span>
+                                                <span>승인된 회원은 기본정보 자동 입력</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <span>✓</span>
+                                                <span>마이페이지에서 신청 내역 조회</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 {/* 복지 물품 대여 */}
                                 <div className="p-6 border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800 shadow-sm">
@@ -172,29 +279,95 @@ export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
                                         <CheckSquare className="w-5 h-5 text-purple-500" />
                                         복지 사업
                                     </h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                        물품 대여 사업에 접근하여 우산, 보조배터리 등 <br />
-                                        학생회실 대여 물품의 잔여 수량을 확인하고 대여 신청을 할 수 있습니다.
-                                    </p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                        사물함 신청 및 배정 자리 조회 가능합니다.
-                                    </p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                        프린터 사용 매뉴얼을 확인할 수 있습니다.
-                                    </p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                        신입생 가이드북을 손쉽게 접근하여 확인할 수 있습니다.
-                                    </p>
+                                    <div className="space-y-3">
+                                        <div className="border-l-4 border-purple-500 pl-3">
+                                            <h4 className="font-bold text-sm text-purple-900 dark:text-purple-100 mb-1">물품 대여</h4>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                우산, 보조배터리 등의 실시간 재고 확인 및 구글폼으로 대여 신청
+                                            </p>
+                                        </div>
+                                        <div className="border-l-4 border-blue-500 pl-3">
+                                            <h4 className="font-bold text-sm text-blue-900 dark:text-blue-100 mb-1">사물함</h4>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                배치도 확인, 신청/반납연장 구글폼, 신청 기간 안내
+                                            </p>
+                                        </div>
+                                        <div className="border-l-4 border-green-500 pl-3">
+                                            <h4 className="font-bold text-sm text-green-900 dark:text-green-100 mb-1">프린터</h4>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                학생회실 프린터 사용 매뉴얼 이미지 제공
+                                            </p>
+                                        </div>
+                                        <div className="border-l-4 border-orange-500 pl-3">
+                                            <h4 className="font-bold text-sm text-orange-900 dark:text-orange-100 mb-1">신입생 가이드북</h4>
+                                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                학교 생활에 필요한 정보를 담은 노션 가이드북 바로가기
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                                 {/* 마이페이지 관리 */}
                                 <div className="p-6 border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800 shadow-sm">
                                     <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
                                         <Users className="w-5 h-5 text-orange-500" />
-                                        마이페이지 관리
+                                        마이페이지
                                     </h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                        내가 신청한 행사의 승인 상태를 확인하고, 학생회비 납부 여부 및 개인정보를 관리할 수 있습니다.
-                                    </p>
+                                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                                        <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2">내 정보 관리</p>
+                                        <ul className="space-y-1 text-xs ml-4">
+                                            <li className="flex gap-2"><span>•</span><span>행사 신청 내역 및 승인 상태 확인</span></li>
+                                            <li className="flex gap-2"><span>•</span><span>학생회비 납부 여부 조회</span></li>
+                                            <li className="flex gap-2"><span>•</span><span>개인정보 수정 요청 (이름, 학번, 이메일, 전화번호)</span></li>
+                                            <li className="flex gap-2"><span>•</span><span>비밀번호 변경</span></li>
+                                            <li className="flex gap-2"><span>•</span><span>회원 탈퇴</span></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                {/* 건의함 */}
+                                <div className="p-6 border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800 shadow-sm">
+                                    <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                                        <Megaphone className="w-5 h-5 text-pink-500" />
+                                        건의함
+                                    </h3>
+                                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                                        <p>학생회에 건의사항을 제출할 수 있습니다.</p>
+                                        <div className="bg-pink-50 dark:bg-pink-900/10 p-3 rounded-lg text-xs space-y-1">
+                                            <div className="flex gap-2"><span className="text-pink-600">•</span><span>승인된 회원만 작성 가능</span></div>
+                                            <div className="flex gap-2"><span className="text-pink-600">•</span><span>작성자는 관리자에게만 표시됩니다</span></div>
+                                            <div className="flex gap-2"><span className="text-pink-600">•</span><span>상태: 접수/검토중/승인/반려</span></div>
+                                            <div className="flex gap-2"><span className="text-pink-600">•</span><span>처리 결과 및 답변 확인 가능</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* 동아리 */}
+                                <div className="p-6 border border-gray-100 dark:border-slate-800 rounded-2xl 1bg-white dark:bg-slate-800 shadow-sm">
+                                    <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                                        <Users className="w-5 h-5 text-cyan-500" />
+                                        동아리
+                                    </h3>
+                                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                                        <p>컴퓨터공학부 동아리 정보를 확인할 수 있습니다.</p>
+                                        <ul className="space-y-1 text-xs ml-4">
+                                            <li className="flex gap-2"><span>•</span><span>카테고리별 필터링 (학술, 스포츠 등)</span></li>
+                                            <li className="flex gap-2"><span>•</span><span>동아리 로고, 소개, 연락처 확인</span></li>
+                                            <li className="flex gap-2"><span>•</span><span>사진 갤러리로 활동 모습 보기</span></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                {/* 검색 */}
+                                <div className="p-6 border border-gray-100 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-800 shadow-sm">
+                                    <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                                        <BookOpen className="w-5 h-5 text-indigo-500" />
+                                        통합 검색
+                                    </h3>
+                                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                                        <p>공지사항과 행사를 한 번에 검색할 수 있습니다.</p>
+                                        <div className="bg-indigo-50 dark:bg-indigo-900/10 p-3 rounded-lg text-xs space-y-1">
+                                            <div className="flex gap-2"><span className="text-indigo-600">•</span><span>제목 및 내용 통합 검색</span></div>
+                                            <div className="flex gap-2"><span className="text-indigo-600">•</span><span>최신순/오래된순 정렬</span></div>
+                                            <div className="flex gap-2"><span className="text-indigo-600">•</span><span>공지사항/행사 탭 구분</span></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </section>
@@ -254,9 +427,17 @@ export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
                                         <h3 className="font-bold text-sm mb-2 text-indigo-600">좌측 사이드바 메뉴</h3>
                                         <ul className="text-xs space-y-2 text-gray-600 dark:text-gray-400">
                                             <li><strong>통계/대시보드:</strong> 전체 회원 수, 승인 대기 수 등 요약 지표</li>
-                                            <li><strong>회원 관리:</strong> 전체 회원 목록 조회, 승인 대기자 처리</li>
-                                            <li><strong>컨텐츠 관리:</strong> 공지사항 작성, 제휴 업체 관리</li>
-                                            <li><strong>사업 관리:</strong> 행사 생성, 신청자 명단 확인, 물품 대여 관리</li>
+                                            <li><strong>프로필 변경 요청:</strong> 유저의 개인정보 변경 요청 관리</li>
+                                            <li><strong>회장 정보 관리:</strong> 회장 정보 관리 | 대가 바뀌어도 유지보수 하기 위함</li>
+                                            <li><strong>학생회 소개:</strong> 학생회 소개 | 대가 바뀌어도 유지보수 하기 위함</li>
+                                            <li><strong>공지사항 관리:</strong> 공지사항 관리</li>
+                                            <li><strong>행사 공지 신청:</strong> 행사 생성, 신청자 관리 및 출석 (선착순 마감 기능)</li>
+                                            <li><strong>수요 설문 조사:</strong>설문조사, 수요조사 생성 (기명/익명 선택 가능)(추가 설문조사 기능 활용) </li>
+                                            <li><strong>카톡방 초대:</strong> 학번별 카톡방 초대시 활용, 편입전과복부전교환 관리</li>
+                                            <li><strong>복지 사업 관리:</strong> 물품 대여 링크 연결, 사물함 배정표, 프린터 매뉴얼, 신입생 가이드북</li>
+                                            <li><strong>동아리 관리:</strong> 학과 동아리 홍보용</li>
+                                            <li><strong>건의함 관리:</strong> 건의함을 통한 소통창구 마련</li>
+                                            <li><strong>시스템 매뉴얼:</strong> 홈페이지 유지보수 및 관리 매뉴얼</li>
                                         </ul>
                                     </div>
                                     <div className="p-4 bg-white dark:bg-slate-800 border rounded-xl">
@@ -266,9 +447,6 @@ export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
                                             <li><strong>프로필:</strong> 내 정보 확인 및 로그아웃</li>
                                         </ul>
                                     </div>
-                                </div>
-                                <div className="bg-gray-100 dark:bg-slate-800 rounded-xl aspect-video flex items-center justify-center text-gray-400 text-xs text-center p-6 border-2 border-dashed border-gray-200 dark:border-slate-700">
-                                    📷 (Admin Dashboard Structure Diagram or Screenshot)
                                 </div>
                             </div>
                         </section>
@@ -283,64 +461,290 @@ export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
                             </h2>
 
                             <div className="space-y-12">
-                                {/* 3.1 회원 승인 관리 */}
+                                {/* 3.1 회원 관리 */}
                                 <div className="scroll-mt-24">
                                     <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                                         <Users className="w-5 h-5 text-purple-500" />
-                                        3.1 신규 회원 승인 프로세스
+                                        3.1 회원 관리
                                     </h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                        가입 신청한 학생들의 학적 증빙을 확인하고 서비스를 이용할 수 있도록 승인 처리합니다.
-                                    </p>
-                                    <div className="bg-gray-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-slate-800">
+
+                                    <div className="bg-gray-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 mb-4">
+                                        <h4 className="font-bold mb-3">신규 회원 승인 프로세스</h4>
                                         <ol className="list-decimal list-inside space-y-3 text-sm">
                                             <li><strong>[회원 관리] &gt; [승인 대기]</strong> 메뉴로 이동합니다.</li>
                                             <li>학생이 업로드한 <strong>재학증명서/학생증 이미지</strong>를 클릭하여 정보를 확인합니다.</li>
                                             <li>이름, 학번, 학과가 일치하면 <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">승인</span> 버튼을 클릭합니다.</li>
                                             <li>정보가 불확실한 경우 반려 사유를 입력하고 <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-bold">반려</span> 처리합니다.</li>
+                                            <li>반려 사유는 해당 유저가 로그인 시, 모달로 알릴 수 있습니다.</li>
                                         </ol>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">전체 회원 관리</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 회원 목록 조회 및 검색 (이름, 학번)</li>
+                                                <li>• 상태별 필터링 (승인/반려/대기)</li>
+                                                <li>• 회원 상세 정보 보기</li>
+                                                <li>• 관리자 권한 부여/회수</li>
+                                                <li>• 학생회비 납부 여부 표시</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">정보 수정 요청 관리</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 회원이 요청한 개인정보 수정 내역 확인</li>
+                                                <li>• 수정 요청 승인 또는 반려</li>
+                                                <li>• 반려 시 사유 입력</li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* 3.2 행사 관리 */}
+                                {/* 3.2 공지사항 관리 */}
+                                <div className="scroll-mt-24">
+                                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                        <BookOpen className="w-5 h-5 text-blue-500" />
+                                        3.2 공지사항 관리
+                                    </h3>
+
+                                    <div className="bg-gray-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 mb-4">
+                                        <h4 className="font-bold mb-3">공지사항 작성 방법</h4>
+                                        <ol className="list-decimal list-inside space-y-3 text-sm">
+                                            <li><strong>[콘텐츠 관리] &gt; [공지사항]</strong> 메뉴에서 '새 공지사항 작성' 클릭</li>
+                                            <li>대분류 선택: <span className="text-indigo-600 font-mono text-xs">학생회</span> 또는 <span className="text-indigo-600 font-mono text-xs">정보공개</span></li>
+                                            <li>소분류 선택: 행사, 복지, 공지, 공고, 고시, 대표자회의, 학생회칙</li>
+                                            <li>제목과 내용 작성 (마크다운 지원)</li>
+                                            <li>첫 번째 설정에서 '상단 고정' 체크 시 메인 페이지에 고정 표시</li>
+                                            <li>첨부파일 업로드 (Cloudflare R2 사용)</li>
+                                            <li>'미리보기'로 최종 확인 후 '게시' 클릭</li>
+                                        </ol>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">공지사항 수정/삭제</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 기존 공지사항 목록에서 수정 가능</li>
+                                                <li>• 첨부파일 추가/삭제 가능</li>
+                                                <li>• 삭제 시 첨부파일도 자동 삭제</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 3.3 행사 및 활동 관리 */}
                                 <div className="scroll-mt-24">
                                     <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                                         <Calendar className="w-5 h-5 text-green-500" />
-                                        3.2 행사 및 설문 생성 관리
+                                        3.3 행사 및 활동 관리
                                     </h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                        학생회에서 주관하는 각종 이벤트와 설문조사를 생성하고 신청 데이터를 관리합니다.
-                                    </p>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="p-5 border rounded-xl bg-white dark:bg-slate-800">
-                                            <h4 className="font-bold text-sm mb-3">행사 생성 팁</h4>
-                                            <ul className="text-xs space-y-2 text-gray-500">
-                                                <li>- 신청 기간을 설정하면 해당 시간에만 신청 버튼이 활성화됩니다.</li>
-                                                <li>- 선착순 인원을 설정하면 초과 인원 발생 시 자동으로 마감됩니다.</li>
-                                                <li>- 폼 빌더를 통해 주관식, 객관식 등 원하는 질문을 추가할 수 있습니다.</li>
+
+                                    <div className="bg-gray-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 mb-4">
+                                        <h4 className="font-bold mb-3">행사 생성 방법</h4>
+                                        <ol className="list-decimal list-inside space-y-3 text-sm">
+                                            <li><strong>[사업 관리] &gt; [행사/공지]</strong> 메뉴에서 '새 활동 만들기' 클릭</li>
+                                            <li>활동 유형 선택:
+                                                <ul className="ml-6 mt-1 space-y-1 text-xs">
+                                                    <li>• <strong>event</strong>: 일반 행사 (간식행사, MT 등)</li>
+                                                    <li>• <strong>survey</strong>: 설문조사</li>
+                                                    <li>• <strong>demand_survey</strong>: 수요조사</li>
+                                                    <li>• <strong>kakao_invite</strong>: 카톡방 초대 신청</li>
+                                                    <li>• <strong>notice</strong>: 단순 공지</li>
+                                                </ul>
+                                            </li>
+                                            <li>기본 정보 입력:
+                                                <ul className="ml-6 mt-1 space-y-1 text-xs">
+                                                    <li>• 제목, 설명, 썸네일 이미지</li>
+                                                    <li>• 신청 기간 (시작/종료 일시)</li>
+                                                    <li>• 최대 정원(선택사항)</li>
+                                                    <li>• 학생회비 납부자 필수 여부(사용하지 않기를 권장)</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>폼 부가 필드 추가</strong>:
+                                                <ul className="ml-6 mt-1 space-y-1 text-xs">
+                                                    <li>• 단답형: 이름, 학번, 이메일, 전화번호 등</li>
+                                                    <li>• 긴 텍스트: 의견, 요청사항</li>
+                                                    <li>• 체크박스: 동의함, 여러 선택지</li>
+                                                    <li>• 라디오: 한 가지만 선택</li>
+                                                    <li>• 선택: 드롭다운 메뉴</li>
+                                                    <li>• 날짜: 날짜 입력칸</li>
+                                                    <li>• 파일: 이미지 또는 파일 업로드</li>
+                                                </ul>
+                                            </li>
+                                            <li>'미리보기'로 확인 후 '생성' 클릭</li>
+                                        </ol>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">신청자 관리</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 신청자 목록 조회</li>
+                                                <li>• 상태별 필터링</li>
+                                                <li>• 신청 내용 상세 보기</li>
+                                                <li>• 승인/거절 처리</li>
+                                                <li>• Excel 다운로드</li>
+                                                <li>• 출석체크(승인된 자에 한해서, 학번입력을 통해)</li>
                                             </ul>
                                         </div>
-                                        <div className="p-5 border rounded-xl bg-white dark:bg-slate-800">
-                                            <h4 className="font-bold text-sm mb-3">데이터 추출</h4>
-                                            <ul className="text-xs space-y-2 text-gray-500">
-                                                <li>- 신청 완료된 명단을 Excel(.csv) 파일로 다운로드할 수 있습니다.</li>
-                                                <li>- 명단 확인 페이지에서 개별 신청자의 상세 내용을 확인 가능합니다.</li>
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">설문 결과 분석</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 각 질문별 응답 통계</li>
+                                                <li>• 그래프로 시각화</li>
+                                                <li>• 주관식 응답 목록</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">출석 체크</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 학번으로 출석 조회</li>
+                                                <li>• 출석 승인 클릭</li>
+                                                <li>• 출석 시간 기록</li>
+                                                <li>• 출석자 목록 다운로드</li>
                                             </ul>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* 3.3 복지 물품 관리 */}
+                                {/* 3.4 복지 사업 관리 */}
                                 <div className="scroll-mt-24">
                                     <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                        <Database className="w-5 h-5 text-blue-500" />
-                                        3.3 복지 물품 대여 관리
+                                        <Database className="w-5 h-5 text-purple-500" />
+                                        3.4 복지 사업 관리
                                     </h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                        현재 대여 중인 물품과 반납 상태를 실시간으로 관리합니다.
-                                    </p>
-                                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-sm text-blue-800 dark:text-blue-200">
-                                        학생이 대여 신청 후 방문하면, 관리자 페이지에서 <strong>[대여 승인]</strong> 처리를 하여 수량을 차감하고, 반납 시 <strong>[반납 처리]</strong>를 통해 수량을 복구합니다.
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">물품 대여</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• Google Sheets와 연동하여 재고 실시간 동기화</li>
+                                                <li>• 물품 목록 추가/수정/삭제</li>
+                                                <li>• 물품 이미지 업로드</li>
+                                                <li>• 대여 신청 구글폼 URL 연결</li>
+                                                <li>• 활성화/비활성화 토글</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">사물함 관리</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 배치도 이미지 업로드</li>
+                                                <li>• 신청/반납 구글폼 URL 설정</li>
+                                                <li>• 신청 기간 설정</li>
+                                                <li>• 안내 메시지 작성</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">프린터 안내</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 사용 매뉴얼 이미지 업로드</li>
+                                                <li>• 안내 설명 텍스트 작성</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">신입생 가이드북</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 노션(Notion) URL 설정</li>
+                                                <li>• 제목 및 설명 수정</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 3.5 건의함 관리 */}
+                                <div className="scroll-mt-24">
+                                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                        <Megaphone className="w-5 h-5 text-pink-500" />
+                                        3.5 건의함 관리
+                                    </h3>
+
+                                    <div className="bg-gray-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-slate-800">
+                                        <h4 className="font-bold mb-3">처리 프로세스</h4>
+                                        <div className="space-y-3 text-sm">
+                                            <div className="flex gap-3">
+                                                <div className="flex-shrink-0 w-20 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold text-center">접수</div>
+                                                <p className="text-gray-700 dark:text-gray-300">새로운 건의 접수 상태 (기본값)</p>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <div className="flex-shrink-0 w-20 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-bold text-center">검토중</div>
+                                                <p className="text-gray-700 dark:text-gray-300">관리자가 검토 중인 상태로 변경</p>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <div className="flex-shrink-0 w-20 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold text-center">승인</div>
+                                                <p className="text-gray-700 dark:text-gray-300">건의 사항이 반영되었을 때, 해결 내용 작성</p>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <div className="flex-shrink-0 w-20 px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold text-center">반려</div>
+                                                <p className="text-gray-700 dark:text-gray-300">건의 사항이 반영할 수 없을 때, 반려 사유 필수</p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/10 p-3 rounded text-xs">
+                                            💡 <strong>팁:</strong> 작성자는 관리자에게만 표시되며, 일반 사용자에게는 익명으로 표시됩니다.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 3.6 동아리 관리 */}
+                                <div className="scroll-mt-24">
+                                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                        <Users className="w-5 h-5 text-cyan-500" />
+                                        3.6 동아리 관리
+                                    </h3>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">동아리 등록</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 동아리 이름, 카테고리 입력</li>
+                                                <li>• 동아리 설명 작성</li>
+                                                <li>• 로고 이미지 업로드</li>
+                                                <li>• 관련 사이트 연결</li>
+                                                <li>• 연락처 정보 입력</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">활동 사진 관리</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 동아리별 활동 사진 추가</li>
+                                                <li>• 사진 설명 및 순서 설정</li>
+                                                <li>• 사진 삭제</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 3.7 학생회 소개 관리 */}
+                                <div className="scroll-mt-24">
+                                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                        <BookOpen className="w-5 h-5 text-indigo-500" />
+                                        3.7 학생회 소개 관리
+                                    </h3>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">공약 관리</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 공약 제목 및 내용 작성</li>
+                                                <li>• 각 공약별 설명 추가</li>
+                                                <li>• 공약 진행 상태 표시</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">조직도 및 연락처</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 조직도 이미지 업로드</li>
+                                                <li>• 부서별 담당자 정보 입력</li>
+                                                <li>• 학생회장 연락처 설정</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-white dark:bg-slate-800 border rounded-xl p-4">
+                                            <h4 className="font-bold text-sm mb-2">개인정보 처리 담당자</h4>
+                                            <ul className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                                <li>• 담당자 이름, 부서, 연락처</li>
+                                                <li>• 업무 및 이메일 주소 입력</li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -782,13 +1186,246 @@ export const useAuthStore = create((set) => ({
                                 </div>
                             </div>
 
-                            <h3 className="text-xl font-semibold mt-4 mb-2">로그 필터링 가이드</h3>
-                            <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300 mb-6">
-                                <li><code>[API ERROR]</code>: API 핸들러 에러</li>
-                                <li><code>[CLEANUP]</code>: Draft 자동 정리 로그</li>
-                                <li><code>[STARTUP]</code>: 서버 시작 워밍업 완료</li>
-                                <li><code>429</code>: Rate Limit 초과 (정상)</li>
-                            </ul>
+                            <h3 className="text-xl font-semibold mt-6 mb-4">로그 확인 가이드</h3>
+
+                            <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-200 dark:border-blue-800 mb-6">
+                                <h4 className="font-bold text-blue-900 dark:text-blue-100 mb-2">📋 로그 확인 방법</h4>
+                                <ol className="list-decimal list-inside text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                                    <li>Fly.io 대시보드 접속: <a href="https://fly.io/dashboard" target="_blank" className="underline">https://fly.io/dashboard</a></li>
+                                    <li>`seoultech-cse-backend` 앱 선택</li>
+                                    <li>왼쪽 메뉴에서 <strong>Monitoring</strong> 클릭</li>
+                                    <li><strong>Logs</strong> 탭 선택</li>
+                                </ol>
+                            </div>
+
+                            <h4 className="text-lg font-semibold mb-3">로그 레벨 이해하기</h4>
+
+                            <div className="space-y-4 mb-6">
+                                <div className="border-l-4 border-red-500 bg-red-50 dark:bg-red-900/10 p-4 rounded-r-lg">
+                                    <h5 className="font-bold text-red-700 dark:text-red-300 mb-2">🔴 ERROR - 즉시 확인 필요</h5>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">실제 오류가 발생하여 기능이 정상 동작하지 않은 경우입니다.</p>
+                                    <p className="text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">주요 ERROR 메시지:</p>
+                                    <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside pl-2">
+                                        <li><code>users 테이블 insert 실패</code> → 회원가입 실패</li>
+                                        <li><code>Auth 삭제 실패</code> → 관리자 회원 거절 기능 오류</li>
+                                        <li><code>upload_file_to_r2</code> → 파일 업로드 실패 (공지사항 첨부파일 등)</li>
+                                        <li><code>R2 파일 삭제 실패</code> → 스토리지 정리 실패</li>
+                                        <li><code>로그인 시도 기록 실패</code> → 보안 로그 기록 오류</li>
+                                        <li><code>verification-images 업로드 실패</code> → 학적인증 이미지 업로드 실패</li>
+                                    </ul>
+                                    <p className="text-xs text-red-600 dark:text-red-400 font-bold mt-2">→ 조치: 개발자에게 즉시 문의</p>
+                                </div>
+
+                                <div className="border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-r-lg">
+                                    <h5 className="font-bold text-yellow-700 dark:text-yellow-300 mb-2">🟡 WARNING - 확인 권장 (대부분 정상)</h5>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">경고 메시지지만 대부분 정상 동작합니다. 자주 보는 메시지는 무시해도 됩니다.</p>
+                                    <p className="text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">자주 보는 WARNING (무시 가능):</p>
+                                    <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside pl-2">
+                                        <li><code>Rate limit check failed</code> → Rate limit DB 일시 오류, 요청은 정상 처리됨</li>
+                                        <li><code>재고 조회 실패</code> → Google Sheets API 일시 오류, 캐시 데이터 사용</li>
+                                        <li><code>기존 세션 만료 실패</code> → 중복 로그인 시 이전 세션 정리 실패, 로그인은 정상</li>
+                                        <li><code>last_login_at update failed</code> → 로그인 시간 기록 실패, 로그인은 정상</li>
+                                        <li><code>파일 삭제 실패</code> → 개별 파일 정리 실패, 전체 기능은 정상</li>
+                                    </ul>
+                                    <p className="text-xs text-yellow-600 dark:text-yellow-400 font-bold mt-2">→ 조치: 반복적으로 나타나면 개발자 문의</p>
+                                </div>
+
+                                <div className="border-l-4 border-green-500 bg-green-50 dark:bg-green-900/10 p-4 rounded-r-lg">
+                                    <h5 className="font-bold text-green-700 dark:text-green-300 mb-2">🟢 INFO - 정상 동작</h5>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">일반적인 정보 메시지로, 시스템이 정상 동작하고 있다는 신호입니다.</p>
+                                    <p className="text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">자주 보는 INFO 메시지:</p>
+                                    <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside pl-2">
+                                        <li><code>DB 워밍업 완료</code> → 서버 시작 시 정상 메시지</li>
+                                        <li><code>Draft 삭제 완료</code> → 임시 게시글 자동 정리 (정상)</li>
+                                        <li><code>email_verifications 삭제</code> → 회원 탈퇴 시 인증 기록 정리 (정상)</li>
+                                    </ul>
+                                    <p className="text-xs text-green-600 dark:text-green-400 font-bold mt-2">→ 조치: 확인만 하면 됨</p>
+                                </div>
+
+                                <div className="border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/10 p-4 rounded-r-lg">
+                                    <h5 className="font-bold text-blue-700 dark:text-blue-300 mb-2">🔵 DEBUG - 개발자용 상세 정보</h5>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300">개발 환경에서만 출력되는 상세 정보입니다. 일반적으로는 보이지 않습니다.</p>
+                                </div>
+                            </div>
+
+                            <h4 className="text-lg font-semibold mb-3">상황별 로그 확인</h4>
+                            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4 mb-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p className="font-bold mb-1">1. 회원가입이 안 된다는 신고</p>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400">로그에서 다음 메시지 찾기:</p>
+                                        <ul className="text-xs text-gray-600 dark:text-gray-400 list-disc list-inside pl-2 mt-1">
+                                            <li><code>ERROR</code> + <code>users 테이블 insert 실패</code></li>
+                                            <li><code>ERROR</code> + <code>signup</code></li>
+                                            <li><code>ERROR</code> + <code>verification-images</code></li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <p className="font-bold mb-1">2. 로그인이 안 된다는 신고</p>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400">로그에서 다음 메시지 찾기:</p>
+                                        <ul className="text-xs text-gray-600 dark:text-gray-400 list-disc list-inside pl-2 mt-1">
+                                            <li><code>ERROR</code> + <code>login</code></li>
+                                            <li><code>WARNING</code> + <code>기존 세션</code> → 이건 정상</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <p className="font-bold mb-1">3. 파일 업로드가 안 된다는 신고</p>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400">로그에서 다음 메시지 찾기:</p>
+                                        <ul className="text-xs text-gray-600 dark:text-gray-400 list-disc list-inside pl-2 mt-1">
+                                            <li><code>ERROR</code> + <code>upload_file_to_r2</code></li>
+                                            <li><code>ERROR</code> + <code>upload</code> + <code>ClientError</code></li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <p className="font-bold mb-1">4. 공지사항 작성이 안 된다는 신고</p>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400">로그에서 다음 메시지 찾기:</p>
+                                        <ul className="text-xs text-gray-600 dark:text-gray-400 list-disc list-inside pl-2 mt-1">
+                                            <li><code>ERROR</code> + <code>create_notice</code></li>
+                                            <li><code>ERROR</code> + <code>app.routes.notices</code></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4 className="text-lg font-semibold mb-3">정상 vs 오류 빠른 구분</h4>
+                            <div className="grid grid-cols-1 gap-4 mb-6">
+                                <div className="bg-green-50 dark:bg-green-900/10 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                                    <p className="font-bold text-green-700 dark:text-green-300 mb-2">✅ 이런 메시지는 정상입니다 (무시 가능)</p>
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full text-xs">
+                                            <thead className="border-b border-green-200 dark:border-green-800">
+                                                <tr>
+                                                    <th className="text-left py-1 pr-4">메시지</th>
+                                                    <th className="text-left py-1">의미</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="text-gray-600 dark:text-gray-400">
+                                                <tr>
+                                                    <td className="py-1 pr-4"><code>[WARNING] Rate limit check failed</code></td>
+                                                    <td className="py-1">Rate limit 확인 실패했지만 요청은 처리됨</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="py-1 pr-4"><code>[WARNING] 재고 조회 실패</code></td>
+                                                    <td className="py-1">Google Sheets 일시 오류, 캐시 사용</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="py-1 pr-4"><code>[INFO] Draft 삭제 완료</code></td>
+                                                    <td className="py-1">임시 게시글 자동 정리 완료</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="py-1 pr-4"><code>[WARNING] 기존 세션 만료 실패</code></td>
+                                                    <td className="py-1">이전 로그인 정리 실패, 현재 로그인은 성공</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="py-1 pr-4"><code>[INFO] DB 워밍업 완료</code></td>
+                                                    <td className="py-1">서버 시작 완료</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div className="bg-red-50 dark:bg-red-900/10 p-4 rounded-lg border border-red-200 dark:border-red-800">
+                                    <p className="font-bold text-red-700 dark:text-red-300 mb-2">⚠️ 이런 메시지는 확인 필요 (실제 오류)</p>
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full text-xs">
+                                            <thead className="border-b border-red-200 dark:border-red-800">
+                                                <tr>
+                                                    <th className="text-left py-1 pr-4">메시지</th>
+                                                    <th className="text-left py-1 pr-4">의미</th>
+                                                    <th className="text-left py-1">사용자 영향</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="text-gray-600 dark:text-gray-400">
+                                                <tr>
+                                                    <td className="py-1 pr-4"><code>[ERROR] users 테이블 insert 실패</code></td>
+                                                    <td className="py-1 pr-4">회원가입 실패</td>
+                                                    <td className="py-1">가입 불가</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="py-1 pr-4"><code>[ERROR] upload_file_to_r2 ClientError</code></td>
+                                                    <td className="py-1 pr-4">파일 업로드 실패</td>
+                                                    <td className="py-1">첨부파일 업로드 불가</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="py-1 pr-4"><code>[ERROR] Auth 삭제 실패</code></td>
+                                                    <td className="py-1 pr-4">관리자 회원 거절 실패</td>
+                                                    <td className="py-1">관리자 기능 오류</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="py-1 pr-4"><code>[ERROR] verification-images 업로드 실패</code></td>
+                                                    <td className="py-1 pr-4">학적인증 이미지 업로드 실패</td>
+                                                    <td className="py-1">회원가입 불가</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="py-1 pr-4"><code>[ERROR] R2 파일 삭제 실패</code></td>
+                                                    <td className="py-1 pr-4">파일 삭제 실패</td>
+                                                    <td className="py-1">스토리지 용량 증가</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4 className="text-lg font-semibold mb-3">로그 검색 팁 (Fly.io 대시보드)</h4>
+                            <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700 mb-6">
+                                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">Fly.io 대시보드 로그 화면에서 검색창을 사용할 수 있습니다:</p>
+                                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside">
+                                    <li><strong>에러만 보기:</strong> 검색창에 <code>ERROR</code> 입력</li>
+                                    <li><strong>특정 기능 로그:</strong> 검색창에 <code>auth</code> 또는 <code>notices</code> 입력</li>
+                                    <li><strong>특정 시간대:</strong> 대시보드에서 시간 필터 사용</li>
+                                </ul>
+                            </div>
+
+                            <h4 className="text-lg font-semibold mb-3">긴급 상황 대응</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700">
+                                    <p className="font-bold text-red-600 dark:text-red-400 mb-2">서버가 다운된 경우</p>
+                                    <ol className="text-xs text-gray-600 dark:text-gray-400 space-y-1 list-decimal list-inside">
+                                        <li>Fly.io 대시보드에서 최근 <code>ERROR</code> 로그 확인</li>
+                                        <li>마지막 에러 메시지 스크린샷</li>
+                                        <li>개발자에게 전달</li>
+                                    </ol>
+                                </div>
+                                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700">
+                                    <p className="font-bold text-orange-600 dark:text-orange-400 mb-2">특정 기능만 안 되는 경우</p>
+                                    <ol className="text-xs text-gray-600 dark:text-gray-400 space-y-1 list-decimal list-inside">
+                                        <li>해당 기능 이름(회원가입, 로그인 등)으로 로그 검색</li>
+                                        <li><code>ERROR</code> 메시지 찾기</li>
+                                        <li>에러 메시지 전체 복사하여 개발자에게 전달</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <h4 className="text-lg font-semibold mb-3">정기 점검 시 확인 사항</h4>
+                            <div className="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700 mb-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p className="font-bold mb-1">매일 확인</p>
+                                        <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                                            <li>• 최근 1시간 내 <code>ERROR</code> 로그 개수</li>
+                                            <li>• 5개 이상 → 개발자 문의</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <p className="font-bold mb-1">매주 확인</p>
+                                        <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                                            <li>• <code>WARNING</code> 중 반복되는 패턴 확인</li>
+                                            <li>• 같은 WARNING이 시간당 10회 이상 → 개발자 문의</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700 mb-6">
+                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                    <strong>참고:</strong><br />
+                                    • <strong>로그 보관 기간:</strong> Fly.io 플랜에 따라 다름 (일반적으로 7일)<br />
+                                    • <strong>로그 레벨:</strong> <code>LOG_LEVEL</code> 환경변수로 조절 가능 (INFO가 기본값)<br />
+                                    • <strong>긴급 연락:</strong> 심각한 오류 발견 시 즉시 개발자 연락
+                                </p>
+                            </div>
 
                             <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 p-5 rounded-xl border border-indigo-100 dark:border-indigo-800">
                                 <h3 className="text-lg font-bold text-indigo-900 dark:text-indigo-100 flex items-center gap-2 mb-2">
@@ -798,7 +1435,7 @@ export const useAuthStore = create((set) => ({
                                     행사 신청 기간 등 트래픽이 몰릴 것으로 예상될 때는 일시적으로 서버 메모리를 증설하여 안정성을 확보할 것을 권장합니다.
                                 </p>
                                 <div className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800">
-                                    <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 mb-2">서버 메모리 임시 증가 방법</h4>
+                                    <h4 className="font-bold text-sm -gray-900 dark:text-gray-100 mb-2">서버 메모리 임시 증가 방법</h4>
                                     <ol className="list-decimal list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
                                         <li>Fly.io Dashboard 접속 후 해당 앱 선택</li>
                                         <li>좌측 메뉴에서 <strong>Machines</strong> 탭 클릭</li>
@@ -929,7 +1566,7 @@ UPDATE activities SET current_count = (
                                         <li><a href="https://developers.google.com/oauthplayground" target="_blank" className="underline font-bold">OAuth Playground</a> 접속</li>
                                         <li>상단 톱니바퀴 ⚙️ → "Use your own OAuth credentials" 체크</li>
                                         <li>Client ID, Secret 입력 (Fly.io Secrets 값)</li>
-                                        <li>API 목록에서 "Gmail API v1" 선택 후 Authorize</li>
+                                        <li>API 목록에서 "Gmail API v1" 선택한 다음 Gmail Send 선택 후 Authorize</li>
                                         <li>"Exchange authorization code for tokens" 클릭</li>
                                         <li>새 Refresh Token을 Fly.io Secrets의 <code>GOOGLE_REFRESH_TOKEN</code>에 업데이트</li>
                                     </ol>
@@ -1011,12 +1648,7 @@ UPDATE activities SET current_count = (
                         </section>
                     </>
                 )}
-
-                <div className="mt-20 pt-10 border-t border-gray-200 dark:border-slate-800 text-center text-gray-400 text-sm">
-                    <p>시스템 운영 매뉴얼 v3.0 (2026.02)</p>
-                    <p>문의: 전산팀장</p>
-                </div>
             </div>
-        </div>
+        </div >
     )
 }

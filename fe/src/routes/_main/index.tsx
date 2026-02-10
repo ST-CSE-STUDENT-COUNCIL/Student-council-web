@@ -1,10 +1,11 @@
 ﻿import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Autoplay, Pagination, Navigation } from 'swiper/modules'
+import { Autoplay, Pagination, Navigation, Lazy } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/navigation'
+import 'swiper/css/lazy'
 import {
     School,
     BookOpen,
@@ -58,8 +59,8 @@ function Index() {
         const fetchData = async () => {
             try {
                 const [activitiesResponse, postsResponse] = await Promise.all([
-                    activityApi.getAll({ is_active_only: true, page: 1, page_size: 20 }),
-                    postApi.getAll({ page: 1, page_size: 5, sort: 'newest' })
+                    activityApi.getAll({ is_active_only: true, page: 1, page_size: 6 }),
+                    postApi.getAll({ page: 1, page_size: 6, sort: 'newest' })
                 ])
 
                 const validActivities = activitiesResponse.activities.filter(activity => {
@@ -100,11 +101,13 @@ function Index() {
                             <>
                                 <Swiper
                                     key={featuredActivities.length}
-                                    modules={[Autoplay, Pagination, Navigation]}
+                                    modules={[Autoplay, Pagination, Navigation, Lazy]}
                                     navigation={{ nextEl: '.hero-next', prevEl: '.hero-prev' }}
                                     pagination={{ clickable: true, dynamicBullets: true, bulletClass: 'swiper-pagination-bullet !bg-white/80 !w-2 !h-2' }}
                                     autoplay={{ delay: 6000, disableOnInteraction: false, pauseOnMouseEnter: true }}
                                     loop={featuredActivities.length > 1}
+                                    lazy={{ loadPrevNext: true, loadPrevNextAmount: 1 }}
+                                    preloadImages={false}
                                     className="h-full w-full"
                                 >
                                     {featuredActivities.length > 0 ? (
@@ -116,9 +119,11 @@ function Index() {
                                                         {activity.thumbnail_url ? (
                                                             <>
                                                                 <img
-                                                                    src={activity.thumbnail_url}
+                                                                    data-src={activity.thumbnail_url}
                                                                     alt=""
-                                                                    className="w-full h-full object-cover blur-2xl opacity-40 scale-110 transform"
+                                                                    className="swiper-lazy w-full h-full object-cover blur-2xl opacity-40 scale-110 transform"
+                                                                    loading="lazy"
+                                                                    decoding="async"
                                                                 />
                                                                 <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/60 to-slate-900/30" />
                                                             </>
@@ -149,6 +154,7 @@ function Index() {
 
                                                             <Link
                                                                 to="/activities"
+                                                                params={{ activityId: activity.id.toString() }}
                                                                 className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
                                                             >
                                                                 자세히 보기 <ChevronRight size={16} />
@@ -160,10 +166,13 @@ function Index() {
                                                             <div className="hidden lg:block w-[320px] shrink-0 transform transition-all duration-700 ease-out translate-x-12 opacity-0 [.swiper-slide-active_&]:translate-x-0 [.swiper-slide-active_&]:opacity-100">
                                                                 <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/10 transition-transform duration-500 bg-slate-800">
                                                                     <img
-                                                                        src={activity.thumbnail_url}
+                                                                        data-src={activity.thumbnail_url}
                                                                         alt={activity.title}
-                                                                        className="w-full h-full object-cover"
+                                                                        className="swiper-lazy w-full h-full object-cover"
+                                                                        loading="lazy"
+                                                                        decoding="async"
                                                                     />
+                                                                    <div className="swiper-lazy-preloader" />
                                                                 </div>
                                                             </div>
                                                         ) : (
