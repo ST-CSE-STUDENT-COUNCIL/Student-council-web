@@ -13,6 +13,9 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from typing import Optional
 from datetime import datetime
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 import math
 import json
 from app.schemas.activities import (

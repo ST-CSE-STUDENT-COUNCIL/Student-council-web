@@ -6,6 +6,9 @@ from fastapi import HTTPException, status, Security, Depends, Request
 from typing import Optional, List
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.database import supabase
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 # OpenAPI에 HTTP Bearer 스킴을 등록하기 위한 객체
 bearer_scheme = HTTPBearer()
@@ -96,7 +99,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
             raise
         except Exception as e:
             # 토큰 파싱 실패 등은 무시 (일반 검증으로 넘어감)
-            print(f"[AUTH WARNING] iat check failed: {e}")
+            logger.debug(f"iat check failed: {e}")
             pass
         
         return user_data

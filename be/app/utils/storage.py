@@ -6,7 +6,9 @@ from typing import Optional
 import uuid
 import os
 from app.database import supabase, get_supabase_admin
+from app.utils.logger import get_logger
 
+logger = get_logger(__name__)
 
 # 허용된 이미지 확장자
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png'}
@@ -104,7 +106,7 @@ async def upload_verification_image(file: UploadFile, user_id: str, folder: Opti
                 detail="빈 파일은 업로드할 수 없습니다"
             )
     except Exception as e:
-        print(f"[UTIL ERROR] upload_verification_image read: {str(e)}")
+        logger.error(f"upload_verification_image read: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="파일 읽기 실패"
@@ -161,7 +163,7 @@ async def upload_verification_image(file: UploadFile, user_id: str, folder: Opti
                 status_code = status.HTTP_401_UNAUTHORIZED
                 error_msg = "스토리지 접근 권한이 없습니다"
         
-        print(f"[STORAGE ERROR] verification-images 업로드 실패: {str(e)}")
+        logger.error(f"verification-images 업로드 실패: {str(e)}")
         raise HTTPException(
             status_code=status_code,
             detail=f"이미지 업로드 실패: {error_msg}"
@@ -206,7 +208,7 @@ def create_signed_url(
     
     except Exception as e:
         # 에러 발생 시 None 반환 (이미지가 없어도 다른 정보는 표시되도록)
-        print(f"Signed URL 생성 실패 - bucket: {bucket}, file_path: {file_path}, error: {str(e)}")
+        logger.error(f"Signed URL 생성 실패 - bucket: {bucket}, file_path: {file_path}, error: {str(e)}")
         return None
 
 
@@ -271,7 +273,7 @@ async def upload_post_attachment(file: UploadFile, post_id: int) -> dict:
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[UTIL ERROR] upload_post_attachment read: {str(e)}")
+        logger.error(f"upload_post_attachment read: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="파일 읽기 실패"
@@ -308,7 +310,7 @@ async def upload_post_attachment(file: UploadFile, post_id: int) -> dict:
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[UTIL ERROR] upload_post_attachment upload: {str(e)}")
+        logger.error(f"upload_post_attachment upload: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Storage 업로드 실패"
@@ -330,7 +332,7 @@ async def delete_post_attachments(storage_paths: list[str]) -> bool:
         storage_client.storage.from_('post-attachments').remove(storage_paths)
         return True
     except Exception as e:
-        print(f"첨부파일 삭제 실패: {str(e)}")
+        logger.error(f"첨부파일 삭제 실패: {str(e)}")
         return False
 
 
@@ -353,7 +355,7 @@ async def delete_verification_image(file_path: str) -> bool:
         result = supabase.storage.from_('verification-images').remove([file_path])
         return True
     except Exception as e:
-        print(f"파일 삭제 실패: {str(e)}")
+        logger.error(f"파일 삭제 실패: {str(e)}")
         return False
 
 
@@ -416,7 +418,7 @@ async def upload_file_to_supabase(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[UTIL ERROR] upload_file_to_supabase read: {str(e)}")
+        logger.error(f"upload_file_to_supabase read: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="파일 읽기 실패"
@@ -450,7 +452,7 @@ async def upload_file_to_supabase(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[UTIL ERROR] upload_file_to_supabase upload: {str(e)}")
+        logger.error(f"upload_file_to_supabase upload: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Storage 업로드 실패"

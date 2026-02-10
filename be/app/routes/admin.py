@@ -5,6 +5,10 @@
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import List, Optional
 from datetime import datetime, timezone
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 from app.schemas.admin import (
     UserListResponse,
     PendingUserListResponse,
@@ -312,7 +316,7 @@ async def approve_user(user_id: str):
                 supabase.storage.from_('verification-images').remove([user['verification_image_url']])
             except Exception as e:
                 # 이미지 삭제 실패해도 승인은 유지 (로그만 남김)
-                print(f"[APPROVE INFO] 이미지 삭제 실패 (무시됨): {str(e)}")
+                logger.warning(f"이미지 삭제 실패 (무시됨): {str(e)}")
         
         return ApproveUserResponse(user_id=user_id)
     
@@ -398,7 +402,7 @@ async def reject_user(user_id: str, request: RejectUserRequest):
             fresh_client.auth.admin.delete_user(user_id)
         except Exception as auth_error:
             # Auth 삭제 실패 로깅
-            print(f"[ADMIN REJECT ERROR] Auth 삭제 실패: {str(auth_error)}")
+            logger.error(f"Auth 삭제 실패: {str(auth_error)}")
         
         # 5. email_verifications 삭제 (재가입 허용) - 직접 삭제
         try:

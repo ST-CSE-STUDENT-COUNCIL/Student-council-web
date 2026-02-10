@@ -8,6 +8,9 @@ from fastapi import UploadFile, HTTPException, status
 from typing import Optional, Literal
 import uuid
 import os
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from datetime import timedelta
 from app.config import settings
 
@@ -109,7 +112,7 @@ def generate_presigned_url(
         )
         return presigned_url
     except Exception as e:
-        print(f"[UTIL ERROR] generate_presigned_url: {str(e)}")
+        logger.error(f"generate_presigned_url: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Presigned URL 생성 실패"
@@ -147,7 +150,7 @@ def generate_presigned_url_with_content_type(
         )
         return presigned_url
     except Exception as e:
-        print(f"[UTIL ERROR] generate_presigned_url_with_content_type: {str(e)}")
+        logger.error(f"generate_presigned_url_with_content_type: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Presigned URL 생성 실패"
@@ -223,7 +226,7 @@ async def upload_file_to_r2(
         return public_url
     
     except ClientError as e:
-        print(f"[UTIL ERROR] upload_file_to_r2 ClientError: {str(e)}")
+        logger.error(f"upload_file_to_r2 ClientError: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="R2 업로드 실패"
@@ -231,7 +234,7 @@ async def upload_file_to_r2(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[UTIL ERROR] upload_file_to_r2: {str(e)}")
+        logger.error(f"upload_file_to_r2: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="파일 처리 실패"
@@ -266,7 +269,7 @@ async def delete_file_from_r2(file_url: str, bucket_name: str) -> bool:
         return True
     
     except Exception as e:
-        print(f"R2 파일 삭제 실패: {str(e)}")
+        logger.error(f"R2 파일 삭제 실패: {str(e)}")
         return False
 
 
@@ -342,7 +345,7 @@ async def upload_post_attachment(file: UploadFile, post_id: int) -> dict:
         }
     
     except ClientError as e:
-        print(f"[UTIL ERROR] upload_post_file_to_r2 ClientError: {str(e)}")
+        logger.error(f"upload_post_file_to_r2 ClientError: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="R2 업로드 실패"
@@ -350,7 +353,7 @@ async def upload_post_attachment(file: UploadFile, post_id: int) -> dict:
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[UTIL ERROR] upload_post_file_to_r2: {str(e)}")
+        logger.error(f"upload_post_file_to_r2: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="파일 처리 실패"
@@ -384,11 +387,11 @@ async def delete_post_attachments(storage_paths: list[str]) -> bool:
                     Key=file_key
                 )
             except Exception as e:
-                print(f"파일 삭제 실패: {url}, 에러: {str(e)}")
+                logger.warning(f"파일 삭제 실패: {url}, 에러: {str(e)}")
                 continue
         
         return True
     
     except Exception as e:
-        print(f"R2 파일 삭제 실패: {str(e)}")
+        logger.error(f"R2 파일 삭제 실패: {str(e)}")
         return False

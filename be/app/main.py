@@ -10,6 +10,9 @@ from slowapi.errors import RateLimitExceeded
 from contextlib import asynccontextmanager
 from app.config import settings
 from app.routes import auth, admin, users, suggestions, notices, clubs, welfare, introductions, activities, search
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 # Rate limiter 설정
 limiter = Limiter(key_func=get_remote_address)
@@ -23,9 +26,9 @@ async def lifespan(app: FastAPI):
         from app.database import get_supabase
         supabase = get_supabase()
         supabase.table("boards").select("id").limit(1).execute()
-        print("[STARTUP] DB 워밍업 완료")
+        logger.info("DB 워밍업 완료")
     except Exception as e:
-        print(f"[STARTUP] 워밍업 실패 (무시): {e}")
+        logger.warning(f"DB 워밍업 실패 (무시): {e}")
     yield
     # shutdown: 필요 시 정리 작업
 
