@@ -1,11 +1,10 @@
 ﻿import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Autoplay, Pagination, Navigation, Lazy } from 'swiper/modules'
+import { Autoplay, Pagination, Navigation } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/navigation'
-import 'swiper/css/lazy'
 import {
     School,
     BookOpen,
@@ -102,13 +101,11 @@ function Index() {
                             <>
                                 <Swiper
                                     key={featuredActivities.length}
-                                    modules={[Autoplay, Pagination, Navigation, Lazy]}
+                                    modules={[Autoplay, Pagination, Navigation]}
                                     navigation={{ nextEl: '.hero-next', prevEl: '.hero-prev' }}
                                     pagination={{ clickable: true, dynamicBullets: true, bulletClass: 'swiper-pagination-bullet !bg-white/80 !w-2 !h-2' }}
                                     autoplay={{ delay: 6000, disableOnInteraction: false, pauseOnMouseEnter: true }}
                                     loop={featuredActivities.length > 1}
-                                    lazy={{ loadPrevNext: true, loadPrevNextAmount: 1 }}
-                                    preloadImages={false}
                                     className="h-full w-full"
                                 >
                                     {featuredActivities.length > 0 ? (
@@ -120,9 +117,9 @@ function Index() {
                                                         {activity.thumbnail_url ? (
                                                             <>
                                                                 <img
-                                                                    data-src={activity.thumbnail_url}
+                                                                    src={activity.thumbnail_url}
                                                                     alt=""
-                                                                    className="swiper-lazy w-full h-full object-cover blur-2xl opacity-40 scale-110 transform"
+                                                                    className="w-full h-full object-cover blur-2xl opacity-40 scale-110 transform"
                                                                     loading="lazy"
                                                                     decoding="async"
                                                                 />
@@ -167,13 +164,12 @@ function Index() {
                                                             <div className="hidden lg:block w-[320px] shrink-0 transform transition-all duration-700 ease-out translate-x-12 opacity-0 [.swiper-slide-active_&]:translate-x-0 [.swiper-slide-active_&]:opacity-100">
                                                                 <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/10 transition-transform duration-500 bg-slate-800">
                                                                     <img
-                                                                        data-src={activity.thumbnail_url}
+                                                                        src={activity.thumbnail_url}
                                                                         alt={activity.title}
-                                                                        className="swiper-lazy w-full h-full object-cover"
+                                                                        className="w-full h-full object-cover"
                                                                         loading="lazy"
                                                                         decoding="async"
                                                                     />
-                                                                    <div className="swiper-lazy-preloader" />
                                                                 </div>
                                                             </div>
                                                         ) : (
