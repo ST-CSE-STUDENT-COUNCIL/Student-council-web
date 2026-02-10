@@ -48,9 +48,9 @@ class Settings(BaseSettings):
     ALLOWED_EMAIL_DOMAIN: str
     
     # Environment
-    ENVIRONMENT: str = "development"
-    DEBUG: bool = True
-    FRONTEND_URL: str = "*"  # 쉼표로 구분된 여러 URL 가능 (예: http://localhost:5173,https://yourdomain.com)
+    ENVIRONMENT: str = "production"
+    DEBUG: bool = False
+    FRONTEND_URL: str  # 필수값, .env 또는 Fly Secrets에서 설정 필요
     
     # Server
     HOST: str = "0.0.0.0"
