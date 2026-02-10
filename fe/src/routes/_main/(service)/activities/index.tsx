@@ -195,9 +195,10 @@ function ActivitiesPage() {
     return (
         <div className="container mx-auto px-4 py-8">
             <SEO
-                title="사업 신청"
-                description="학생회 행사 및 사업 신청"
+                title="신청"
+                description="학생회 행사 및 설문조사 신청 등 다양한 활동에 참여하세요."
                 url="/activities"
+                keywords="행사신청, 설문조사, MT, 축제, 컴퓨터공학과, 학년행사"
             />
             {loading ? (
                 <div className="flex justify-center py-20">

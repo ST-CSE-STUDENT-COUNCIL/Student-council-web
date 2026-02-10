@@ -27,8 +27,9 @@ function Clubs() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <SEO
         title="동아리"
-        description="컴퓨터공학과 동아리를 소개합니다."
+        description="컴퓨터공학과 동아리 소개. 프로그래밍, 보안, 게임개발, 네트워크 등 다양한 분야의 동아리를 확인하세요."
         url="/clubs"
+        keywords="동아리, 프로그래밍, 보안, 게임개발, 컴퓨터공학과, 학생회"
       />
       <ClubsHeader />
 

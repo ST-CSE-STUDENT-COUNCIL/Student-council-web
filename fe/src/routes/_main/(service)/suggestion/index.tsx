@@ -99,8 +99,9 @@ function SuggestionPage() {
         <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors">
             <SEO
                 title="건의함"
-                description="학생회에 바라는 점을 건의주세요."
+                description="학생회에 건의사항을 작성해주세요. 이미 처리된 건의사항을 확인하고, 새로운 건의를 통해 학생회 발전에 참여하세요."
                 url="/suggestion"
+                keywords="건의함, 건의사항, 학생의견, 학생회, 피드백"
             />
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-24 space-y-10">
                 <SuggestionHero

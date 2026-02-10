@@ -139,8 +139,9 @@ function Welfare() {
     <div className="w-full px-4 sm:px-6 lg:px-[10%] py-8 sm:py-12">
       <SEO
         title="복지사업"
-        description="학생회의 복지사업(물품 대여, 사물함, 프린터, 가이드북)을 확인하세요."
+        description="학생회 복지사업: 물품대여(우산, 보조배터리 등), 사물함, 프린터, 신입생 가이드북 확인하세요."
         url="/welfare"
+        keywords="복지사업, 물품대여, 사물함, 프린터, 신입생가이드북, 학생회"
       />
       {/* Page Title */}
       <div className="text-center mb-8 sm:mb-12">

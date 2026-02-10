@@ -1,6 +1,7 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState, useEffect, useRef } from 'react'
 import type { NoticeDetailResponse } from '../../../../types/posts'
+import { SEO } from '../../../../components/common/SEO'
 
 export const Route = createFileRoute('/_main/(info)/notices/$noticeId')({
     component: PostDetail,
@@ -74,6 +75,15 @@ function PostDetail() {
 
     return (
         <div className="max-w-4xl mx-auto px-4 pt-24 pb-12">
+            <SEO
+                title={post.title}
+                description={post.content.slice(0, 150).replace(/\n/g, ' ')}
+                type="article"
+                publishedTime={post.created_at}
+                image={post.attachments?.[0]?.file_url}
+                url={`/notices/${id}`}
+                keywords={`공지사항, ${getCategoryLabel(post.board, post.subcategory)}, ${post.title}`}
+            />
             <button
                 onClick={() => {
                     if (window.history.length > 1) {

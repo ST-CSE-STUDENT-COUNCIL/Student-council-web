@@ -102,8 +102,9 @@ function Notices() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <SEO
         title="공지사항"
-        description="학생회 공지사항 및 소식"
+        description="서울과학기술대학교 컴퓨터공학과 학생회 공지사항, 학사 공지, 행사 소식, 학생회칙, 대표자회의 등 다양한 정보를 확인할 수 있습니다."
         url="/notices"
+        keywords="공지사항, 학사공지, 행사소식, 학생회칙, 대표자회의, 컴퓨터공학과, 학생회"
       />
       {/* Page Title */}
       <div className="text-center mb-12">

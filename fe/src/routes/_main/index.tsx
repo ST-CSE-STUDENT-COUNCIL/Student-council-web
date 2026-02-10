@@ -85,8 +85,9 @@ function Index() {
         <div className="pb-20 space-y-12">
             <SEO
                 title="홈"
-                description="서울과학기술대학교 컴퓨터공학과 학생회 공식 홈페이지입니다."
+                description="서울과학기술대학교 컴퓨터공학과 학생회 공식 홈페이지. 공지사항, 행사신청, 복지사업(물품대여, 사물함, 프린터), 동아리, 건의함 등 다양한 정보를 확인하세요."
                 url="/"
+                keywords="서울과학기술대학교, 과기대, 설곽, 서울과기대, 컴공,  컴퓨터공학과, 학생회, SeoulTech, CSE, 공지사항, 행사, 복지사업, 동아리, 건의함"
             />
             {/* Bento Grid Hero Layout */}
             <section className="container mx-auto px-4 pt-6 pb-12">
