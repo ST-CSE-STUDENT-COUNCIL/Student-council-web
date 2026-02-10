@@ -54,46 +54,8 @@ export default defineConfig({
   build: {
     // 청크 크기 최적화
     chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        // 수동 청크 분리로 초기 로딩 속도 개선
-        manualChunks: (id) => {
-          // node_modules의 vendor 라이브러리 분리
-          if (id.includes('node_modules')) {
-            // React 관련 (최우선)
-            if (id.includes('react') && !id.includes('@tanstack')) {
-              return 'vendor-react'
-            }
-            // TanStack 라이브러리
-            if (id.includes('@tanstack')) {
-              return 'vendor-tanstack'
-            }
-            // Swiper
-            if (id.includes('swiper')) {
-              return 'vendor-swiper'
-            }
-            // UI 라이브러리
-            if (id.includes('lucide-react') || id.includes('framer-motion') || id.includes('sonner')) {
-              return 'vendor-ui'
-            }
-            // Supabase & Axios
-            if (id.includes('@supabase') || id.includes('axios')) {
-              return 'vendor-data'
-            }
-          }
-          // 관리자 페이지 분리
-          if (id.includes('src/routes/admin')) {
-            return 'admin'
-          }
-        },
-        // 파일명 패턴 최적화
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
-      }
-    },
     // Minification 최적화
-    minify: 'esbuild', // terser 대신 더 빠른 esbuild 사용
+    minify: 'esbuild',
     // Source map 비활성화 (production)
     sourcemap: false
   },
