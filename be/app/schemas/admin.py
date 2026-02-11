@@ -113,3 +113,31 @@ class UpdateMembershipResponse(BaseModel):
 class ErrorResponse(BaseModel):
     """에러 응답"""
     detail: str
+
+
+class BanUserRequest(BaseModel):
+    """회원 밴 요청"""
+    reason: str = Field(..., min_length=1, max_length=500, description="밴 사유")
+
+
+class BanUserResponse(BaseModel):
+    """회원 밴 응답"""
+    message: str = "회원이 차단되었습니다"
+    user_id: str
+
+
+class UnbanUserRequest(BaseModel):
+    """회원 밴 해제 요청"""
+    note: Optional[str] = Field(None, max_length=500, description="해제 메모")
+
+
+class UnbanUserResponse(BaseModel):
+    """회원 밴 해제 응답"""
+    message: str = "회원 차단이 해제되었습니다"
+    user_id: str
+
+
+class DeleteUserResponse(BaseModel):
+    """회원 삭제 응답"""
+    message: str = "회원이 삭제되었습니다"
+    user_id: str

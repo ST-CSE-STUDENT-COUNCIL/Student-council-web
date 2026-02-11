@@ -6,6 +6,10 @@
 """
 from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from typing import List, Optional
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 from app.schemas.welfare import (
     LockerInfo,
     LockerInfoUpdate,
@@ -525,7 +529,7 @@ async def get_rental_items():
                     # 성공 시 캐시에 저장
                     get_rental_items.cache[cache_key] = available_quantity
                 except Exception as e:
-                    print(f"재고 조회 실패 ({item['item_name']}): {e}")
+                    logger.warning(f"재고 조회 실패 ({item['item_name']}): {e}")
                     # 실패 시 캐시된 값이 있다면 그것이라도 사용 (없으면 None)
                     pass
         

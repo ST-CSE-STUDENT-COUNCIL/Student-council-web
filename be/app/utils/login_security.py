@@ -4,7 +4,9 @@
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from app.database import supabase, get_supabase_admin
+from app.utils.logger import get_logger
 
+logger = get_logger(__name__)
 
 async def record_login_attempt(student_id: str, success: bool, ip_address: Optional[str] = None):
     """
@@ -23,7 +25,7 @@ async def record_login_attempt(student_id: str, success: bool, ip_address: Optio
             'attempt_time': datetime.now().isoformat()
         }).execute()
     except Exception as e:
-        print(f"로그인 시도 기록 실패: {str(e)}")
+        logger.error(f"로그인 시도 기록 실패: {str(e)}")
 
 
 async def check_login_block(student_id: str) -> Dict[str, Any]:
@@ -107,7 +109,7 @@ async def check_login_block(student_id: str) -> Dict[str, Any]:
             }
     
     except Exception as e:
-        print(f"로그인 차단 확인 실패: {str(e)}")
+        logger.error(f"로그인 차단 확인 실패: {str(e)}")
         return {
             'is_blocked': False,
             'reason': None,
@@ -204,7 +206,7 @@ async def increment_failed_attempts(student_id: str) -> Dict[str, Any]:
         }
     
     except Exception as e:
-        print(f"실패 횟수 증가 실패: {str(e)}")
+        logger.error(f"실패 횟수 증가 실패: {str(e)}")
         return {
             'failed_attempts': 0,
             'is_blocked': False,
@@ -229,7 +231,7 @@ async def reset_failed_attempts(student_id: str):
             .eq('student_id', student_id)\
             .execute()
     except Exception as e:
-        print(f"실패 횟수 초기화 실패: {str(e)}")
+        logger.error(f"실패 횟수 초기화 실패: {str(e)}")
 
 
 async def unblock_user(student_id: str):
@@ -247,4 +249,4 @@ async def unblock_user(student_id: str):
             .eq('student_id', student_id)\
             .execute()
     except Exception as e:
-        print(f"차단 해제 실패: {str(e)}")
+        logger.error(f"차단 해제 실패: {str(e)}")

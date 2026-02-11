@@ -13,6 +13,9 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from typing import Optional
 from datetime import datetime
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 import math
 import json
 from app.schemas.activities import (
@@ -359,6 +362,19 @@ async def register_for_activity(
         # 회원 정보 가져오기
         user_id = current_user["id"] if current_user else None
         
+        # 더미값 필터링 (프론트에서 보낼 수 있는 임시값들)
+        DUMMY_STUDENT_IDS = ["00000000", "0"]
+        DUMMY_PHONES = ["01000000000", "010-0000-0000", "01000000000"]
+        
+        raw_student_id = body.student_id
+        raw_phone = body.phone
+        
+        # 더미값이면 None으로 치환
+        if raw_student_id in DUMMY_STUDENT_IDS:
+            raw_student_id = None
+        if raw_phone in DUMMY_PHONES:
+            raw_phone = None
+        
         # 익명 활동이면 무조건 개인정보 제거 (프론트에서 임시값을 보내도 무시)
         # student_id=None이어야 DB 유니크 인덱스에 걸리지 않음
         if activity.get("is_anonymous", False):
@@ -369,9 +385,9 @@ async def register_for_activity(
              email = None
         else:
             name = body.name or (current_user.get("name") if current_user else None)
-            student_id = body.student_id or (current_user.get("student_id") if current_user else None)
+            student_id = raw_student_id or (current_user.get("student_id") if current_user else None)
             department = body.department or (current_user.get("department") if current_user else None)
-            phone = body.phone or (current_user.get("phone") if current_user else None)
+            phone = raw_phone or (current_user.get("phone") if current_user else None)
             email = body.email or (current_user.get("email") if current_user else None)
         
         # PostgreSQL 함수 호출

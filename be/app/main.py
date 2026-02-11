@@ -10,6 +10,9 @@ from slowapi.errors import RateLimitExceeded
 from contextlib import asynccontextmanager
 from app.config import settings
 from app.routes import auth, admin, users, suggestions, notices, clubs, welfare, introductions, activities, search
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 # Rate limiter 설정
 limiter = Limiter(key_func=get_remote_address)
@@ -18,16 +21,12 @@ limiter = Limiter(key_func=get_remote_address)
 # 서버 시작/종료 이벤트
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # startup: DB 커넥션 워밍업 (첫 요청 지연 방지)
-    try:
-        from app.database import get_supabase
-        supabase = get_supabase()
-        supabase.table("boards").select("id").limit(1).execute()
-        print("[STARTUP] DB 워밍업 완료")
-    except Exception as e:
-        print(f"[STARTUP] 워밍업 실패 (무시): {e}")
+    # startup
+    logger.info("서버 시작")
     yield
-    # shutdown: 필요 시 정리 작업
+    # shutdown
+    logger.info("서버 종료")
+
 
 
 # FastAPI 앱 생성

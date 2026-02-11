@@ -6,6 +6,9 @@ from fastapi import HTTPException, status, Security, Depends, Request
 from typing import Optional, List
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.database import supabase
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 # OpenAPI에 HTTP Bearer 스킴을 등록하기 위한 객체
 bearer_scheme = HTTPBearer()
@@ -96,7 +99,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
             raise
         except Exception as e:
             # 토큰 파싱 실패 등은 무시 (일반 검증으로 넘어감)
-            print(f"[AUTH WARNING] iat check failed: {e}")
+            logger.debug(f"iat check failed: {e}")
             pass
         
         return user_data
@@ -126,7 +129,14 @@ async def require_verified_user(user: dict = Depends(get_current_user)) -> dict:
     Raises:
         HTTPException 403: 승인 대기 또는 거절된 사용자
     """
-    # `user`는 Depends로 주입됩니다
+    # 1. 밴 상태 확인 (최우선)
+    if user.get('is_banned', False):
+        ban_reason = user.get('ban_reason', '관리자에 의해 차단되었습니다')
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"접근이 차단되었습니다. 사유: {ban_reason}"
+        )
+    
     # 2. 승인 상태 확인
     verification_status = user.get('verification_status')
     

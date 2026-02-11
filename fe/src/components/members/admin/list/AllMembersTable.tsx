@@ -1,4 +1,4 @@
-import { BadgeCheck, Coins, RefreshCw } from 'lucide-react'
+import { BadgeCheck, Coins, RefreshCw, Ban, Trash2, LockOpen } from 'lucide-react'
 
 type RoleValue = 'student' | 'admin' | 'council'
 
@@ -11,6 +11,7 @@ type MemberRow = {
     phone: string
     role: RoleValue
     duesPaid: boolean
+    isBanned: boolean
     joinedAt: string
 }
 
@@ -25,6 +26,9 @@ type AllMembersTableProps = {
     onRoleSelect: (id: string, role: 'student' | 'admin') => void
     onRoleSave: (id: string) => void
     onToggleDues: (id: string) => void
+    onBanUser: (id: string, name: string) => void
+    onUnbanUser: (id: string, name: string) => void
+    onDeleteUser: (id: string, name: string) => void
     page: number
     totalPages: number
     onPageChange: (page: number) => void
@@ -51,6 +55,9 @@ export function AllMembersTable({
     onRoleSelect,
     onRoleSave,
     onToggleDues,
+    onBanUser,
+    onUnbanUser,
+    onDeleteUser,
     page,
     totalPages,
     onPageChange,
@@ -103,6 +110,7 @@ export function AllMembersTable({
                                     <th className="px-4 py-3 text-left font-semibold text-gray-600">회비</th>
                                     <th className="px-4 py-3 text-left font-semibold text-gray-600">연락처</th>
                                     <th className="px-4 py-3 text-left font-semibold text-gray-600">가입일</th>
+                                    <th className="px-4 py-3 text-left font-semibold text-gray-600">관리</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -161,6 +169,43 @@ export function AllMembersTable({
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">{member.joinedAt}</td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                                {member.isBanned ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onUnbanUser(member.id, member.name)}
+                                                        className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        disabled={loading}
+                                                        title="차단 해제"
+                                                    >
+                                                        <LockOpen size={14} />
+                                                        차단 해제
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onBanUser(member.id, member.name)}
+                                                        className="inline-flex items-center gap-1 rounded-lg border border-orange-200 bg-orange-50 px-2.5 py-1.5 text-xs font-semibold text-orange-700 hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        disabled={loading}
+                                                        title="회원 차단"
+                                                    >
+                                                        <Ban size={14} />
+                                                        차단
+                                                    </button>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onDeleteUser(member.id, member.name)}
+                                                    className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                    disabled={loading}
+                                                    title="회원 삭제"
+                                                >
+                                                    <Trash2 size={14} />
+                                                    삭제
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                                 {members.length === 0 && (

@@ -134,10 +134,11 @@ function AdminKakaoTalkPage() {
         if (!selectedActivity) return
         try {
             await activityAdminApi.updateRegistrationStatus(selectedActivity.id, registrationId, status)
+            toast.success('상태가 변경되었습니다.')
             fetchRegistrations(page)
         } catch (error) {
             console.error('Failed to update registration status', error)
-            alert('상태 변경에 실패했습니다.')
+            toast.error('상태 변경에 실패했습니다.')
         }
     }
 
@@ -151,10 +152,11 @@ function AdminKakaoTalkPage() {
                 activityAdminApi.updateRegistrationStatus(selectedActivity.id, id, status)
             ))
             setSelectedIds([])
+            toast.success(`${selectedIds.length}개 항목이 일괄 처리되었습니다.`)
             fetchRegistrations(page)
         } catch (error) {
             console.error('Failed to bulk update', error)
-            alert('일괄 처리에 실패했습니다.')
+            toast.error('일괄 처리에 실패했습니다.')
         } finally {
             setProcessingBulk(false)
         }

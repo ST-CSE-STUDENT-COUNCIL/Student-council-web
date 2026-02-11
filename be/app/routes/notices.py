@@ -6,6 +6,10 @@ from fastapi import APIRouter, HTTPException, Depends, status, Query, File, Uplo
 from typing import Optional
 from datetime import datetime, timedelta, timezone
 import math
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 from app.schemas.notices import (
     NoticeListResponse,
     NoticeDetailResponse,
@@ -323,9 +327,9 @@ async def get_notice_attachment_presigned_url(
                 .eq('author_id', str(current_user["id"]))\
                 .eq('is_draft', True)\
                 .execute()
-            print(f"[CLEANUP] Draft {post_id} 삭제 완료 (파일 확장자 검증 실패)")
+            logger.info(f"Draft {post_id} 삭제 완료 (파일 확장자 검증 실패)")
         except Exception as cleanup_err:
-            print(f"[CLEANUP ERROR] Draft {post_id} 삭제 실패: {cleanup_err}")
+            logger.error(f"Draft {post_id} 삭제 실패: {cleanup_err}")
         raise
 
     unique_filename = f"{uuid.uuid4()}{file_ext}"
@@ -385,7 +389,7 @@ async def create_draft_notice(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Rate limit check failed: {e}")
+        logger.warning(f"Rate limit check failed: {e}")
 
     """
     Draft 게시글 생성
@@ -463,13 +467,13 @@ async def delete_draft_notice(
                 detail="삭제할 Draft를 찾을 수 없습니다"
             )
         
-        print(f"[CLEANUP] Draft {post_id} 삭제 완료 (by {current_user['id']})")
+        logger.info(f"Draft {post_id} 삭제 완료 (by {current_user['id']})")
         return {"message": "Draft가 삭제되었습니다"}
     
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[API ERROR] delete_draft_notice: {str(e)}")
+        logger.error(f"delete_draft_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Draft 삭제 실패"
@@ -516,7 +520,7 @@ async def create_notice(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Rate limit check failed: {e}")
+        logger.warning(f"Rate limit check failed: {e}")
 
     """
     공지사항 작성 (관리자 전용, Presigned URL 사용)
@@ -604,9 +608,9 @@ async def create_notice(
                     .eq('id', body.post_id)\
                     .eq('is_draft', True)\
                     .execute()
-                print(f"[CLEANUP] Draft {body.post_id} 삭제 완료 (HTTPException)")
+                logger.info(f"Draft {body.post_id} 삭제 완료 (HTTPException)")
             except Exception as cleanup_err:
-                print(f"[CLEANUP ERROR] Draft {body.post_id} 삭제 실패: {cleanup_err}")
+                logger.error(f"Draft {body.post_id} 삭제 실패: {cleanup_err}")
         raise
     except Exception as e:
         # publish 실패 시 draft 정리
@@ -618,10 +622,10 @@ async def create_notice(
                     .eq('id', body.post_id)\
                     .eq('is_draft', True)\
                     .execute()
-                print(f"[CLEANUP] Draft {body.post_id} 삭제 완료 (Exception)")
+                logger.info(f"Draft {body.post_id} 삭제 완료 (Exception)")
             except Exception as cleanup_err:
-                print(f"[CLEANUP ERROR] Draft {body.post_id} 삭제 실패: {cleanup_err}")
-        print(f"[API ERROR] create_notice: {str(e)}")
+                logger.error(f"Draft {body.post_id} 삭제 실패: {cleanup_err}")
+        logger.error(f"create_notice: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="공지사항 작성 실패"

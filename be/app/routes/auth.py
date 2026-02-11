@@ -5,7 +5,11 @@ from fastapi import APIRouter, HTTPException, Header, Request, Response, status
 from typing import Optional
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from datetime import datetime
+from datetime import datetime, timezone
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 from app.schemas.auth import (
     SendVerificationRequest,
     SendVerificationResponse,
@@ -241,7 +245,7 @@ async def signup(request: SignupRequest):
             })
         except Exception as auth_error:
             error_message = str(auth_error)
-            print(f"[SIGNUP ERROR] Auth 생성 실패: {error_message}")
+            logger.error(f"회원가입 Auth 생성 실패: {error_message}")
             if "already been registered" in error_message:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -277,7 +281,7 @@ async def signup(request: SignupRequest):
             # RLS 우회를 위해 fresh_client 사용
             fresh_client.table('users').insert(user_data).execute()
         except Exception as insert_error:
-            print(f"[SIGNUP ERROR] users 테이블 insert 실패: {str(insert_error)}")
+            logger.error(f"users 테이블 insert 실패: {str(insert_error)}")
             raise
         
         # 7. 이메일 인증 사용됨으로 표시
@@ -360,6 +364,14 @@ async def login(body: LoginRequest, request: Request):
         user_data = user_result.data[0]
         email = user_data['email']
         
+        # 2-1. 밴 상태 확인 (로그인 차단과 별개)
+        if user_data.get('is_banned', False):
+            ban_reason = user_data.get('ban_reason', '관리자에 의해 차단되었습니다')
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"접근이 차단되었습니다. 사유: {ban_reason}"
+            )
+        
         # 3. 학번 기반 차단 확인
         block_status = await check_login_block(body.student_id)
         
@@ -400,7 +412,7 @@ async def login(body: LoginRequest, request: Request):
                 fresh_client.auth.admin.sign_out(user_data['id'], scope='global')
             except Exception as e:
                 # 로그아웃 실패하더라도 로그인은 계속 진행 (로그만 남김)
-                print(f"[LOGIN WARNING] 기존 세션 만료 실패 (무시됨): {str(e)}")
+                logger.warning(f"기존 세션 만료 실패 (무시됨): {str(e)}")
             
             auth_response = fresh_client.auth.sign_in_with_password({
                 "email": email,
@@ -478,7 +490,7 @@ async def login(body: LoginRequest, request: Request):
             # 응답 데이터에도 최신 로그인 시각 반영
             user_data['last_login_at'] = now_iso
         except Exception as e:
-            print(f"[LOGIN ERROR] last_login_at update failed: {e}")
+            logger.warning(f"last_login_at update failed: {e}")
             # 치명적이지 않으므로 진행 (로그인 성공 처리)
 
         # 6. 응답 생성 및 refresh_token을 HttpOnly 쿠키로 설정

@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import * as XLSX from 'xlsx'
+import { toast } from 'sonner'
 import { activityAdminApi, activityApi } from '../../../../../lib/api/activities'
 import type { ActivityRegistrationResponse, Activity } from '../../../../../types/activities'
 import {
@@ -75,7 +76,7 @@ function SurveyActivityDetailPage() {
             setActivityDetail(detail)
         } catch (error) {
             console.error('Failed to fetch activity detail', error)
-            alert('설문조사 정보를 불러오는데 실패했습니다.')
+            toast.error('설문조사 정보를 불러오는데 실패했습니다.')
             navigate({ to: '/admin/surveys' })
         }
     }, [id, navigate])
@@ -153,9 +154,10 @@ function SurveyActivityDetailPage() {
         try {
             await activityAdminApi.updateRegistrationStatus(id, registrationId, status)
             fetchRegistrations(page)
+            toast.success('상태가 변경되었습니다.')
         } catch (error) {
             console.error('Failed to update registration status', error)
-            alert('상태 변경에 실패했습니다.')
+            toast.error('상태 변경에 실패했습니다.')
         }
     }
 
@@ -169,10 +171,11 @@ function SurveyActivityDetailPage() {
                 activityAdminApi.updateRegistrationStatus(id, regId, status)
             ))
             setRowSelection({})
+            toast.success(`${selectedIds.length}개 항목이 일괄 처리되었습니다.`)
             fetchRegistrations(page)
         } catch (error) {
             console.error('Failed to bulk update', error)
-            alert('일괄 처리에 실패했습니다.')
+            toast.error('일괄 처리에 실패했습니다.')
         } finally {
             setProcessingBulk(false)
         }
@@ -210,7 +213,7 @@ function SurveyActivityDetailPage() {
             }
 
             if (allRegistrations.length === 0) {
-                alert('다운로드할 신청자 데이터가 없습니다.')
+                toast.warning('다운로드할 신청자 데이터가 없습니다.')
                 return
             }
 
@@ -287,7 +290,7 @@ function SurveyActivityDetailPage() {
 
         } catch (error) {
             console.error('Excel download failed', error)
-            alert('엑셀 다운로드에 실패했습니다.')
+            toast.error('엑셀 다운로드에 실패했습니다.')
         } finally {
             setDownloading(false)
         }

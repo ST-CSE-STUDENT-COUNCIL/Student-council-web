@@ -243,11 +243,7 @@ function Welfare() {
                 <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
                   배치도 불러오는 중...
                 </div>
-              ) : lockerError ? (
-                <div className="aspect-[16/9] w-full rounded-md border border-dashed border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center text-red-500 text-sm">
-                  {lockerError instanceof Error ? lockerError.message : '불러오기 실패'}
-                </div>
-              ) : lockerInfo?.layout_image_url ? (
+              ) : !lockerError && lockerInfo?.layout_image_url ? (
                 <div className="space-y-3">
                   <img
                     src={lockerInfo.layout_image_url}

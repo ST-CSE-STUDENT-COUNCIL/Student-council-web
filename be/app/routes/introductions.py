@@ -4,6 +4,10 @@
 from fastapi import APIRouter, HTTPException, Depends, status, File, UploadFile, Form
 from typing import Optional
 from datetime import datetime
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 from app.schemas.introductions import (
     IntroductionImageCreate,
     IntroductionImageUpdate,

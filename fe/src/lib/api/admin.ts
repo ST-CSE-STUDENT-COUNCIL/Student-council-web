@@ -55,6 +55,18 @@ export const adminApi = {
         const response = await api.post<{ message: string }>(`/admin/users/${studentId}/unblock`)
         return response.data
     },
+    banUser: async (userId: string, reason: string) => {
+        const response = await api.patch<{ message: string; user_id: string }>(`/admin/users/${userId}/ban`, { reason })
+        return response.data
+    },
+    unbanUser: async (userId: string, note?: string) => {
+        const response = await api.patch<{ message: string; user_id: string }>(`/admin/users/${userId}/unban`, { note })
+        return response.data
+    },
+    deleteUser: async (userId: string) => {
+        const response = await api.delete<{ message: string; user_id: string }>(`/admin/users/${userId}`)
+        return response.data
+    },
     getProfileUpdates: async (params?: { status_filter?: string | null; page?: number; page_size?: number }) => {
         const response = await api.get('/admin/profile-updates', { params })
         return response.data

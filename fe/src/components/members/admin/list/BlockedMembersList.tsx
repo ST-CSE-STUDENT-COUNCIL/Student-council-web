@@ -84,7 +84,7 @@ export function BlockedMembersList({
                                 <button
                                     type="button"
                                     className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                    onClick={() => onUnblock(member.studentId)}
+                                    onClick={() => onUnblock(member.id)}
                                     disabled={unblockingId === member.id || loading}
                                 >
                                     <LockOpen size={16} className={unblockingId === member.id ? 'animate-spin' : ''} />

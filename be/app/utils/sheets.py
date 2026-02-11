@@ -6,7 +6,9 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from app.config import settings
 from typing import Optional
+from app.utils.logger import get_logger
 
+logger = get_logger(__name__)
 
 def get_sheet_value(spreadsheet_id: str, range_name: str) -> Optional[int]:
     """
@@ -54,8 +56,8 @@ def get_sheet_value(spreadsheet_id: str, range_name: str) -> Optional[int]:
                 return None
     
     except HttpError as error:
-        print(f"Google Sheets API error: {error}")
+        logger.error(f"Google Sheets API error: {error}")
         return None
     except Exception as error:
-        print(f"Unexpected error: {error}")
+        logger.error(f"Unexpected error: {error}")
         return None
