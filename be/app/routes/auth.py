@@ -364,6 +364,14 @@ async def login(body: LoginRequest, request: Request):
         user_data = user_result.data[0]
         email = user_data['email']
         
+        # 2-1. 밴 상태 확인 (로그인 차단과 별개)
+        if user_data.get('is_banned', False):
+            ban_reason = user_data.get('ban_reason', '관리자에 의해 차단되었습니다')
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"접근이 차단되었습니다. 사유: {ban_reason}"
+            )
+        
         # 3. 학번 기반 차단 확인
         block_status = await check_login_block(body.student_id)
         

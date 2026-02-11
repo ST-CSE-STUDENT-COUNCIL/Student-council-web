@@ -129,7 +129,14 @@ async def require_verified_user(user: dict = Depends(get_current_user)) -> dict:
     Raises:
         HTTPException 403: 승인 대기 또는 거절된 사용자
     """
-    # `user`는 Depends로 주입됩니다
+    # 1. 밴 상태 확인 (최우선)
+    if user.get('is_banned', False):
+        ban_reason = user.get('ban_reason', '관리자에 의해 차단되었습니다')
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"접근이 차단되었습니다. 사유: {ban_reason}"
+        )
+    
     # 2. 승인 상태 확인
     verification_status = user.get('verification_status')
     

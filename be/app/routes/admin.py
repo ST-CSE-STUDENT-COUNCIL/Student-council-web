@@ -20,6 +20,11 @@ from app.schemas.admin import (
     UpdateRoleResponse,
     UpdateMembershipRequest,
     UpdateMembershipResponse,
+    BanUserRequest,
+    BanUserResponse,
+    UnbanUserRequest,
+    UnbanUserResponse,
+    DeleteUserResponse,
     ErrorResponse
 )
 from app.utils.auth import require_admin
@@ -1138,4 +1143,193 @@ async def update_privacy_officer_info(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="수정 실패"
+        )
+
+# ============================================================================
+# 회원 밴/삭제 관리
+# ============================================================================
+
+@router.patch(
+    "/users/{user_id}/ban",
+    response_model=BanUserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="회원 밴 (차단)",
+    description="회원을 차단합니다. 차단된 회원은 로그인 및 모든 기능 사용이 불가능합니다."
+)
+async def ban_user(
+    user_id: str,
+    request: BanUserRequest,
+    current_user: dict = Depends(require_admin)
+):
+    """회원 밴 (차단)"""
+    try:
+        # 자기 자신을 밴할 수 없음
+        if user_id == current_user["id"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="자기 자신을 차단할 수 없습니다"
+            )
+        
+        # 회원 존재 확인
+        user_result = supabase.table("users")\
+            .select("id, name, student_id, is_banned")\
+            .eq("id", user_id)\
+            .single()\
+            .execute()
+        
+        if not user_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="회원을 찾을 수 없습니다"
+            )
+        
+        if user_result.data.get("is_banned", False):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="이미 차단된 회원입니다"
+            )
+        
+        # 밴 처리
+        from datetime import datetime, timezone, timedelta
+        admin_supabase = get_supabase_admin()
+        
+        # 강제 로그아웃을 위해 last_login_at을 미래 시각으로 업데이트
+        # 기존 중복 로그인 방지 로직(auth.py의 iat 체크)이 모든 토큰을 무효화함
+        future_time = (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
+        
+        admin_supabase.table("users")\
+            .update({
+                "is_banned": True,
+                "ban_reason": request.reason,
+                "banned_at": datetime.now(timezone.utc).isoformat(),
+                "banned_by": current_user["id"],
+                "last_login_at": future_time  # 강제 로그아웃
+            })\
+            .eq("id", user_id)\
+            .execute()
+        
+        return BanUserResponse(
+            message="회원이 차단되었습니다",
+            user_id=user_id
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="회원 차단 실패"
+        )
+
+
+@router.patch(
+    "/users/{user_id}/unban",
+    response_model=UnbanUserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="회원 밴 해제",
+    description="차단된 회원의 차단을 해제합니다."
+)
+async def unban_user(
+    user_id: str,
+    request: UnbanUserRequest = None,
+    current_user: dict = Depends(require_admin)
+):
+    """회원 밴 해제"""
+    try:
+        # 회원 존재 확인
+        user_result = supabase.table("users")\
+            .select("id, name, student_id, is_banned")\
+            .eq("id", user_id)\
+            .single()\
+            .execute()
+        
+        if not user_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="회원을 찾을 수 없습니다"
+            )
+        
+        if not user_result.data.get("is_banned", False):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="차단되지 않은 회원입니다"
+            )
+        
+        # 밴 해제
+        admin_supabase = get_supabase_admin()
+        admin_supabase.table("users")\
+            .update({
+                "is_banned": False,
+                "ban_reason": None,
+                "banned_at": None,
+                "banned_by": None
+            })\
+            .eq("id", user_id)\
+            .execute()
+        
+        return UnbanUserResponse(
+            message="회원 차단이 해제되었습니다",
+            user_id=user_id
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="회원 차단 해제 실패"
+        )
+
+
+@router.delete(
+    "/users/{user_id}",
+    response_model=DeleteUserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="회원 삭제 (영구)",
+    description="회원을 영구적으로 삭제합니다. Supabase Auth에서도 삭제되며 복구할 수 없습니다."
+)
+async def delete_user(
+    user_id: str,
+    current_user: dict = Depends(require_admin)
+):
+    """회원 영구 삭제"""
+    try:
+        # 자기 자신을 삭제할 수 없음
+        if user_id == current_user["id"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="자기 자신을 삭제할 수 없습니다"
+            )
+        
+        # 회원 존재 확인
+        user_result = supabase.table("users")\
+            .select("id, name, student_id")\
+            .eq("id", user_id)\
+            .single()\
+            .execute()
+        
+        if not user_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="회원을 찾을 수 없습니다"
+            )
+        
+        # Supabase Auth에서 삭제 (admin SDK 필요)
+        admin_supabase = get_supabase_admin()
+        admin_supabase.auth.admin.delete_user(user_id)
+        
+        # users 테이블은 ON DELETE CASCADE로 자동 삭제됨
+        # 관련 데이터 (posts, registrations 등)는 user_id=NULL 또는 CASCADE 설정에 따라 처리됨
+        
+        return DeleteUserResponse(
+            message="회원이 삭제되었습니다",
+            user_id=user_id
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="회원 삭제 실패"
         )
