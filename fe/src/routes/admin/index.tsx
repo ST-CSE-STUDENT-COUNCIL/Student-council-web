@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Clock3, Shield, Users, XCircle } from 'lucide-react'
+import { toast } from 'sonner'
+import Swal from 'sweetalert2'
 import { adminApi } from '../../lib/api/admin'
 import type { PendingUserItem, UserListItem, RejectedUserItem, BlockedUserItem } from '../../types/users'
 import {
@@ -78,7 +80,7 @@ const mapUserToMember = (user: UserListItem): Member => ({
     name: user.name,
     studentId: user.student_id,
     role: (user.role as Role) ?? 'student',
-    status: user.verification_status === 'rejected' ? 'rejected' : user.verification_status === 'pending' ? 'pending' : 'active',
+    status: user.is_banned ? 'blocked' : user.verification_status === 'rejected' ? 'rejected' : user.verification_status === 'pending' ? 'pending' : 'active',
     major: user.department ?? '학과 미정',
     email: user.email,
     phone: user.phone ?? '-',
@@ -281,32 +283,46 @@ function RouteComponent() {
         try {
             await adminApi.approveUser(id)
             await fetchPendingMembers()
+            toast.success('회원 승인이 완료되었습니다.')
         } catch (error) {
             console.error('회원 승인 실패:', error)
-            alert('회원 승인에 실패했습니다. 다시 시도해주세요.')
+            toast.error('회원 승인에 실패했습니다. 다시 시도해주세요.')
         } finally {
             setApprovingId(null)
         }
     }
 
     const handleReject = async (id: string) => {
-        const reasonInput = window.prompt('거절 사유를 입력하세요.')
-        if (reasonInput === null) return
+        const { value: reason, isConfirmed } = await Swal.fire({
+            title: '회원 가입 거절',
+            input: 'textarea',
+            inputLabel: '거절 사유를 입력하세요',
+            inputPlaceholder: '거절 사유를 상세히 입력해주세요...',
+            inputAttributes: {
+                'aria-label': '거절 사유'
+            },
+            showCancelButton: true,
+            confirmButtonText: '거절',
+            cancelButtonText: '취소',
+            confirmButtonColor: '#ef4444',
+            inputValidator: (value) => {
+                if (!value?.trim()) {
+                    return '거절 사유는 필수입니다.'
+                }
+            }
+        })
 
-        const reason = reasonInput.trim()
-        if (!reason) {
-            alert('거절 사유는 필수입니다.')
-            return
-        }
+        if (!isConfirmed || !reason) return
 
         setRejectingId(id)
         try {
-            await adminApi.rejectUser(id, reason)
+            await adminApi.rejectUser(id, reason.trim())
             await fetchPendingMembers()
             await fetchRejectedMembers()
+            toast.success('회원 가입이 거절되었습니다.')
         } catch (error) {
             console.error('회원 거절 실패:', error)
-            alert('회원 거절에 실패했습니다. 다시 시도해주세요.')
+            toast.error('회원 거절에 실패했습니다. 다시 시도해주세요.')
         } finally {
             setRejectingId(null)
         }
@@ -333,9 +349,10 @@ function RouteComponent() {
                 delete updated[id]
                 return updated
             })
+            toast.success('역할이 변경되었습니다.')
         } catch (error) {
             console.error('역할 변경 실패:', error)
-            alert('역할 변경에 실패했습니다. 다시 시도해주세요.')
+            toast.error('역할 변경에 실패했습니다. 다시 시도해주세요.')
         } finally {
             setRoleSavingId(null)
         }
@@ -351,9 +368,10 @@ function RouteComponent() {
 
         try {
             await adminApi.updateMembershipPaid(id, nextPaid)
+            toast.success(`회비 상태가 ${nextPaid ? '납부' : '미납'}로 변경되었습니다.`)
         } catch (error) {
             console.error('회비 상태 변경 실패:', error)
-            alert('회비 상태 변경에 실패했습니다. 다시 시도해주세요.')
+            toast.error('회비 상태 변경에 실패했습니다. 다시 시도해주세요.')
             setMembers((prev) => prev.map((member) => (member.id === id ? { ...member, duesPaid: target.duesPaid } : member)))
         } finally {
             setDuesUpdatingId(null)
@@ -373,11 +391,109 @@ function RouteComponent() {
                     { ...target, status: 'active', blockedAt: undefined, joinedAt: target.joinedAt || new Date().toISOString().slice(0, 10) },
                 ])
             }
+            toast.success('차단이 해제되었습니다.')
         } catch (error) {
             console.error('차단 해제 실패:', error)
-            alert('차단 해제에 실패했습니다. 다시 시도해주세요.')
+            toast.error('차단 해제에 실패했습니다. 다시 시도해주세요.')
         } finally {
             setUnblockingId(null)
+        }
+    }
+
+    const handleBanUser = async (id: string, name: string) => {
+        const { value: reason, isConfirmed } = await Swal.fire({
+            title: `"${name}" 회원 차단`,
+            html: '<p class="text-sm text-gray-600 mb-4">차단된 회원은 로그인할 수 없습니다.</p>',
+            input: 'textarea',
+            inputLabel: '차단 사유',
+            inputPlaceholder: '차단 사유를 상세히 입력해주세요...',
+            inputAttributes: {
+                'aria-label': '차단 사유'
+            },
+            showCancelButton: true,
+            confirmButtonText: '차단',
+            cancelButtonText: '취소',
+            confirmButtonColor: '#f97316',
+            icon: 'warning',
+            inputValidator: (value) => {
+                if (!value?.trim()) {
+                    return '차단 사유는 필수입니다.'
+                }
+            }
+        })
+
+        if (!isConfirmed || !reason) return
+
+        try {
+            await adminApi.banUser(id, reason.trim())
+            toast.success('회원이 차단되었습니다.')
+            await fetchMembers()
+            await fetchBlockedMembers()
+        } catch (error) {
+            console.error('회원 차단 실패:', error)
+            toast.error('회원 차단에 실패했습니다. 다시 시도해주세요.')
+        }
+    }
+
+    const handleUnbanUser = async (id: string, name: string) => {
+        const { isConfirmed } = await Swal.fire({
+            title: `"${name}" 회원 차단 해제`,
+            text: '차단을 해제하시겠습니까?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '해제',
+            cancelButtonText: '취소',
+            confirmButtonColor: '#10b981',
+        })
+
+        if (!isConfirmed) return
+
+        try {
+            await adminApi.unbanUser(id)
+            toast.success('차단이 해제되었습니다.')
+            await fetchMembers()
+            await fetchBlockedMembers()
+        } catch (error) {
+            console.error('차단 해제 실패:', error)
+            toast.error('차단 해제에 실패했습니다. 다시 시도해주세요.')
+        }
+    }
+
+    const handleDeleteUser = async (id: string, name: string) => {
+        const result = await Swal.fire({
+            title: `"${name}" 회원 영구 삭제`,
+            html: `
+                <div class="text-left space-y-2">
+                    <p class="text-red-600 font-semibold">⚠️ 경고: 이 작업은 되돌릴 수 없습니다</p>
+                    <ul class="text-sm text-gray-600 list-disc list-inside space-y-1">
+                        <li>회원의 모든 데이터가 영구적으로 삭제됩니다</li>
+                        <li>작성한 게시글, 댓글 등 모든 활동 기록이 삭제됩니다</li>
+                        <li>복구가 불가능합니다</li>
+                    </ul>
+                </div>
+            `,
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonText: '삭제',
+            cancelButtonText: '취소',
+            confirmButtonColor: '#dc2626',
+            input: 'checkbox',
+            inputValue: 0,
+            inputPlaceholder: '위 내용을 확인했으며 삭제에 동의합니다',
+            inputValidator: (result) => {
+                return !result && '삭제하려면 확인란에 체크해주세요'
+            }
+        })
+
+        if (!result.isConfirmed) return
+
+        try {
+            await adminApi.deleteUser(id)
+            toast.success('회원이 삭제되었습니다.')
+            await fetchMembers()
+        } catch (error) {
+            console.error('회원 삭제 실패:', error)
+            toast.error('회원 삭제에 실패했습니다. 다시 시도해주세요.')
         }
     }
 
@@ -387,7 +503,7 @@ function RouteComponent() {
             setPreviewImage(signed_url)
         } catch (error) {
             console.error('이미지 로딩 실패:', error)
-            alert('이미지를 불러올 수 없습니다. 다시 시도해주세요.')
+            toast.error('이미지를 불러올 수 없습니다. 다시 시도해주세요.')
         }
     }
 
@@ -462,7 +578,18 @@ function RouteComponent() {
 
                     {view === 'all' && (
                         <AllMembersTable
-                            members={filteredMembers}
+                            members={filteredMembers.map(m => ({
+                                id: m.id,
+                                name: m.name,
+                                studentId: m.studentId,
+                                major: m.major,
+                                email: m.email,
+                                phone: m.phone,
+                                role: m.role,
+                                duesPaid: m.duesPaid,
+                                isBanned: m.status === 'blocked',
+                                joinedAt: m.joinedAt
+                            }))}
                             loading={membersLoading}
                             error={membersError}
                             editedRoles={editedRoles}
@@ -472,6 +599,9 @@ function RouteComponent() {
                             onRoleSelect={handleRoleSelect}
                             onRoleSave={handleRoleSave}
                             onToggleDues={handleToggleDues}
+                            onBanUser={handleBanUser}
+                            onUnbanUser={handleUnbanUser}
+                            onDeleteUser={handleDeleteUser}
                             page={membersPage}
                             totalPages={Math.ceil(membersTotal / MEMBERS_LIMIT)}
                             onPageChange={setMembersPage}

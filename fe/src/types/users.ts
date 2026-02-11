@@ -60,6 +60,7 @@ export type UserListItem = {
     role: string
     verification_status: string
     membership_paid: boolean
+    is_banned?: boolean
     created_at: string
 }
 

@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { ShieldCheck, UserRoundPen, RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
+import Swal from 'sweetalert2'
 import { adminApi } from '../../../../lib/api/admin'
 import { ProfileUpdateCard } from '../../../../components/members/admin/profile-updates/ProfileUpdateCard'
 import { ProfileUpdatesFilter } from '../../../../components/members/admin/profile-updates/ProfileUpdatesFilter'
@@ -206,6 +208,7 @@ function AdminProfileUpdatesPage() {
       setPreviewImageUrl(signed_url || verificationImageUrl)
     } catch (err) {
       console.error('학적인증 이미지 조회 실패:', err)
+      toast.error('이미지를 불러오지 못했습니다.')
       setPreviewImageUrl(verificationImageUrl)
     } finally {
       setPreviewLoading(false)
@@ -219,10 +222,11 @@ function AdminProfileUpdatesPage() {
     try {
       const targets = requestIds.length > 0 ? requestIds : [requestId]
       await Promise.all(targets.map((id) => adminApi.approveProfileUpdate(id)))
+      toast.success('프로필 변경이 승인되었습니다.')
       setRefreshKey((prev) => prev + 1)
     } catch (err) {
       console.error('프로필 변경 승인 실패:', err)
-      setError('승인 처리에 실패했습니다.')
+      toast.error('승인 처리에 실패했습니다.')
     } finally {
       setActionLoadingId(null)
     }
@@ -230,18 +234,38 @@ function AdminProfileUpdatesPage() {
 
   async function handleReject(requestId: string, requestIds: Array<string>) {
     if (actionLoadingId) return
-    const reason = window.prompt('반려 사유를 입력해주세요.')
-    if (!reason || reason.trim().length === 0) return
+
+    const { value: reason, isConfirmed } = await Swal.fire({
+      title: '프로필 변경 반려',
+      input: 'textarea',
+      inputLabel: '반려 사유를 입력해주세요',
+      inputPlaceholder: '반려 사유를 상세히 입력해주세요...',
+      inputAttributes: {
+        'aria-label': '반려 사유'
+      },
+      showCancelButton: true,
+      confirmButtonText: '반려',
+      cancelButtonText: '취소',
+      confirmButtonColor: '#ef4444',
+      inputValidator: (value) => {
+        if (!value?.trim()) {
+          return '반려 사유는 필수입니다.'
+        }
+      }
+    })
+
+    if (!isConfirmed || !reason) return
 
     setActionLoadingId(requestId)
 
     try {
       const targets = requestIds.length > 0 ? requestIds : [requestId]
       await Promise.all(targets.map((id) => adminApi.rejectProfileUpdate(id, reason.trim())))
+      toast.success('프로필 변경이 반려되었습니다.')
       setRefreshKey((prev) => prev + 1)
     } catch (err) {
       console.error('프로필 변경 반려 실패:', err)
-      setError('반려 처리에 실패했습니다.')
+      toast.error('반려 처리에 실패했습니다.')
     } finally {
       setActionLoadingId(null)
     }
