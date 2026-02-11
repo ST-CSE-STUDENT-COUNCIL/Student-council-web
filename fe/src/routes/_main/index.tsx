@@ -58,8 +58,8 @@ function Index() {
         const fetchData = async () => {
             try {
                 const [activitiesResponse, postsResponse] = await Promise.all([
-                    activityApi.getAll({ is_active_only: true, page: 1, page_size: 20 }),
-                    postApi.getAll({ page: 1, page_size: 5, sort: 'newest' })
+                    activityApi.getAll({ is_active_only: true, page: 1, page_size: 6 }),
+                    postApi.getAll({ page: 1, page_size: 6, sort: 'newest' })
                 ])
 
                 const validActivities = activitiesResponse.activities.filter(activity => {
@@ -84,8 +84,9 @@ function Index() {
         <div className="pb-20 space-y-12">
             <SEO
                 title="홈"
-                description="서울과학기술대학교 컴퓨터공학과 학생회 공식 홈페이지입니다."
+                description="서울과학기술대학교 컴퓨터공학과 학생회 공식 홈페이지. 공지사항, 행사신청, 복지사업(물품대여, 사물함, 프린터), 동아리, 건의함 등 다양한 정보를 확인하세요."
                 url="/"
+                keywords="서울과학기술대학교, 과기대, 설곽, 서울과기대, 컴공,  컴퓨터공학과, 학생회, SeoulTech, CSE, 공지사항, 행사, 복지사업, 동아리, 건의함"
             />
             {/* Bento Grid Hero Layout */}
             <section className="container mx-auto px-4 pt-6 pb-12">
@@ -119,6 +120,8 @@ function Index() {
                                                                     src={activity.thumbnail_url}
                                                                     alt=""
                                                                     className="w-full h-full object-cover blur-2xl opacity-40 scale-110 transform"
+                                                                    loading="lazy"
+                                                                    decoding="async"
                                                                 />
                                                                 <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/60 to-slate-900/30" />
                                                             </>
@@ -149,6 +152,7 @@ function Index() {
 
                                                             <Link
                                                                 to="/activities"
+                                                                params={{ activityId: activity.id.toString() }}
                                                                 className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
                                                             >
                                                                 자세히 보기 <ChevronRight size={16} />
@@ -163,6 +167,8 @@ function Index() {
                                                                         src={activity.thumbnail_url}
                                                                         alt={activity.title}
                                                                         className="w-full h-full object-cover"
+                                                                        loading="lazy"
+                                                                        decoding="async"
                                                                     />
                                                                 </div>
                                                             </div>

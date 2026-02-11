@@ -107,8 +107,10 @@ function AttendancePage() {
         <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100">
             <SEO
                 title="행사 출석 체크"
-                description="학생회 행사 출석 체크"
+                description="학생회 행사 출석체크. 학번을 입력하여 행사 출석을 등록하세요."
                 url={`/attendance/${activityId}`}
+                keywords="출석체크, 행사출석, 학생회행사, 참석인증"
+                noindex={true}
             />
             <div className="min-h-screen flex items-center justify-center px-4">
                 <AttendanceCheckCard

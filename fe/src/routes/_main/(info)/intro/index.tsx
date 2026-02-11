@@ -43,8 +43,9 @@ function Intro() {
     <div className="min-h-screen bg-gray-100 dark:bg-slate-900">
       <SEO
         title="학생회 소개"
-        description="컴퓨터공학과 학생회를 소개합니다."
+        description="서울과학기술대학교 컴퓨터공학과 학생회를 소개합니다. 학생회 임원, 비전, 활동 내역 등을 확인하세요."
         url="/intro"
+        keywords="학생회소개, 학생회임원, 컴퓨터공학과, SeoulTech, 학생회활동"
       />
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">

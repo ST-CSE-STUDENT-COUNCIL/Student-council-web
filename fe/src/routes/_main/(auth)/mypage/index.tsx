@@ -8,6 +8,7 @@ import { InfoRow, InfoLine, SummaryCard, StatusPill, Badge, VerifyModal, EditPro
 import type { User } from '../../../../types/users'
 import type { MyRegistration, ProfileUpdateRequest } from '../../../../lib/api/mypage'
 import { useTimer } from '../../../../hooks/useTimer'
+import { SEO } from '../../../../components/common/SEO'
 
 export const Route = createFileRoute('/_main/(auth)/mypage/')({
   component: MyPage,
@@ -386,6 +387,12 @@ function MyPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      <SEO
+        title="마이페이지"
+        description="나의 학생회 정보 및 행사 신청 내역을 확인하세요."
+        url="/mypage"
+        noindex={true}
+      />
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">마이페이지</h1>
 
       <div className="flex flex-col lg:flex-row gap-6">
