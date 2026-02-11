@@ -4,6 +4,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Form, Query
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 from app.schemas.users import (
     UserProfileResponse,
     ChangePasswordRequest,
@@ -229,7 +233,7 @@ async def withdraw(
                 .eq('email', user_email)\
                 .execute()
         except Exception as email_del_error:
-            print(f"[WITHDRAW] email_verifications 삭제: {str(email_del_error)}")
+            logger.info(f"email_verifications 삭제: {str(email_del_error)}")
         
         return WithdrawResponse()
     

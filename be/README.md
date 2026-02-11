@@ -135,7 +135,59 @@ fly logs -a seoultech-cse-backend
 
 ---
 
-## 8. 기타 유지보수 참고사항
+## 8. 로깅 (Logging)
+
+서버는 Python의 표준 `logging` 모듈을 사용하여 구조화된 로그를 출력합니다.
+
+### 로그 레벨
+환경변수 `LOG_LEVEL`을 설정하여 로그 출력 수준을 조절할 수 있습니다.
+
+| 레벨 | 설명 | 용도 |
+|------|------|------|
+| **DEBUG** | 상세한 디버깅 정보 | 개발 환경, 문제 추적 |
+| **INFO** | 일반 정보 메시지 | 기본 운영 정보 (기본값) |
+| **WARNING** | 경고 메시지 | 잠재적 문제 상황 |
+| **ERROR** | 오류 메시지 | 오류 발생 시 |
+
+### 로그 레벨 설정 방법
+
+**로컬 개발 환경 (.env 파일):**
+```bash
+LOG_LEVEL=DEBUG  # 상세 로그
+# 또는
+LOG_LEVEL=INFO   # 일반 로그 (기본값)
+```
+
+**프로덕션 환경 (Fly.io Secrets):**
+```bash
+fly secrets set LOG_LEVEL=INFO
+```
+
+### 로그 형식
+```
+[레벨] 타임스탬프 - 모듈명:함수명:라인 - 메시지
+```
+
+예시:
+```
+[INFO] 2024-01-15 10:30:45 - app.main:startup:25 - DB 워밍업 완료
+[ERROR] 2024-01-15 10:31:20 - app.routes.auth:login:284 - users 테이블 insert 실패: ...
+[WARNING] 2024-01-15 10:32:00 - app.utils.r2_storage:delete:390 - 파일 삭제 실패: ...
+```
+
+### 로그 확인
+
+**로컬:**
+터미널에서 실시간 출력됩니다.
+
+**프로덕션 (Fly.io):**
+```bash
+fly logs -a seoultech-cse-backend
+```
+
+---
+
+## 9. 기타 유지보수 참고사항
 
 ### 싱글톤 클라이언트 주의
 Supabase 클라이언트(`supabase`)는 서버 전체에서 공유되는 싱글톤입니다.
@@ -150,7 +202,7 @@ fly secrets set KEY=VALUE
 
 ---
 
-## 9. 문의
+## 10. 문의
 
 개발 관련 문의나 인수는 아래 이메일로 연락주세요.
 

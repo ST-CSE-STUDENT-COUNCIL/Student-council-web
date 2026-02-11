@@ -7,7 +7,9 @@ import httpx
 from typing import Optional
 from fastapi import HTTPException, status
 from app.config import settings
+from app.utils.logger import get_logger
 
+logger = get_logger(__name__)
 
 async def verify_turnstile(token: str, remote_ip: Optional[str] = None) -> bool:
     """
@@ -61,7 +63,7 @@ async def verify_turnstile(token: str, remote_ip: Optional[str] = None) -> bool:
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[UTIL ERROR] verify_turnstile: {str(e)}")
+        logger.error(f"verify_turnstile: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Turnstile 검증 중 오류 발생"

@@ -5,6 +5,10 @@ from fastapi import APIRouter, HTTPException, Depends, status, Query
 from typing import Optional
 from datetime import datetime, timedelta, timezone
 import math
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 from app.schemas.suggestions import (
     SuggestionCreateRequest,
     SuggestionStatusUpdateRequest,
@@ -81,7 +85,7 @@ async def create_suggestion(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Rate limit check failed: {e}")
+        logger.warning(f"Rate limit check failed: {e}")
         # DB 오류시에는 진행 허용 (Fail Open) 또는 차단?
         # 안전하게 진행 허용
         pass
