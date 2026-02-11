@@ -212,7 +212,7 @@ async def get_all_users(
 
         # 기본 쿼리
         query = supabase.table('users')\
-            .select('id, student_id, name, email, department, phone, role, verification_status, membership_paid, created_at', count='exact')
+            .select('id, student_id, name, email, department, phone, role, verification_status, membership_paid, is_banned, created_at', count='exact')
         
         # 필터 적용
         if role:
