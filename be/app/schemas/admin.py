@@ -21,6 +21,7 @@ class UserListItem(BaseModel):
     role: str
     verification_status: str
     membership_paid: bool
+    is_banned: Optional[bool] = False
     created_at: datetime
     
     class Config:
