@@ -778,8 +778,8 @@ export const ActivityRegistrationModal = ({ isOpen, onClose, activity, onSubmit 
                                                                 const file = e.target.files?.[0]
                                                                 if (!file) return
 
-                                                                if (file.size > 10 * 1024 * 1024) {
-                                                                    toast.error('파일 크기는 10MB 이하여야 합니다.')
+                                                                if (file.size > 20 * 1024 * 1024) {
+                                                                    toast.error('파일 크기는 20MB 이하여야 합니다.')
                                                                     return
                                                                 }
 
