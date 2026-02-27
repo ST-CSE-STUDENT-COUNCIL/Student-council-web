@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Pagination, Navigation } from 'swiper/modules'
 import type { Activity, ActivityListItem } from '../../types/activities'
@@ -20,6 +20,8 @@ type ActivityCardProps = {
 export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
     const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false)
     const [currentTime, setCurrentTime] = useState(Date.now())
+    const [contentPanelHeight, setContentPanelHeight] = useState<number | null>(null)
+    const imageFrameRef = useRef<HTMLDivElement | null>(null)
     const queryClient = useQueryClient()
 
     // 1초마다 현재 시간 업데이트 (남은 시간 실시간 표시용 & 상태 자동 업데이트용)
@@ -51,6 +53,36 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
         }
         return []
     })()
+
+    // 데스크톱에서는 오른쪽 콘텐츠 높이를 이미지 높이와 동일하게 맞춰
+    // 설명이 길어져도 버튼 위치가 유지되고 설명만 내부 스크롤되도록 한다.
+    useEffect(() => {
+        if (typeof window === 'undefined') return
+
+        const updateContentPanelHeight = () => {
+            if (window.innerWidth < 768) {
+                setContentPanelHeight(null)
+                return
+            }
+
+            const imageHeight = imageFrameRef.current?.getBoundingClientRect().height ?? 0
+            setContentPanelHeight(imageHeight > 0 ? Math.round(imageHeight) : null)
+        }
+
+        updateContentPanelHeight()
+
+        const resizeObserver = new ResizeObserver(updateContentPanelHeight)
+        if (imageFrameRef.current) {
+            resizeObserver.observe(imageFrameRef.current)
+        }
+
+        window.addEventListener('resize', updateContentPanelHeight)
+
+        return () => {
+            resizeObserver.disconnect()
+            window.removeEventListener('resize', updateContentPanelHeight)
+        }
+    }, [activity.id, displayImages.length])
 
     const handleRegistrationSubmit = async (_data: unknown) => {
         // 성공적으로 신청 완료 시 쿼리 무효화 -> 데이터 최신화
@@ -164,8 +196,8 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
         <>
             <div className={`flex flex-col md:flex-row items-stretch bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden transition-all duration-300 ${isActive ? 'ring-2 ring-blue-500' : ''}`}>
                 {/* Image Section */}
-                <div className="w-full md:w-7/12 relative group bg-gray-100 dark:bg-slate-800">
-                    <div className="relative w-full" style={{ paddingBottom: '133%' }}>
+                <div className="w-full md:w-7/12 md:self-start relative group bg-gray-100 dark:bg-slate-800">
+                    <div ref={imageFrameRef} className="relative w-full" style={{ paddingBottom: '133%' }}>
                         <div className="absolute inset-0 w-full h-full bg-gray-200 dark:bg-slate-800">
                             {displayImages.length > 0 ? (
                                 <Swiper
@@ -211,7 +243,10 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
                 </div>
 
                 {/* Content Section */}
-                <div className="w-full md:w-5/12 p-6 flex flex-col bg-white dark:bg-slate-900">
+                <div
+                    className="w-full md:w-5/12 p-6 flex flex-col bg-white dark:bg-slate-900 md:min-h-0 md:overflow-hidden"
+                    style={contentPanelHeight ? { height: `${contentPanelHeight}px` } : undefined}
+                >
                     <div className="flex justify-between items-start mb-2 shrink-0">
                         <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white leading-tight">{activity.title}</h2>
                     </div>
@@ -233,7 +268,7 @@ export const ActivityCard = ({ activity, isActive }: ActivityCardProps) => {
                         </div>
                     )}
 
-                    <div className="flex-1 overflow-y-auto mb-6 custom-scrollbar pr-2 min-h-[100px] md:min-h-0">
+                    <div className="flex-1 overflow-y-scroll mb-6 always-visible-scrollbar pr-2 min-h-[100px] md:min-h-0">
                         <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed whitespace-pre-wrap break-words">
                             <span className="text-base">{activity.description}</span>
                         </p>
