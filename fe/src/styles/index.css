@@ -144,3 +144,44 @@ body {
 .animate-fade-in {
     animation: fade-in 0.2s ease-out forwards;
 }
+
+/* Keep scrollbars visible on content panels that require discoverable scrolling */
+.always-visible-scrollbar {
+    scrollbar-width: auto;
+    scrollbar-color: #94a3b8 #e2e8f0;
+    scrollbar-gutter: stable;
+}
+
+.dark .always-visible-scrollbar {
+    scrollbar-color: #64748b #1e293b;
+}
+
+.always-visible-scrollbar::-webkit-scrollbar {
+    width: 10px;
+}
+
+.always-visible-scrollbar::-webkit-scrollbar-track {
+    background: #e2e8f0;
+    border-radius: 9999px;
+}
+
+.always-visible-scrollbar::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 9999px;
+}
+
+.always-visible-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+.dark .always-visible-scrollbar::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+
+.dark .always-visible-scrollbar::-webkit-scrollbar-thumb {
+    background: #64748b;
+}
+
+.dark .always-visible-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
