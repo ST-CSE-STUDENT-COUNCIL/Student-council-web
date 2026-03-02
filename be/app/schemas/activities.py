@@ -509,3 +509,33 @@ class AttendanceListResponse(BaseModel):
     attended_count: int = Field(..., description="출석자 수")
     attendance_rate: float = Field(..., description="출석률 (%)")
     registrations: List[AttendanceListItem]
+
+
+# ============================================================================
+# 활동 통계 스키마
+# ============================================================================
+
+class ActivityTypeBreakdown(BaseModel):
+    """타입별 활동 수"""
+    event: int = Field(0, description="행사 수")
+    demand_survey: int = Field(0, description="수요조사 수")
+    survey: int = Field(0, description="설문조사 수")
+    kakao_invite: int = Field(0, description="카톡방 초대 수")
+    notice: int = Field(0, description="공지 수")
+
+
+class ActivityStatusBreakdown(BaseModel):
+    """진행 상태별 활동 수 (registration 기간 기준)"""
+    upcoming: int = Field(0, description="예정됨 — registration_start > now")
+    ongoing: int = Field(0, description="진행중 — registration_start <= now <= registration_end (또는 registration_end 없음)")
+    ended: int = Field(0, description="종료됨 — registration_end < now")
+    no_period: int = Field(0, description="기간 없음 — registration_start/end 미설정 (공지 등)")
+
+
+class ActivityStatsResponse(BaseModel):
+    """활동 통계 응답 (관리자용, 페이지네이션 없는 전체 집계)"""
+    total: int = Field(..., description="전체 활동 수 (삭제 제외)")
+    active: int = Field(..., description="활성화된 활동 수")
+    inactive: int = Field(..., description="비활성화된 활동 수")
+    by_type: ActivityTypeBreakdown = Field(..., description="타입별 활동 수")
+    by_status: ActivityStatusBreakdown = Field(..., description="진행 상태별 활동 수")
