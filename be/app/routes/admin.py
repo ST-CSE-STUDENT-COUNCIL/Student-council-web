@@ -457,7 +457,14 @@ async def reject_user(user_id: str, request: RejectUserRequest):
                 detail="이미 처리된 요청입니다"
             )
         
-        # 3. rejected_users 테이블에 아카이브
+        # 3. 인증 이미지 삭제 (개인정보 보호)
+        if user_data.get('verification_image_url'):
+            try:
+                supabase.storage.from_('verification-images').remove([user_data['verification_image_url']])
+            except Exception as e:
+                logger.warning(f"거부 처리 중 이미지 삭제 실패 (무시됨): {str(e)}")
+
+        # 4. rejected_users 테이블에 아카이브
         archive_data = {
             'original_user_id': user_id,
             'email': user_data.get('email'),
@@ -470,7 +477,7 @@ async def reject_user(user_id: str, request: RejectUserRequest):
         
         admin_supabase.table('rejected_users').insert(archive_data).execute()
         
-        # 4. Supabase Auth에서 삭제 (새 클라이언트 사용)
+        # 5. Supabase Auth에서 삭제 (새 클라이언트 사용)
         try:
             from app.database import get_fresh_admin_client
             fresh_client = get_fresh_admin_client()
@@ -479,7 +486,7 @@ async def reject_user(user_id: str, request: RejectUserRequest):
             # Auth 삭제 실패 로깅
             logger.error(f"Auth 삭제 실패: {str(auth_error)}")
         
-        # 5. email_verifications 삭제 (재가입 허용) - 직접 삭제
+        # 6. email_verifications 삭제 (재가입 허용) - 직접 삭제
         try:
             user_email = user_data.get('email')
             # 해당 이메일의 모든 레코드 삭제 (verified 상태와 무관하게)

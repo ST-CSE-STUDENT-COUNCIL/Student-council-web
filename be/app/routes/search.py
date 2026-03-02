@@ -80,8 +80,14 @@ async def search(
     """
     supabase = get_supabase()
 
-    # 검색어에 % 등 특수문자가 있으면 이스케이프
-    safe_q = q.replace("%", "\\%").replace("_", "\\_")
+    # LIKE 와일드카드 이스케이프 + PostgREST 필터 구문 문자 제거
+    safe_q = (
+        q.replace("%", "\\%")   # LIKE 와일드카드
+         .replace("_", "\\_")   # LIKE 단일문자 와일드카드
+         .replace(",", "")      # PostgREST or_() 조건 구분자
+         .replace("(", "")      # PostgREST 그룹 시작
+         .replace(")", "")      # PostgREST 그룹 끝
+    )
 
     try:
         # 3개 카테고리를 병렬로 동시 검색 (순차 대비 ~3배 빠름)
