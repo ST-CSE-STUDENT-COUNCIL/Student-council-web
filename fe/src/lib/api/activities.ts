@@ -234,6 +234,33 @@ export const activityAdminApi = {
     },
 
     /**
+     * 활동 전체 통계 조회 (관리자)
+     * 페이지네이션 없이 전체/활성/타입별/진행상태별 집계 값을 반환합니다.
+     * GET /admin/activities/stats
+     */
+    getStats: async (): Promise<{
+        total: number
+        active: number
+        inactive: number
+        by_type: {
+            event: number
+            demand_survey: number
+            survey: number
+            kakao_invite: number
+            notice: number
+        }
+        by_status: {
+            upcoming: number
+            ongoing: number
+            ended: number
+            no_period: number
+        }
+    }> => {
+        const response = await api.get('/admin/activities/stats')
+        return response.data
+    },
+
+    /**
      * 수요조사 통계 조회 (관리자)
      */
     getDemandSurveyStats: async (activityId: number): Promise<{

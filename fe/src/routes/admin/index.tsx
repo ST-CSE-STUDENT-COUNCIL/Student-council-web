@@ -143,6 +143,16 @@ function RouteComponent() {
     const [unblockingId, setUnblockingId] = useState<string | null>(null)
     const [previewImage, setPreviewImage] = useState<string | null>(null)
 
+    // 회원 통계: 백엔드 /admin/stats API에서 만아는 전체 집계 값
+    const [userStats, setUserStats] = useState<{
+        total_users: number
+        pending_users: number
+        approved_users: number
+        rejected_users: number
+        membership_paid: number
+        banned_users: number
+    } | null>(null)
+
     // Pagination State
     const [pendingPage, setPendingPage] = useState(1)
     const [pendingTotal, setPendingTotal] = useState(0)
@@ -151,6 +161,22 @@ function RouteComponent() {
     const [membersPage, setMembersPage] = useState(1)
     const [membersTotal, setMembersTotal] = useState(0)
     const MEMBERS_LIMIT = 20
+
+    // 회원 통계 데이터를 /admin/stats API에서 불러옵니다.
+    // 페이지네이션된 목록(최대 20개)를 기준으로 통계를 계산하는 버그를 수정합니다.
+    const fetchUserStats = useCallback(async () => {
+        try {
+            const data = await adminApi.getStats()
+            setUserStats(data)
+        } catch (error) {
+            console.error('회원 통계 조회 실패:', error)
+            // 통계 API 실패 시 페이지네이션 기반 집계 값으로 폴백 (setUserStats null 유지)
+        }
+    }, [])
+
+    useEffect(() => {
+        fetchUserStats()
+    }, [fetchUserStats])
 
     const fetchPendingMembers = useCallback(async () => {
         setPendingLoading(true)
@@ -283,6 +309,8 @@ function RouteComponent() {
         try {
             await adminApi.approveUser(id)
             await fetchPendingMembers()
+            // 승인 후 통계 재조회
+            await fetchUserStats()
             toast.success('회원 승인이 완료되었습니다.')
         } catch (error) {
             console.error('회원 승인 실패:', error)
@@ -319,6 +347,8 @@ function RouteComponent() {
             await adminApi.rejectUser(id, reason.trim())
             await fetchPendingMembers()
             await fetchRejectedMembers()
+            // 거절 후 통계 재조회
+            await fetchUserStats()
             toast.success('회원 가입이 거절되었습니다.')
         } catch (error) {
             console.error('회원 거절 실패:', error)
@@ -507,28 +537,36 @@ function RouteComponent() {
         }
     }
 
+    // 통계 카드: userStats가 있으면 백엔드 집계 값 사용, 없으면 페이지네이션 기반 별도 집계 값으로 폴백
     const stats = [
         {
             label: '승인 대기',
-            value: pendingMembers.length,
+            // pendingTotal: 페이지네이션 count(DB 전체 합계).
+            // userStats.pending_users: /admin/stats API 값으로 더 정확함.
+            value: userStats?.pending_users ?? pendingTotal,
             color: 'bg-amber-50 text-amber-700',
             icon: Clock3,
         },
         {
             label: '전체 회원',
-            value: members.length,
+            // membersTotal은 필터 적용 시 부정확할 수 있으므로 /admin/stats API 값 사용.
+            value: userStats?.total_users ?? membersTotal,
             color: 'bg-sky-50 text-sky-700',
             icon: Users,
         },
         {
             label: '거절됨',
-            value: rejectedMembers.length,
+            // rejectedMembers.length는 한 페이지분만 반영.
+            // userStats.rejected_users: rejected_users 테이블 전체 행 수.
+            value: userStats?.rejected_users ?? rejectedMembers.length,
             color: 'bg-rose-50 text-rose-700',
             icon: XCircle,
         },
         {
             label: '차단됨',
-            value: blockedMembers.length,
+            // blocked users는 저량 없이 모두 불러오도록 설계되어 있어 blockedMembers.length이 정확.
+            // userStats.banned_users로 더 안정적으로 대체.
+            value: userStats?.banned_users ?? blockedMembers.length,
             color: 'bg-slate-100 text-slate-700',
             icon: Shield,
         },
