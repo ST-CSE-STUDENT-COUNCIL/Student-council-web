@@ -39,16 +39,23 @@ type SurveyStatsPanelProps = {
     loading: boolean
     surveyStats: { total_responses: number } | null
     questionStats: SurveyQuestionStat[]
+    /** 입학 년도(학번 앞 2자리)별 카운트 */
+    yearCounts?: Record<string, number>
 }
 
-export const SurveyStatsPanel = ({ loading, surveyStats, questionStats }: SurveyStatsPanelProps) => {
+const YEAR_COLORS: Record<string, string> = {
+    '20': '#6366f1', '21': '#3b82f6', '22': '#06b6d4',
+    '23': '#10b981', '24': '#f59e0b', '25': '#f43f5e', '26': '#a855f7',
+}
+
+export const SurveyStatsPanel = ({ loading, surveyStats, questionStats, yearCounts }: SurveyStatsPanelProps) => {
     const [statsFilter, setStatsFilter] = useState<'all' | 'objective' | 'subjective'>('all')
     const [expandedSubjective, setExpandedSubjective] = useState<Record<string, boolean>>({})
     const [highlightedId, setHighlightedId] = useState<string | null>(null)
     const highlightTimeoutRef = useRef<number | null>(null)
     const pendingJumpIdRef = useRef<string | null>(null)
     const scrollRafRef = useRef<number | null>(null)
-    const tryScrollPendingRef = useRef<() => void>(() => {})
+    const tryScrollPendingRef = useRef<() => void>(() => { })
 
     const objectiveQuestionCount = questionStats.filter(stat => OBJECTIVE_TYPES.has(stat.type)).length
     const subjectiveQuestionCount = questionStats.length - objectiveQuestionCount
@@ -127,7 +134,7 @@ export const SurveyStatsPanel = ({ loading, surveyStats, questionStats }: Survey
     }, [])
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[400px]">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-100">
             {loading ? (
                 <div className="flex flex-col items-center justify-center h-64">
                     <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mb-4">
@@ -183,6 +190,37 @@ export const SurveyStatsPanel = ({ loading, surveyStats, questionStats }: Survey
                             className="sticky top-4 z-10 mb-6"
                         />
                     )}
+
+                    {/* 학번별 분포 */}
+                    {yearCounts && Object.keys(yearCounts).length > 0 && (() => {
+                        const total = surveyStats.total_responses
+                        const sorted = Object.entries(yearCounts).sort(([a], [b]) => a.localeCompare(b))
+                        return (
+                            <div className="bg-gray-50 rounded-2xl p-5 mb-6 border border-gray-100">
+                                <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />
+                                    입학 년도별 응답 분포
+                                </h3>
+                                <div className="space-y-2.5">
+                                    {sorted.map(([year, count]) => {
+                                        const percent = total > 0 ? (count / total) * 100 : 0
+                                        const color = YEAR_COLORS[year] || '#94a3b8'
+                                        return (
+                                            <div key={year} className="flex items-center gap-3">
+                                                <span className="text-xs font-bold text-gray-600 w-12 shrink-0">20{year}학번</span>
+                                                <div className="flex-1 h-4 rounded-full bg-gray-200 overflow-hidden">
+                                                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${percent}%`, backgroundColor: color }} />
+                                                </div>
+                                                <span className="text-xs font-semibold text-gray-700 w-20 shrink-0 text-right">
+                                                    {count}명 ({percent < 1 && percent > 0 ? '<1' : percent.toFixed(0)}%)
+                                                </span>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )
+                    })()}
 
                     {filteredQuestionStats.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-gray-500">

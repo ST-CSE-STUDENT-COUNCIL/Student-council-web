@@ -25,6 +25,7 @@ from app.schemas.admin import (
     UnbanUserRequest,
     UnbanUserResponse,
     DeleteUserResponse,
+    UserStatsResponse,
     ErrorResponse
 )
 from app.utils.auth import require_admin
@@ -178,6 +179,75 @@ async def get_rejected_users(
         )
 
 @router.get(
+    "/stats",
+    response_model=UserStatsResponse,
+    summary="회원 통계 조회",
+    description="전체 회원 수, 승인 대기 수, 회비 납부 수 등 회원 관련 통계를 반환합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증되지 않음"},
+        403: {"model": ErrorResponse, "description": "관리자 권한 필요"}
+    }
+)
+async def get_user_stats():
+    """
+    회원 통계 조회
+
+    페이지네이션 없이 전체 집계 값을 반환합니다.
+    - total_users: users 테이블 전체 row 수
+    - pending_users: verification_status가 pending 또는 submitted
+    - approved_users: verification_status가 approved
+    - rejected_users: rejected_users 테이블 전체 row 수
+    - membership_paid: membership_paid = true
+    - banned_users: is_banned = true
+    """
+    try:
+        admin_supabase = get_supabase_admin()
+
+        # 병렬로 각 집계 쿼리 실행 (supabase-py는 동기 클라이언트이므로 순차 실행)
+        total_result = admin_supabase.table('users')\
+            .select('id', count='exact').limit(0).execute()
+
+        pending_result = admin_supabase.table('users')\
+            .select('id', count='exact')\
+            .in_('verification_status', ['pending', 'submitted'])\
+            .limit(0).execute()
+
+        approved_result = admin_supabase.table('users')\
+            .select('id', count='exact')\
+            .eq('verification_status', 'approved')\
+            .limit(0).execute()
+
+        rejected_result = admin_supabase.table('rejected_users')\
+            .select('id', count='exact').limit(0).execute()
+
+        membership_result = admin_supabase.table('users')\
+            .select('id', count='exact')\
+            .eq('membership_paid', True)\
+            .limit(0).execute()
+
+        banned_result = admin_supabase.table('users')\
+            .select('id', count='exact')\
+            .eq('is_banned', True)\
+            .limit(0).execute()
+
+        return UserStatsResponse(
+            total_users=total_result.count or 0,
+            pending_users=pending_result.count or 0,
+            approved_users=approved_result.count or 0,
+            rejected_users=rejected_result.count or 0,
+            membership_paid=membership_result.count or 0,
+            banned_users=banned_result.count or 0,
+        )
+
+    except Exception as e:
+        logger.error(f"회원 통계 조회 실패: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="회원 통계 조회 실패"
+        )
+
+
+@router.get(
     "/users",
     response_model=UserListResponse,
     summary="전체 회원 목록 조회",
@@ -212,7 +282,7 @@ async def get_all_users(
 
         # 기본 쿼리
         query = supabase.table('users')\
-            .select('id, student_id, name, email, department, phone, role, verification_status, membership_paid, created_at', count='exact')
+            .select('id, student_id, name, email, department, phone, role, verification_status, membership_paid, is_banned, created_at', count='exact')
         
         # 필터 적용
         if role:
@@ -387,7 +457,14 @@ async def reject_user(user_id: str, request: RejectUserRequest):
                 detail="이미 처리된 요청입니다"
             )
         
-        # 3. rejected_users 테이블에 아카이브
+        # 3. 인증 이미지 삭제 (개인정보 보호)
+        if user_data.get('verification_image_url'):
+            try:
+                supabase.storage.from_('verification-images').remove([user_data['verification_image_url']])
+            except Exception as e:
+                logger.warning(f"거부 처리 중 이미지 삭제 실패 (무시됨): {str(e)}")
+
+        # 4. rejected_users 테이블에 아카이브
         archive_data = {
             'original_user_id': user_id,
             'email': user_data.get('email'),
@@ -400,7 +477,7 @@ async def reject_user(user_id: str, request: RejectUserRequest):
         
         admin_supabase.table('rejected_users').insert(archive_data).execute()
         
-        # 4. Supabase Auth에서 삭제 (새 클라이언트 사용)
+        # 5. Supabase Auth에서 삭제 (새 클라이언트 사용)
         try:
             from app.database import get_fresh_admin_client
             fresh_client = get_fresh_admin_client()
@@ -409,7 +486,7 @@ async def reject_user(user_id: str, request: RejectUserRequest):
             # Auth 삭제 실패 로깅
             logger.error(f"Auth 삭제 실패: {str(auth_error)}")
         
-        # 5. email_verifications 삭제 (재가입 허용) - 직접 삭제
+        # 6. email_verifications 삭제 (재가입 허용) - 직접 삭제
         try:
             user_email = user_data.get('email')
             # 해당 이메일의 모든 레코드 삭제 (verified 상태와 무관하게)

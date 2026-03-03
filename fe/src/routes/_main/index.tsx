@@ -90,11 +90,11 @@ function Index() {
             />
             {/* Bento Grid Hero Layout */}
             <section className="container mx-auto px-4 pt-6 pb-12">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px]">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-150">
                     {/* 1. Main Featured Carousel (Large, 8 cols) */}
                     <div className="lg:col-span-8 relative group rounded-3xl overflow-hidden shadow-2xl shadow-indigo-500/10 dark:shadow-none ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-slate-900">
                         {loading ? (
-                            <div className="w-full h-full min-h-[400px] flex items-center justify-center bg-gray-100 dark:bg-slate-800 animate-pulse">
+                            <div className="w-full h-full min-h-100 flex items-center justify-center bg-gray-100 dark:bg-slate-800 animate-pulse">
                                 <Loading />
                             </div>
                         ) : (
@@ -111,7 +111,7 @@ function Index() {
                                     {featuredActivities.length > 0 ? (
                                         featuredActivities.map((activity) => (
                                             <SwiperSlide key={activity.id}>
-                                                <div className="relative w-full h-full min-h-[400px] lg:min-h-full group/slide overflow-hidden bg-slate-900">
+                                                <div className="relative w-full h-full min-h-100 lg:min-h-full group/slide overflow-hidden bg-slate-900">
                                                     {/* 1. Background Blur Layer */}
                                                     <div className="absolute inset-0">
                                                         {activity.thumbnail_url ? (
@@ -123,10 +123,10 @@ function Index() {
                                                                     loading="lazy"
                                                                     decoding="async"
                                                                 />
-                                                                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/60 to-slate-900/30" />
+                                                                <div className="absolute inset-0 bg-linear-to-r from-slate-950/90 via-slate-900/60 to-slate-900/30" />
                                                             </>
                                                         ) : (
-                                                            <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-950 opacity-50" />
+                                                            <div className="w-full h-full bg-linear-to-br from-slate-800 to-slate-950 opacity-50" />
                                                         )}
                                                     </div>
 
@@ -152,7 +152,7 @@ function Index() {
 
                                                             <Link
                                                                 to="/activities"
-                                                                params={{ activityId: activity.id.toString() }}
+                                                                search={{ id: activity.id }}
                                                                 className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
                                                             >
                                                                 자세히 보기 <ChevronRight size={16} />
@@ -161,8 +161,8 @@ function Index() {
 
                                                         {/* Right: Poster Card (Desktop Only) */}
                                                         {activity.thumbnail_url ? (
-                                                            <div className="hidden lg:block w-[320px] shrink-0 transform transition-all duration-700 ease-out translate-x-12 opacity-0 [.swiper-slide-active_&]:translate-x-0 [.swiper-slide-active_&]:opacity-100">
-                                                                <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/10 transition-transform duration-500 bg-slate-800">
+                                                            <div className="hidden lg:block w-[320px] shrink-0 transform transition-all duration-700 ease-out translate-x-12 opacity-0 in-[.swiper-slide-active]:translate-x-0 in-[.swiper-slide-active]:opacity-100">
+                                                                <div className="aspect-3/4 rounded-2xl overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/10 transition-transform duration-500 bg-slate-800">
                                                                     <img
                                                                         src={activity.thumbnail_url}
                                                                         alt={activity.title}
@@ -173,7 +173,7 @@ function Index() {
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <div className="hidden lg:flex w-[320px] aspect-[3/4] shrink-0 items-center justify-center rounded-2xl bg-white/5 border border-white/10 shadow-2xl">
+                                                            <div className="hidden lg:flex w-[320px] aspect-3/4 shrink-0 items-center justify-center rounded-2xl bg-white/5 border border-white/10 shadow-2xl">
                                                                 <Megaphone className="w-24 h-24 text-white/20" />
                                                             </div>
                                                         )}
@@ -183,7 +183,7 @@ function Index() {
                                         ))
                                     ) : (
                                         <SwiperSlide>
-                                            <div className="relative w-full h-full min-h-[400px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                            <div className="relative w-full h-full min-h-100 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                                                 <div className="text-center p-8">
                                                     <h2 className="text-3xl font-bold text-slate-400 dark:text-slate-600 mb-2">진행 중인 행사가 없습니다</h2>
                                                     <p className="text-slate-400">새로운 소식을 기다려주세요!</p>
@@ -196,7 +196,7 @@ function Index() {
                                 <button className="hero-prev absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/10 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0">
                                     <ChevronLeft size={24} />
                                 </button>
-                                <button className="hero-next absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/10 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100 translate-x-[-16px] group-hover:translate-x-0">
+                                <button className="hero-next absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/10 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0">
                                     <ChevronRight size={24} />
                                 </button>
                             </>
@@ -206,7 +206,7 @@ function Index() {
                     {/* 2. Right Column (4 cols) - Intro & Shortcuts */}
                     <div className="lg:col-span-4 flex flex-col gap-6">
                         {/* 2-1. Intro Card (Gradient) */}
-                        <div className="flex-1 bg-gradient-to-br from-indigo-600 to-violet-700 dark:from-indigo-900 dark:to-violet-900 rounded-3xl p-8 text-white shadow-xl shadow-indigo-500/20 dark:shadow-none flex flex-col justify-between relative overflow-hidden group">
+                        <div className="flex-1 bg-linear-to-br from-indigo-600 to-violet-700 dark:from-indigo-900 dark:to-violet-900 rounded-3xl p-8 text-white shadow-xl shadow-indigo-500/20 dark:shadow-none flex flex-col justify-between relative overflow-hidden group">
                             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_50%)]" />
                             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
 

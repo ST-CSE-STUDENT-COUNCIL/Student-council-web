@@ -414,7 +414,7 @@ function AdminActivitiesPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/25">
+          <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/25">
             <ClipboardList size={28} className="text-white" />
           </div>
           <div>
@@ -424,7 +424,7 @@ function AdminActivitiesPage() {
         </div>
         <button
           onClick={handleCreate}
-          className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-purple-500/25 hover:shadow-xl transform hover:-translate-y-0.5 font-medium"
+          className="bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-purple-500/25 hover:shadow-xl transform hover:-translate-y-0.5 font-medium"
         >
           <Plus size={20} />
           <span>새 신청 만들기</span>
@@ -468,7 +468,7 @@ function AdminActivitiesPage() {
           <div className="relative">
             <button
               onClick={() => setShowSortDropdown(!showSortDropdown)}
-              className={`flex items-center gap-2 px-4 py-3.5 bg-white border border-gray-200 rounded-xl hover:border-gray-300 min-w-[140px] ${showSortDropdown ? 'ring-2 ring-purple-500/20 border-purple-500' : ''}`}
+              className={`flex items-center gap-2 px-4 py-3.5 bg-white border border-gray-200 rounded-xl hover:border-gray-300 min-w-35 ${showSortDropdown ? 'ring-2 ring-purple-500/20 border-purple-500' : ''}`}
             >
               <span className="text-sm font-medium text-gray-700">
                 {sortBy === 'newest' ? '최신순' : sortBy === 'oldest' ? '오래된순' : sortBy === 'title' ? '제목순' : '신청자순'}
@@ -476,7 +476,7 @@ function AdminActivitiesPage() {
               <ChevronDown size={16} className={`ml-auto text-gray-400 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
             </button>
             {showSortDropdown && (
-              <div className="absolute right-0 top-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl py-1 min-w-[160px] z-10">
+              <div className="absolute right-0 top-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl py-1 min-w-40 z-10">
                 {([['newest', '최신순'], ['oldest', '오래된순'], ['title', '제목순'], ['registrations', '신청자순']] as [SortOption, string][]).map(([value, label]) => (
                   <button
                     key={value}
@@ -615,7 +615,7 @@ function AdminActivitiesPage() {
                       {activity.thumbnail_url ? (
                         <img src={activity.thumbnail_url} alt="" className="w-20 h-20 rounded-xl object-cover border border-gray-200" />
                       ) : (
-                        <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <div className="w-20 h-20 rounded-xl bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                           <ImageIcon size={24} className="text-gray-400" />
                         </div>
                       )}
@@ -683,7 +683,7 @@ function AdminActivitiesPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gradient-to-br from-gray-50 to-gray-100/50">
+                  <thead className="bg-linear-to-br from-gray-50 to-gray-100/50">
                     <tr>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">타입</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase w-1/3">제목</th>
@@ -965,7 +965,7 @@ function AdminActivitiesPage() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="flex-1 py-3 px-4 bg-linear-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     {saving ? '저장 중...' : (editingActivity ? '수정 완료' : '생성하기')}
                   </button>

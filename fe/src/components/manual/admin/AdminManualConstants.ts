@@ -10,7 +10,8 @@ export const MANUAL_GROUPS = [
         sections: [
             { id: 'user-intro', title: '1. 시스템 개요' },
             { id: 'user-interface', title: '2. 메인 화면 구성' },
-            { id: 'user-features', title: '3. 주요 기능 가이드' },
+            { id: 'user-signup', title: '3. 회원가입 및 로그인' },
+            { id: 'user-features', title: '4. 주요 기능 가이드' },
         ]
     },
     {

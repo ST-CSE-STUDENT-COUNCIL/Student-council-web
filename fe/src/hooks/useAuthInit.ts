@@ -2,8 +2,14 @@
  * 앱 시작 시 인증 상태를 초기화하는 훅
  * 
  * - 저장된 세션이 있으면 토큰 갱신 시도
- * - 갱신 성공: 새 토큰으로 업데이트
- * - 갱신 실패: 로그아웃 처리
+ * - 갱신 성공: 새 토큰으로 업데이트 후 isInitialized = true
+ * - 갱신 실패: 로그아웃 처리 후 isInitialized = true
+ * - 토큰 없음: 즉시 isInitialized = true
+ * 
+ * 주의:
+ * - useAuthStore의 onRehydrateStorage는 accessToken이 없을 때만 isInitialized=true 설정
+ * - accessToken이 있을 경우 이 훅이 refresh 완료 후 isInitialized=true 설정
+ * - 이 구조로 관리자 페이지 등에서 로그인 상태가 미확인된 채로 렌더되는 race condition 방지
  */
 import { useEffect, useRef } from 'react'
 import { useAuthStore } from '../store/useAuthStore'
@@ -11,16 +17,16 @@ import { authApi } from '../lib/api/auth'
 import { mypageApi } from '../lib/api/mypage'
 
 export function useAuthInit() {
-    const { accessToken, isInitialized, setAccessToken, setUser, logout, setInitialized } = useAuthStore()
+    const { accessToken, setAccessToken, setUser, logout, setInitialized } = useAuthStore()
     const initAttempted = useRef(false)
 
     useEffect(() => {
-        // 이미 초기화되었거나 시도 중이면 스킵
-        if (isInitialized || initAttempted.current) return
+        // 이미 시도 중이면 스킵
+        if (initAttempted.current) return
         initAttempted.current = true
 
         const initializeAuth = async () => {
-            // 저장된 토큰이 없으면 초기화 완료
+            // 저장된 토큰이 없으면 즉시 초기화 완료 (onRehydrateStorage에서 이미 true로 설정함)
             if (!accessToken) {
                 setInitialized(true)
                 return
@@ -58,7 +64,8 @@ export function useAuthInit() {
         }
 
         initializeAuth()
-    }, [accessToken, isInitialized, setAccessToken, setUser, logout, setInitialized])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
-    return { isInitialized }
+    return { isInitialized: useAuthStore(state => state.isInitialized) }
 }

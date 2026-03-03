@@ -27,16 +27,20 @@ type EventStatsPanelProps = {
         question_stats: any[]
     } | null
     onPreviewImage: (url: string) => void
+    /** 전체 데이터 기준 상태별 카운트 */
+    statusCounts?: { pending?: number; approved?: number; rejected?: number }
+    /** 입학 년도(학번 앞 2자리)별 카운트 */
+    yearCounts?: Record<string, number>
 }
 
-export const EventStatsPanel = ({ loading, stats, onPreviewImage }: EventStatsPanelProps) => {
+export const EventStatsPanel = ({ loading, stats, onPreviewImage, statusCounts, yearCounts }: EventStatsPanelProps) => {
     const [expandedSubjective, setExpandedSubjective] = useState<Record<string, boolean>>({})
 
     const questionStats = useMemo(() => stats?.question_stats ?? [], [stats])
 
     if (loading) {
         return (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[400px]">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-100">
                 <div className="flex flex-col items-center justify-center h-64">
                     <Loader2 size={32} className="text-purple-600 animate-spin mb-4" />
                     <p className="text-gray-500">통계 데이터를 불러오는 중...</p>
@@ -47,19 +51,31 @@ export const EventStatsPanel = ({ loading, stats, onPreviewImage }: EventStatsPa
 
     if (!stats || questionStats.length === 0) {
         return (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[400px]">
-                <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-                    <BarChart3 size={48} className="text-gray-300 mb-4" />
-                    <p>표시할 통계 데이터가 없습니다.</p>
-                </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-100">
+                {/* 신청자 통계는 질문 없이도 표시 */}
+                <EventStatsSummary
+                    totalResponses={stats?.total_responses ?? 0}
+                    statusCounts={statusCounts}
+                    yearCounts={yearCounts}
+                />
+                {questionStats.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-40 text-gray-500">
+                        <BarChart3 size={48} className="text-gray-300 mb-4" />
+                        <p>표시할 설문 통계 데이터가 없습니다.</p>
+                    </div>
+                )}
             </div>
         )
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[400px]">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-100">
             <div className="max-w-4xl mx-auto space-y-8">
-                <EventStatsSummary totalResponses={stats.total_responses} />
+                <EventStatsSummary
+                    totalResponses={stats.total_responses}
+                    statusCounts={statusCounts}
+                    yearCounts={yearCounts}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {questionStats.map((stat: any, index: number) => {
@@ -100,7 +116,7 @@ export const EventStatsPanel = ({ loading, stats, onPreviewImage }: EventStatsPa
                                 {isChoice ? (
                                     <div className="mt-4 space-y-6">
                                         <div className="flex justify-center">
-                                            <div className="relative w-full max-w-[220px] h-40">
+                                            <div className="relative w-full max-w-55 h-40">
                                                 <ResponsiveContainer>
                                                     <PieChart>
                                                         <Pie

@@ -36,7 +36,10 @@ from app.schemas.activities import (
     AttendanceCheckResponse,
     AttendanceInfoResponse,
     AttendanceListResponse,
-    AttendanceListItem
+    AttendanceListItem,
+    ActivityStatsResponse,
+    ActivityTypeBreakdown,
+    ActivityStatusBreakdown
 )
 from app.utils.auth import optional_current_user, require_verified_user, require_admin
 from app.utils.r2_storage import (
@@ -664,6 +667,104 @@ async def submit_survey(
 # ============================================================================
 # 관리자 엔드포인트
 # ============================================================================
+
+@router.get(
+    "/admin/activities/stats",
+    response_model=ActivityStatsResponse,
+    summary="활동 통계 조회 (관리자)",
+    description="전체/활성/타입별/진행 상태별 활동 수를 페이지네이션 없이 반환합니다",
+    responses={
+        401: {"model": ErrorResponse, "description": "인증 필요"},
+        403: {"model": ErrorResponse, "description": "권한 없음"}
+    }
+)
+async def get_activity_stats(
+    current_user: dict = Depends(require_admin)
+):
+    """
+    활동 통계 조회 (관리자 전용)
+
+    페이지네이션 없이 전체 집계 값을 반환합니다.
+    - total      : 전체 활동 수 (is_deleted=false)
+    - active     : is_active=true
+    - inactive   : is_active=false
+    - by_type    : 타입별 카운트
+    - by_status  : registration_start/end 기준 진행 상태별 카운트
+      - upcoming : registration_start > now
+      - ongoing  : registration_start <= now AND (registration_end >= now OR registration_end IS NULL)
+      - ended    : registration_end < now
+      - no_period: registration_start IS NULL AND registration_end IS NULL
+    """
+    try:
+        from datetime import timezone, timedelta
+        kst = timezone(timedelta(hours=9))
+        now_iso = datetime.now(kst).isoformat()
+
+        admin_supabase = get_supabase_admin()
+        base = lambda: admin_supabase.table("activities").select("id", count="exact").eq("is_deleted", False)  # type: ignore
+
+        # 전체 / 활성 / 비활성
+        total_res   = base().limit(0).execute()
+        active_res  = base().eq("is_active", True).limit(0).execute()
+        inactive_res = base().eq("is_active", False).limit(0).execute()
+
+        # 타입별
+        type_results = {}
+        for t in ["event", "demand_survey", "survey", "kakao_invite", "notice"]:
+            type_results[t] = base().eq("type", t).limit(0).execute().count or 0
+
+        # 진행 상태별
+        # 예정됨: registration_start > now
+        upcoming_res = base().gt("registration_start", now_iso).limit(0).execute()
+
+        # 진행중: registration_start <= now AND (registration_end >= now OR registration_end IS NULL)
+        # supabase-py 에서 OR 조건은 .or_() 사용
+        ongoing_res = (
+            base()
+            .lte("registration_start", now_iso)
+            .or_(f"registration_end.gte.{now_iso},registration_end.is.null")
+            .limit(0).execute()
+        )
+
+        # 종료됨: registration_end < now (IS NOT NULL 조건 포함)
+        ended_res = base().lt("registration_end", now_iso).limit(0).execute()
+
+        # 기간 없음: registration_start IS NULL AND registration_end IS NULL
+        no_period_res = (
+            base()
+            .is_("registration_start", "null")
+            .is_("registration_end", "null")
+            .limit(0).execute()
+        )
+
+        return ActivityStatsResponse(
+            total=total_res.count or 0,
+            active=active_res.count or 0,
+            inactive=inactive_res.count or 0,
+            by_type=ActivityTypeBreakdown(
+                event=type_results["event"],
+                demand_survey=type_results["demand_survey"],
+                survey=type_results["survey"],
+                kakao_invite=type_results["kakao_invite"],
+                notice=type_results["notice"],
+            ),
+            by_status=ActivityStatusBreakdown(
+                upcoming=upcoming_res.count or 0,
+                ongoing=ongoing_res.count or 0,
+                ended=ended_res.count or 0,
+                no_period=no_period_res.count or 0,
+            )
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"활동 통계 조회 실패: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="활동 통계 조회 실패"
+        )
+
 
 @router.post(
     "/admin/activities",
