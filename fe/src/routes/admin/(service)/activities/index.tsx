@@ -81,6 +81,15 @@ function AdminActivitiesPage() {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
   const [saving, setSaving] = useState(false)
 
+  // 활동 통계: 백엔드 /admin/activities/stats API에서 만아는 전체 집계 값
+  const [activityStats, setActivityStats] = useState<{
+    total: number
+    active: number
+    inactive: number
+    by_type: { event: number; demand_survey: number; survey: number; kakao_invite: number; notice: number }
+    by_status: { upcoming: number; ongoing: number; ended: number; no_period: number }
+  } | null>(null)
+
   // View & Filter State
   const [viewMode, setViewMode] = useState<ViewMode>('table')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -126,8 +135,22 @@ function AdminActivitiesPage() {
     }
   }
 
+  // 활동 통계를 /admin/activities/stats API에서 불러옵니다.
+  // 활동 목록은 페이지네이션되어(기본 20개) 있어
+  // 로컈 배열 기준으로 통계를 계산하면 부정확할 수 있습니다.
+  const fetchActivityStats = async () => {
+    try {
+      const data = await activityAdminApi.getStats()
+      setActivityStats(data)
+    } catch (error) {
+      console.error('활동 통계 조회 실패:', error)
+      // 실패 시 null을 유지하여 로컈 계산 값으로 폴백
+    }
+  }
+
   useEffect(() => {
     fetchActivities()
+    fetchActivityStats()
   }, [])
 
   // Scroll to center logic
@@ -211,14 +234,27 @@ function AdminActivitiesPage() {
     currentPage * itemsPerPage
   )
 
-  // Stats
+  // Stats: activityStats가 있으면 백엔드 집계 값 사용, 없으면 로컈 계산 값으로 폴백
   const stats = useMemo(() => {
+    if (activityStats) {
+      return {
+        // by_status.ongoing: registration_start <= now <= registration_end (또는 end 없음) 기준
+        activeCount: activityStats.by_status.ongoing,
+        // by_status.upcoming: registration_start > now 기준
+        scheduledCount: activityStats.by_status.upcoming,
+        // by_status.ended: registration_end < now 기준
+        closedCount: activityStats.by_status.ended,
+        // 중앙 API에 주문 수 집계가 없으므로 로컈에서 계산
+        totalRegistrations: activities.reduce((sum, a) => sum + (a.current_count || 0), 0),
+      }
+    }
+    // activityStats 로드 전 폴백: 로컈 배열 기반 코드 유지
     const activeCount = activities.filter(a => getActivityStatus(a) === 'active').length
     const scheduledCount = activities.filter(a => getActivityStatus(a) === 'scheduled').length
     const closedCount = activities.filter(a => getActivityStatus(a) === 'closed').length
     const totalRegistrations = activities.reduce((sum, a) => sum + (a.current_count || 0), 0)
     return { activeCount, scheduledCount, closedCount, totalRegistrations }
-  }, [activities])
+  }, [activities, activityStats])
 
   // Image upload
   const uploadImages = async (): Promise<string[]> => {

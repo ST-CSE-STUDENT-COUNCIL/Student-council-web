@@ -99,6 +99,22 @@ export const adminApi = {
         const response = await api.get<{ signed_url: string }>('/admin/storage/signed-url', { params: { path } })
         return response.data
     },
+    /**
+     * 회원 통계 조회
+     * 페이지네이션 없이 전체 집계 값을 반환합니다.
+     * GET /admin/stats
+     */
+    getStats: async () => {
+        const response = await api.get<{
+            total_users: number
+            pending_users: number
+            approved_users: number
+            rejected_users: number
+            membership_paid: number
+            banned_users: number
+        }>('/admin/stats')
+        return response.data
+    },
     getActivityAttendance: async (activityId: number) => {
         const response = await api.get<{
             activity_id: number
