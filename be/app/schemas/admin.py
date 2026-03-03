@@ -21,6 +21,7 @@ class UserListItem(BaseModel):
     role: str
     verification_status: str
     membership_paid: bool
+    is_banned: Optional[bool] = False
     created_at: datetime
     
     class Config:
@@ -141,3 +142,17 @@ class DeleteUserResponse(BaseModel):
     """회원 삭제 응답"""
     message: str = "회원이 삭제되었습니다"
     user_id: str
+
+
+# ============================================================================
+# 통계
+# ============================================================================
+
+class UserStatsResponse(BaseModel):
+    """회원 통계 응답"""
+    total_users: int = Field(..., description="전체 가입 회원 수 (users 테이블)")
+    pending_users: int = Field(..., description="승인 대기 회원 수 (pending/submitted)")
+    approved_users: int = Field(..., description="승인 완료 회원 수")
+    rejected_users: int = Field(..., description="거절된 회원 수 (rejected_users 테이블)")
+    membership_paid: int = Field(..., description="회비 납부 완료 회원 수")
+    banned_users: int = Field(..., description="차단된 회원 수")
