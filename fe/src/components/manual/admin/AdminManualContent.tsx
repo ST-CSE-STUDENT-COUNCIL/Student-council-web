@@ -6,8 +6,8 @@ interface AdminManualContentProps {
 
 export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
     return (
-        <div className="flex-1 min-w-0 pr-0 xl:pr-8 pb-20">
-            <div className="prose prose-slate dark:prose-invert max-w-none">
+        <div className="flex-1 min-w-0 pr-0 lg:pr-8 pb-20">
+            <div className="prose prose-slate dark:prose-invert prose-headings:font-bold prose-p:leading-relaxed max-w-none">
 
                 {/* PART 1. 사용자 가이드 */}
                 {activePart === 'user' && (
@@ -661,19 +661,19 @@ export const AdminManualContent = ({ activePart }: AdminManualContentProps) => {
                                         <h4 className="font-bold mb-3">처리 프로세스</h4>
                                         <div className="space-y-3 text-sm">
                                             <div className="flex gap-3">
-                                                <div className="flex-shrink-0 w-20 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold text-center">접수</div>
+                                                <div className="shrink-0 w-20 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold text-center">접수</div>
                                                 <p className="text-gray-700 dark:text-gray-300">새로운 건의 접수 상태 (기본값)</p>
                                             </div>
                                             <div className="flex gap-3">
-                                                <div className="flex-shrink-0 w-20 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-bold text-center">검토중</div>
+                                                <div className="shrink-0 w-20 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-bold text-center">검토중</div>
                                                 <p className="text-gray-700 dark:text-gray-300">관리자가 검토 중인 상태로 변경</p>
                                             </div>
                                             <div className="flex gap-3">
-                                                <div className="flex-shrink-0 w-20 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold text-center">승인</div>
+                                                <div className="shrink-0 w-20 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold text-center">승인</div>
                                                 <p className="text-gray-700 dark:text-gray-300">건의 사항이 반영되었을 때, 해결 내용 작성</p>
                                             </div>
                                             <div className="flex gap-3">
-                                                <div className="flex-shrink-0 w-20 px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold text-center">반려</div>
+                                                <div className="shrink-0 w-20 px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold text-center">반려</div>
                                                 <p className="text-gray-700 dark:text-gray-300">건의 사항이 반영할 수 없을 때, 반려 사유 필수</p>
                                             </div>
                                         </div>
@@ -1644,7 +1644,7 @@ export const useAuthStore = create((set) => ({
                                 </p>
                             </div>
 
-                            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 p-5 rounded-xl border border-indigo-100 dark:border-indigo-800">
+                            <div className="bg-linear-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 p-5 rounded-xl border border-indigo-100 dark:border-indigo-800">
                                 <h3 className="text-lg font-bold text-indigo-900 dark:text-indigo-100 flex items-center gap-2 mb-2">
                                     🚀 트래픽 급증 대비 (Scale Up)
                                 </h3>

@@ -89,7 +89,10 @@ export default function Footer() {
                         <Link to="/non-member-policy" className="hover:text-slate-300">비회원 처리 규정</Link>
                     </div>
                     <div>
-                        developed by <strong>SC Dev Team</strong>
+                        developed by{' '}
+                        <Link to="/developers" className="hover:text-slate-300 font-semibold transition-colors">
+                            SC Dev Team
+                        </Link>
                     </div>
                 </div>
             </div>

@@ -159,7 +159,7 @@ export const SurveyRegistrationsPanel = ({
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden min-h-[500px] flex flex-col">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden min-h-125 flex flex-col">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 flex-1">
                         <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mb-4">
@@ -180,7 +180,7 @@ export const SurveyRegistrationsPanel = ({
                 ) : viewMode === 'table' ? (
                     <div className="overflow-x-auto flex-1">
                         <table className="w-full whitespace-nowrap text-sm">
-                            <thead className="bg-gradient-to-br from-gray-50 to-gray-100/50 border-b border-gray-200">
+                            <thead className="bg-linear-to-br from-gray-50 to-gray-100/50 border-b border-gray-200">
                                 {table.getHeaderGroups().map(headerGroup => (
                                     <tr key={headerGroup.id}>
                                         {headerGroup.headers.map(header => {
@@ -282,7 +282,7 @@ export const SurveyRegistrationsPanel = ({
                                                             <div className="w-1 h-1 rounded-full bg-indigo-400"></div>
                                                             {field.label}
                                                         </div>
-                                                        <div className="text-sm text-gray-800 break-words leading-relaxed">
+                                                        <div className="text-sm text-gray-800 wrap-break-word leading-relaxed">
                                                             {field.type === 'file' ? (
                                                                 <div className="flex flex-col gap-1 mt-1">
                                                                     {(Array.isArray(value) ? value : [value]).map((url: string, idx: number) => {

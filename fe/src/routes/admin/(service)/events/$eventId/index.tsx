@@ -159,6 +159,10 @@ function EventActivityDetailPage() {
   // Excel Download
   const [downloading, setDownloading] = useState(false)
 
+  // 전체 등록자 기반 통계 (페이지네이션 오류 방지 - 정확한 카운트)
+  const [allRegistrationsForStats, setAllRegistrationsForStats] = useState<ActivityRegistrationResponse[]>([])
+  const [loadingAllStats, setLoadingAllStats] = useState(false)
+
   // Fetch activity detail
   const fetchActivityDetail = useCallback(async () => {
     try {
@@ -171,7 +175,7 @@ function EventActivityDetailPage() {
     }
   }, [id, navigate])
 
-  // Fetch registrations
+  // Fetch registrations (페이지네이션 표시용)
   const fetchRegistrations = useCallback(async (pageNum: number) => {
     try {
       setLoading(true)
@@ -183,6 +187,36 @@ function EventActivityDetailPage() {
       console.error('Failed to fetch registrations', error)
     } finally {
       setLoading(false)
+    }
+  }, [id])
+
+  /**
+   * 전체 등록자 데이터 로드 (통계 정확도를 위해)
+   * 페이지네이션으로 인해 현재 페이지 데이터만으로 상태별/학번별 통계를 내면 오류 발생
+   * 모든 페이지를 병렬로 fetch하여 정확한 통계를 제공
+   */
+  const fetchAllRegistrationsForStats = useCallback(async () => {
+    try {
+      setLoadingAllStats(true)
+      const pageSize = 200
+      const firstPage = await activityAdminApi.getRegistrations(id, { page: 1, page_size: pageSize })
+      let allRegs = [...firstPage.registrations]
+      const tp = firstPage.pagination.total_pages
+
+      if (tp > 1) {
+        const pages = await Promise.all(
+          Array.from({ length: tp - 1 }, (_, i) =>
+            activityAdminApi.getRegistrations(id, { page: i + 2, page_size: pageSize })
+          )
+        )
+        pages.forEach(p => { allRegs = [...allRegs, ...p.registrations] })
+      }
+
+      setAllRegistrationsForStats(allRegs)
+    } catch (error) {
+      console.error('Failed to fetch all registrations for stats', error)
+    } finally {
+      setLoadingAllStats(false)
     }
   }, [id])
 
@@ -198,14 +232,19 @@ function EventActivityDetailPage() {
         return
       }
 
-      const pageSize = 200
-      const firstPage = await activityAdminApi.getRegistrations(id, { page: 1, page_size: pageSize })
-      const pages = firstPage.pagination.total_pages
-      const allRegistrations = [...firstPage.registrations]
+      // 이미 전체 데이터가 로드된 경우 재사용, 없으면 새로 로드
+      let allRegistrations = allRegistrationsForStats
+      if (allRegistrations.length === 0) {
+        const pageSize = 200
+        const firstPage = await activityAdminApi.getRegistrations(id, { page: 1, page_size: pageSize })
+        const pages = firstPage.pagination.total_pages
+        allRegistrations = [...firstPage.registrations]
 
-      for (let currentPage = 2; currentPage <= pages; currentPage += 1) {
-        const nextPage = await activityAdminApi.getRegistrations(id, { page: currentPage, page_size: pageSize })
-        allRegistrations.push(...nextPage.registrations)
+        for (let currentPage = 2; currentPage <= pages; currentPage += 1) {
+          const nextPage = await activityAdminApi.getRegistrations(id, { page: currentPage, page_size: pageSize })
+          allRegistrations.push(...nextPage.registrations)
+        }
+        setAllRegistrationsForStats(allRegistrations)
       }
 
       setStats(buildLocalStats(activityDetail, allRegistrations))
@@ -365,6 +404,11 @@ function EventActivityDetailPage() {
     fetchRegistrations(page)
   }, [fetchActivityDetail, fetchRegistrations, page])
 
+  // 마운트 시 전체 등록자 데이터 백그라운드 로드 (정확한 통계 카운트)
+  useEffect(() => {
+    fetchAllRegistrationsForStats()
+  }, [fetchAllRegistrationsForStats])
+
   useEffect(() => {
     if (!activityDetail || currentTab !== 'stats') return
     fetchStats()
@@ -490,7 +534,7 @@ function EventActivityDetailPage() {
           }
 
           return (
-            <div className="max-w-[200px] truncate" title={Array.isArray(value) ? value.join(', ') : String(value || '')}>
+            <div className="max-w-50 truncate" title={Array.isArray(value) ? value.join(', ') : String(value || '')}>
               {(Array.isArray(value) ? value.join(', ') : String(value))}
             </div>
           )
@@ -549,11 +593,32 @@ function EventActivityDetailPage() {
     pageCount: totalPages,
   })
 
-  // Status counts
-  const statusCounts = registrations.reduce((acc, r) => {
-    acc[r.status] = (acc[r.status] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
+  /**
+   * 전체 기준 상태별 카운트 (allRegistrationsForStats 기반)
+   * 페이지네이션으로 잘린 현재 페이지 데이터가 아닌 전체 데이터 기준으로 계산
+   */
+  const statusCounts = useMemo(() => {
+    const source = allRegistrationsForStats.length > 0 ? allRegistrationsForStats : registrations
+    return source.reduce((acc, r) => {
+      acc[r.status] = (acc[r.status] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+  }, [allRegistrationsForStats, registrations])
+
+  /**
+   * 학번 앞 2자리 기준 입학 년도별 카운트
+   * student_id의 첫 2자리로 입학 년도를 파악 (예: "24XXXXXX" → "24")
+   */
+  const yearCounts = useMemo(() => {
+    const source = allRegistrationsForStats.length > 0 ? allRegistrationsForStats : registrations
+    return source.reduce((acc, r) => {
+      if (r.student_id && r.student_id.length >= 2) {
+        const year = r.student_id.slice(0, 2)
+        acc[year] = (acc[year] || 0) + 1
+      }
+      return acc
+    }, {} as Record<string, number>)
+  }, [allRegistrationsForStats, registrations])
 
   if (!activityDetail) {
     return (
@@ -575,7 +640,7 @@ function EventActivityDetailPage() {
           <ArrowLeft size={20} className="text-gray-600" />
         </button>
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg">
+          <div className="w-12 h-12 rounded-xl bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg">
             <ClipboardList size={24} className="text-white" />
           </div>
           <div>
@@ -726,7 +791,7 @@ function EventActivityDetailPage() {
           </div>
 
           {/* Content */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden min-h-[500px] flex flex-col">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden min-h-125 flex flex-col">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20 flex-1">
                 <div className="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center mb-4">
@@ -747,7 +812,7 @@ function EventActivityDetailPage() {
             ) : viewMode === 'table' ? (
               <div className="overflow-x-auto flex-1">
                 <table className="w-full whitespace-nowrap text-sm">
-                  <thead className="bg-gradient-to-br from-gray-50 to-gray-100/50 border-b border-gray-200">
+                  <thead className="bg-linear-to-br from-gray-50 to-gray-100/50 border-b border-gray-200">
                     {table.getHeaderGroups().map(headerGroup => (
                       <tr key={headerGroup.id}>
                         {headerGroup.headers.map(header => {
@@ -848,7 +913,7 @@ function EventActivityDetailPage() {
                                   <div className="w-1 h-1 rounded-full bg-purple-400"></div>
                                   {field.label}
                                 </div>
-                                <div className="text-sm text-gray-800 break-words leading-relaxed">
+                                <div className="text-sm text-gray-800 wrap-break-word leading-relaxed">
                                   {field.type === 'file' ? (
                                     <div className="flex flex-col gap-1 mt-1">
                                       {(Array.isArray(value) ? value : [value]).map((url: string, idx: number) => {
@@ -958,9 +1023,11 @@ function EventActivityDetailPage() {
         </>
       ) : (
         <EventStatsPanel
-          loading={loadingStats}
+          loading={loadingStats || loadingAllStats}
           stats={stats}
           onPreviewImage={setPreviewImageUrl}
+          statusCounts={{ pending: statusCounts['pending'], approved: statusCounts['approved'], rejected: statusCounts['rejected'] }}
+          yearCounts={yearCounts}
         />
       )}
       {/* Sub-modals */}

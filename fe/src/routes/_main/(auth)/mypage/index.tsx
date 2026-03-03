@@ -396,7 +396,7 @@ function MyPage() {
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">마이페이지</h1>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        <aside className="w-full lg:w-64 flex-shrink-0">
+        <aside className="w-full lg:w-64 shrink-0">
           <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-slate-700 mb-6">
             <div className="flex flex-col items-center text-center">
               <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-3xl mb-3">

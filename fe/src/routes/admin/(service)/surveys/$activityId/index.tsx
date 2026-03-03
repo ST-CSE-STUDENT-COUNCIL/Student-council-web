@@ -69,6 +69,9 @@ function SurveyActivityDetailPage() {
     // Excel Download
     const [downloading, setDownloading] = useState(false)
 
+    // 전체 등록자 기반 통계 (페이지네이션 오류 방지)
+    const [allRegistrationsForStats, setAllRegistrationsForStats] = useState<ActivityRegistrationResponse[]>([])
+
     // Fetch activity detail
     const fetchActivityDetail = useCallback(async () => {
         try {
@@ -305,6 +308,35 @@ function SurveyActivityDetailPage() {
         fetchSurveyStats()
     }, [fetchSurveyStats])
 
+    /**
+     * 전체 등록자 일괄 로드 (통계 정확도 보장)
+     * 페이지네이션으로 잘린 현재 페이지 데이터만으로 상태별/학번별 통계를 내면 오류
+     */
+    useEffect(() => {
+        const loadAll = async () => {
+            try {
+                const pageSize = 200
+                const firstPage = await activityAdminApi.getRegistrations(id, { page: 1, page_size: pageSize })
+                let allRegs = [...firstPage.registrations]
+                const tp = firstPage.pagination.total_pages
+
+                if (tp > 1) {
+                    const pages = await Promise.all(
+                        Array.from({ length: tp - 1 }, (_, i) =>
+                            activityAdminApi.getRegistrations(id, { page: i + 2, page_size: pageSize })
+                        )
+                    )
+                    pages.forEach(p => { allRegs = [...allRegs, ...p.registrations] })
+                }
+
+                setAllRegistrationsForStats(allRegs)
+            } catch (error) {
+                console.error('Failed to load all registrations for stats', error)
+            }
+        }
+        loadAll()
+    }, [id])
+
     // Filter registrations client-side
     const filteredRegistrations = useMemo(() => {
         return registrations.filter(reg => {
@@ -431,7 +463,7 @@ function SurveyActivityDetailPage() {
                     }
 
                     return (
-                        <div className="max-w-[200px] truncate" title={Array.isArray(value) ? value.join(', ') : String(value || '')}>
+                        <div className="max-w-50 truncate" title={Array.isArray(value) ? value.join(', ') : String(value || '')}>
                             {(Array.isArray(value) ? value.join(', ') : String(value))}
                         </div>
                     )
@@ -490,11 +522,31 @@ function SurveyActivityDetailPage() {
         pageCount: totalPages,
     })
 
-    // Status counts
-    const statusCounts = registrations.reduce((acc, r) => {
-        acc[r.status] = (acc[r.status] || 0) + 1
-        return acc
-    }, {} as Record<string, number>)
+    /**
+     * 전체 기준 상태별 카운트
+     * allRegistrationsForStats 기반으로 정확한 카운트 제공
+     */
+    const statusCounts = useMemo(() => {
+        const source = allRegistrationsForStats.length > 0 ? allRegistrationsForStats : registrations
+        return source.reduce((acc, r) => {
+            acc[r.status] = (acc[r.status] || 0) + 1
+            return acc
+        }, {} as Record<string, number>)
+    }, [allRegistrationsForStats, registrations])
+
+    /**
+     * 학번 앞 2자리 기준 입학 년도별 카운트
+     */
+    const yearCounts = useMemo(() => {
+        const source = allRegistrationsForStats.length > 0 ? allRegistrationsForStats : registrations
+        return source.reduce((acc, r) => {
+            if (r.student_id && r.student_id.length >= 2) {
+                const year = r.student_id.slice(0, 2)
+                acc[year] = (acc[year] || 0) + 1
+            }
+            return acc
+        }, {} as Record<string, number>)
+    }, [allRegistrationsForStats, registrations])
 
     const surveyQuestionStats: SurveyQuestionStat[] = surveyStats?.question_stats ?? []
     const fallbackQuestionStats = useMemo(() => {
@@ -583,7 +635,7 @@ function SurveyActivityDetailPage() {
                     <ArrowLeft size={20} className="text-gray-600" />
                 </button>
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg">
+                    <div className="w-12 h-12 rounded-xl bg-linear-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg">
                         <BarChart3 size={24} className="text-white" />
                     </div>
                     <div>
@@ -661,6 +713,7 @@ function SurveyActivityDetailPage() {
                         loading={loadingStats}
                         surveyStats={surveyStats}
                         questionStats={resolvedQuestionStats}
+                        yearCounts={yearCounts}
                     />
                 )
             }

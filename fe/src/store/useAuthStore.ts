@@ -77,7 +77,13 @@ export const useAuthStore = create<AuthState>()(
                 // isInitialized는 저장하지 않음
             }),
             onRehydrateStorage: () => (state) => {
-                state?.setInitialized(true)
+                // isInitialized는 useAuthInit 훅에서 토큰 갱신 후 설정한다.
+                // 여기서는 데이터 복원만 완료되었으므로 false 유지 (토큰 유효성은 아직 미확인)
+                // 단, accessToken이 없는 경우에만 초기화 완료로 처리
+                if (!state?.accessToken) {
+                    state?.setInitialized(true)
+                }
+                // accessToken이 있는 경우: useAuthInit이 refresh 후 true로 설정
             },
         },
     ),

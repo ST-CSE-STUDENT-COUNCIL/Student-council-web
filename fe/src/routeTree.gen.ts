@@ -36,6 +36,7 @@ import { Route as MainpolicyPrivacyIndexRouteImport } from './routes/_main/(poli
 import { Route as MainpolicyNonMemberPolicyIndexRouteImport } from './routes/_main/(policy)/non-member-policy/index'
 import { Route as MaininfoNoticesIndexRouteImport } from './routes/_main/(info)/notices/index'
 import { Route as MaininfoIntroIndexRouteImport } from './routes/_main/(info)/intro/index'
+import { Route as MaininfoDevelopersIndexRouteImport } from './routes/_main/(info)/developers/index'
 import { Route as MaininfoClubsIndexRouteImport } from './routes/_main/(info)/clubs/index'
 import { Route as MainauthSignupIndexRouteImport } from './routes/_main/(auth)/signup/index'
 import { Route as MainauthResetPasswordIndexRouteImport } from './routes/_main/(auth)/reset-password/index'
@@ -200,6 +201,11 @@ const MaininfoIntroIndexRoute = MaininfoIntroIndexRouteImport.update({
   path: '/intro/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MaininfoDevelopersIndexRoute = MaininfoDevelopersIndexRouteImport.update({
+  id: '/_main/(info)/developers/',
+  path: '/developers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MaininfoClubsIndexRoute = MaininfoClubsIndexRouteImport.update({
   id: '/_main/(info)/clubs/',
   path: '/clubs/',
@@ -322,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof MainauthResetPasswordIndexRoute
   '/signup': typeof MainauthSignupIndexRoute
   '/clubs': typeof MaininfoClubsIndexRoute
+  '/developers': typeof MaininfoDevelopersIndexRoute
   '/intro': typeof MaininfoIntroIndexRoute
   '/notices/': typeof MaininfoNoticesIndexRoute
   '/non-member-policy': typeof MainpolicyNonMemberPolicyIndexRoute
@@ -367,6 +374,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof MainauthResetPasswordIndexRoute
   '/signup': typeof MainauthSignupIndexRoute
   '/clubs': typeof MaininfoClubsIndexRoute
+  '/developers': typeof MaininfoDevelopersIndexRoute
   '/intro': typeof MaininfoIntroIndexRoute
   '/notices': typeof MaininfoNoticesIndexRoute
   '/non-member-policy': typeof MainpolicyNonMemberPolicyIndexRoute
@@ -415,6 +423,7 @@ export interface FileRoutesById {
   '/_main/(auth)/reset-password/': typeof MainauthResetPasswordIndexRoute
   '/_main/(auth)/signup/': typeof MainauthSignupIndexRoute
   '/_main/(info)/clubs/': typeof MaininfoClubsIndexRoute
+  '/_main/(info)/developers/': typeof MaininfoDevelopersIndexRoute
   '/_main/(info)/intro/': typeof MaininfoIntroIndexRoute
   '/_main/(info)/notices/': typeof MaininfoNoticesIndexRoute
   '/_main/(policy)/non-member-policy/': typeof MainpolicyNonMemberPolicyIndexRoute
@@ -464,6 +473,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/clubs'
+    | '/developers'
     | '/intro'
     | '/notices/'
     | '/non-member-policy'
@@ -509,6 +519,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/clubs'
+    | '/developers'
     | '/intro'
     | '/notices'
     | '/non-member-policy'
@@ -556,6 +567,7 @@ export interface FileRouteTypes {
     | '/_main/(auth)/reset-password/'
     | '/_main/(auth)/signup/'
     | '/_main/(info)/clubs/'
+    | '/_main/(info)/developers/'
     | '/_main/(info)/intro/'
     | '/_main/(info)/notices/'
     | '/_main/(policy)/non-member-policy/'
@@ -597,6 +609,7 @@ export interface RootRouteChildren {
   MainauthResetPasswordIndexRoute: typeof MainauthResetPasswordIndexRoute
   MainauthSignupIndexRoute: typeof MainauthSignupIndexRoute
   MaininfoClubsIndexRoute: typeof MaininfoClubsIndexRoute
+  MaininfoDevelopersIndexRoute: typeof MaininfoDevelopersIndexRoute
   MaininfoIntroIndexRoute: typeof MaininfoIntroIndexRoute
   MainpolicyNonMemberPolicyIndexRoute: typeof MainpolicyNonMemberPolicyIndexRoute
   MainpolicyPrivacyIndexRoute: typeof MainpolicyPrivacyIndexRoute
@@ -796,6 +809,13 @@ declare module '@tanstack/react-router' {
       path: '/intro'
       fullPath: '/intro'
       preLoaderRoute: typeof MaininfoIntroIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_main/(info)/developers/': {
+      id: '/_main/(info)/developers/'
+      path: '/developers'
+      fullPath: '/developers'
+      preLoaderRoute: typeof MaininfoDevelopersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_main/(info)/clubs/': {
@@ -1013,6 +1033,7 @@ const rootRouteChildren: RootRouteChildren = {
   MainauthResetPasswordIndexRoute: MainauthResetPasswordIndexRoute,
   MainauthSignupIndexRoute: MainauthSignupIndexRoute,
   MaininfoClubsIndexRoute: MaininfoClubsIndexRoute,
+  MaininfoDevelopersIndexRoute: MaininfoDevelopersIndexRoute,
   MaininfoIntroIndexRoute: MaininfoIntroIndexRoute,
   MainpolicyNonMemberPolicyIndexRoute: MainpolicyNonMemberPolicyIndexRoute,
   MainpolicyPrivacyIndexRoute: MainpolicyPrivacyIndexRoute,
