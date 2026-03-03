@@ -7,8 +7,8 @@
  */
 
 import { useState, useEffect } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { Mail, Github, ChevronLeft, Code2, Monitor, Server, Globe, GitFork, Star, Shield, Users, Bell, CalendarCheck, Calendar, FileCode2, Flame } from 'lucide-react'
+import { createFileRoute } from '@tanstack/react-router'
+import { Mail, Github, Code2, Monitor, Server, Globe, GitFork, Star, Shield, Users, Bell, CalendarCheck, Calendar, FileCode2, Flame } from 'lucide-react'
 import { SEO } from '../../../../components/common/SEO'
 
 /** GitHub API에서 가져온 프로필 데이터 */
