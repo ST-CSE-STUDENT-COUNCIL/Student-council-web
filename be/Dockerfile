@@ -18,5 +18,5 @@ COPY . .
 # Fly.io는 8080 포트 사용
 EXPOSE 8080
 
-# uvicorn 실행 (256MB에서는 워커 1개가 안정적)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# uvicorn 실행 (1GB 기준 워커 2개, 헬스체크 블로킹 방지)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2", "--timeout-keep-alive", "30"]

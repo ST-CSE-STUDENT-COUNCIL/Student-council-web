@@ -22,11 +22,11 @@ primary_region = 'nrt'
     type = 'http'
     interval = '30s'
     timeout = '10s'
-    grace_period = '10s'
+    grace_period = '60s'
     path = '/'
 
 [[vm]]
-  memory = '512mb'
+  memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
 
