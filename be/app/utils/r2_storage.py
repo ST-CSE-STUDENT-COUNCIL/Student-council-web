@@ -43,10 +43,11 @@ BUCKET_URL_MAP = {
 
 # R2 클라이언트 싱글톤 (연결 재사용으로 성능 향상)
 _r2_client = None
+_r2_presign_client = None
 
 
 def get_r2_client():
-    """Cloudflare R2 클라이언트 반환 (싱글톤)"""
+    """Cloudflare R2 클라이언트 반환 (싱글톤) - 업로드/삭제용"""
     global _r2_client
     if _r2_client is None:
         _r2_client = boto3.client(
@@ -54,10 +55,31 @@ def get_r2_client():
             endpoint_url=f'https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com',
             aws_access_key_id=settings.R2_ACCESS_KEY_ID,
             aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
-            region_name='auto',  # R2는 auto 사용
-            config=Config(signature_version='s3v4')
+            region_name='auto',
+            config=Config(
+                signature_version='s3v4',
+                s3={'addressing_style': 'path'}
+            )
         )
     return _r2_client
+
+
+def get_r2_presign_client():
+    """Cloudflare R2 Presigned URL 전용 클라이언트 - region을 us-east-1로 고정해야 SigV4 정상 동작"""
+    global _r2_presign_client
+    if _r2_presign_client is None:
+        _r2_presign_client = boto3.client(
+            's3',
+            endpoint_url=f'https://{settings.R2_ACCOUNT_ID}.r2.cloudflarestorage.com',
+            aws_access_key_id=settings.R2_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY,
+            region_name='us-east-1',  # Presigned URL SigV4 크레덴셜 정상 생성에 필요
+            config=Config(
+                signature_version='s3v4',
+                s3={'addressing_style': 'path'}
+            )
+        )
+    return _r2_presign_client
 
 
 
@@ -100,7 +122,7 @@ def generate_presigned_url(
         str: Presigned URL
     """
     try:
-        r2_client = get_r2_client()
+        r2_client = get_r2_presign_client()
         presigned_url = r2_client.generate_presigned_url(
             'put_object',
             Params={
@@ -110,6 +132,8 @@ def generate_presigned_url(
             },
             ExpiresIn=expires_in
         )
+        # boto3의 이중 인코딩 버그 수정 (%252F → %2F)
+        presigned_url = presigned_url.replace('%252F', '%2F')
         return presigned_url
     except Exception as e:
         logger.error(f"generate_presigned_url: {str(e)}")
@@ -138,7 +162,7 @@ def generate_presigned_url_with_content_type(
         str: Presigned URL
     """
     try:
-        r2_client = get_r2_client()
+        r2_client = get_r2_presign_client()
         presigned_url = r2_client.generate_presigned_url(
             'put_object',
             Params={
@@ -148,6 +172,8 @@ def generate_presigned_url_with_content_type(
             },
             ExpiresIn=expires_in
         )
+        # boto3의 이중 인코딩 버그 수정 (%252F → %2F)
+        presigned_url = presigned_url.replace('%252F', '%2F')
         return presigned_url
     except Exception as e:
         logger.error(f"generate_presigned_url_with_content_type: {str(e)}")
@@ -261,7 +287,7 @@ def generate_download_presigned_url(
         str: 만료 시간이 포함된 Presigned URL
     """
     try:
-        r2_client = get_r2_client()
+        r2_client = get_r2_presign_client()
         presigned_url = r2_client.generate_presigned_url(
             'get_object',
             Params={
@@ -270,6 +296,8 @@ def generate_download_presigned_url(
             },
             ExpiresIn=expires_in
         )
+        # boto3의 이중 인코딩 버그 수정 (%252F → %2F)
+        presigned_url = presigned_url.replace('%252F', '%2F')
         return presigned_url
     except Exception as e:
         logger.error(f"generate_download_presigned_url: {str(e)}")
