@@ -25,6 +25,7 @@ from app.utils.r2_storage import (
     delete_post_attachments,
     generate_presigned_url,
     generate_presigned_url_with_content_type,
+    generate_download_presigned_url,
     validate_file_extension,
     get_bucket_url,
     BROAD_ALLOWED_EXTENSIONS
@@ -279,15 +280,32 @@ async def get_notice(
             .eq('post_id', notice_id)\
             .execute()
         
+        # 첨부파일 URL을 만료되는 Presigned URL로 변환 (직접 공개 URL 노출 방지)
+        attachments = []
+        base_url = get_bucket_url("post-attachments")
+        for attachment in (attachments_result.data or []):
+            file_url = attachment.get("file_url", "")
+            file_key = file_url.replace(f"{base_url}/", "") if file_url else ""
+            if file_key:
+                try:
+                    signed_url = generate_download_presigned_url(
+                        bucket_name="post-attachments",
+                        file_key=file_key,
+                        expires_in=3600  # 1시간 후 만료
+                    )
+                    attachments.append({**attachment, "file_url": signed_url})
+                except Exception:
+                    # Presigned URL 생성 실패 시 원본 URL 유지 (서비스 중단 방지)
+                    attachments.append(attachment)
+            else:
+                attachments.append(attachment)
+
         notice = {
             **post,
             'board': board_result.data if board_result.data else {'id': post['board_id'], 'name': '', 'category': ''},
             'author': author_result.data if author_result.data else {'id': post['author_id'], 'name': '알 수 없음'},
-            'attachments': attachments_result.data if attachments_result.data else []
+            'attachments': attachments
         }
-        
-        # 첨부파일 URL은 이미 public URL이므로 그대로 사용
-        # post-attachments bucket이 public이므로 signed URL 불필요
         
         return NoticeDetailResponse(**notice)
     

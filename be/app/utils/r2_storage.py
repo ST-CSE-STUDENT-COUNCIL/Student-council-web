@@ -241,6 +241,44 @@ async def upload_file_to_r2(
         )
 
 
+def generate_download_presigned_url(
+    bucket_name: BucketType,
+    file_key: str,
+    expires_in: int = 3600
+) -> str:
+    """
+    다운로드용 Presigned URL 생성 (GET)
+
+    버킷이 public이 아닌 경우에도 임시 접근 가능한 URL 발급.
+    expires_in 초 후 자동 만료됨.
+
+    Args:
+        bucket_name: R2 버킷 이름
+        file_key: 파일 경로 (예: 'post-1/uuid.pdf')
+        expires_in: URL 유효 시간 (초, 기본 1시간)
+
+    Returns:
+        str: 만료 시간이 포함된 Presigned URL
+    """
+    try:
+        r2_client = get_r2_client()
+        presigned_url = r2_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': bucket_name,
+                'Key': file_key,
+            },
+            ExpiresIn=expires_in
+        )
+        return presigned_url
+    except Exception as e:
+        logger.error(f"generate_download_presigned_url: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="다운로드 URL 생성 실패"
+        )
+
+
 async def delete_file_from_r2(file_url: str, bucket_name: str) -> bool:
     """
     R2에서 파일 삭제
