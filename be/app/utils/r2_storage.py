@@ -134,6 +134,8 @@ def generate_presigned_url(
         )
         # boto3의 이중 인코딩 버그 수정 (%252F → %2F)
         presigned_url = presigned_url.replace('%252F', '%2F')
+        # 프론트엔드 이중 인코딩 방지: 쿼리 파라미터의 %2F를 실제 /로 변환
+        presigned_url = presigned_url.replace('%2F', '/')
         return presigned_url
     except Exception as e:
         logger.error(f"generate_presigned_url: {str(e)}")
@@ -174,6 +176,8 @@ def generate_presigned_url_with_content_type(
         )
         # boto3의 이중 인코딩 버그 수정 (%252F → %2F)
         presigned_url = presigned_url.replace('%252F', '%2F')
+        # 프론트엔드 이중 인코딩 방지: 쿼리 파라미터의 %2F를 실제 /로 변환
+        presigned_url = presigned_url.replace('%2F', '/')
         return presigned_url
     except Exception as e:
         logger.error(f"generate_presigned_url_with_content_type: {str(e)}")
@@ -298,6 +302,8 @@ def generate_download_presigned_url(
         )
         # boto3의 이중 인코딩 버그 수정 (%252F → %2F)
         presigned_url = presigned_url.replace('%252F', '%2F')
+        # 프론트엔드 이중 인코딩 방지: 쿼리 파라미터의 %2F를 실제 /로 변환
+        presigned_url = presigned_url.replace('%2F', '/')
         return presigned_url
     except Exception as e:
         logger.error(f"generate_download_presigned_url: {str(e)}")
