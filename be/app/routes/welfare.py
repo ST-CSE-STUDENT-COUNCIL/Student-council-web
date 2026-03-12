@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 import re
 from app.database import get_supabase, get_supabase_admin
 from app.utils.auth import get_current_user, require_admin
-from app.utils.sheets import get_sheet_value
+from app.utils.sheets import get_sheet_value, get_sheet_values_batch
 from app.utils.r2_storage import (
     upload_file_to_r2 as upload_file_to_supabase,
     delete_file_from_r2,
@@ -45,16 +45,10 @@ router = APIRouter(tags=["복지사업"])
 
 # ── 모듈 레벨 공유 자원 ──────────────────────────────────────────────────────
 # 서버 프로세스 전체에서 공유되며, 요청시 재생성되지 않습니다.
-_executor = ThreadPoolExecutor(max_workers=4)
+_executor = ThreadPoolExecutor(max_workers=2)
 # 재고 캐시: 최대 100개 항목, 5분 TTL — TTLCache는 thread-unsafe이므로 lock으로 보호
 _rental_quantity_cache: TTLCache = TTLCache(maxsize=100, ttl=300)
 _cache_lock = threading.RLock()
-
-
-async def _get_sheet_value_async(spreadsheet_id: str, range_name: str):
-    """구글 시트 동기 조회를 스레드풀에서 실행 → 이벤트 루프 블로킹 방지"""
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(_executor, get_sheet_value, spreadsheet_id, range_name)
 
 
 # ============================================================================
@@ -511,37 +505,44 @@ async def get_rental_items():
     # rental_items 테이블에서 활성화된 물품만 조회
     result = supabase.table('rental_items').select('*').eq('is_active', True).order('category, item_name').execute()
     
-    # N개 물품의 재고를 병렬로 비동기 조회
-    async def _fetch_item(item: dict) -> dict:
-        available_quantity = None
-        if spreadsheet_id:
-            # 빈 문자열이면 기본값 적용: 시트 이름은 물품명, 셀은 B2
-            sheet_name = item.get('quantity_sheet_name') or item.get('item_name', 'Sheet1')
-            cell_range = item.get('quantity_cell_range') or 'B2'
-            # 시트 이름에 특수문자(괄호, +, 공백 등)가 포함되면 작은따옴표로 감싸야 함
-            if not sheet_name.startswith("'"):
-                sheet_name = f"'{sheet_name}'"
-            range_notation = f"{sheet_name}!{cell_range}"
-            cache_key = f"{spreadsheet_id}:{range_notation}"
+    if not spreadsheet_id or not result.data:
+        return [{**item, 'available_quantity': None} for item in result.data]
 
-            with _cache_lock:
-                cached = _rental_quantity_cache.get(cache_key)
-            if cached is not None:
-                logger.debug(f"[welfare/rentals] cache_hit key={cache_key}")
-                available_quantity = cached
-            else:
-                logger.info(f"[welfare/rentals] cache_miss item={item['item_name']}")
-                try:
-                    available_quantity = await _get_sheet_value_async(spreadsheet_id, range_notation)
-                    with _cache_lock:
-                        _rental_quantity_cache[cache_key] = available_quantity
-                except Exception as e:
-                    logger.warning(f"재고 조회 실패 ({item['item_name']}): {e}")
-        return {**item, 'available_quantity': available_quantity}
+    # 각 물품의 range 계산
+    items_data = result.data
+    range_notations = []
+    for item in items_data:
+        sheet_name = item.get('quantity_sheet_name') or item.get('item_name', 'Sheet1')
+        cell_range = item.get('quantity_cell_range') or 'B2'
+        if not sheet_name.startswith("'"):
+            sheet_name = f"'{sheet_name}'"
+        range_notations.append(f"{sheet_name}!{cell_range}")
 
-    # N개 물품 동시 조회 (직렬 → 병렬, 이벤트 루프 블로킹 없음)
-    items = await asyncio.gather(*[_fetch_item(item) for item in result.data])
-    return list(items)
+    # 캐시 미스 항목만 추려서 1번의 batchGet으로 조회
+    with _cache_lock:
+        uncached_indices = [
+            i for i, r in enumerate(range_notations)
+            if f"{spreadsheet_id}:{r}" not in _rental_quantity_cache
+        ]
+
+    if uncached_indices:
+        uncached_ranges = [range_notations[i] for i in uncached_indices]
+        logger.info(f"[welfare/rentals] cache_miss {len(uncached_indices)}개 batchGet 호출")
+        loop = asyncio.get_running_loop()
+        batch_values = await loop.run_in_executor(
+            _executor, get_sheet_values_batch, spreadsheet_id, uncached_ranges
+        )
+        with _cache_lock:
+            for i, idx in enumerate(uncached_indices):
+                _rental_quantity_cache[f"{spreadsheet_id}:{range_notations[idx]}"] = batch_values[i]
+
+    # 캐시에서 결과 조립
+    with _cache_lock:
+        items = [
+            {**item, 'available_quantity': _rental_quantity_cache.get(f"{spreadsheet_id}:{r}")}
+            for item, r in zip(items_data, range_notations)
+        ]
+    return items
 
 
 @router.post("/admin/welfare/welfare_rentals/presigned-url", summary="대여 물품 이미지 업로드용 Presigned URL 발급 (관리자)")

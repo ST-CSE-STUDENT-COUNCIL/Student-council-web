@@ -35,6 +35,47 @@ def _get_sheets_service():
     return _sheets_service
 
 
+def _parse_cell_value(cell_value) -> Optional[int]:
+    try:
+        return int(cell_value)
+    except (ValueError, TypeError):
+        try:
+            return int(float(cell_value))
+        except (ValueError, TypeError):
+            return None
+
+
+def get_sheet_values_batch(spreadsheet_id: str, ranges: list) -> list:
+    """
+    여러 셀을 한 번의 batchGet API 호출로 조회합니다.
+
+    Returns:
+        ranges와 같은 순서의 Optional[int] 리스트
+    """
+    if not ranges:
+        return []
+    try:
+        service = _get_sheets_service()
+        result = service.spreadsheets().values().batchGet(
+            spreadsheetId=spreadsheet_id,
+            ranges=ranges
+        ).execute()
+        output = []
+        for vr in result.get('valueRanges', []):
+            values = vr.get('values', [])
+            if values and values[0]:
+                output.append(_parse_cell_value(values[0][0]))
+            else:
+                output.append(None)
+        # API가 빈 range를 생략할 수 있으므로 부족분을 None으로 채움
+        while len(output) < len(ranges):
+            output.append(None)
+        return output
+    except HttpError as error:
+        logger.error(f"Google Sheets batchGet API error: {error}")
+        return [None] * len(ranges)
+
+
 def get_sheet_value(spreadsheet_id: str, range_name: str) -> Optional[int]:
     """
     구글 스프레드시트에서 특정 셀의 값을 읽어옵니다.
@@ -67,18 +108,7 @@ def get_sheet_value(spreadsheet_id: str, range_name: str) -> Optional[int]:
         if not values or not values[0]:
             return None
         
-        # 첫 번째 셀의 값을 숫자로 변환
-        cell_value = values[0][0]
-        
-        # 숫자로 변환 시도
-        try:
-            return int(cell_value)
-        except (ValueError, TypeError):
-            # 소수점이 있는 경우
-            try:
-                return int(float(cell_value))
-            except (ValueError, TypeError):
-                return None
+        return _parse_cell_value(values[0][0])
     
     except HttpError as error:
         logger.error(f"Google Sheets API error: {error}")
