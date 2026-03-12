@@ -23,6 +23,15 @@ limiter = Limiter(key_func=get_remote_address)
 async def lifespan(app: FastAPI):
     # startup
     logger.info("서버 시작")
+    # Google Sheets Discovery API 사전 초기화
+    # 스레드풀에서 실행해 이벤트 루프 블로킹 없이 종료된 뒤 첫 요청이 빠르게 처리됨
+    try:
+        import asyncio as _asyncio
+        from app.utils.sheets import _get_sheets_service
+        loop = _asyncio.get_running_loop()
+        await loop.run_in_executor(None, _get_sheets_service)
+    except Exception as _e:
+        logger.warning(f"Google Sheets 사전 초기화 실패 (문제 없음): {_e}")
     yield
     # shutdown
     logger.info("서버 종료")

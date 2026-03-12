@@ -2,6 +2,7 @@
 Google Sheets API 연동 유틸리티
 API 키를 사용하여 공개 스프레드시트에서 데이터를 읽어옵니다.
 """
+import threading
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from app.config import settings
@@ -9,6 +10,30 @@ from typing import Optional
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+# ── 싱글턴 서비스 객체 ────────────────────────────────────────────────────────
+# build()는 최초 1회만 Discovery API(~1MB JSON) HTTP 요청을 수행합니다.
+# 매 요청마다 build()를 호출하면 첫 요청·콜드 스타트 시 10초 이상 지연됩니다.
+_sheets_service = None
+_sheets_service_lock = threading.Lock()
+
+
+def _get_sheets_service():
+    """Google Sheets API 서비스 객체를 싱글턴으로 반환합니다."""
+    global _sheets_service
+    if _sheets_service is not None:
+        return _sheets_service
+    with _sheets_service_lock:
+        if _sheets_service is None:  # double-checked locking
+            logger.info("[sheets] Google Sheets 서비스 초기화 (Discovery API 호출)...")
+            _sheets_service = build(
+                'sheets', 'v4',
+                developerKey=settings.GOOGLE_SHEETS_API_KEY,
+                cache_discovery=False,  # Docker 컨테이너 내 파일 쓰기 시도 방지
+            )
+            logger.info("[sheets] Google Sheets 서비스 초기화 완료")
+    return _sheets_service
+
 
 def get_sheet_value(spreadsheet_id: str, range_name: str) -> Optional[int]:
     """
@@ -27,9 +52,9 @@ def get_sheet_value(spreadsheet_id: str, range_name: str) -> Optional[int]:
         5
     """
     try:
-        # Google Sheets API 서비스 빌드 (API 키 사용)
-        service = build('sheets', 'v4', developerKey=settings.GOOGLE_SHEETS_API_KEY)
-        
+        # 싱글턴 서비스 사용 (매 요청마다 build() 재호출 방지)
+        service = _get_sheets_service()
+
         # 스프레드시트에서 데이터 조회
         result = service.spreadsheets().values().get(
             spreadsheetId=spreadsheet_id,

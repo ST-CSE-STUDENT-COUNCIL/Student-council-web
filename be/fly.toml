@@ -21,8 +21,8 @@ primary_region = 'nrt'
     port = 8080
     type = 'http'
     interval = '30s'
-    timeout = '10s'
-    grace_period = '60s'
+    timeout = '30s'
+    grace_period = '120s'
     path = '/'
 
 [[vm]]

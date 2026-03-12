@@ -36,8 +36,25 @@ from app.utils.r2_storage import (
 )
 import uuid
 import os
+import asyncio
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from cachetools import TTLCache
 
 router = APIRouter(tags=["복지사업"])
+
+# ── 모듈 레벨 공유 자원 ──────────────────────────────────────────────────────
+# 서버 프로세스 전체에서 공유되며, 요청시 재생성되지 않습니다.
+_executor = ThreadPoolExecutor(max_workers=4)
+# 재고 캐시: 최대 100개 항목, 5분 TTL — TTLCache는 thread-unsafe이므로 lock으로 보호
+_rental_quantity_cache: TTLCache = TTLCache(maxsize=100, ttl=300)
+_cache_lock = threading.RLock()
+
+
+async def _get_sheet_value_async(spreadsheet_id: str, range_name: str):
+    """구글 시트 동기 조회를 스레드풀에서 실행 → 이벤트 루프 블로킹 방지"""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(_executor, get_sheet_value, spreadsheet_id, range_name)
 
 
 # ============================================================================
@@ -494,22 +511,9 @@ async def get_rental_items():
     # rental_items 테이블에서 활성화된 물품만 조회
     result = supabase.table('rental_items').select('*').eq('is_active', True).order('category, item_name').execute()
     
-    # 각 물품의 재고를 구글 스프레드시트에서 조회
-    from cachetools import TTLCache
-    
-    # 캐시 초기화 (최대 100개 항목, 5분 유효)
-    # 전역변수로 선언하여 요청 간 공유
-    if not hasattr(get_rental_items, "cache"):
-        get_rental_items.cache = TTLCache(maxsize=100, ttl=300)
-    
-    items = []
-    
-    # 배치 처리를 위한 시트별 그룹화가 이상적이지만,
-    # 일단 캐싱으로 부하를 대폭 줄임
-    
-    for item in result.data:
+    # N개 물품의 재고를 병렬로 비동기 조회
+    async def _fetch_item(item: dict) -> dict:
         available_quantity = None
-        
         if spreadsheet_id:
             # 빈 문자열이면 기본값 적용: 시트 이름은 물품명, 셀은 B2
             sheet_name = item.get('quantity_sheet_name') or item.get('item_name', 'Sheet1')
@@ -519,26 +523,25 @@ async def get_rental_items():
                 sheet_name = f"'{sheet_name}'"
             range_notation = f"{sheet_name}!{cell_range}"
             cache_key = f"{spreadsheet_id}:{range_notation}"
-            
-            # 캐시 확인
-            if cache_key in get_rental_items.cache:
-                available_quantity = get_rental_items.cache[cache_key]
+
+            with _cache_lock:
+                cached = _rental_quantity_cache.get(cache_key)
+            if cached is not None:
+                logger.debug(f"[welfare/rentals] cache_hit key={cache_key}")
+                available_quantity = cached
             else:
+                logger.info(f"[welfare/rentals] cache_miss item={item['item_name']}")
                 try:
-                    available_quantity = get_sheet_value(spreadsheet_id, range_notation)
-                    # 성공 시 캐시에 저장
-                    get_rental_items.cache[cache_key] = available_quantity
+                    available_quantity = await _get_sheet_value_async(spreadsheet_id, range_notation)
+                    with _cache_lock:
+                        _rental_quantity_cache[cache_key] = available_quantity
                 except Exception as e:
                     logger.warning(f"재고 조회 실패 ({item['item_name']}): {e}")
-                    # 실패 시 캐시된 값이 있다면 그것이라도 사용 (없으면 None)
-                    pass
-        
-        items.append({
-            **item,
-            'available_quantity': available_quantity
-        })
-    
-    return items
+        return {**item, 'available_quantity': available_quantity}
+
+    # N개 물품 동시 조회 (직렬 → 병렬, 이벤트 루프 블로킹 없음)
+    items = await asyncio.gather(*[_fetch_item(item) for item in result.data])
+    return list(items)
 
 
 @router.post("/admin/welfare/welfare_rentals/presigned-url", summary="대여 물품 이미지 업로드용 Presigned URL 발급 (관리자)")
